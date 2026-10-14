@@ -9,8 +9,13 @@ import * as calendar from './views/calendar.js';
 import * as study from './views/study.js';
 import * as diet from './views/diet.js';
 import * as settings from './views/settings.js';
+import * as mapView from './views/map.js';
+import { currencyOptions } from './data.js';
+import { icon } from './icons.js';
 
-const VIEWS = { home, money, calendar, study, diet, settings };
+const TABS = { home: ['home', 'home'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'] };
+
+const VIEWS = { home, money, calendar, study, diet, map: mapView, settings };
 let current = 'home';
 
 function go(name) {
@@ -34,14 +39,14 @@ function draw() {
 async function onboarding() {
   if (db.setting('onboarded', false)) return;
   const v = await sheet({
-    title: 'Merhaba! I\'m Yaver 👋',
-    body: '<p class="muted">Your pocket assistant for money, meetings, studies and diet. Two quick things and we\'re set. You can change them later in Settings.</p>',
+    title: 'Yaver',
+    body: '<p class="muted small">Study tracking, money, meetings, diet and an AI assistant. Set the basics; everything can be changed later in Settings.</p>',
     fields: [
       { name: 'userName', label: 'What should I call you?', placeholder: 'Mustafa' },
-      { name: 'currency', label: 'Currency', type: 'select', options: ['TRY', 'USD', 'EUR', 'GBP'], value: 'TRY' },
-      { name: 'apiKey', label: 'Anthropic API key (for the AI, optional now)', type: 'password', placeholder: 'sk-ant-…' },
+      { name: 'currency', label: 'Currency', type: 'select', options: currencyOptions().filter(([c]) => c), value: 'TRY' },
+      { name: 'apiKey', label: 'Anthropic API key (console.anthropic.com → API Keys)', type: 'password', placeholder: 'sk-ant-… (can add later)' },
     ],
-    submit: "Let's go",
+    submit: 'Start',
   });
   if (v) {
     if (v.userName) await db.setSetting('userName', v.userName.trim());
@@ -55,14 +60,19 @@ async function start() {
   await db.openDB();
   initAssistant();
 
-  document.querySelectorAll('.tabbar [data-tab]').forEach(b => (b.onclick = () => go(b.dataset.tab)));
+  document.querySelectorAll('.tabbar [data-tab]').forEach(b => {
+    const [ic, label] = TABS[b.dataset.tab];
+    b.innerHTML = `${icon(ic)}<span>${label}</span>`;
+    b.onclick = () => go(b.dataset.tab);
+  });
   $('#fab').onclick = () => openAssistant();
 
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
-  db.onChange(() => { clearTimeout(pending); pending = setTimeout(draw, 30); });
+  // (The map keeps its own state, so data changes don't redraw it.)
+  db.onChange(() => { if (current === 'map') return; clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) draw(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
   window.addEventListener('hashchange', () => go(location.hash.slice(1)));
 
   go(location.hash.slice(1) || 'home');

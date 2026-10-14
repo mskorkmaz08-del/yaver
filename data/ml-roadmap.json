@@ -1,0 +1,517 @@
+{
+  "title": "ML Engineer Roadmap",
+  "owner": "Mustafa",
+  "version": 1,
+  "start": "2026-10-19",
+  "end": "2027-10-17",
+  "weeklyHoursTarget": 15,
+  "weeklyTemplate": {
+    "mon-fri": "2h: 15m Anki, 15m recall, 60m new material, 30m problems",
+    "sat": "4h project",
+    "sun": "1h weekly review"
+  },
+  "minimumDay": "25 minutes: Anki + one problem; never miss two days in a row",
+  "metrics": [
+    "hoursStudied",
+    "ankiReviewsDone",
+    "problemsSolved",
+    "neetcodeSolved",
+    "exercismDone"
+  ],
+  "phases": [
+    {
+      "id": "p0",
+      "name": "Setup and baseline",
+      "weekStart": 1,
+      "weekEnd": 1,
+      "start": "2026-10-19",
+      "end": "2026-10-25",
+      "topics": [
+        {
+          "id": "p0-t1",
+          "name": "Python + VS Code",
+          "done": false
+        },
+        {
+          "id": "p0-t2",
+          "name": "Git and GitHub",
+          "done": false
+        },
+        {
+          "id": "p0-t3",
+          "name": "Terminal basics",
+          "done": false
+        },
+        {
+          "id": "p0-t4",
+          "name": "Anki set up",
+          "done": false
+        },
+        {
+          "id": "p0-t5",
+          "name": "Diagnostic test",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "Public ml-journey repo with README and weekly log",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "Diagnostic score recorded",
+        "passed": false,
+        "passMark": 0.8
+      }
+    },
+    {
+      "id": "p1",
+      "name": "Programming foundations",
+      "weekStart": 2,
+      "weekEnd": 9,
+      "start": "2026-10-26",
+      "end": "2026-12-20",
+      "topics": [
+        {
+          "id": "p1-t1",
+          "name": "Functions and scope",
+          "done": false
+        },
+        {
+          "id": "p1-t2",
+          "name": "Lists, dicts, sets, tuples, strings",
+          "done": false
+        },
+        {
+          "id": "p1-t3",
+          "name": "Files and exceptions",
+          "done": false
+        },
+        {
+          "id": "p1-t4",
+          "name": "Modules",
+          "done": false
+        },
+        {
+          "id": "p1-t5",
+          "name": "Classes and OOP",
+          "done": false
+        },
+        {
+          "id": "p1-t6",
+          "name": "Recursion",
+          "done": false
+        },
+        {
+          "id": "p1-t7",
+          "name": "Iterators and generators",
+          "done": false
+        },
+        {
+          "id": "p1-t8",
+          "name": "Testing with pytest",
+          "done": false
+        },
+        {
+          "id": "p1-t9",
+          "name": "Debugging",
+          "done": false
+        },
+        {
+          "id": "p1-t10",
+          "name": "Reading code",
+          "done": false
+        },
+        {
+          "id": "p1-t11",
+          "name": "Clean code",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "CLI personal finance tool: CSV import, categories, monthly reports, SQLite, pytest",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "Phase 1 test 80%+, 40 Exercism exercises, 80% test coverage",
+        "passed": false,
+        "passMark": 0.8
+      }
+    },
+    {
+      "id": "p2",
+      "name": "Data structures and algorithms",
+      "weekStart": 10,
+      "weekEnd": 17,
+      "start": "2026-12-21",
+      "end": "2027-02-14",
+      "topics": [
+        {
+          "id": "p2-t1",
+          "name": "Big-O",
+          "done": false
+        },
+        {
+          "id": "p2-t2",
+          "name": "Arrays and hashing",
+          "done": false
+        },
+        {
+          "id": "p2-t3",
+          "name": "Two pointers",
+          "done": false
+        },
+        {
+          "id": "p2-t4",
+          "name": "Sliding window",
+          "done": false
+        },
+        {
+          "id": "p2-t5",
+          "name": "Stacks and queues",
+          "done": false
+        },
+        {
+          "id": "p2-t6",
+          "name": "Binary search",
+          "done": false
+        },
+        {
+          "id": "p2-t7",
+          "name": "Linked lists",
+          "done": false
+        },
+        {
+          "id": "p2-t8",
+          "name": "Trees and BST",
+          "done": false
+        },
+        {
+          "id": "p2-t9",
+          "name": "Heaps",
+          "done": false
+        },
+        {
+          "id": "p2-t10",
+          "name": "Graphs: BFS, DFS, topo sort, Dijkstra",
+          "done": false
+        },
+        {
+          "id": "p2-t11",
+          "name": "Backtracking",
+          "done": false
+        },
+        {
+          "id": "p2-t12",
+          "name": "Intro dynamic programming",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "Data-structures library from scratch + BFS/Dijkstra/A* path-finder",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "100 of NeetCode 150 solved, 2 timed mocks passed",
+        "passed": false,
+        "passMark": 0.8
+      }
+    },
+    {
+      "id": "p3",
+      "name": "Math for ML and NumPy",
+      "weekStart": 18,
+      "weekEnd": 23,
+      "start": "2027-02-15",
+      "end": "2027-03-28",
+      "topics": [
+        {
+          "id": "p3-t1",
+          "name": "Vectors and matrices",
+          "done": false
+        },
+        {
+          "id": "p3-t2",
+          "name": "Eigenvectors and SVD",
+          "done": false
+        },
+        {
+          "id": "p3-t3",
+          "name": "Derivatives and chain rule",
+          "done": false
+        },
+        {
+          "id": "p3-t4",
+          "name": "Gradients",
+          "done": false
+        },
+        {
+          "id": "p3-t5",
+          "name": "Probability and Bayes",
+          "done": false
+        },
+        {
+          "id": "p3-t6",
+          "name": "Expectation and variance",
+          "done": false
+        },
+        {
+          "id": "p3-t7",
+          "name": "Maximum likelihood",
+          "done": false
+        },
+        {
+          "id": "p3-t8",
+          "name": "NumPy vectorisation",
+          "done": false
+        },
+        {
+          "id": "p3-t9",
+          "name": "pandas and matplotlib",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "Linear and logistic regression from scratch in NumPy vs scikit-learn",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "Phase 3 test 80%+, derive logistic loss gradient on paper",
+        "passed": false,
+        "passMark": 0.8
+      }
+    },
+    {
+      "id": "p4",
+      "name": "Classical machine learning",
+      "weekStart": 24,
+      "weekEnd": 31,
+      "start": "2027-03-29",
+      "end": "2027-05-23",
+      "topics": [
+        {
+          "id": "p4-t1",
+          "name": "ML workflow",
+          "done": false
+        },
+        {
+          "id": "p4-t2",
+          "name": "Splits and cross-validation",
+          "done": false
+        },
+        {
+          "id": "p4-t3",
+          "name": "Data leakage",
+          "done": false
+        },
+        {
+          "id": "p4-t4",
+          "name": "Metrics",
+          "done": false
+        },
+        {
+          "id": "p4-t5",
+          "name": "Bias and variance",
+          "done": false
+        },
+        {
+          "id": "p4-t6",
+          "name": "Regularisation",
+          "done": false
+        },
+        {
+          "id": "p4-t7",
+          "name": "Decision trees and random forests",
+          "done": false
+        },
+        {
+          "id": "p4-t8",
+          "name": "Gradient boosting",
+          "done": false
+        },
+        {
+          "id": "p4-t9",
+          "name": "SVMs",
+          "done": false
+        },
+        {
+          "id": "p4-t10",
+          "name": "k-means and PCA",
+          "done": false
+        },
+        {
+          "id": "p4-t11",
+          "name": "Feature engineering",
+          "done": false
+        },
+        {
+          "id": "p4-t12",
+          "name": "Pipelines",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "End-to-end Kaggle tabular project with error analysis",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "Phase 4 test 80%+, top 50% in a Kaggle playground competition",
+        "passed": false,
+        "passMark": 0.8
+      }
+    },
+    {
+      "id": "p5",
+      "name": "Deep learning",
+      "weekStart": 32,
+      "weekEnd": 41,
+      "start": "2027-05-24",
+      "end": "2027-08-01",
+      "topics": [
+        {
+          "id": "p5-t1",
+          "name": "Backpropagation",
+          "done": false
+        },
+        {
+          "id": "p5-t2",
+          "name": "PyTorch tensors and autograd",
+          "done": false
+        },
+        {
+          "id": "p5-t3",
+          "name": "Training loops and optimisers",
+          "done": false
+        },
+        {
+          "id": "p5-t4",
+          "name": "Initialisation and batch norm",
+          "done": false
+        },
+        {
+          "id": "p5-t5",
+          "name": "CNNs",
+          "done": false
+        },
+        {
+          "id": "p5-t6",
+          "name": "Embeddings",
+          "done": false
+        },
+        {
+          "id": "p5-t7",
+          "name": "RNNs",
+          "done": false
+        },
+        {
+          "id": "p5-t8",
+          "name": "Attention and transformers",
+          "done": false
+        },
+        {
+          "id": "p5-t9",
+          "name": "Tokenisation",
+          "done": false
+        },
+        {
+          "id": "p5-t10",
+          "name": "Fine-tuning pretrained models",
+          "done": false
+        },
+        {
+          "id": "p5-t11",
+          "name": "GPU training",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "micrograd; small GPT on Turkish text; fine-tune a model on your own dataset",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "Phase 5 test 80%+, transformer block from a blank file",
+        "passed": false,
+        "passMark": 0.8
+      }
+    },
+    {
+      "id": "p6",
+      "name": "ML engineering and LLM systems",
+      "weekStart": 42,
+      "weekEnd": 52,
+      "start": "2027-08-02",
+      "end": "2027-10-17",
+      "topics": [
+        {
+          "id": "p6-t1",
+          "name": "Packaging models",
+          "done": false
+        },
+        {
+          "id": "p6-t2",
+          "name": "FastAPI services",
+          "done": false
+        },
+        {
+          "id": "p6-t3",
+          "name": "Docker",
+          "done": false
+        },
+        {
+          "id": "p6-t4",
+          "name": "Experiment tracking",
+          "done": false
+        },
+        {
+          "id": "p6-t5",
+          "name": "Data versioning",
+          "done": false
+        },
+        {
+          "id": "p6-t6",
+          "name": "CI for ML",
+          "done": false
+        },
+        {
+          "id": "p6-t7",
+          "name": "Cloud deployment",
+          "done": false
+        },
+        {
+          "id": "p6-t8",
+          "name": "Monitoring and drift",
+          "done": false
+        },
+        {
+          "id": "p6-t9",
+          "name": "LLM APIs and prompting",
+          "done": false
+        },
+        {
+          "id": "p6-t10",
+          "name": "RAG",
+          "done": false
+        },
+        {
+          "id": "p6-t11",
+          "name": "Evaluations",
+          "done": false
+        },
+        {
+          "id": "p6-t12",
+          "name": "Cost and latency",
+          "done": false
+        }
+      ],
+      "project": {
+        "name": "Capstone: deployed ML service with API, Docker, CI, tracking, monitoring, write-up",
+        "done": false
+      },
+      "checkpoint": {
+        "criteria": "Capstone live, Phase 6 test passed, CV updated",
+        "passed": false,
+        "passMark": 0.8
+      }
+    }
+  ],
+  "doc": "https://claude.ai/code/artifact/d2c794f6-3027-4bf3-8e88-4011bceb1f01"
+}

@@ -1,7 +1,7 @@
 import { chromium, devices } from 'playwright';
 const base = 'http://localhost:8765/';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-const ctx = await browser.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
+const ctx = await browser.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block', geolocation: { latitude: 43.2389, longitude: 76.8897 }, permissions: ['geolocation'] });
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
@@ -40,10 +40,15 @@ await page.route('https://api.anthropic.com/**', async route => {
   await route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream', 'access-control-allow-origin': '*' }, body: sse(evs) });
 });
 
+await page.route('https://tile.openstreetmap.org/**', r => r.fulfill({ status: 204 }));
+await page.route('https://overpass-api.de/**', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ elements: [
+  { type: 'node', lat: 43.2395, lon: 76.8905, tags: { name: 'Arbat Pharmacy', 'addr:street': 'Abay Ave', 'addr:housenumber': '12', opening_hours: '08:00-22:00' } },
+  { type: 'node', lat: 43.2410, lon: 76.8870, tags: { name: 'Europharma' } }] }) }));
 await page.goto(base);
 await page.waitForSelector('.sheet');
 await page.screenshot({ path: 'tests/shots/0-onboarding.png' });
 await page.fill('input[name=userName]', 'Mustafa');
+await page.selectOption('select[name=currency]', 'KZT');
 await page.fill('input[name=apiKey]', 'sk-ant-test');
 await page.click('.sheet button[type=submit]');
 await page.waitForTimeout(500);
@@ -66,11 +71,23 @@ await page.evaluate(async () => {
 });
 await page.waitForTimeout(400);
 await page.screenshot({ path: 'tests/shots/1-home.png', fullPage: true });
+// Load the bundled ML roadmap through the Study tab
+await page.click('.tabbar [data-tab=study]');
+await page.waitForTimeout(300);
+await page.click('[data-load-plan]');
+await page.waitForTimeout(800);
 for (const tab of ['money', 'calendar', 'study', 'diet']) {
   await page.click(`.tabbar [data-tab=${tab}]`);
   await page.waitForTimeout(400);
   await page.screenshot({ path: `shots/2-${tab}.png`, fullPage: true });
 }
+// Map with nearby search
+await page.click('.tabbar [data-tab=map]');
+await page.waitForTimeout(1200);
+await page.click('[data-cat=pharmacy]');
+await page.waitForSelector('.place-row', { timeout: 8000 });
+await page.waitForTimeout(500);
+await page.screenshot({ path: 'tests/shots/2-map.png', fullPage: true });
 // Focus timer
 await page.click('.tabbar [data-tab=study]');
 await page.waitForTimeout(300);
@@ -95,7 +112,7 @@ await page.screenshot({ path: 'tests/shots/6-chat-reply.png' });
 
 const state = await page.evaluate(async () => {
   const db = await import('./js/db.js');
-  return { expenses: db.all('expenses').length, events: db.all('events').map(e => e.title), chatApi: db.get('chats', 'main').api.length };
+  return { expenses: db.all('expenses').length, events: db.all('events').map(e => e.title), chatApi: db.get('chats', 'main').api.length, milestones: db.all('milestones').length, plan: db.setting('plan')?.title, currency: db.setting('currency') };
 });
 console.log('STATE', JSON.stringify(state));
 console.log('REQUESTS', requests.length, requests.map(r => r.url).join(' '));

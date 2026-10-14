@@ -4,6 +4,8 @@
 import * as db from '../db.js';
 import * as D from '../data.js';
 import { today, addDays } from '../util.js';
+import { reminders } from '../reminders.js';
+import * as Places from '../places.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -13,7 +15,7 @@ const TOOLS = [
     name: 'get_overview',
     description: 'Snapshot of the user\'s day: spending, budget, today\'s and upcoming meetings, study time and streak, diet totals, open tasks. Call this first whenever the user asks how they are doing, wants a briefing, or you need context.',
     input_schema: obj({}),
-    run: () => D.overview(),
+    run: () => ({ ...D.overview(), reminders: reminders().map(r => r.text) }),
   },
   // ----- Money -----
   {
@@ -96,6 +98,52 @@ const TOOLS = [
       return { ...s, streak: { current: s.streak.current, best: s.streak.best, studiedToday: s.streak.studiedToday }, last14 };
     },
   },
+  {
+    name: 'get_roadmap',
+    description: 'The user\'s learning roadmap: milestones per subject, which are done, and what is next.',
+    input_schema: obj({}),
+    run: () => D.roadmap().map(r => ({ subject: r.subject, done: r.done, total: r.total, milestones: r.items.map(m => ({ id: m.id, title: m.title, done: m.done })) })),
+  },
+  {
+    name: 'add_roadmap_milestones',
+    description: 'Add ordered milestones (topics, chapters, projects) to a subject\'s roadmap, e.g. subject "Algorithms", milestones ["Big-O", "Sorting", "Binary search"]. Creates the subject if new.',
+    input_schema: obj({ subject: { type: 'string' }, milestones: { type: 'array', items: { type: 'string' } } }, ['subject', 'milestones']),
+    run: async ({ subject, milestones }) => { if (!Array.isArray(milestones) || !milestones.length) throw new Error('milestones must be a non-empty list'); const rows = await D.addMilestones(subject, milestones); return { added: rows.length }; },
+  },
+  {
+    name: 'complete_milestone',
+    description: 'Mark a roadmap milestone done (or not done) by id.',
+    input_schema: obj({ id: { type: 'string' }, done: { type: 'boolean' } }, ['id']),
+    run: async ({ id, done = true }) => { const m = db.get('milestones', id); if (!m) throw new Error('No milestone with that id'); await db.put('milestones', { ...m, done, doneAt: done ? new Date().toISOString() : null }); return { done }; },
+  },
+  {
+    name: 'log_practice',
+    description: 'Add to today\'s practice counters: coding problems solved and/or Anki flashcard reviews done.',
+    input_schema: obj({ problems: { type: 'number' }, anki_reviews: { type: 'number' } }),
+    run: async ({ problems, anki_reviews }) => {
+      if (problems) await D.addPractice('problems', problems);
+      if (anki_reviews) await D.addPractice('anki', anki_reviews);
+      return { problemsToday: D.practiceOn('problems'), ankiToday: D.practiceOn('anki'), problemsTotal: D.practiceTotal('problems') };
+    },
+  },
+  {
+    name: 'get_study_plan',
+    description: 'The user\'s long-term study plan (the ML Engineer roadmap if loaded): current week and phase, phase progress, next topics, weekly hours target, daily template and minimum-day rule.',
+    input_schema: obj({}),
+    run: () => { const p = D.planStatus(); return p ? { title: p.title, start: p.start, end: p.end, week: p.week, started: p.started, phase: p.phase, phaseProgress: `${p.phaseDone}/${p.phaseTotal}`, nextTopics: p.next.map(m => ({ id: m.id, title: m.title })), weeklyHoursTarget: p.weeklyHours, template: p.template, minimumDay: p.minimumDay } : { plan: null, hint: 'No plan loaded. The user can load the ML Engineer roadmap from the Study tab.' }; },
+  },
+  // ----- Places -----
+  {
+    name: 'find_places',
+    description: `Find real places near the user with OpenStreetMap. Use category for "a pharmacy near me" style asks (${Object.keys(Places.CATEGORIES).join(', ')}), or query for a named place or address. Returns name, distance, opening hours and an Apple Maps directions link.`,
+    input_schema: obj({ category: { type: 'string', enum: Object.keys(Places.CATEGORIES) }, query: { type: 'string' }, radius_m: { type: 'number' } }),
+    run: async ({ category, query, radius_m }) => {
+      let near = Places.lastLocation();
+      if (!near) { try { near = await Places.locate(); } catch (e) { throw new Error(e.message); } }
+      const list = category ? await Places.nearby(category, near, Math.min(radius_m || 2000, 10000)) : await Places.search(query || '', near);
+      return list.slice(0, 8).map(p => ({ name: p.name, distance: p.km != null ? Places.fmtDist(p.km) : undefined, address: p.address || undefined, hours: p.hours || undefined, directions: Places.directionsUrl(p) }));
+    },
+  },
   // ----- Diet -----
   {
     name: 'log_meal',
@@ -146,7 +194,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -161,17 +209,20 @@ export async function runTool(name, input) {
 
 export function describeAction(name, input) {
   switch (name) {
-    case 'add_expense': return `💸 Added ${input.amount} · ${input.category}${input.note ? ` · ${input.note}` : ''}`;
-    case 'add_meeting': return `📅 Scheduled “${input.title}” · ${String(input.start).replace('T', ' ')}`;
-    case 'update_meeting': return '📅 Updated a meeting';
-    case 'delete_meeting': return '🗑️ Removed a meeting';
-    case 'delete_expense': return '🗑️ Removed an expense';
-    case 'log_study': return `📚 Logged ${input.minutes} min of ${input.subject}`;
-    case 'log_meal': return `🥗 Logged ${input.name} · ${input.calories} kcal`;
-    case 'log_water': return `💧 Water ${input.glasses > 0 ? '+' : ''}${input.glasses}`;
-    case 'add_task': return `✅ Task: ${input.title}`;
-    case 'complete_task': return '✅ Completed a task';
-    case 'set_goal': return `🎯 ${input.goal} → ${input.value}`;
+    case 'add_expense': return `Added ${input.amount} · ${input.category}${input.note ? ` · ${input.note}` : ''}`;
+    case 'add_meeting': return `Scheduled “${input.title}” · ${String(input.start).replace('T', ' ')}`;
+    case 'update_meeting': return 'Updated a meeting';
+    case 'delete_meeting': return 'Removed a meeting';
+    case 'delete_expense': return 'Removed an expense';
+    case 'log_study': return `Logged ${input.minutes} min of ${input.subject}`;
+    case 'log_meal': return `Logged ${input.name} · ${input.calories} kcal`;
+    case 'log_water': return `Water ${input.glasses > 0 ? '+' : ''}${input.glasses}`;
+    case 'add_task': return `Task: ${input.title}`;
+    case 'complete_task': return 'Completed a task';
+    case 'add_roadmap_milestones': return `Roadmap: +${input.milestones?.length || 0} milestones in ${input.subject}`;
+    case 'complete_milestone': return input.done === false ? 'Milestone reopened' : 'Milestone done';
+    case 'log_practice': return `Practice +${input.problems || 0} problems, +${input.anki_reviews || 0} Anki`;
+    case 'set_goal': return `Goal ${input.goal} = ${input.value}`;
     default: return null;
   }
 }

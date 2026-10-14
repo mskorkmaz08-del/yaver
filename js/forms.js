@@ -11,7 +11,7 @@ export async function expenseForm(existing) {
     danger: existing ? 'Delete' : null,
     fields: [
       { name: 'amount', label: `Amount (${db.setting('currency', 'TRY')})`, type: 'number', step: '0.01', value: e.amount, required: true },
-      { name: 'category', label: 'Category', type: 'select', options: D.EXPENSE_CATEGORIES.map(c => [c, `${D.CATEGORY_ICON[c]} ${c}`]), value: e.category || 'Food' },
+      { name: 'category', label: 'Category', type: 'select', options: D.EXPENSE_CATEGORIES, value: e.category || 'Food' },
       { name: 'note', label: 'Note', value: e.note, placeholder: 'What was it?' },
       { name: 'date', label: 'Date', type: 'date', value: e.date || today() },
     ],
@@ -72,7 +72,7 @@ export async function studyForm(subjectName) {
   const subject = v.subject === '+ New subject' || !v.subject ? v.newSubject : v.subject;
   if (!subject) { toast('Pick or name a subject'); return; }
   await D.logStudy({ ...v, subject });
-  toast(`Logged ${v.minutes} min · streak ${D.studyStreak().current}🔥`);
+  toast(`+${v.minutes} XP · streak ${D.studyStreak().current}d`);
 }
 
 export async function mealForm(existing, day = today(), preset = {}) {

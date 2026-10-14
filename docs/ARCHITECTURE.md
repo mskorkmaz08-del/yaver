@@ -64,7 +64,7 @@ When you ask Yaver something, the app runs an **agent loop**:
    │
    ▼
  App sends to Claude: your message + the conversation so far
-                      + the list of 16 tools Yaver offers (plus web search)
+                      + the list of 21 tools Yaver offers (plus web search)
    │
    ▼
  Claude replies: "call add_expense {amount:120, category:Food}"
@@ -110,6 +110,13 @@ A web app can't write directly into the iPhone Calendar or schedule alerts while
 
 The study focus timer stores *when it started*, not a running counter, so it stays correct even if you close the app mid-session.
 
+## 5b. Study plan, reminders, map (added in v2)
+
+- **Study plan.** The 52-week ML Engineer roadmap is bundled as `data/ml-roadmap.json`. "Load the ML Engineer roadmap" on the Study tab turns each phase into a subject whose milestones are its topics, project and checkpoint. Yaver then shows the current week and phase, the weekly hours target, and the next topics to tick off. Claude can read it (`get_study_plan`, `get_roadmap`) and tick milestones for you.
+- **Practice counters.** Problems solved and Anki reviews per day (`log_practice`).
+- **Reminders** (`js/reminders.js`) are plain facts computed from your data: study goal left, "don't miss two days in a row", behind weekly pace, next topic, meeting soon, overdue tasks, budget pace. Home shows them, and Claude gets the same list, so briefings match the screen.
+- **Map** (`js/views/map.js`, `js/places.js`) uses free OpenStreetMap services: Nominatim for search by name or address, Overpass for "pharmacy / cafe / coworking near me". No account or key. Results open in Apple Maps for directions. Claude uses the same code through `find_places`.
+
 ## 6. The files
 
 ```
@@ -119,7 +126,8 @@ yaver/
 ├── sw.js                   Service worker: offline copy + updates
 ├── css/app.css             All styling (dark theme, cards, sheets, chat)
 ├── icons/                  Home Screen icons
-├── vendor/anthropic-sdk.js The official Anthropic SDK, bundled into one file
+├── data/ml-roadmap.json    Copy of the 52-week study roadmap
+├── vendor/                 Anthropic SDK (one file) and Leaflet (map)
 └── js/
     ├── app.js              Starts everything; switches screens; redraws on data change
     ├── db.js               IndexedDB storage, settings, backup/restore
@@ -128,10 +136,13 @@ yaver/
     ├── ui.js               Progress rings, bar charts
     ├── forms.js            Add/edit sheets for expenses, meetings, study, meals, tasks
     ├── ics.js              Builds .ics calendar files
-    ├── views/              One file per screen: home, money, calendar, study, diet, settings
+    ├── reminders.js        Plain "what needs attention today" facts
+    ├── places.js           OpenStreetMap search and nearby lookup
+    ├── icons.js            Line icons
+    ├── views/              One file per screen: home, study, calendar, money, diet, map, settings
     └── ai/
         ├── claude.js       Talks to the Anthropic API; the agent loop
-        ├── tools.js        The 16 tools Claude can call, and the code behind each
+        ├── tools.js        The 21 tools Claude can call, and the code behind each
         └── assistant.js    The chat screen: messages, photos, voice in/out
 ```
 

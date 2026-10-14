@@ -2,6 +2,7 @@
 import * as db from '../db.js';
 import { runTurn } from './claude.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
+import { icon } from '../icons.js';
 
 const CHAT_ID = 'main';
 let chat;          // { id, api: [...API messages], view: [...what the user sees] }
@@ -11,12 +12,12 @@ let pendingImage = null;
 let el;
 
 const SUGGESTIONS = [
-  'Brief me on my day',
+  'What should I study today?',
+  'Quiz me on what I studied this week',
+  'Explain recursion with a small Python example',
+  'Log 45 min of algorithms and 3 problems',
+  'Find a quiet cafe near me',
   'How much did I spend this week?',
-  'Find a free hour tomorrow for a meeting',
-  'Log 45 minutes of math',
-  'I had menemen and tea for breakfast',
-  'Plan a study schedule for my exams',
 ];
 
 function load() {
@@ -31,18 +32,18 @@ export function initAssistant() {
   el.innerHTML = `
     <div class="chat" role="dialog" aria-label="Yaver assistant">
       <header class="chat-head">
-        <button class="icon-btn" data-close aria-label="Close">⌄</button>
-        <div class="chat-title"><span class="orb small"></span><div><b>Yaver</b><small data-status>Ready</small></div></div>
-        <button class="icon-btn" data-new aria-label="New chat">✎</button>
+        <button class="icon-btn" data-close aria-label="Close">${icon('chevronDown')}</button>
+        <div class="chat-title"><span class="mark sm">Y</span><div><b>Yaver</b><small data-status>ready</small></div></div>
+        <button class="icon-btn" data-new aria-label="New chat">${icon('edit')}</button>
       </header>
       <div class="chat-log" data-log></div>
       <div class="chat-input">
         <div class="attach-preview" data-preview hidden></div>
         <div class="chat-bar">
-          <label class="icon-btn" aria-label="Add photo">📷<input type="file" accept="image/*" data-file hidden></label>
+          <label class="icon-btn" aria-label="Add photo">${icon('camera')}<input type="file" accept="image/*" data-file hidden></label>
           <textarea rows="1" placeholder="Ask Yaver anything…" data-input enterkeyhint="send"></textarea>
-          <button class="icon-btn mic" data-mic aria-label="Speak">🎙️</button>
-          <button class="send" data-send aria-label="Send">↑</button>
+          <button class="icon-btn mic" data-mic aria-label="Speak">${icon('mic')}</button>
+          <button class="send" data-send aria-label="Send">${icon('send')}</button>
         </div>
       </div>
     </div>`;
@@ -61,7 +62,7 @@ export function initAssistant() {
     pendingImage = await shrinkImage(f);
     const p = el.querySelector('[data-preview]');
     p.hidden = false;
-    p.innerHTML = `<img src="${pendingImage.url}" alt=""><button data-x aria-label="Remove photo">×</button><span>Meal, receipt, notes… ask anything about it</span>`;
+    p.innerHTML = `<img src="${pendingImage.url}" alt=""><button data-x aria-label="Remove photo">${icon('close')}</button><span>meal, receipt, notes, code…</span>`;
     p.querySelector('[data-x]').onclick = () => { pendingImage = null; p.hidden = true; };
     input.focus();
   };
@@ -99,9 +100,9 @@ function render() {
     const name = db.setting('userName', '');
     log.innerHTML = html`
       <div class="chat-empty">
-        <div class="orb big"></div>
-        <h2>${name ? `Merhaba, ${name}` : 'Merhaba'}</h2>
-        <p class="muted">I can log expenses, plan meetings, track your studies and meals, or answer any question.</p>
+        <span class="mark lg">Y</span>
+        <h2>${name ? `What's next, ${name}?` : "What's next?"}</h2>
+        <p class="muted small">Ask anything, or tell me what you did: I log study, practice, expenses, meetings and meals, explain concepts, quiz you, and find places nearby.</p>
         <div class="chips">${raw(SUGGESTIONS.map(s => html`<button class="chip" data-suggest="${s}">${s}</button>`).join(''))}</div>
       </div>`;
     return;
@@ -114,7 +115,7 @@ function bubble(m) {
   if (m.role === 'user') {
     return html`<div class="msg user">${raw(m.image ? `<img src="${m.image}" alt="">` : '')}${m.text ? raw(`<p>${esc(m.text)}</p>`) : ''}</div>`;
   }
-  const actions = (m.actions || []).map(a => html`<div class="receipt">${a}</div>`).join('');
+  const actions = (m.actions || []).map(a => html`<div class="receipt">${raw(icon('check'))}${a}</div>`).join('');
   const body = m.error ? html`<p class="err">${m.text}</p>` : m.text ? md(m.text) : '<span class="typing"><i></i><i></i><i></i></span>';
   return `<div class="msg bot">${actions}<div class="bot-text">${body}</div></div>`;
 }
@@ -125,7 +126,7 @@ function scrollDown() {
 }
 
 function setStatus(s) {
-  el.querySelector('[data-status]').textContent = s || (busy ? 'Thinking…' : 'Ready');
+  el.querySelector('[data-status]').textContent = (s || (busy ? 'thinking…' : 'ready')).toLowerCase();
 }
 
 async function send(textIn) {
@@ -149,6 +150,7 @@ async function send(textIn) {
   chat.api.push({ role: 'user', content });
   busy = true;
   el.classList.add('busy');
+  el.querySelector('[data-send]').innerHTML = icon('stop');
   setStatus('Thinking…');
   render();
 
@@ -173,10 +175,11 @@ async function send(textIn) {
   } finally {
     busy = false;
     el.classList.remove('busy');
+    el.querySelector('[data-send]').innerHTML = icon('send');
     setStatus('');
     // Long conversations: start a fresh context for Claude (the screen keeps the old bubbles).
     // We never edit earlier turns in place, because Claude's saved reasoning is tied to them.
-    if (chat.api.length > 80) { chat.api = []; chat.view.push({ role: 'bot', text: '— Fresh start: I keep your data, but not this chat\'s details —', actions: [] }); }
+    if (chat.api.length > 80) { chat.api = []; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
     save();
     render();
   }
@@ -193,7 +196,7 @@ function speak(text) {
 function setupVoice(btn, input) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    btn.onclick = () => toast('Tip: tap the 🎤 on your iPhone keyboard to dictate.');
+    btn.onclick = () => toast('Use the mic key on your iPhone keyboard to dictate.');
     return;
   }
   let rec = null;

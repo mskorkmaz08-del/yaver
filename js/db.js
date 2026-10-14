@@ -3,8 +3,8 @@
 // read synchronously; every write goes to memory and IndexedDB together.
 
 const DB_NAME = 'yaver';
-const DB_VERSION = 1;
-export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 'tasks', 'chats', 'kv'];
+const DB_VERSION = 2;
+export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 'tasks', 'milestones', 'chats', 'kv'];
 
 let idb;
 const mem = Object.fromEntries(STORES.map(s => [s, new Map()]));
