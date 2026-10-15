@@ -333,11 +333,11 @@
    "seq": 1,
    "kind": "build",
    "minutes": 90,
-   "title": "Tracker v3, day 1: a testable structure",
+   "title": "Tracker v3, day 1: pytest set-up and parsing tests",
    "objectives": [
-    "Restructure the tracker into importable functions with a `main()` guard",
-    "Set up a virtual environment with pytest and a small fixture CSV",
-    "Write the first pytest tests for loading the export"
+    "Set up a virtual environment with pytest and a test folder with a small fixture CSV",
+    "Move last week's plain-assert tests into pytest test files",
+    "Write pytest tests for `parse_rows`, including edge cases"
    ],
    "prereqs": [
     "build-w02-sat",
@@ -347,13 +347,13 @@
     {
      "title": "pytest documentation",
      "url": "https://docs.pytest.org/en/stable/",
-     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path)",
+     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path); parametrizing tests",
      "type": "docs"
     },
     {
      "title": "The Python Standard Library",
      "url": "https://docs.python.org/3/library/",
-     "part": "csv, json and pathlib module pages",
+     "part": "csv, json, pathlib and sys module pages",
      "type": "docs"
     }
    ],
@@ -362,43 +362,43 @@
      "kind": "plan",
      "minutes": 10,
      "title": "Plan: the week's brief",
-     "body": "**Week 3 project: Tracker v3.** Same tracker, same anonymized portal export, but now trustworthy and machine-readable:\n\n- every function in the tracker has **pytest tests**, including edge cases (empty data, missing scores, a student with nothing done);\n- the tracker can write its results as **JSON** (a documented schema) as well as printing a text report;\n- it runs as `python tracker.py <export.csv> [--json <out.json>]` and fails with a clear message, not a traceback, on a missing file or bad rows;\n- shipped Sunday: tagged `v3`, README updated, tests green.\n\nDaily goals: Mon testable structure + load tests · Tue statistics tests · Wed JSON output · Thu command line and error handling · Fri text report and test audit · Sat finish, cross-check against pandas, document, tag.\n\n**Today:** make the tracker *testable*. By the end, `pytest` runs and passes at least four tests for loading data. Before writing code, list every function your v2 has (name, input, output). Anything that both computes and prints gets split into two functions. That list is your test checklist for the week.\n\nThe examples in this week's build lessons assume the export has columns `student_id, topic, lesson, completed, score`. If your v2 export uses different names, keep yours and adapt the examples."
+     "body": "**Week 3 project: Tracker v3.** Same tracker in `learning-log/tracker/`, same anonymized portal export (`student_id,module,lesson,completed_at,score`), same v2 functions (`parse_rows`, `student_stats`, `module_stats`, `hardest_lesson`), but now trustworthy and machine-readable:\n\n- every function has **pytest tests**, including edge cases (empty data, a completed lesson without a score, a student with nothing done); last week's plain-assert `test_tracker.py` moves to pytest;\n- the tracker can write its results as **JSON** (a documented schema) as well as print the text report;\n- it runs as `python tracker.py <export.csv> [--json <out.json>]`, returns proper exit codes, and its error handling is under test;\n- shipped Sunday: tagged `v3`, README updated, tests green.\n\nDaily goals: Mon pytest set-up and parsing tests · Tue statistics tests and edge cases · Wed JSON output · Thu command line and error paths under test · Fri report formatting and test audit · Sat cross-check against pandas, document, tag.\n\n**Today:** make the test suite real. By the end, `pytest` runs from the `tracker/` folder and passes: last week's checks (now as pytest tests) plus new parsing tests. Before writing code, list every function in `tracker.py` with its input and output; that list is this week's test checklist. Anything that still both computes and prints gets split in two."
     },
     {
      "kind": "build",
      "minutes": 65,
      "title": "Build",
-     "body": "Target layout:\n\n```bash\ntracker/\n  tracker.py          # functions + main()\n  tests/\n    test_load.py\n    data/sample.csv   # small, hand-made, with edge cases\n  requirements.txt    # pytest\n  .gitignore          # .venv/, __pycache__/, .pytest_cache/, .DS_Store\n  README.md\n```\n\nOn the MacBook (zsh), inside the project folder:\n\n```bash\npython3 -m venv .venv\nsource .venv/bin/activate\npip install pytest\npip freeze | grep -i pytest > requirements.txt\n```\n\nA reference loader in the shape we want: it takes a path, returns a list of clean dicts, and never prints. Compare it with yours rather than pasting it:\n\n```python\nimport csv\nfrom pathlib import Path\n\ndef load_rows(path):\n    rows = []\n    with open(path, newline=\"\", encoding=\"utf-8\") as f:\n        for row in csv.DictReader(f):\n            score = row[\"score\"].strip()\n            rows.append({\n                \"student_id\": row[\"student_id\"].strip(),\n                \"topic\": row[\"topic\"].strip(),\n                \"lesson\": row[\"lesson\"].strip(),\n                \"completed\": row[\"completed\"].strip() == \"1\",\n                \"score\": float(score) if score else None,\n            })\n    return rows\n\np = Path(\"sample_demo.csv\")\np.write_text(\"student_id,topic,lesson,completed,score\\nS01,python,loops,1,85\\nS02,algo,sorting,0,\\n\", encoding=\"utf-8\")\nrows = load_rows(p)\nassert rows[0] == {\"student_id\": \"S01\", \"topic\": \"python\", \"lesson\": \"loops\", \"completed\": True, \"score\": 85.0}\nassert rows[1][\"score\"] is None and rows[1][\"completed\"] is False\nprint(rows)\n```",
+     "body": "Target layout:\n\n```bash\ntracker/\n  tracker.py            # parse_rows, student_stats, module_stats, hardest_lesson, main()\n  tests/\n    test_parse.py\n    test_stats.py       # (tomorrow)\n    data/sample.csv     # small, hand-made, with edge cases\n  requirements.txt      # pytest\n  README.md\n```\n\nOn the MacBook (zsh), inside `learning-log/tracker/`:\n\n```bash\npython3 -m venv .venv\nsource .venv/bin/activate\npip install pytest\npip freeze | grep -i pytest > requirements.txt\nprintf \".venv/\\n__pycache__/\\n.pytest_cache/\\n.DS_Store\\nout/\\n\" >> ../.gitignore\n```\n\npytest needs to be able to `import tracker` from the tests folder. The simplest reliable way: run `python -m pytest` from the `tracker/` folder (that puts the current folder on the import path), or add a `pytest.ini` there with `[pytest]` and `pythonpath = .` on the next line, after which plain `pytest` works.\n\nA reminder of the v2 parser this week builds on; `parse_rows` takes any iterable of lines, so tests can feed it an `io.StringIO` or an open file:\n\n```python\nimport csv\nimport io\n\ndef parse_rows(lines):\n    rows = []\n    for rec in csv.DictReader(lines):\n        score = rec[\"score\"].strip()\n        rows.append({\n            \"student\": rec[\"student_id\"].strip(),\n            \"module\": rec[\"module\"].strip(),\n            \"lesson\": rec[\"lesson\"].strip(),\n            \"done\": bool(rec[\"completed_at\"].strip()),\n            \"score\": int(score) if score else None,\n        })\n    return rows\n\ndef test_parses_done_and_score():\n    rows = parse_rows(io.StringIO(\"student_id,module,lesson,completed_at,score\\nS001,Python,Loops,2026-10-05,78\\nS002,Web,CSS,,\\n\"))\n    assert rows[0] == {\"student\": \"S001\", \"module\": \"Python\", \"lesson\": \"Loops\", \"done\": True, \"score\": 78}\n    assert rows[1][\"done\"] is False and rows[1][\"score\"] is None\n\ntest_parses_done_and_score()\nprint(\"ok\")\n```",
      "tasks": [
       {
-       "prompt": "Move every top-level statement of your v2 into functions, add `main()` and the `if __name__ == \"__main__\":` guard. `python tracker.py` must still print the same report as v2.",
-       "hints": [
-        "Start by wrapping everything in `main()`; then pull pieces out one at a time.",
-        "Each function should either compute (args in, value out) or do I/O, not both.",
-        "Run the old and new versions on the same export and `diff` their outputs."
-       ],
-       "check": "`python -c \"import tracker\"` prints nothing; `python tracker.py export.csv` prints the v2 report unchanged.",
-       "solution": "There's no single right answer; the shape is: `load_rows(path)`, the statistics functions from v2 taking rows and returning dicts, a `format_report(...)` returning a string, and `main()` that wires them together and prints."
-      },
-      {
-       "prompt": "Create `tests/data/sample.csv` with 10–15 rows that include: a student with everything done, one with nothing done, a missing score, a topic with a single lesson, and a name with a non-ASCII character in the lesson title (e.g. `döngüler`).",
+       "prompt": "Create `tests/data/sample.csv` with 12–16 rows that include: a student with everything done, one with nothing done, a completed lesson with a blank score, a module with a single lesson, extra spaces around a value, and a lesson name with Turkish characters (e.g. `Döngüler`).",
        "hints": [
         "Small enough that you can compute every expected statistic by hand.",
-        "Write the expected per-student completion next to the file in a comment or in the test file.",
-        "Save it as UTF-8 (VS Code shows the encoding in the status bar)."
+        "Write the expected per-student and per-module numbers in a comment at the top of the test file.",
+        "Save as UTF-8 (VS Code shows the encoding in the status bar)."
        ],
-       "check": "You can state, without running anything, every student's completion rate for this file.",
-       "solution": "Use the rows from the ai lesson as a starting point and add an extra student and topic: e.g. `S04,math,determinants,0,` and `S04,python,döngüler,1,77`."
+       "check": "You can state, without running anything, every student's done/total and mean score for this file.",
+       "solution": "Start from last week's 12-row SAMPLE and add e.g. `S004,Robotics,Ohm,,` (nothing done, single-lesson module), `S005,Python,Döngüler,2026-10-07,` (done, no score) and ` S005 , Web , HTML ,2026-10-08, 70` (spaces)."
       },
       {
-       "prompt": "Write `tests/test_load.py` with at least four tests for `load_rows`: row count, types after conversion (`completed` is bool, missing score is `None`), whitespace stripped, and non-ASCII text preserved. Use pytest's `tmp_path` for at least one test that writes its own tiny CSV.",
+       "prompt": "Move last week's `test_tracker.py` checks into `tests/test_parse.py` and `tests/test_stats.py` as pytest functions (no calls at the bottom; pytest finds them). Then add at least four new `parse_rows` tests: row count from `sample.csv`, types (`done` is bool, blank score is `None`), whitespace stripped, Turkish characters preserved.",
        "hints": [
-        "`from tracker import load_rows` at the top; run `pytest` from the project root.",
-        "If the import fails, add an empty `tests/__init__.py` or run `python -m pytest` from the project root.",
-        "Path to the fixture: `Path(__file__).parent / \"data\" / \"sample.csv\"`."
+        "`from tracker import parse_rows` at the top.",
+        "Open the fixture with `open(DATA, encoding=\"utf-8\", newline=\"\")` and pass the file object to `parse_rows`.",
+        "`DATA = Path(__file__).parent / \"data\" / \"sample.csv\"` makes the path independent of where you run pytest."
        ],
-       "check": "`pytest -q` shows 4+ passing tests.",
-       "solution": "```python-snippet\nfrom pathlib import Path\nfrom tracker import load_rows\n\nDATA = Path(__file__).parent / \"data\" / \"sample.csv\"\n\ndef test_row_count():\n    assert len(load_rows(DATA)) == 14\n\ndef test_types():\n    rows = load_rows(DATA)\n    assert all(isinstance(r[\"completed\"], bool) for r in rows)\n    assert any(r[\"score\"] is None for r in rows)\n\ndef test_strips_whitespace(tmp_path):\n    p = tmp_path / \"x.csv\"\n    p.write_text(\"student_id,topic,lesson,completed,score\\n S09 , algo , sorting ,1, 70\\n\", encoding=\"utf-8\")\n    assert load_rows(p)[0][\"student_id\"] == \"S09\"\n\ndef test_unicode():\n    assert \"döngüler\" in {r[\"lesson\"] for r in load_rows(DATA)}\n```"
+       "check": "`python -m pytest -q` shows all old checks plus 4+ new tests passing.",
+       "solution": "```python-snippet\nfrom pathlib import Path\nfrom tracker import parse_rows\n\nDATA = Path(__file__).parent / \"data\" / \"sample.csv\"\n\ndef rows():\n    with open(DATA, encoding=\"utf-8\", newline=\"\") as f:\n        return parse_rows(f)\n\ndef test_row_count():\n    assert len(rows()) == 15\n\ndef test_types():\n    rs = rows()\n    assert all(isinstance(r[\"done\"], bool) for r in rs)\n    assert any(r[\"done\"] and r[\"score\"] is None for r in rs)\n\ndef test_strips_whitespace():\n    assert \"S005\" in {r[\"student\"] for r in rows()}\n\ndef test_turkish_text():\n    assert \"Döngüler\" in {r[\"lesson\"] for r in rows()}\n```"
+      },
+      {
+       "prompt": "Decide what `parse_rows` should do with a score like `\"8O\"` (letter O) or `\"92.5\"`, write the test for your decision first, watch it fail or pass, then make the code match. (Thursday you'll wire this into the command-line error handling.)",
+       "hints": [
+        "Options: raise `ValueError` with the line number, or skip the row and record it.",
+        "Whatever v2 did on Wednesday's 'robust input' day, write it down as a test now.",
+        "If you choose to raise: `with pytest.raises(ValueError): parse_rows(io.StringIO(bad_csv))`."
+       ],
+       "check": "A test documents the rule and passes.",
+       "solution": "Either rule is defensible; what matters is that it's written as a test. A common choice: `parse_rows` raises `ValueError` naming the line, and a separate checked loader (Thursday) catches it per row and keeps going."
       }
      ]
     },
@@ -406,30 +406,30 @@
      "kind": "test",
      "minutes": 10,
      "title": "Test and commit",
-     "body": "```bash\npytest -q\ngit add -A\ngit commit -m \"v3 day 1: importable structure, venv, load tests\"\n```\nCheck that `.venv/` is **not** in the commit (`git status` before adding; fix `.gitignore` if it shows up)."
+     "body": "```bash\npython -m pytest -q\ngit status\ngit add -A\ngit commit -m \"Tracker v3 day 1: pytest set-up, fixture CSV, parsing tests\"\n```\nCheck `git status` before adding: `.venv/` and `.pytest_cache/` must not appear."
     },
     {
      "kind": "log",
      "minutes": 5,
      "title": "Log",
-     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. List the functions still without tests: that's tomorrow's start."
+     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. List the functions still without pytest tests: that's tomorrow's start."
     }
    ],
    "cards": [
     {
-     "front": "Why must the tracker have a `main()` guard before you can test it?",
-     "back": "So importing it from the test file doesn't run the report."
+     "front": "How does pytest find your tests?",
+     "back": "Files named `test_*.py`, functions named `test_*`; no calls at the bottom needed."
     },
     {
-     "front": "pytest fixture that gives each test a fresh temporary folder",
-     "back": "`tmp_path` (a `pathlib.Path`)"
+     "front": "Make `import tracker` work from tests/",
+     "back": "Run `python -m pytest` from the project folder, or set `pythonpath = .` in pytest.ini."
     },
     {
-     "front": "Where does the test fixture CSV live?",
-     "back": "`tests/data/sample.csv`, small enough to compute expected results by hand."
+     "front": "Path to a fixture file that works wherever pytest is run from",
+     "back": "`Path(__file__).parent / 'data' / 'sample.csv'`"
     }
    ],
-   "deliverable": "Tracker repo with tracker.py restructured, tests/test_load.py passing, requirements.txt and .gitignore, committed.",
+   "deliverable": "learning-log/tracker with venv set up, tests/ folder, sample.csv, old checks migrated to pytest and new parsing tests green, committed.",
    "teachBy": null,
    "safety": null
   },
@@ -925,8 +925,8 @@
    "minutes": 90,
    "title": "Tracker v3, day 2: test the statistics",
    "objectives": [
-    "Write pytest tests for every statistics function using hand-computed expectations",
-    "Handle edge cases (no lessons, no scores, nothing completed) and fix the bugs the tests reveal"
+    "Write pytest tests for `student_stats`, `module_stats` and `hardest_lesson` from hand-computed expectations",
+    "Handle edge cases (empty input, completed lessons without scores, a module nobody finished) and fix the bugs the tests reveal"
    ],
    "prereqs": [
     "build-w03-1"
@@ -935,13 +935,13 @@
     {
      "title": "pytest documentation",
      "url": "https://docs.pytest.org/en/stable/",
-     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path)",
+     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path); parametrizing tests",
      "type": "docs"
     },
     {
      "title": "The Python Standard Library",
      "url": "https://docs.python.org/3/library/",
-     "part": "csv, json and pathlib module pages",
+     "part": "csv, json, pathlib and sys module pages",
      "type": "docs"
     }
    ],
@@ -950,47 +950,47 @@
      "kind": "plan",
      "minutes": 10,
      "title": "Plan",
-     "body": "Brief recap: Tracker v3 = tests for every function + JSON output + a clean command line, shipped Sunday.\n\n**Today:** the statistics functions from v2 (per student and per topic) get tests. Write the expected numbers for `sample.csv` **by hand first**, then the tests, then run them. Expect at least one failure: v2 was never asked what happens with a missing score or a student with zero lessons in a topic. Decide the rules and write them down:\n\n- completion rate = completed lessons / all lessons (a lesson without a score still counts as a lesson);\n- mean score = mean of available scores only; `None` if there are none (never 0, never a crash)."
+     "body": "Brief recap: Tracker v3 = pytest for every function + JSON output + a tested command line, shipped Sunday.\n\n**Today:** the statistics. Write the expected numbers for `sample.csv` **by hand first**, then the tests, then run them. Expect at least one failure: v2 was built against clean samples. Rules to pin down as tests:\n\n- `pct` counts every lesson, scored or not; `mean` uses completed scores only and is `None` (never 0, never a crash) when there are none;\n- empty input returns `{}` from every stats function; `hardest_lesson` on input with no scores returns `None` instead of crashing on `min()` of an empty sequence;\n- no stats function modifies the rows it's given."
     },
     {
      "kind": "build",
      "minutes": 65,
      "title": "Build",
-     "body": "If your v2 statistics take the list of row dicts from `load_rows`, the functions below are what we're aiming for. Again: compare, don't paste.",
+     "body": "Work through the tasks in `tests/test_stats.py`. The coding tasks show reference versions consistent with last week's functions; compare them with yours after you've written your tests.",
      "tasks": [
       {
-       "prompt": "Write (or refactor yours into) `completion_by_student(rows)` → `{student_id: rate}` and `mean_score_by_student(rows)` → `{student_id: mean or None}`, following today's rules. Then write the tests.",
+       "prompt": "Write tests for `student_stats(rows)` (returns `{student: {\"done\", \"total\", \"pct\", \"mean\"}}`, pct rounded to 1, mean of completed scores rounded to 1 or `None`) covering: the 12-row sample, a completed lesson without a score, a student with nothing done, and empty input. Fix `student_stats` until they pass.",
        "hints": [
-        "Accumulate counts in dicts: done and total per student; scores as a list per student.",
-        "`None` scores are skipped for the mean but the lesson still counts toward the total.",
-        "Return `round(sum(s)/len(s), 1) if s else None` per student."
+        "Compute the sample by hand: S001 3/4 = 75.0%, mean (92 + 78 + 85)/3 = 85.0.",
+        "Edge case: `done` True with `score` None must count toward `done` but not toward the mean.",
+        "Empty input: the dict comprehension over an empty accumulator already returns `{}`; check yours does."
        ],
-       "check": "On the sample rows: S01 0.75 / 85.0, S02 0.25 / 70.0, S03 1.0 / 88.5; a student with no scores maps to None.",
-       "solution": "```python\ndef completion_by_student(rows):\n    done, total = {}, {}\n    for r in rows:\n        sid = r[\"student_id\"]\n        total[sid] = total.get(sid, 0) + 1\n        done[sid] = done.get(sid, 0) + (1 if r[\"completed\"] else 0)\n    return {sid: done[sid] / total[sid] for sid in total}\n\ndef mean_score_by_student(rows):\n    scores = {}\n    for r in rows:\n        bucket = scores.setdefault(r[\"student_id\"], [])\n        if r[\"score\"] is not None:\n            bucket.append(r[\"score\"])\n    return {sid: (round(sum(s) / len(s), 1) if s else None) for sid, s in scores.items()}\n\nrows = [\n    {\"student_id\": \"S01\", \"topic\": \"python\", \"lesson\": \"a\", \"completed\": True, \"score\": 90.0},\n    {\"student_id\": \"S01\", \"topic\": \"algo\", \"lesson\": \"b\", \"completed\": False, \"score\": None},\n    {\"student_id\": \"S04\", \"topic\": \"math\", \"lesson\": \"c\", \"completed\": False, \"score\": None},\n]\nassert completion_by_student(rows) == {\"S01\": 0.5, \"S04\": 0.0}\nassert mean_score_by_student(rows) == {\"S01\": 90.0, \"S04\": None}\n```",
+       "check": "Sample: S001 → 3/4, 75.0, 85.0; S002 → 1/4, 25.0, 65.0; S003 → 4/4, 100.0, 85.5. Nothing-done student → pct 0.0, mean None.",
+       "solution": "```python\nimport statistics\n\ndef student_stats(rows):\n    acc = {}\n    for r in rows:\n        s = acc.setdefault(r[\"student\"], {\"done\": 0, \"total\": 0, \"scores\": []})\n        s[\"total\"] += 1\n        if r[\"done\"]:\n            s[\"done\"] += 1\n            if r[\"score\"] is not None:\n                s[\"scores\"].append(r[\"score\"])\n    return {\n        sid: {\n            \"done\": s[\"done\"],\n            \"total\": s[\"total\"],\n            \"pct\": round(100 * s[\"done\"] / s[\"total\"], 1),\n            \"mean\": round(statistics.fmean(s[\"scores\"]), 1) if s[\"scores\"] else None,\n        }\n        for sid, s in acc.items()\n    }\n\nprint(student_stats([{\"student\": \"S9\", \"module\": \"Web\", \"lesson\": \"CSS\", \"done\": True, \"score\": None}]))\n```",
        "lang": "python",
-       "tests": "def _r(sid, topic, done, score):\n    return {\"student_id\": sid, \"topic\": topic, \"lesson\": \"x\", \"completed\": done, \"score\": score}\n\nROWS = [\n    _r(\"S01\", \"python\", True, 92.0), _r(\"S01\", \"python\", True, 85.0), _r(\"S01\", \"algo\", True, 78.0), _r(\"S01\", \"algo\", False, None),\n    _r(\"S02\", \"python\", True, 70.0), _r(\"S02\", \"python\", False, None), _r(\"S02\", \"algo\", False, None), _r(\"S02\", \"algo\", False, None),\n    _r(\"S03\", \"python\", True, 88.0), _r(\"S03\", \"python\", True, 90.0), _r(\"S03\", \"algo\", True, 95.0), _r(\"S03\", \"algo\", True, 81.0),\n]\n\ndef test_completion():\n    assert completion_by_student(ROWS) == {\"S01\": 0.75, \"S02\": 0.25, \"S03\": 1.0}\n\ndef test_means():\n    assert mean_score_by_student(ROWS) == {\"S01\": 85.0, \"S02\": 70.0, \"S03\": 88.5}\n\ndef test_no_scores():\n    assert mean_score_by_student([_r(\"S09\", \"math\", False, None)]) == {\"S09\": None}\n\ndef test_empty():\n    assert completion_by_student([]) == {}\n"
+       "tests": "def _r(student, module, lesson, done, score):\n    return {\"student\": student, \"module\": module, \"lesson\": lesson, \"done\": done, \"score\": score}\n\nROWS = [\n    _r(\"S001\", \"Python\", \"Variables\", True, 92), _r(\"S001\", \"Python\", \"Loops\", True, 78),\n    _r(\"S001\", \"Web\", \"HTML\", True, 85), _r(\"S001\", \"Web\", \"CSS\", False, None),\n    _r(\"S002\", \"Python\", \"Variables\", True, 65), _r(\"S002\", \"Python\", \"Loops\", False, None),\n    _r(\"S002\", \"Web\", \"HTML\", False, None), _r(\"S002\", \"Web\", \"CSS\", False, None),\n    _r(\"S003\", \"Python\", \"Variables\", True, 88), _r(\"S003\", \"Python\", \"Loops\", True, 91),\n    _r(\"S003\", \"Web\", \"HTML\", True, 79), _r(\"S003\", \"Web\", \"CSS\", True, 84),\n]\n\ndef test_sample():\n    st = student_stats(ROWS)\n    assert st[\"S001\"] == {\"done\": 3, \"total\": 4, \"pct\": 75.0, \"mean\": 85.0}\n    assert st[\"S002\"] == {\"done\": 1, \"total\": 4, \"pct\": 25.0, \"mean\": 65.0}\n    assert st[\"S003\"][\"mean\"] == 85.5\n\ndef test_done_without_score():\n    st = student_stats([_r(\"S9\", \"Web\", \"CSS\", True, None)])\n    assert st[\"S9\"] == {\"done\": 1, \"total\": 1, \"pct\": 100.0, \"mean\": None}\n\ndef test_nothing_done_and_empty():\n    assert student_stats([_r(\"S8\", \"Web\", \"CSS\", False, None)])[\"S8\"][\"mean\"] is None\n    assert student_stats([]) == {}\n"
       },
       {
-       "prompt": "Write `topic_stats(rows)` → `{topic: {\"done\": int, \"lessons\": int, \"rate\": float, \"mean_score\": float or None}}` and its tests, including a topic where nobody has a score.",
+       "prompt": "Write tests for `module_stats(rows)` (`{module: {\"pct\", \"mean\", \"median\", \"min\"}}`) and `hardest_lesson(rows)` (the `(module, lesson)` with the lowest mean score, ties alphabetical). Add the rule that `hardest_lesson` returns `None` when no row has a score, and make the code pass.",
        "hints": [
-        "Same accumulation pattern, keyed by topic.",
-        "Build the inner dict at the end from your counters.",
-        "Test the topic-with-no-scores case explicitly: `mean_score` must be `None`."
+        "Python: done 5 of 6 → 83.3%; scores 92, 78, 65, 88, 91 → mean 82.8, median 88, min 65.",
+        "Web: 3 of 6 → 50.0%; scores 85, 79, 84 → mean 82.7, median 84, min 79. Hardest lesson: (Python, Loops)? Compute it: Loops has 78 and 91.",
+        "Guard: `if not by_lesson: return None` before the `min(...)`."
        ],
-       "check": "Sample rows: python → done 5, lessons 6, rate ≈ 0.833, mean 85.0; algo → done 4, lessons 6, mean 84.7.",
-       "solution": "```python\ndef topic_stats(rows):\n    acc = {}\n    for r in rows:\n        t = acc.setdefault(r[\"topic\"], {\"done\": 0, \"lessons\": 0, \"scores\": []})\n        t[\"lessons\"] += 1\n        t[\"done\"] += 1 if r[\"completed\"] else 0\n        if r[\"score\"] is not None:\n            t[\"scores\"].append(r[\"score\"])\n    out = {}\n    for topic, t in acc.items():\n        s = t[\"scores\"]\n        out[topic] = {\n            \"done\": t[\"done\"],\n            \"lessons\": t[\"lessons\"],\n            \"rate\": t[\"done\"] / t[\"lessons\"],\n            \"mean_score\": round(sum(s) / len(s), 1) if s else None,\n        }\n    return out\n\nprint(topic_stats([{\"student_id\": \"S1\", \"topic\": \"math\", \"lesson\": \"x\", \"completed\": False, \"score\": None}]))\n```",
+       "check": "Module numbers as in the hints; `hardest_lesson(ROWS) == (\"Web\", \"HTML\")` (mean 82.0, the lowest); `hardest_lesson` of rows without scores is None.",
+       "solution": "```python\nimport statistics\n\ndef module_stats(rows):\n    acc = {}\n    for r in rows:\n        m = acc.setdefault(r[\"module\"], {\"done\": 0, \"total\": 0, \"scores\": []})\n        m[\"total\"] += 1\n        if r[\"done\"]:\n            m[\"done\"] += 1\n            if r[\"score\"] is not None:\n                m[\"scores\"].append(r[\"score\"])\n    out = {}\n    for name, m in acc.items():\n        sc = m[\"scores\"]\n        out[name] = {\n            \"pct\": round(100 * m[\"done\"] / m[\"total\"], 1),\n            \"mean\": round(statistics.fmean(sc), 1) if sc else None,\n            \"median\": statistics.median(sc) if sc else None,\n            \"min\": min(sc) if sc else None,\n        }\n    return out\n\ndef hardest_lesson(rows):\n    by_lesson = {}\n    for r in rows:\n        if r[\"score\"] is not None:\n            by_lesson.setdefault((r[\"module\"], r[\"lesson\"]), []).append(r[\"score\"])\n    if not by_lesson:\n        return None\n    return min(by_lesson, key=lambda k: (statistics.fmean(by_lesson[k]), k))\n\nprint(hardest_lesson([]))\n```\nLesson means on the sample: Variables (92, 65, 88) = 81.7, Loops (78, 91) = 84.5, HTML (85, 79) = 82.0, CSS (84) = 84.0, so the hardest is Python/Variables at 81.7. (Check the hint's claim yourself: hand calculations are exactly what these tests are for.)",
        "lang": "python",
-       "tests": "def _r(sid, topic, done, score):\n    return {\"student_id\": sid, \"topic\": topic, \"lesson\": \"x\", \"completed\": done, \"score\": score}\n\nROWS = [\n    _r(\"S01\", \"python\", True, 92.0), _r(\"S01\", \"python\", True, 85.0), _r(\"S01\", \"algo\", True, 78.0), _r(\"S01\", \"algo\", False, None),\n    _r(\"S02\", \"python\", True, 70.0), _r(\"S02\", \"python\", False, None), _r(\"S02\", \"algo\", False, None), _r(\"S02\", \"algo\", False, None),\n    _r(\"S03\", \"python\", True, 88.0), _r(\"S03\", \"python\", True, 90.0), _r(\"S03\", \"algo\", True, 95.0), _r(\"S03\", \"algo\", True, 81.0),\n]\n\ndef test_topic_stats():\n    t = topic_stats(ROWS)\n    assert t[\"python\"][\"done\"] == 5 and t[\"python\"][\"lessons\"] == 6\n    assert abs(t[\"python\"][\"rate\"] - 5 / 6) < 1e-9\n    assert t[\"python\"][\"mean_score\"] == 85.0\n    assert t[\"algo\"][\"mean_score\"] == 84.7\n\ndef test_topic_without_scores():\n    assert topic_stats([_r(\"S1\", \"math\", False, None)])[\"math\"][\"mean_score\"] is None\n"
+       "tests": "def _r(student, module, lesson, done, score):\n    return {\"student\": student, \"module\": module, \"lesson\": lesson, \"done\": done, \"score\": score}\n\nROWS = [\n    _r(\"S001\", \"Python\", \"Variables\", True, 92), _r(\"S001\", \"Python\", \"Loops\", True, 78),\n    _r(\"S001\", \"Web\", \"HTML\", True, 85), _r(\"S001\", \"Web\", \"CSS\", False, None),\n    _r(\"S002\", \"Python\", \"Variables\", True, 65), _r(\"S002\", \"Python\", \"Loops\", False, None),\n    _r(\"S002\", \"Web\", \"HTML\", False, None), _r(\"S002\", \"Web\", \"CSS\", False, None),\n    _r(\"S003\", \"Python\", \"Variables\", True, 88), _r(\"S003\", \"Python\", \"Loops\", True, 91),\n    _r(\"S003\", \"Web\", \"HTML\", True, 79), _r(\"S003\", \"Web\", \"CSS\", True, 84),\n]\n\ndef test_module_stats():\n    m = module_stats(ROWS)\n    assert m[\"Python\"] == {\"pct\": 83.3, \"mean\": 82.8, \"median\": 88, \"min\": 65}\n    assert m[\"Web\"] == {\"pct\": 50.0, \"mean\": 82.7, \"median\": 84, \"min\": 79}\n\ndef test_hardest():\n    assert hardest_lesson(ROWS) == (\"Python\", \"Variables\")\n    assert hardest_lesson([_r(\"S1\", \"Web\", \"CSS\", False, None)]) is None\n\ndef test_module_without_scores():\n    assert module_stats([_r(\"S1\", \"Robotics\", \"Ohm\", False, None)])[\"Robotics\"][\"mean\"] is None\n"
       },
       {
-       "prompt": "Use `@pytest.mark.parametrize` to turn your per-student expectations into one table-driven test, and add a test that the statistics functions don't modify the rows they're given.",
+       "prompt": "Use `@pytest.mark.parametrize` to turn the per-student expectations from `sample.csv` into one table-driven test, and add a test that none of the stats functions modify the rows they're given.",
        "hints": [
-        "Parametrize over `(student_id, expected_rate)` pairs.",
-        "For the no-mutation test, deep-copy the rows (`copy.deepcopy`) before calling, then compare.",
-        "Both tests go in `tests/test_stats.py`."
+        "Parametrize over `(student, expected_pct, expected_mean)` triples.",
+        "For the no-mutation test, `copy.deepcopy` the rows before calling, then compare.",
+        "Both live in `tests/test_stats.py`."
        ],
-       "check": "`pytest -v` lists one line per student for the parametrized test.",
-       "solution": "```python-snippet\nimport copy\nimport pytest\nfrom tracker import load_rows, completion_by_student, topic_stats\nfrom pathlib import Path\n\nROWS = load_rows(Path(__file__).parent / \"data\" / \"sample.csv\")\n\n@pytest.mark.parametrize(\"sid, rate\", [(\"S01\", 0.75), (\"S02\", 0.25), (\"S03\", 1.0)])\ndef test_rate(sid, rate):\n    assert completion_by_student(ROWS)[sid] == pytest.approx(rate)\n\ndef test_no_mutation():\n    before = copy.deepcopy(ROWS)\n    completion_by_student(ROWS)\n    topic_stats(ROWS)\n    assert ROWS == before\n```"
+       "check": "`python -m pytest -v` lists one line per student for the parametrized test.",
+       "solution": "```python-snippet\nimport copy\nimport pytest\nfrom pathlib import Path\nfrom tracker import parse_rows, student_stats, module_stats, hardest_lesson\n\nDATA = Path(__file__).parent / \"data\" / \"sample.csv\"\nwith open(DATA, encoding=\"utf-8\", newline=\"\") as f:\n    ROWS = parse_rows(f)\n\n@pytest.mark.parametrize(\"sid, pct, mean\", [(\"S001\", 75.0, 85.0), (\"S002\", 25.0, 65.0), (\"S003\", 100.0, 85.5)])\ndef test_student(sid, pct, mean):\n    st = student_stats(ROWS)[sid]\n    assert (st[\"pct\"], st[\"mean\"]) == (pct, mean)\n\ndef test_no_mutation():\n    before = copy.deepcopy(ROWS)\n    student_stats(ROWS); module_stats(ROWS); hardest_lesson(ROWS)\n    assert ROWS == before\n```"
       }
      ]
     },
@@ -998,13 +998,13 @@
      "kind": "test",
      "minutes": 10,
      "title": "Test and commit",
-     "body": "Run `pytest -q`; every failure today is either a bug you fix or a rule you decide and write in a comment. Commit: `git commit -am \"v3 day 2: statistics tests and edge cases\"`."
+     "body": "Run `python -m pytest -q`; every failure today is either a bug you fix or a rule you decide and record in a test. Commit: `git commit -am \"Tracker v3 day 2: statistics tests and edge cases\"`."
     },
     {
      "kind": "log",
      "minutes": 5,
      "title": "Log",
-     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. Note which bug the tests found in v2 code. There almost always is one."
+     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. Note which v2 bug the tests found. There almost always is one; the hint in task 2 even contained a wrong claim on purpose, so note whether your hand calculation caught it."
     }
    ],
    "cards": [
@@ -1017,11 +1017,15 @@
      "back": "Before, by hand: otherwise you're testing that the code agrees with itself."
     },
     {
+     "front": "What does `min()` do on an empty sequence?",
+     "back": "Raises `ValueError`; guard for the empty case first."
+    },
+    {
      "front": "Test that a function doesn't modify its input",
      "back": "Deep-copy the input, call the function, assert the input still equals the copy."
     }
    ],
-   "deliverable": "tests/test_stats.py covering every statistics function with edge cases, all green, committed.",
+   "deliverable": "tests/test_stats.py covering student_stats, module_stats and hardest_lesson with edge cases, all green, committed.",
    "teachBy": null,
    "safety": null
   },
@@ -1533,13 +1537,13 @@
     {
      "title": "pytest documentation",
      "url": "https://docs.pytest.org/en/stable/",
-     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path)",
+     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path); parametrizing tests",
      "type": "docs"
     },
     {
      "title": "The Python Standard Library",
      "url": "https://docs.python.org/3/library/",
-     "part": "csv, json and pathlib module pages",
+     "part": "csv, json, pathlib and sys module pages",
      "type": "docs"
     }
    ],
@@ -1548,43 +1552,43 @@
      "kind": "plan",
      "minutes": 10,
      "title": "Plan",
-     "body": "Brief recap: Tracker v3 = tests everywhere + JSON output + clean CLI, shipped Sunday.\n\n**Today:** JSON output, using this morning's File I/O lesson. Design first, on paper: what would a later tool (a dashboard, next week's class-based v4, a pandas notebook) want to read? Proposed schema:\n\n```bash\n{\n  \"generated\": \"2026-11-04\",\n  \"source\": \"export.csv\",\n  \"students\": [{\"id\": \"S01\", \"rate\": 0.75, \"mean_score\": 85.0, \"open\": [\"sorting\"]}],\n  \"topics\":   [{\"topic\": \"algo\", \"done\": 4, \"lessons\": 6, \"rate\": 0.667, \"mean_score\": 84.7}]\n}\n```\n\nRules: lists sorted (by id, by topic) so the output is deterministic and diffable; rates rounded to 3 decimals; `null` where there's no score; the date passed in, not read from the clock inside the function (otherwise tests break tomorrow)."
+     "body": "Brief recap: Tracker v3 = pytest for every function + JSON output + a tested command line, shipped Sunday.\n\n**Today:** JSON output, using this morning's File I/O lesson. Design first, on paper: what would a later tool (next week's class-based v4, a pandas notebook, a dashboard) want to read? Proposed schema:\n\n```bash\n{\n  \"generated\": \"2026-11-04\",\n  \"source\": \"export.csv\",\n  \"students\": [{\"id\": \"S001\", \"done\": 3, \"total\": 4, \"pct\": 75.0, \"mean\": 85.0}],\n  \"modules\":  [{\"module\": \"Python\", \"pct\": 83.3, \"mean\": 82.8, \"median\": 88, \"min\": 65}],\n  \"hardest_lesson\": {\"module\": \"Python\", \"lesson\": \"Variables\"}\n}\n```\n\nRules: lists sorted (by id, by module) so the output is deterministic and diffable; `null` where there's no score; the date passed in as an argument, not read from the clock inside the function (otherwise a test written today fails tomorrow)."
     },
     {
      "kind": "build",
      "minutes": 65,
      "title": "Build",
-     "body": "`build_report(rows, source, generated)` returns a plain dict (pure, easy to test); `write_json(report, path)` only writes. Reference shape:\n\n```python\nimport json\nimport tempfile\nfrom pathlib import Path\n\ndef build_report(rows, source, generated):\n    students, topics = {}, {}\n    for r in rows:\n        s = students.setdefault(r[\"student_id\"], {\"done\": 0, \"total\": 0, \"scores\": [], \"open\": []})\n        s[\"total\"] += 1\n        if r[\"completed\"]:\n            s[\"done\"] += 1\n        else:\n            s[\"open\"].append(r[\"lesson\"])\n        if r[\"score\"] is not None:\n            s[\"scores\"].append(r[\"score\"])\n        t = topics.setdefault(r[\"topic\"], {\"done\": 0, \"lessons\": 0, \"scores\": []})\n        t[\"lessons\"] += 1\n        t[\"done\"] += int(r[\"completed\"])\n        if r[\"score\"] is not None:\n            t[\"scores\"].append(r[\"score\"])\n\n    def mean(xs):\n        return round(sum(xs) / len(xs), 1) if xs else None\n\n    return {\n        \"generated\": generated,\n        \"source\": str(source),\n        \"students\": [\n            {\"id\": sid, \"rate\": round(s[\"done\"] / s[\"total\"], 3), \"mean_score\": mean(s[\"scores\"]), \"open\": s[\"open\"]}\n            for sid, s in sorted(students.items())\n        ],\n        \"topics\": [\n            {\"topic\": name, \"done\": t[\"done\"], \"lessons\": t[\"lessons\"],\n             \"rate\": round(t[\"done\"] / t[\"lessons\"], 3), \"mean_score\": mean(t[\"scores\"])}\n            for name, t in sorted(topics.items())\n        ],\n    }\n\ndef write_json(report, path):\n    path = Path(path)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + \"\\n\", encoding=\"utf-8\")\n\nrows = [\n    {\"student_id\": \"S02\", \"topic\": \"algo\", \"lesson\": \"sorting\", \"completed\": False, \"score\": None},\n    {\"student_id\": \"S01\", \"topic\": \"python\", \"lesson\": \"loops\", \"completed\": True, \"score\": 85.0},\n]\nreport = build_report(rows, \"export.csv\", \"2026-11-04\")\nwith tempfile.TemporaryDirectory() as d:\n    out = Path(d) / \"out\" / \"report.json\"\n    write_json(report, out)\n    assert json.loads(out.read_text(encoding=\"utf-8\")) == report\nprint(json.dumps(report, indent=2))\n```",
+     "body": "`build_report(rows, source, generated)` returns a plain dict built from your tested statistics functions (pure, easy to test); `write_json(report, path)` only writes. Reference, using the v2 functions:\n\n```python\nimport json\nimport statistics\nimport tempfile\nfrom pathlib import Path\n\ndef student_stats(rows):\n    acc = {}\n    for r in rows:\n        s = acc.setdefault(r[\"student\"], {\"done\": 0, \"total\": 0, \"scores\": []})\n        s[\"total\"] += 1\n        if r[\"done\"]:\n            s[\"done\"] += 1\n            if r[\"score\"] is not None:\n                s[\"scores\"].append(r[\"score\"])\n    return {sid: {\"done\": s[\"done\"], \"total\": s[\"total\"],\n                  \"pct\": round(100 * s[\"done\"] / s[\"total\"], 1),\n                  \"mean\": round(statistics.fmean(s[\"scores\"]), 1) if s[\"scores\"] else None}\n            for sid, s in acc.items()}\n\ndef build_report(rows, source, generated, module_stats=lambda rows: {}, hardest_lesson=lambda rows: None):\n    hardest = hardest_lesson(rows)\n    return {\n        \"generated\": generated,\n        \"source\": str(source),\n        \"students\": [{\"id\": sid, **st} for sid, st in sorted(student_stats(rows).items())],\n        \"modules\": [{\"module\": m, **st} for m, st in sorted(module_stats(rows).items())],\n        \"hardest_lesson\": None if hardest is None else {\"module\": hardest[0], \"lesson\": hardest[1]},\n    }\n\ndef write_json(report, path):\n    path = Path(path)\n    path.parent.mkdir(parents=True, exist_ok=True)\n    path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + \"\\n\", encoding=\"utf-8\")\n\nrows = [\n    {\"student\": \"S002\", \"module\": \"Web\", \"lesson\": \"CSS\", \"done\": False, \"score\": None},\n    {\"student\": \"S001\", \"module\": \"Python\", \"lesson\": \"Loops\", \"done\": True, \"score\": 78},\n]\nreport = build_report(rows, \"export.csv\", \"2026-11-04\")\nwith tempfile.TemporaryDirectory() as d:\n    out = Path(d) / \"out\" / \"report.json\"\n    write_json(report, out)\n    assert json.loads(out.read_text(encoding=\"utf-8\")) == report\nprint(json.dumps(report, indent=2))\n```\n\n(The `module_stats=` and `hardest_lesson=` parameters are only there so this block runs on its own; in `tracker.py` just call your real functions directly.)",
      "tasks": [
       {
-       "prompt": "Implement `build_report` and `write_json` in your tracker (reuse your tested statistics functions inside `build_report` where you can, instead of recomputing).",
+       "prompt": "Implement `build_report` and `write_json` in `tracker.py`, calling your tested `student_stats`, `module_stats` and `hardest_lesson` instead of recomputing anything.",
        "hints": [
-        "Call `completion_by_student`, `mean_score_by_student` and `topic_stats` and reshape their dicts into the schema's lists.",
-        "Sort with `sorted(d.items())` so the order never depends on the CSV's row order.",
+        "Reshape each stats dict into a sorted list of objects: `[{\"id\": sid, **st} for sid, st in sorted(d.items())]`.",
+        "A tuple like `(\"Python\", \"Variables\")` would become a JSON list; turn it into a small object with named fields instead.",
         "Keep `generated` a parameter; `main()` passes `date.today().isoformat()`."
        ],
        "check": "Calling it twice on the same rows gives identical JSON text.",
-       "solution": "See the reference above; the version that reuses your statistics functions is shorter and is the one you should keep."
+       "solution": "See the reference above, with the real functions called directly."
       },
       {
-       "prompt": "Write `tests/test_report.py`: schema keys present, students sorted, a student with no scores has `mean_score` `null` in the file, rows in a different order give the same report, and a `tmp_path` round trip (`write_json` then `json.loads`) gives back an equal dict.",
+       "prompt": "Write `tests/test_report.py`: schema keys present, students sorted by id, a student with no scores has `mean` `null` in the file, rows in a different order give the same report, and a `tmp_path` round trip (`write_json` then `json.loads`) gives back an equal dict.",
        "hints": [
         "Shuffle a copy of the rows with `random.Random(0).shuffle` for the order test.",
-        "`json.loads(path.read_text())` to read back.",
+        "Read back with `json.loads(path.read_text(encoding=\"utf-8\"))`.",
         "In the file, Python `None` appears as `null`; after loading it's `None` again."
        ],
        "check": "5+ new tests pass.",
-       "solution": "```python-snippet\nimport json, random\nfrom tracker import load_rows, build_report, write_json\nfrom pathlib import Path\n\nROWS = load_rows(Path(__file__).parent / \"data\" / \"sample.csv\")\n\ndef test_keys():\n    rep = build_report(ROWS, \"s.csv\", \"2026-11-04\")\n    assert set(rep) == {\"generated\", \"source\", \"students\", \"topics\"}\n\ndef test_order_independent():\n    shuffled = ROWS[:]\n    random.Random(0).shuffle(shuffled)\n    assert build_report(shuffled, \"s.csv\", \"d\") == build_report(ROWS, \"s.csv\", \"d\")\n\ndef test_round_trip(tmp_path):\n    rep = build_report(ROWS, \"s.csv\", \"2026-11-04\")\n    write_json(rep, tmp_path / \"out\" / \"r.json\")\n    assert json.loads((tmp_path / \"out\" / \"r.json\").read_text(encoding=\"utf-8\")) == rep\n```"
+       "solution": "```python-snippet\nimport json, random\nfrom pathlib import Path\nfrom tracker import parse_rows, build_report, write_json\n\nDATA = Path(__file__).parent / \"data\" / \"sample.csv\"\nwith open(DATA, encoding=\"utf-8\", newline=\"\") as f:\n    ROWS = parse_rows(f)\n\ndef test_keys():\n    rep = build_report(ROWS, \"s.csv\", \"2026-11-04\")\n    assert set(rep) == {\"generated\", \"source\", \"students\", \"modules\", \"hardest_lesson\"}\n\ndef test_sorted():\n    ids = [s[\"id\"] for s in build_report(ROWS, \"s.csv\", \"d\")[\"students\"]]\n    assert ids == sorted(ids)\n\ndef test_order_independent():\n    shuffled = ROWS[:]\n    random.Random(0).shuffle(shuffled)\n    assert build_report(shuffled, \"s.csv\", \"d\") == build_report(ROWS, \"s.csv\", \"d\")\n\ndef test_round_trip(tmp_path):\n    rep = build_report(ROWS, \"s.csv\", \"2026-11-04\")\n    write_json(rep, tmp_path / \"out\" / \"r.json\")\n    assert json.loads((tmp_path / \"out\" / \"r.json\").read_text(encoding=\"utf-8\")) == rep\n```"
       },
       {
-       "prompt": "Write `docs/schema.md`: each key, its type, units (rate 0–1, scores 0–100), and what `null` means. Two minutes now saves an hour when v4 or a notebook reads this file.",
+       "prompt": "Write `docs/schema.md`: each key, its type, units (pct 0–100, scores 0–100), how lists are sorted, and what `null` means. Two minutes now saves an hour when v4 or a notebook reads this file.",
        "hints": [
         "One line per field.",
-        "Give one complete example object.",
-        "Say how lists are sorted."
+        "Include one complete example object.",
+        "Say explicitly that `mean` covers completed lessons with a score only."
        ],
        "check": "Someone who never saw the code could write a reader from it.",
-       "solution": "A short table or list: `generated` (ISO date string), `source` (input filename), `students[]` (`id`, `rate` 0–1 rounded to 3, `mean_score` 0–100 or null when no scores, `open` lesson names in file order), `topics[]` (`topic`, `done`, `lessons`, `rate`, `mean_score`); lists sorted by id / topic."
+       "solution": "A short list: `generated` (ISO date), `source` (input filename), `students[]` (`id`, `done`, `total`, `pct` 0–100 one decimal, `mean` or null), `modules[]` (`module`, `pct`, `mean`, `median`, `min`, each null when no scores), `hardest_lesson` (`module`, `lesson`, or null); lists sorted by id / module."
       }
      ]
     },
@@ -1592,7 +1596,7 @@
      "kind": "test",
      "minutes": 10,
      "title": "Test and commit",
-     "body": "`pytest -q`, then run the real export once and open the JSON in VS Code to eyeball it. Commit: `git commit -am \"v3 day 3: JSON report with schema and tests\"`."
+     "body": "`python -m pytest -q`, then run on the real export once and open the JSON in VS Code to eyeball it. Commit: `git commit -am \"Tracker v3 day 3: JSON report, schema and tests\"`."
     },
     {
      "kind": "log",
@@ -1609,6 +1613,10 @@
     {
      "front": "Why sort lists in a JSON report?",
      "back": "Deterministic, diffable output that doesn't depend on input row order."
+    },
+    {
+     "front": "What does a Python tuple become in JSON?",
+     "back": "A list (array); use an object with named fields when the parts have meanings."
     },
     {
      "front": "Python `None` in JSON",
@@ -2092,10 +2100,10 @@
    "seq": 1,
    "kind": "build",
    "minutes": 90,
-   "title": "Tracker v3, day 4: command line and error handling",
+   "title": "Tracker v3, day 4: command line and error paths under test",
    "objectives": [
-    "Make `main(argv)` parse `<export.csv> [--json <out.json>]` and return an exit code",
-    "Handle a missing file and malformed rows with clear messages, and test both"
+    "Rewrite `main` as `main(argv)` that parses `<export.csv> [--json <out.json>]` and returns an exit code",
+    "Put the missing-file and bad-row handling under test"
    ],
    "prereqs": [
     "build-w03-3",
@@ -2105,13 +2113,13 @@
     {
      "title": "pytest documentation",
      "url": "https://docs.pytest.org/en/stable/",
-     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path)",
+     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path); parametrizing tests",
      "type": "docs"
     },
     {
      "title": "The Python Standard Library",
      "url": "https://docs.python.org/3/library/",
-     "part": "csv, json and pathlib module pages",
+     "part": "csv, json, pathlib and sys module pages",
      "type": "docs"
     },
     {
@@ -2126,47 +2134,47 @@
      "kind": "plan",
      "minutes": 10,
      "title": "Plan",
-     "body": "Brief recap: Tracker v3 = tests everywhere + JSON output + clean CLI, shipped Sunday.\n\n**Today:** the outside edge of the program. Work on a branch (`git switch -c feature/cli`) and merge it at the end; you read about branches last night.\n\n`main(argv)` takes the argument list (so tests can call `main([\"x.csv\", \"--json\", \"out.json\"])` without touching `sys.argv`) and **returns** an exit code: 0 OK, 1 file problem, 2 usage error. The guard at the bottom becomes `sys.exit(main(sys.argv[1:]))`. (`argparse` arrives in Week 8; today a few lines of manual parsing are enough and teach you what argparse saves you.)\n\nBad rows (a `completed` value that isn't 0/1, a non-numeric score): skip the row, count it, print one warning line to stderr at the end with the count and the first bad line number."
+     "body": "Brief recap: Tracker v3 = pytest for every function + JSON output + a tested command line, shipped Sunday.\n\n**Today:** the outside edge of the program. Last week (v2, Wednesday) you made it survive a missing file and bad rows; today that behaviour gets tests and a cleaner shape. Work on a branch (`git switch -c feature/cli`) and merge it at the end; you read about branches last night.\n\n`main(argv)` takes the argument list (so tests can call `main([\"x.csv\", \"--json\", \"out.json\"])` without touching `sys.argv`) and **returns** an exit code: 0 OK, 1 file problem, 2 usage error. The guard at the bottom becomes `sys.exit(main(sys.argv[1:]))`. (`argparse` arrives in Week 8; a few lines of manual parsing today show you what it will save you.)\n\nBad rows (a non-numeric score, a missing column value): skip the row, collect its line number, and print one warning line to stderr at the end: how many rows were skipped and the first few line numbers."
     },
     {
      "kind": "build",
      "minutes": 65,
      "title": "Build",
-     "body": "Reference for the argument handling and error paths. Yours will call your own `load_rows`, `build_report`, `format_report` and `write_json`:\n\n```python\nimport sys\n\nUSAGE = \"usage: python tracker.py <export.csv> [--json <out.json>]\"\n\ndef parse_args(argv):\n    if not argv or argv[0].startswith(\"-\"):\n        raise ValueError(USAGE)\n    csv_path, json_path = argv[0], None\n    rest = argv[1:]\n    if rest:\n        if rest[0] != \"--json\" or len(rest) != 2:\n            raise ValueError(USAGE)\n        json_path = rest[1]\n    return csv_path, json_path\n\ndef main(argv):\n    try:\n        csv_path, json_path = parse_args(argv)\n    except ValueError as e:\n        print(e, file=sys.stderr)\n        return 2\n    try:\n        with open(csv_path, encoding=\"utf-8\") as f:\n            text = f.read()\n    except FileNotFoundError:\n        print(f\"tracker: no such file: {csv_path}\", file=sys.stderr)\n        return 1\n    print(f\"read {len(text.splitlines())} lines; json -> {json_path}\")\n    return 0\n\nassert parse_args([\"a.csv\"]) == (\"a.csv\", None)\nassert parse_args([\"a.csv\", \"--json\", \"o.json\"]) == (\"a.csv\", \"o.json\")\nassert main([]) == 2\nassert main([\"definitely_missing.csv\"]) == 1\nprint(\"ok\")\n```",
+     "body": "Reference for argument handling and the error paths; yours will call your own `parse_rows`, `build_report`, report formatting and `write_json`:\n\n```python\nimport sys\n\nUSAGE = \"usage: python tracker.py <export.csv> [--json <out.json>]\"\n\ndef parse_args(argv):\n    if not argv or argv[0].startswith(\"-\"):\n        raise ValueError(USAGE)\n    rest = argv[1:]\n    if not rest:\n        return argv[0], None\n    if rest[0] != \"--json\" or len(rest) != 2:\n        raise ValueError(USAGE)\n    return argv[0], rest[1]\n\ndef main(argv):\n    try:\n        csv_path, json_path = parse_args(argv)\n    except ValueError as e:\n        print(e, file=sys.stderr)\n        return 2\n    try:\n        with open(csv_path, encoding=\"utf-8\", newline=\"\") as f:\n            n = sum(1 for _ in f)\n    except FileNotFoundError:\n        print(f\"tracker: no such file: {csv_path}\", file=sys.stderr)\n        return 1\n    print(f\"read {n} lines; json -> {json_path}\")\n    return 0\n\nassert parse_args([\"a.csv\"]) == (\"a.csv\", None)\nassert parse_args([\"a.csv\", \"--json\", \"o.json\"]) == (\"a.csv\", \"o.json\")\nassert main([]) == 2\nassert main([\"definitely_missing.csv\"]) == 1\nprint(\"ok\")\n```",
      "tasks": [
       {
-       "prompt": "Write `parse_args(argv)` for your tracker (as above or your own design) and test it: no arguments, only the CSV, CSV plus `--json` path, `--json` without a path, an unknown flag.",
+       "prompt": "Write `parse_args(argv)` (as above or your own design) and test it: only the CSV, CSV plus `--json` path, and the errors: no arguments, `--json` without a path, an unknown flag, a flag first.",
        "hints": [
         "Return a tuple; raise `ValueError(USAGE)` for anything else.",
         "Test the error cases with `pytest.raises(ValueError)`.",
         "Keep `parse_args` free of printing; `main` decides what to print."
        ],
-       "check": "Five tests pass; `python tracker.py` with no arguments prints the usage line and exits with code 2 (`echo $?` in zsh).",
+       "check": "Tests pass; `python tracker.py` with no arguments prints the usage line, and `echo $?` in zsh shows 2.",
        "solution": "```python\nUSAGE = \"usage: python tracker.py <export.csv> [--json <out.json>]\"\n\ndef parse_args(argv):\n    if not argv or argv[0].startswith(\"-\"):\n        raise ValueError(USAGE)\n    rest = argv[1:]\n    if not rest:\n        return argv[0], None\n    if rest[0] != \"--json\" or len(rest) != 2:\n        raise ValueError(USAGE)\n    return argv[0], rest[1]\n\nassert parse_args([\"a.csv\", \"--json\", \"o.json\"]) == (\"a.csv\", \"o.json\")\n```",
        "lang": "python",
        "tests": "def _bad(argv):\n    try:\n        parse_args(argv)\n    except ValueError:\n        return True\n    return False\n\ndef test_ok():\n    assert parse_args([\"a.csv\"]) == (\"a.csv\", None)\n    assert parse_args([\"a.csv\", \"--json\", \"o.json\"]) == (\"a.csv\", \"o.json\")\n\ndef test_errors():\n    assert _bad([])\n    assert _bad([\"a.csv\", \"--json\"])\n    assert _bad([\"a.csv\", \"--xml\", \"o.xml\"])\n    assert _bad([\"--json\", \"o.json\"])\n"
       },
       {
-       "prompt": "Make `load_rows` skip malformed rows and report them: return `(rows, bad_line_numbers)` (or keep the old signature and add `load_rows_checked`). Bad means: `completed` not `0`/`1`, or a non-empty score that isn't a number. Line numbers count the header as line 1.",
+       "prompt": "Write `parse_rows_checked(lines)` returning `(rows, bad_line_numbers)`: same rows as `parse_rows`, but a row whose score isn't an integer or whose `student_id` is blank is skipped and its line number recorded (the header is line 1). If v2 already has an equivalent, refactor it to this shape and test it.",
        "hints": [
-        "`for lineno, row in enumerate(csv.DictReader(f), start=2):`",
-        "Wrap the conversions in `try/except ValueError`; append `lineno` and `continue`.",
-        "Raise `ValueError` yourself when `completed` isn't `\"0\"` or `\"1\"`, so both cases share one except."
+        "`for lineno, rec in enumerate(csv.DictReader(lines), start=2):`",
+        "Wrap the conversion in `try/except ValueError`, append `lineno` and `continue`.",
+        "Raise `ValueError` yourself for the blank student, so both problems share one `except`."
        ],
-       "check": "A CSV with one bad score on line 4 and one `completed=yes` on line 6 returns all other rows and `[4, 6]`.",
-       "solution": "```python\nimport csv\nfrom pathlib import Path\n\ndef load_rows_checked(path):\n    rows, bad = [], []\n    with open(path, newline=\"\", encoding=\"utf-8\") as f:\n        for lineno, row in enumerate(csv.DictReader(f), start=2):\n            try:\n                done = row[\"completed\"].strip()\n                if done not in (\"0\", \"1\"):\n                    raise ValueError(done)\n                score = row[\"score\"].strip()\n                rows.append({\n                    \"student_id\": row[\"student_id\"].strip(),\n                    \"topic\": row[\"topic\"].strip(),\n                    \"lesson\": row[\"lesson\"].strip(),\n                    \"completed\": done == \"1\",\n                    \"score\": float(score) if score else None,\n                })\n            except ValueError:\n                bad.append(lineno)\n    return rows, bad\n\np = Path(\"bad_demo.csv\")\np.write_text(\n    \"student_id,topic,lesson,completed,score\\n\"\n    \"S01,python,a,1,90\\n\"\n    \"S01,python,b,0,\\n\"\n    \"S02,algo,a,1,ninety\\n\"\n    \"S02,algo,b,1,70\\n\"\n    \"S03,algo,a,yes,80\\n\",\n    encoding=\"utf-8\",\n)\nrows, bad = load_rows_checked(p)\nassert len(rows) == 3 and bad == [4, 6]\nprint(bad)\n```",
+       "check": "A CSV with `ninety` as a score on line 4 and a blank student on line 6 returns the other rows and `[4, 6]`.",
+       "solution": "```python\nimport csv\nimport io\n\ndef parse_rows_checked(lines):\n    rows, bad = [], []\n    for lineno, rec in enumerate(csv.DictReader(lines), start=2):\n        try:\n            student = rec[\"student_id\"].strip()\n            if not student:\n                raise ValueError(\"blank student_id\")\n            score = rec[\"score\"].strip()\n            rows.append({\n                \"student\": student,\n                \"module\": rec[\"module\"].strip(),\n                \"lesson\": rec[\"lesson\"].strip(),\n                \"done\": bool(rec[\"completed_at\"].strip()),\n                \"score\": int(score) if score else None,\n            })\n        except ValueError:\n            bad.append(lineno)\n    return rows, bad\n\nCSV = (\n    \"student_id,module,lesson,completed_at,score\\n\"\n    \"S001,Python,Variables,2026-10-02,92\\n\"\n    \"S001,Python,Loops,,\\n\"\n    \"S002,Web,HTML,2026-10-03,ninety\\n\"\n    \"S002,Web,CSS,2026-10-04,70\\n\"\n    \",Web,CSS,2026-10-05,80\\n\"\n)\nrows, bad = parse_rows_checked(io.StringIO(CSV))\nassert len(rows) == 3 and bad == [4, 6]\nprint(bad)\n```",
        "lang": "python",
-       "tests": "import tempfile\nfrom pathlib import Path\n\ndef test_bad_rows():\n    with tempfile.TemporaryDirectory() as d:\n        p = Path(d) / \"x.csv\"\n        p.write_text(\n            \"student_id,topic,lesson,completed,score\\n\"\n            \"S01,python,a,1,90\\n\"\n            \"S01,python,b,0,\\n\"\n            \"S02,algo,a,1,ninety\\n\"\n            \"S02,algo,b,1,70\\n\"\n            \"S03,algo,a,yes,80\\n\",\n            encoding=\"utf-8\",\n        )\n        rows, bad = load_rows_checked(p)\n        assert bad == [4, 6]\n        assert [r[\"score\"] for r in rows] == [90.0, None, 70.0]\n"
+       "tests": "import io\n\nCSV = (\n    \"student_id,module,lesson,completed_at,score\\n\"\n    \"S001,Python,Variables,2026-10-02,92\\n\"\n    \"S001,Python,Loops,,\\n\"\n    \"S002,Web,HTML,2026-10-03,ninety\\n\"\n    \"S002,Web,CSS,2026-10-04,70\\n\"\n    \",Web,CSS,2026-10-05,80\\n\"\n)\n\ndef test_bad_rows():\n    rows, bad = parse_rows_checked(io.StringIO(CSV))\n    assert bad == [4, 6]\n    assert [r[\"score\"] for r in rows] == [92, None, 70]\n\ndef test_clean_input():\n    rows, bad = parse_rows_checked(io.StringIO(\"student_id,module,lesson,completed_at,score\\nS1,Web,CSS,,\\n\"))\n    assert bad == [] and rows[0][\"done\"] is False\n"
       },
       {
-       "prompt": "Test `main` end to end with `tmp_path` and pytest's `capsys` fixture: a missing file returns 1 and prints to stderr; a valid run with `--json` returns 0 and creates the file.",
+       "prompt": "Test `main` end to end with `tmp_path` and pytest's `capsys` fixture: a missing file returns 1 and prints to stderr; a valid run with `--json` returns 0 and creates the file; a file with one bad row returns 0 but warns on stderr.",
        "hints": [
         "`capsys.readouterr()` returns an object with `.out` and `.err`.",
         "Write a small CSV into `tmp_path` and pass `str(path)` in argv.",
-        "Assert on the return value, the presence of the JSON file and a substring of stderr."
+        "Assert on the return value, the JSON file's existence and a substring of stderr."
        ],
-       "check": "Both tests pass; nothing in the test touches `sys.argv` or calls `sys.exit`.",
-       "solution": "```python-snippet\nfrom tracker import main\n\ndef test_missing_file(capsys):\n    assert main([\"nope.csv\"]) == 1\n    assert \"no such file\" in capsys.readouterr().err\n\ndef test_json_run(tmp_path):\n    src = tmp_path / \"e.csv\"\n    src.write_text(\"student_id,topic,lesson,completed,score\\nS01,python,a,1,90\\n\", encoding=\"utf-8\")\n    out = tmp_path / \"r.json\"\n    assert main([str(src), \"--json\", str(out)]) == 0\n    assert out.exists()\n```"
+       "check": "Three tests pass; nothing in them touches `sys.argv` or calls `sys.exit`.",
+       "solution": "```python-snippet\nfrom tracker import main\n\nHEADER = \"student_id,module,lesson,completed_at,score\\n\"\n\ndef test_missing_file(capsys):\n    assert main([\"nope.csv\"]) == 1\n    assert \"no such file\" in capsys.readouterr().err\n\ndef test_json_run(tmp_path):\n    src = tmp_path / \"e.csv\"\n    src.write_text(HEADER + \"S001,Python,Loops,2026-10-05,78\\n\", encoding=\"utf-8\")\n    out = tmp_path / \"r.json\"\n    assert main([str(src), \"--json\", str(out)]) == 0\n    assert out.exists()\n\ndef test_bad_row_warns(tmp_path, capsys):\n    src = tmp_path / \"e.csv\"\n    src.write_text(HEADER + \"S001,Python,Loops,2026-10-05,7x\\nS002,Web,CSS,,\\n\", encoding=\"utf-8\")\n    assert main([str(src)]) == 0\n    assert \"skipped 1\" in capsys.readouterr().err\n```"
       }
      ]
     },
@@ -2174,7 +2182,7 @@
      "kind": "test",
      "minutes": 10,
      "title": "Test, merge, commit",
-     "body": "```bash\npytest -q\ngit commit -am \"v3 day 4: CLI, bad-row handling, main tests\"\ngit switch main\ngit merge feature/cli\ngit branch -d feature/cli\npython tracker.py tests/data/sample.csv --json out/report.json; echo \"exit: $?\"\n```"
+     "body": "```bash\npython -m pytest -q\ngit commit -am \"Tracker v3 day 4: main(argv), exit codes, checked parsing, CLI tests\"\ngit switch main\ngit merge feature/cli\ngit branch -d feature/cli\npython tracker.py tests/data/sample.csv --json out/report.json; echo \"exit: $?\"\n```"
     },
     {
      "kind": "log",
@@ -2201,7 +2209,7 @@
      "back": "stderr (`print(..., file=sys.stderr)`), so stdout stays clean for the report."
     }
    ],
-   "deliverable": "feature/cli merged into main: parse_args, checked loading, main returning exit codes, with tests; committed.",
+   "deliverable": "feature/cli merged into main: parse_args, parse_rows_checked, main(argv) with exit codes, and their tests; committed.",
    "teachBy": null,
    "safety": null
   },
@@ -2697,9 +2705,9 @@
    "seq": 1,
    "kind": "build",
    "minutes": 90,
-   "title": "Tracker v3, day 5: text report and test audit",
+   "title": "Tracker v3, day 5: report formatting and test audit",
    "objectives": [
-    "Rewrite the text report as a tested `format_report` function using f-string alignment",
+    "Rebuild the printed report as a tested `format_report(report)` function using f-string alignment",
     "Audit the code so every function has at least one test, and refactor with the tests as a safety net"
    ],
    "prereqs": [
@@ -2710,13 +2718,13 @@
     {
      "title": "pytest documentation",
      "url": "https://docs.pytest.org/en/stable/",
-     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path)",
+     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path); parametrizing tests",
      "type": "docs"
     },
     {
      "title": "The Python Standard Library",
      "url": "https://docs.python.org/3/library/",
-     "part": "csv, json and pathlib module pages",
+     "part": "csv, json, pathlib and sys module pages",
      "type": "docs"
     }
    ],
@@ -2725,43 +2733,43 @@
      "kind": "plan",
      "minutes": 10,
      "title": "Plan",
-     "body": "Brief recap: Tracker v3 = tests everywhere + JSON output + clean CLI, shipped Sunday.\n\n**Today:** two jobs. (1) The printed report becomes `format_report(report) -> str`, built from the same dict as the JSON (one source of truth) and formatted with what you learned this morning about format specs. (2) A test audit: list every function in `tracker.py` and the test that covers it. Any function without one gets a test before anything else changes."
+     "body": "Brief recap: Tracker v3 = pytest for every function + JSON output + a tested command line, shipped Sunday.\n\n**Today:** two jobs. (1) The printed report becomes `format_report(report) -> str`, built from the same dict as the JSON (one source of truth) and formatted with this morning's format-spec lesson. (2) A test audit: list every function in `tracker.py` and the test that covers it; anything uncovered gets a test before anything else changes."
     },
     {
      "kind": "build",
      "minutes": 65,
      "title": "Build",
-     "body": "Target output (fixed width, sorted lowest completion first so the students who need help are at the top):\n\n```python\ndef format_report(report):\n    lines = [f\"Tracker report  {report['generated']}  ({report['source']})\", \"\"]\n    lines.append(f\"{'Student':<10}{'Done':>7}{'Mean':>7}  Open\")\n    for s in sorted(report[\"students\"], key=lambda s: (s[\"rate\"], s[\"id\"])):\n        mean = \"-\" if s[\"mean_score\"] is None else f\"{s['mean_score']:.1f}\"\n        lines.append(f\"{s['id']:<10}{s['rate']:>7.0%}{mean:>7}  {', '.join(s['open'])}\")\n    lines.append(\"\")\n    lines.append(f\"{'Topic':<10}{'Done':>7}{'Mean':>7}\")\n    for t in report[\"topics\"]:\n        mean = \"-\" if t[\"mean_score\"] is None else f\"{t['mean_score']:.1f}\"\n        lines.append(f\"{t['topic']:<10}{t['rate']:>7.0%}{mean:>7}\")\n    return \"\\n\".join(lines)\n\nreport = {\n    \"generated\": \"2026-11-06\", \"source\": \"sample.csv\",\n    \"students\": [\n        {\"id\": \"S01\", \"rate\": 0.75, \"mean_score\": 85.0, \"open\": [\"sorting\"]},\n        {\"id\": \"S02\", \"rate\": 0.25, \"mean_score\": 70.0, \"open\": [\"loops\", \"binary search\", \"sorting\"]},\n        {\"id\": \"S04\", \"rate\": 0.0, \"mean_score\": None, \"open\": [\"determinants\"]},\n    ],\n    \"topics\": [{\"topic\": \"algo\", \"done\": 4, \"lessons\": 6, \"rate\": 0.667, \"mean_score\": 84.7}],\n}\ntext = format_report(report)\nprint(text)\nassert text.splitlines()[3].startswith(\"S04\")\nassert \"S02           25%   70.0  loops, binary search, sorting\" in text\n```",
+     "body": "Target output: fixed-width columns, students sorted by completion (lowest first, so the ones who need attention are on top):\n\n```python\ndef format_report(report):\n    lines = [f\"Tracker report  {report['generated']}  ({report['source']})\", \"\"]\n    lines.append(f\"{'Student':<10}{'Done':>8}{'Pct':>8}{'Mean':>7}\")\n    for s in sorted(report[\"students\"], key=lambda s: (s[\"pct\"], s[\"id\"])):\n        mean = \"-\" if s[\"mean\"] is None else f\"{s['mean']:.1f}\"\n        lines.append(f\"{s['id']:<10}{s['done']:>4}/{s['total']:<3}{s['pct']:>7.1f}%{mean:>7}\")\n    lines.append(\"\")\n    lines.append(f\"{'Module':<10}{'Pct':>8}{'Mean':>7}{'Min':>6}\")\n    for m in report[\"modules\"]:\n        mean = \"-\" if m[\"mean\"] is None else f\"{m['mean']:.1f}\"\n        low = \"-\" if m[\"min\"] is None else str(m[\"min\"])\n        lines.append(f\"{m['module']:<10}{m['pct']:>7.1f}%{mean:>7}{low:>6}\")\n    h = report[\"hardest_lesson\"]\n    if h:\n        lines += [\"\", f\"Hardest lesson: {h['module']} / {h['lesson']}\"]\n    return \"\\n\".join(lines)\n\nreport = {\n    \"generated\": \"2026-11-06\", \"source\": \"sample.csv\",\n    \"students\": [\n        {\"id\": \"S001\", \"done\": 3, \"total\": 4, \"pct\": 75.0, \"mean\": 85.0},\n        {\"id\": \"S002\", \"done\": 1, \"total\": 4, \"pct\": 25.0, \"mean\": 65.0},\n        {\"id\": \"S004\", \"done\": 0, \"total\": 1, \"pct\": 0.0, \"mean\": None},\n    ],\n    \"modules\": [{\"module\": \"Web\", \"pct\": 50.0, \"mean\": 82.7, \"median\": 84, \"min\": 79}],\n    \"hardest_lesson\": {\"module\": \"Python\", \"lesson\": \"Variables\"},\n}\ntext = format_report(report)\nprint(text)\nassert text.splitlines()[3].startswith(\"S004\")\nassert \"S002         1/4     25.0%   65.0\" in text\n```",
      "tasks": [
       {
-       "prompt": "Implement `format_report(report)` in your tracker and change `main` to print it. Test it with **exact** expected lines for a tiny report (one or two students), plus the ordering rule.",
+       "prompt": "Implement `format_report(report)` and make `main` print it. Test it with **exact** expected lines for a tiny report (two students, one module), the ordering rule, and the `-` for a missing mean.",
        "hints": [
-        "Build the expected string in the test by hand, column by column; count the widths.",
-        "Compare line by line (`text.splitlines()`), which gives better failure messages than one huge string.",
-        "Test `None` mean shows as `-`."
+        "Write the expected lines in the test by hand, column by column; count the widths.",
+        "Compare line by line (`text.splitlines()`); failures are much easier to read than one long string.",
+        "If v2 already had a well-formatted printer, keep its look; just make it a function returning a string."
        ],
-       "check": "Tests pass; the report printed by `python tracker.py` matches the format above.",
+       "check": "Tests pass; `python tracker.py tests/data/sample.csv` prints the formatted report.",
        "solution": "See the reference block; your tests compare `format_report(small_report).splitlines()` with a hand-written list of lines."
       },
       {
-       "prompt": "Audit: write the function → test table in `docs/tests.md`. Add tests for anything uncovered. Optional: `pip install pytest-cov` and run `pytest --cov=tracker` to see line coverage, and note the uncovered lines.",
+       "prompt": "Audit: write the function → test table in `docs/tests.md`. Add tests for anything uncovered. Optional: `pip install pytest-cov` and run `python -m pytest --cov=tracker` to see line coverage; note which lines are uncovered.",
        "hints": [
         "`grep -n \"^def \" tracker.py` lists your functions.",
-        "Usually uncovered: error branches and the `main` paths.",
-        "Coverage is a pointer to untested code, not a goal in itself; 100% lines doesn't mean every case is tested."
+        "Usually uncovered: error branches and `main` paths.",
+        "Coverage points at untested code; 100% of lines executed doesn't mean every case is checked."
        ],
        "check": "Every function in the table has at least one test name next to it.",
-       "solution": "A table like: `load_rows` → test_load.py::test_types, … ; `main` → test_cli.py::test_missing_file, test_json_run."
+       "solution": "A table like: `parse_rows` → test_parse.py::test_types, … ; `main` → test_cli.py::test_missing_file, test_json_run, test_bad_row_warns."
       },
       {
-       "prompt": "Refactor one thing that has bothered you all week (a long function, duplicated accumulation code, unclear names) with the tests running after each small step.",
+       "prompt": "Refactor one thing that has bothered you all week (a long function, the duplicated accumulation loop in `student_stats` and `module_stats`, unclear names), running the tests after each small step.",
        "hints": [
         "Pick one change, not five.",
-        "Run `pytest -q` after every edit.",
+        "Run `python -m pytest -q` after every edit.",
         "If a test breaks, undo the last step rather than debugging a big change."
        ],
-       "check": "Same tests, still green, and the diff is something you'd be happy to show a colleague.",
-       "solution": "Typical candidate: `build_report` recomputes statistics that the tested functions already produce; make it call them."
+       "check": "Same tests, still green, and a diff you'd be happy to show a colleague.",
+       "solution": "A typical candidate: extract `_accumulate(rows, key)` that returns `{key: {done, total, scores}}`, and build both `student_stats` and `module_stats` on it."
       }
      ]
     },
@@ -2769,13 +2777,13 @@
      "kind": "test",
      "minutes": 10,
      "title": "Test and commit",
-     "body": "`pytest -q` (and `pytest --cov=tracker` if installed). Commit: `git commit -am \"v3 day 5: formatted report, test audit, refactor\"`."
+     "body": "`python -m pytest -q` (and `--cov=tracker` if installed). Commit: `git commit -am \"Tracker v3 day 5: formatted report, test audit, refactor\"`."
     },
     {
      "kind": "log",
      "minutes": 5,
      "title": "Log",
-     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. Write down what's left for Saturday; keep it to the list in Saturday's plan."
+     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. Write down what's left for Saturday; keep it to Saturday's checklist."
     }
    ],
    "cards": [
@@ -2785,7 +2793,7 @@
     },
     {
      "front": "What does line coverage tell you, and what doesn't it?",
-     "back": "Which lines ran during tests; not whether the right cases or values were checked."
+     "back": "Which lines ran during the tests; not whether the right cases or values were checked."
     },
     {
      "front": "Safe refactoring rhythm",
@@ -3047,10 +3055,10 @@
    "seq": 1,
    "kind": "build",
    "minutes": 120,
-   "title": "Tracker v3, Saturday: finish, cross-check, document, tag",
+   "title": "Tracker v3, Saturday: cross-check, document, tag",
    "objectives": [
     "Run Tracker v3 on the real anonymized export and cross-check its numbers against an independent pandas calculation",
-    "Write the README (install, run, test, JSON schema) and tag the release v3"
+    "Write the README (install, run, test, JSON schema) and tag the release `v3`"
    ],
    "prereqs": [
     "build-w03-5",
@@ -3060,13 +3068,13 @@
     {
      "title": "pytest documentation",
      "url": "https://docs.pytest.org/en/stable/",
-     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path)",
+     "part": "Get Started; 'How to use temporary directories and files in tests' (tmp_path); parametrizing tests",
      "type": "docs"
     },
     {
      "title": "The Python Standard Library",
      "url": "https://docs.python.org/3/library/",
-     "part": "csv, json and pathlib module pages",
+     "part": "csv, json, pathlib and sys module pages",
      "type": "docs"
     },
     {
@@ -3081,33 +3089,33 @@
      "kind": "plan",
      "minutes": 10,
      "title": "Plan",
-     "body": "**Week 3 project: Tracker v3.** Same tracker, same anonymized portal export, but now trustworthy and machine-readable:\n\n- every function in the tracker has **pytest tests**, including edge cases (empty data, missing scores, a student with nothing done);\n- the tracker can write its results as **JSON** (a documented schema) as well as printing a text report;\n- it runs as `python tracker.py <export.csv> [--json <out.json>]` and fails with a clear message, not a traceback, on a missing file or bad rows;\n- shipped Sunday: tagged `v3`, README updated, tests green.\n\nDaily goals: Mon testable structure + load tests · Tue statistics tests · Wed JSON output · Thu command line and error handling · Fri text report and test audit · Sat finish, cross-check against pandas, document, tag.\n\n**Today:** finish this week's version so Sunday is only shipping. Checklist:\n1. real-data run and a pandas cross-check (this morning's ai lesson gave you the pandas functions);\n2. fix whatever the cross-check finds, with a test for it;\n3. README;\n4. tag `v3` and push."
+     "body": "**Week 3 project: Tracker v3.** Same tracker in `learning-log/tracker/`, same anonymized portal export (`student_id,module,lesson,completed_at,score`), same v2 functions (`parse_rows`, `student_stats`, `module_stats`, `hardest_lesson`), but now trustworthy and machine-readable:\n\n- every function has **pytest tests**, including edge cases (empty data, a completed lesson without a score, a student with nothing done); last week's plain-assert `test_tracker.py` moves to pytest;\n- the tracker can write its results as **JSON** (a documented schema) as well as print the text report;\n- it runs as `python tracker.py <export.csv> [--json <out.json>]`, returns proper exit codes, and its error handling is under test;\n- shipped Sunday: tagged `v3`, README updated, tests green.\n\nDaily goals: Mon pytest set-up and parsing tests · Tue statistics tests and edge cases · Wed JSON output · Thu command line and error paths under test · Fri report formatting and test audit · Sat cross-check against pandas, document, tag.\n\n**Today:** finish this week's version so Sunday is only shipping. Checklist:\n1. real-data run and a pandas cross-check (this morning's ai lesson gave you the pandas functions);\n2. fix whatever the cross-check finds, with a regression test for it;\n3. README;\n4. tag `v3` and push."
     },
     {
      "kind": "build",
      "minutes": 95,
      "title": "Build",
-     "body": "**1. Cross-check (40 min).** Two independent implementations agreeing is strong evidence both are right. Compute the per-student completion with pandas and with the tracker on the same file and compare:\n\n```python\nimport io\nimport pandas as pd\n\nCSV = (\n    \"student_id,topic,lesson,completed,score\\n\"\n    \"S01,python,functions,1,92\\nS01,algo,sorting,0,\\n\"\n    \"S02,python,functions,1,70\\nS02,python,loops,0,\\n\"\n    \"S03,algo,sorting,1,81\\n\"\n)\n\ndef tracker_rates(text):\n    done, total = {}, {}\n    for line in text.strip().splitlines()[1:]:\n        sid, _, _, completed, _ = line.split(\",\")\n        total[sid] = total.get(sid, 0) + 1\n        done[sid] = done.get(sid, 0) + (completed == \"1\")\n    return {sid: round(done[sid] / total[sid], 3) for sid in total}\n\npandas_rates = pd.read_csv(io.StringIO(CSV)).groupby(\"student_id\")[\"completed\"].mean().round(3).to_dict()\nmine = tracker_rates(CSV)\ndiff = {k: (mine.get(k), pandas_rates.get(k)) for k in set(mine) | set(pandas_rates) if mine.get(k) != pandas_rates.get(k)}\nprint(mine)\nprint(\"differences:\", diff)\nassert not diff\n```\n\n(The `tracker_rates` above is a stand-in; call your real `load_rows` + `completion_by_student` instead, on the real export.) Do the same for topic rates and mean scores. Any disagreement is a bug in one of them or a rule the two apply differently (missing scores, bad rows): find which, fix it, and add a test.\n\n**2. README (30 min).** Sections: what it does (two lines) · install (`python3 -m venv .venv`, `source .venv/bin/activate`, `pip install -r requirements.txt`) · run (both forms, with sample output) · test (`pytest`) · input format (column list) · output (link to `docs/schema.md`) · privacy note (only anonymized exports in the repo; real exports stay out via `.gitignore`).\n\n**3. Clean-up (25 min).** Delete dead code, make sure `tests/data/` holds only the synthetic sample, check `git status` for stray files (`.DS_Store`, `out/`), update `requirements.txt`.",
+     "body": "**1. Cross-check (40 min).** Two independent implementations agreeing is strong evidence that both are right. Compute per-student completion with pandas and with the tracker on the same file and compare:\n\n```python\nimport csv\nimport io\nimport pandas as pd\n\nCSV = (\n    \"student_id,module,lesson,completed_at,score\\n\"\n    \"S001,Python,Variables,2026-10-02,92\\nS001,Web,CSS,,\\n\"\n    \"S002,Python,Variables,2026-10-03,65\\nS002,Python,Loops,,\\n\"\n    \"S003,Web,HTML,2026-10-06,79\\n\"\n)\n\ndef tracker_pct(lines):\n    done, total = {}, {}\n    for rec in csv.DictReader(lines):\n        sid = rec[\"student_id\"].strip()\n        total[sid] = total.get(sid, 0) + 1\n        done[sid] = done.get(sid, 0) + bool(rec[\"completed_at\"].strip())\n    return {sid: round(100 * done[sid] / total[sid], 1) for sid in total}\n\ndf = pd.read_csv(io.StringIO(CSV))\npandas_pct = (df[\"completed_at\"].notna().groupby(df[\"student_id\"]).mean() * 100).round(1).to_dict()\nmine = tracker_pct(io.StringIO(CSV))\ndiff = {k: (mine.get(k), pandas_pct.get(k)) for k in set(mine) | set(pandas_pct) if mine.get(k) != pandas_pct.get(k)}\nprint(mine)\nprint(\"differences:\", diff)\nassert not diff\n```\n\n(`tracker_pct` is a stand-in; on the real export call your `parse_rows` + `student_stats`.) Do the same for module completion and module mean scores. A disagreement is either a bug in one of them or a rule they apply differently (bad rows skipped by v3 but read by pandas, blank vs whitespace-only `completed_at`): find which, fix or document it, and add a test.\n\n**2. README (30 min).** Sections: what it does (two lines) · install (`python3 -m venv .venv`, `source .venv/bin/activate`, `pip install -r requirements.txt`) · run (both forms, with sample output) · test (`python -m pytest`) · input format (the column list and what blank means) · output (link to `docs/schema.md`) · privacy (only anonymized or generated data in the repo; real exports stay out via `.gitignore`).\n\n**3. Clean-up (25 min).** Delete dead code, keep only synthetic data in `tests/data/`, check `git status` for stray files (`.DS_Store`, `out/`), and make sure `requirements.txt` is current.",
      "tasks": [
       {
-       "prompt": "Run the cross-check on the real anonymized export for completion per student, completion per topic and mean score per topic. Record the result (all equal, or what differed and why).",
+       "prompt": "Run the cross-check on the real anonymized export for completion per student, completion per module and mean score per module. Record the result (all equal, or what differed and why).",
        "hints": [
         "Load the same file both ways; compare dicts.",
         "Round both sides the same way before comparing.",
-        "If pandas counts a bad row your tracker skipped, that's a rule difference, not a bug; document it."
+        "If pandas counts a row your tracker skipped as bad, that's a rule difference, not a bug: document it."
        ],
        "check": "A short table in the build log: metric · tracker · pandas · equal?",
-       "solution": "Expected result: all equal after aligning the rules for bad rows and missing scores. Any genuine bug found gets a regression test named after it."
+       "solution": "Expected outcome: all equal once the rules for bad rows and blank fields are aligned. Any genuine bug gets a regression test named after it."
       },
       {
        "prompt": "Write the README and tag the release.",
        "hints": [
-        "Run every command in the README in a fresh terminal to make sure it works as written.",
+        "Run every README command in a fresh terminal to check it works exactly as written.",
         "`git tag -a v3 -m \"Tracker v3: tests, JSON output, CLI\"`.",
         "`git push && git push --tags`."
        ],
-       "check": "A fresh clone + the README's commands produce the report and a green `pytest`.",
-       "solution": "Commands: `git tag -a v3 -m \"Tracker v3\"`, `git push`, `git push --tags`. On GitHub the tag appears under Releases/Tags."
+       "check": "A fresh clone plus the README's commands produce the report and a green test run.",
+       "solution": "Commands: `git tag -a v3 -m \"Tracker v3\"`, `git push`, `git push --tags`. On GitHub the tag shows under Tags (and can be turned into a Release)."
       }
      ]
     },
@@ -3115,13 +3123,13 @@
      "kind": "test",
      "minutes": 10,
      "title": "Test, tag, push",
-     "body": "```bash\npytest -q\npython tracker.py tests/data/sample.csv --json out/report.json\ngit status\ngit commit -am \"v3: README, cross-check fixes\"\ngit tag -a v3 -m \"Tracker v3: tests, JSON output, CLI\"\ngit push && git push --tags\n```"
+     "body": "```bash\npython -m pytest -q\npython tracker.py tests/data/sample.csv --json out/report.json\ngit status\ngit commit -am \"Tracker v3: README, cross-check fixes\"\ngit tag -a v3 -m \"Tracker v3: tests, JSON output, CLI\"\ngit push && git push --tags\n```"
     },
     {
      "kind": "log",
      "minutes": 5,
      "title": "Log",
-     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. Write the three-line weekly summary for Sunday's ship review: what v3 does, the bug the tests or cross-check found, what v4 (classes, flagging students who fall behind) should start from."
+     "body": "In `learning-log/week03/build-log.md`, add today's entry: what works now, what broke, the one test that caught something, and the first thing to do tomorrow. Write the three-line weekly summary for Sunday's ship review: what v3 does, the bug the tests or the cross-check found, and what v4 (classes, flagging students who fall behind) should start from."
     }
    ],
    "cards": [
