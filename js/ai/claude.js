@@ -40,7 +40,7 @@ User's name: ${name || 'unknown'}. Currency: ${db.setting('currency', 'TRY')}.${
 let client, clientKey;
 function getClient() {
   const key = db.setting('apiKey', '');
-  if (!key) throw Object.assign(new Error('Add your Anthropic API key in Settings to wake Yaver up.'), { code: 'nokey' });
+  if (!key) throw Object.assign(new Error('No Claude key yet. Paste your free Gemini key (or a Claude key) in Settings → AI.'), { code: 'nokey' });
   if (!client || clientKey !== key) {
     // The key never leaves this phone except to go to api.anthropic.com.
     client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, maxRetries: 2 });

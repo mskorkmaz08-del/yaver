@@ -9,7 +9,7 @@ const API = 'https://generativelanguage.googleapis.com/v1beta';
 
 const key = () => {
   const k = db.setting('geminiKey', '');
-  if (!k) throw Object.assign(new Error('Add your Gemini API key in Settings to wake Yaver up.'), { code: 'nokey' });
+  if (!k) throw Object.assign(new Error('Paste your free Gemini key in Settings → AI.'), { code: 'nokey' });
   return k;
 };
 
@@ -59,8 +59,8 @@ export async function pickModel() {
 async function apiError(res) {
   let msg = '';
   try { msg = (await res.json()).error?.message || ''; } catch {}
-  if (res.status === 400 && /api key/i.test(msg)) return new Error('Your Gemini key was rejected. Copy it again from aistudio.google.com → Get API key.');
-  if (res.status === 403) return new Error('This Gemini key is not allowed to use the API. Create a new key in aistudio.google.com.');
+  if (res.status === 400 && /api key/i.test(msg)) return new Error('Google says this key is not valid. Copy it again from aistudio.google.com/apikey (tap the copy icon next to the key).');
+  if (res.status === 403) return new Error(`Google refused this key: ${msg || 'permission denied'}. Create a new key at aistudio.google.com/apikey.`);
   if (res.status === 404) { db.setSetting('geminiModel', ''); return new Error('That Gemini model is not available to your key. Try again; Yaver will pick another.'); }
   if (res.status === 429) return new Error('Free Gemini limit reached for now (requests per minute or per day). Wait a minute and try again.');
   if (res.status >= 500) return new Error('Gemini is having a moment (server error). Try again.');

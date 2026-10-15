@@ -1,7 +1,7 @@
 import * as db from '../db.js';
 import { html, raw, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
-import { PROVIDERS, provider, testCurrent } from '../ai/provider.js';
+import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
 
@@ -28,6 +28,7 @@ export function render(root, go) {
     <form class="card form" data-form>
       <p class="label">ai</p>
       <label class="field"><span>Assistant</span><select name="provider">${raw(PROVIDERS.map(([v, l]) => `<option value="${v}" ${v === prov ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <p class="muted small mono" data-active>now using: ${prov === 'gemini' ? (gkey ? `gemini · ${gmodel || 'auto'} · key …${gkey.slice(-4)}` : 'nothing yet, paste a gemini key below') : `claude · key …${key.slice(-4)}`}</p>
       <label class="field"><span>Gemini API key (free)</span><input name="geminiKey" type="password" autocomplete="off" value="${gkey}" placeholder="AIza…"></label>
       <p class="muted small">Free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → Create API key. The free tier has per-minute and per-day limits, and Google may use free-tier chats to improve its models.</p>
       <label class="field"><span>Gemini model</span><select name="geminiModel"><option value="">Auto (best free flash model)</option>${raw(gmodels.map(m => `<option value="${m}" ${m === gmodel ? 'selected' : ''}>${m}</option>`).join(''))}</select></label>
@@ -66,7 +67,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v3</p>`;
+    <p class="small dim center mono">yaver v4</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   const form = root.querySelector('[data-form]');
@@ -74,8 +75,11 @@ export function render(root, go) {
     const fd = new FormData(form);
     for (const [k, v] of fd.entries()) {
       const num = ['monthlyBudget', 'dailyStudyMin', 'dailyCalories', 'dailyProtein', 'dailyWater'].includes(k);
-      await db.setSetting(k, num ? Number(v) || 0 : String(v).trim());
+      const val = num ? Number(v) || 0 : /Key$/.test(k) ? cleanKey(v) : String(v).trim();
+      if (k === 'geminiKey' && val !== db.setting('geminiKey', '')) await db.setSetting('geminiModel', '');
+      await db.setSetting(k, val);
     }
+    await sortKeys();
     await db.setSetting('webSearch', fd.has('webSearch'));
     await db.setSetting('speak', fd.has('speak'));
   };

@@ -72,9 +72,13 @@ await page.waitForSelector('.sheet');
 await page.screenshot({ path: 'tests/shots/0-onboarding.png' });
 await page.fill('input[name=userName]', 'Mustafa');
 await page.selectOption('select[name=currency]', 'KZT');
-await page.fill('input[name=apiKey]', 'AIzaTestKey');
 await page.click('.sheet button[type=submit]');
 await page.waitForTimeout(500);
+// v2 users may have a Gemini key saved in the Claude slot and provider set to Claude.
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('apiKey', ' AIzaSyOldKeyInWrongSlot0000 '); await db.setSetting('provider', 'anthropic'); await db.setSetting('onboarded', true); });
+await page.reload();
+await page.waitForTimeout(800);
+console.log('SORTED', JSON.stringify(await page.evaluate(async () => { const db = await import('./js/db.js'); return { apiKey: db.setting('apiKey'), geminiKey: db.setting('geminiKey'), provider: db.setting('provider') }; })));
 
 // Seed some data through the real forms/logic
 await page.evaluate(async () => {

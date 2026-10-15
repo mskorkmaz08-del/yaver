@@ -3,7 +3,7 @@
 import * as db from './db.js';
 import { $, sheet, toast } from './util.js';
 import { initAssistant, openAssistant } from './ai/assistant.js';
-import { saveKey } from './ai/provider.js';
+import { saveKey, sortKeys } from './ai/provider.js';
 import * as home from './views/home.js';
 import * as money from './views/money.js';
 import * as calendar from './views/calendar.js';
@@ -59,6 +59,7 @@ async function onboarding() {
 
 async function start() {
   await db.openDB();
+  await sortKeys();
   initAssistant();
 
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => {

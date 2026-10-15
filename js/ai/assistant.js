@@ -176,7 +176,6 @@ async function send(textIn) {
     history.length = before;
     reply.error = e.code !== 'abort';
     reply.text = e.code === 'abort' ? (reply.text || 'Stopped.') : e.message;
-    if (e.code === 'nokey') reply.text += ' (Settings → AI)';
   } finally {
     busy = false;
     el.classList.remove('busy');
