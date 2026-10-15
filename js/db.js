@@ -84,7 +84,7 @@ function notify(store) {
 // Backup: the whole database as one JSON file, and back.
 export function exportAll() {
   const data = {};
-  for (const s of STORES) data[s] = all(s).filter(r => !(s === 'kv' && (r.id === 'apiKey' || r.id === 'geminiKey')));
+  for (const s of STORES) data[s] = all(s).filter(r => !(s === 'kv' && (['apiKey', 'geminiKey', 'macToken'].includes(r.id))));
   return { app: 'yaver', version: DB_VERSION, exportedAt: new Date().toISOString(), data };
 }
 
