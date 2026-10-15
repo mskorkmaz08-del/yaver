@@ -1,6 +1,7 @@
 import * as db from '../db.js';
 import { html, raw, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
+import { testMac } from '../ai/mac.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
@@ -38,6 +39,13 @@ export function render(root, go) {
       <label class="field"><span>Claude thinking effort</span><select name="effort">${raw([['low', 'Low · quickest replies'], ['medium', 'Medium · balanced'], ['high', 'High · deepest thinking']].map(([v, l]) => `<option value="${v}" ${v === s('effort', 'low') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <label class="field check"><span>Claude web search</span><input type="checkbox" name="webSearch" ${raw(s('webSearch', true) ? 'checked' : '')}></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-test>Test assistant</button></div>
+
+      <p class="label">claude on your mac</p>
+      <p class="muted small">Uses your Claude subscription through Claude Code on your MacBook. When the Mac is reachable, Yaver asks it first; otherwise it uses the assistant above. Setup: run the Yaver bridge on the Mac and turn on Tailscale on both devices (steps in the repo, bridge/README.md).</p>
+      <label class="field"><span>Bridge address</span><input name="macUrl" type="url" autocomplete="off" value="${s('macUrl', '')}" placeholder="https://your-mac.tailnet.ts.net"></label>
+      <label class="field"><span>Bridge token</span><input name="macToken" type="password" autocomplete="off" value="${s('macToken', '')}" placeholder="shown when the bridge starts"></label>
+      <label class="field"><span>Model on the Mac</span><select name="macModel">${raw([['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']].map(([v, l]) => `<option value="${v}" ${v === s('macModel', 'sonnet') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <div class="btn-row"><button type="button" class="btn ghost" data-test-mac>Test Mac connection</button></div>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
 
@@ -67,7 +75,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v4</p>`;
+    <p class="small dim center mono">yaver v5</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   const form = root.querySelector('[data-form]');
@@ -75,7 +83,7 @@ export function render(root, go) {
     const fd = new FormData(form);
     for (const [k, v] of fd.entries()) {
       const num = ['monthlyBudget', 'dailyStudyMin', 'dailyCalories', 'dailyProtein', 'dailyWater'].includes(k);
-      const val = num ? Number(v) || 0 : /Key$/.test(k) ? cleanKey(v) : String(v).trim();
+      const val = num ? Number(v) || 0 : /Key$|^macToken$/.test(k) ? cleanKey(v) : String(v).trim();
       if (k === 'geminiKey' && val !== db.setting('geminiKey', '')) await db.setSetting('geminiModel', '');
       await db.setSetting(k, val);
     }
@@ -87,6 +95,10 @@ export function render(root, go) {
   root.querySelector('[data-test]').onclick = async () => {
     await saveForm();
     try { toast(await testCurrent()); } catch (e) { toast(e.message, 4000); }
+  };
+  root.querySelector('[data-test-mac]').onclick = async () => {
+    await saveForm();
+    try { toast(await testMac()); } catch (e) { toast(e.message, 5000); }
   };
   root.querySelector('[data-export]').onclick = async () => {
     const blob = new Blob([JSON.stringify(db.exportAll(), null, 1)], { type: 'application/json' });

@@ -415,3 +415,4 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 .roadmap.compact { gap: 4px; padding: 4px 0; }
 .roadmap.compact .card-head .small:first-child { color: var(--muted); }
 .roadmap.current .card-head .small:first-child { color: var(--accent); }
+.msg.bot .via { margin-top: 4px; font: 10px/1.2 var(--mono, ui-monospace, monospace); color: var(--dim, #5c5c66); letter-spacing: .04em; }
