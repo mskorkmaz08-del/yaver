@@ -161,7 +161,7 @@ const TOOLS = [
     name: 'log_water',
     description: 'Add glasses of water drunk today (can be negative to correct).',
     input_schema: obj({ glasses: { type: 'number' } }, ['glasses']),
-    run: async ({ glasses }) => { const k = `water:${today()}`; const v = Math.max(0, db.setting(k, 0) + glasses); await db.setSetting(k, v); return { waterToday: v }; },
+    run: async ({ glasses }) => ({ waterToday: await D.addWater(glasses) }),
   },
   // ----- Tasks & goals -----
   {

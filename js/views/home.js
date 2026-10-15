@@ -129,7 +129,7 @@ export function render(root, go) {
   root.querySelectorAll('[data-q]').forEach(b => (b.onclick = q[b.dataset.q]));
   root.querySelectorAll('[data-ev]').forEach(b => (b.onclick = () => meetingForm(db.get('events', b.dataset.ev))));
   root.querySelector('[data-add-task]').onclick = taskForm;
-  root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => { const n = Number(b.dataset.w); db.setSetting(`water:${today()}`, d.water === n ? n - 1 : n); }));
+  root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => { const n = Number(b.dataset.w); D.setWater(d.water === n ? n - 1 : n); }));
   root.querySelectorAll('[data-task]').forEach(cb => (cb.onchange = () => {
     const t = db.get('tasks', cb.dataset.task);
     cb.closest('.task').classList.add('done');

@@ -1,0 +1,1371 @@
+{
+ "version": 1,
+ "title": "Yaver Course: AI and robotics engineer",
+ "start": "2026-10-19",
+ "week0": "2026-10-15",
+ "sleep": {
+  "start": "22:30",
+  "end": "05:30",
+  "minHours": 7
+ },
+ "masteryThreshold": 0.8,
+ "testThreshold": 0.7,
+ "cardIntervals": [
+  1,
+  3,
+  7,
+  14,
+  30,
+  60
+ ],
+ "tracks": [
+  {
+   "id": "python",
+   "name": "Python",
+   "color": "#5aa9ff"
+  },
+  {
+   "id": "cpp",
+   "name": "C++",
+   "color": "#a78bfa"
+  },
+  {
+   "id": "algo",
+   "name": "Algorithms",
+   "color": "#ffb547"
+  },
+  {
+   "id": "math",
+   "name": "Math",
+   "color": "#4fd1c5"
+  },
+  {
+   "id": "ai",
+   "name": "AI",
+   "color": "#7ddc6b"
+  },
+  {
+   "id": "robo",
+   "name": "Robotics",
+   "color": "#ff8a4c"
+  },
+  {
+   "id": "build",
+   "name": "Projects",
+   "color": "#ff5a5f"
+  },
+  {
+   "id": "tools",
+   "name": "Tools",
+   "color": "#8b8b96"
+  }
+ ],
+ "lanes": {
+  "setup": {
+   "track": "build",
+   "minutes": 60,
+   "kind": "setup",
+   "label": "Week 0 setup"
+  },
+  "python": {
+   "track": "python",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "python-inter": {
+   "track": "python",
+   "minutes": 90,
+   "kind": "light"
+  },
+  "cpp": {
+   "track": "cpp",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "algo": {
+   "track": "algo",
+   "minutes": 90,
+   "kind": "practice"
+  },
+  "math-learn": {
+   "track": "math",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "math-practice": {
+   "track": "math",
+   "minutes": 90,
+   "kind": "practice"
+  },
+  "ai-main": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "ai-read": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "ai-read-long": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "light"
+  },
+  "ai-sql": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "ai-stats": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "ai-deep": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "ai-practice": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "practice"
+  },
+  "ai-breadth": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "tools": {
+   "track": "tools",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "robo-prep": {
+   "track": "robo",
+   "minutes": 60,
+   "kind": "prep"
+  },
+  "robo-lab": {
+   "track": "robo",
+   "minutes": 120,
+   "kind": "lab"
+  },
+  "robo-read": {
+   "track": "robo",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "cpp-ros": {
+   "track": "cpp",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "build": {
+   "track": "build",
+   "minutes": 90,
+   "kind": "build"
+  },
+  "build-long": {
+   "track": "build",
+   "minutes": 120,
+   "kind": "build"
+  }
+ },
+ "slots": {
+  "weekday": [
+   {
+    "id": "wake",
+    "start": "05:30",
+    "end": "05:50",
+    "label": "Wake, water, 15-min walk, no phone",
+    "type": "info"
+   },
+   {
+    "id": "deep1",
+    "start": "05:50",
+    "end": "07:20",
+    "label": "Deep 1 · hardest new material",
+    "type": "lesson"
+   },
+   {
+    "id": "break",
+    "start": "07:20",
+    "end": "07:35",
+    "label": "Break",
+    "type": "info"
+   },
+   {
+    "id": "deep2",
+    "start": "07:35",
+    "end": "09:05",
+    "label": "Deep 2 · practice at the edge",
+    "type": "lesson"
+   },
+   {
+    "id": "work",
+    "start": "10:00",
+    "end": "12:00",
+    "label": "Work tasks",
+    "type": "fixed"
+   },
+   {
+    "id": "students",
+    "start": "13:00",
+    "end": "15:00",
+    "label": "Students",
+    "type": "fixed"
+   },
+   {
+    "id": "build",
+    "start": "15:20",
+    "end": "16:50",
+    "label": "Build · weekly project",
+    "type": "lesson"
+   },
+   {
+    "id": "exercise",
+    "start": "16:50",
+    "end": "17:30",
+    "label": "Exercise",
+    "type": "info"
+   },
+   {
+    "id": "prep",
+    "start": "17:30",
+    "end": "18:30",
+    "label": "Prep · robotics, ahead of students",
+    "type": "lesson"
+   },
+   {
+    "id": "light",
+    "start": "19:30",
+    "end": "20:30",
+    "label": "Light · reading and lectures",
+    "type": "lesson"
+   },
+   {
+    "id": "review",
+    "start": "20:30",
+    "end": "21:00",
+    "label": "Review · cards, log, plan tomorrow",
+    "type": "review"
+   },
+   {
+    "id": "screens",
+    "start": "22:00",
+    "end": "22:30",
+    "label": "Screens off",
+    "type": "info"
+   }
+  ],
+  "sat": [
+   {
+    "id": "wake",
+    "start": "05:30",
+    "end": "05:50",
+    "label": "Wake, water, walk",
+    "type": "info"
+   },
+   {
+    "id": "deep1",
+    "start": "05:50",
+    "end": "07:20",
+    "label": "Deep 1 · AI main lesson",
+    "type": "lesson"
+   },
+   {
+    "id": "break",
+    "start": "07:20",
+    "end": "07:35",
+    "label": "Break",
+    "type": "info"
+   },
+   {
+    "id": "deep2",
+    "start": "07:35",
+    "end": "09:05",
+    "label": "Mixed practice · all tracks",
+    "type": "lesson"
+   },
+   {
+    "id": "build",
+    "start": "10:00",
+    "end": "12:00",
+    "label": "Build · weekly project",
+    "type": "lesson"
+   },
+   {
+    "id": "lab",
+    "start": "13:00",
+    "end": "15:00",
+    "label": "Lab · robotics on real hardware",
+    "type": "lesson"
+   },
+   {
+    "id": "light",
+    "start": "15:20",
+    "end": "16:50",
+    "label": "Light · reading",
+    "type": "lesson"
+   },
+   {
+    "id": "review",
+    "start": "20:30",
+    "end": "20:45",
+    "label": "Review cards",
+    "type": "review"
+   },
+   {
+    "id": "screens",
+    "start": "22:00",
+    "end": "22:30",
+    "label": "Screens off",
+    "type": "info"
+   }
+  ],
+  "sun": [
+   {
+    "id": "wake",
+    "start": "05:30",
+    "end": "05:50",
+    "label": "Wake, water, walk",
+    "type": "info"
+   },
+   {
+    "id": "test",
+    "start": "05:50",
+    "end": "07:20",
+    "label": "Weekly retrieval test",
+    "type": "test"
+   },
+   {
+    "id": "break",
+    "start": "07:20",
+    "end": "07:35",
+    "label": "Break",
+    "type": "info"
+   },
+   {
+    "id": "ship",
+    "start": "07:35",
+    "end": "09:05",
+    "label": "Ship & weekly review",
+    "type": "ship"
+   },
+   {
+    "id": "plan",
+    "start": "20:30",
+    "end": "20:40",
+    "label": "Confirm Monday's first block",
+    "type": "plan"
+   },
+   {
+    "id": "screens",
+    "start": "22:00",
+    "end": "22:30",
+    "label": "Screens off",
+    "type": "info"
+   }
+  ]
+ },
+ "phases": [
+  {
+   "id": "A",
+   "name": "Foundations: Python, algorithms, linear algebra, electronics",
+   "weeks": [
+    1,
+    7
+   ],
+   "rotation": {
+    "deep1": [
+     "python",
+     "math-learn",
+     "python",
+     "math-learn",
+     "python",
+     "ai-main"
+    ],
+    "deep2": [
+     "algo",
+     "math-practice",
+     "algo",
+     "math-practice",
+     "algo",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "tools",
+     "ai-read",
+     "tools",
+     "ai-read",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "B",
+   "name": "C++, calculus and probability, statistics and SQL, Arduino",
+   "weeks": [
+    8,
+    15
+   ],
+   "rotation": {
+    "deep1": [
+     "cpp",
+     "math-learn",
+     "cpp",
+     "math-learn",
+     "cpp",
+     "ai-main"
+    ],
+    "deep2": [
+     "algo",
+     "math-practice",
+     "algo",
+     "math-practice",
+     "algo",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "ai-sql",
+     "ai-stats",
+     "ai-sql",
+     "ai-stats",
+     "buffer",
+     "python-inter"
+    ]
+   }
+  },
+  {
+   "id": "C",
+   "name": "Algorithms to the finish, classical ML, AI search, ROS 2 basics",
+   "weeks": [
+    16,
+    24
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "algo",
+     "math-practice",
+     "algo",
+     "math-practice",
+     "algo",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "D",
+   "name": "Deep learning, robot kinematics, ROS 2 core",
+   "weeks": [
+    25,
+    33
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "E",
+   "name": "Probabilistic robotics, the course robot, ML engineering",
+   "weeks": [
+    34,
+    46
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "F",
+   "name": "Teach ROS 2, reinforcement learning, capstone robot",
+   "weeks": [
+    47,
+    63
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  }
+ ],
+ "consolidation": [
+  6,
+  11,
+  17,
+  23,
+  29,
+  35,
+  41,
+  47,
+  53,
+  59
+ ],
+ "weeks": [
+  {
+   "week": 0,
+   "start": "2026-10-15",
+   "end": "2026-10-18",
+   "phase": "0",
+   "consolidation": false,
+   "theme": "Setup: machine, diagnostic, first project spec, lock in week 1",
+   "file": "weeks/week-00.json"
+  },
+  {
+   "week": 1,
+   "start": "2026-10-19",
+   "end": "2026-10-25",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Functions, Big-O, vectors, electricity basics, Tracker v1",
+   "file": "weeks/week-01.json"
+  },
+  {
+   "week": 2,
+   "start": "2026-10-26",
+   "end": "2026-11-01",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Exceptions and modules, linked lists and recursion, matrix multiplication, series and parallel circuits, Tracker v2",
+   "file": "weeks/week-02.json"
+  },
+  {
+   "week": 3,
+   "start": "2026-11-02",
+   "end": "2026-11-08",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Unit tests and files, sorting, determinants and inverses, diodes and LEDs, Tracker v3",
+   "file": "weeks/week-03.json"
+  },
+  {
+   "week": 4,
+   "start": "2026-11-09",
+   "end": "2026-11-15",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Regex and OOP, hash tables and stacks, dot products, capacitors, Tracker v4",
+   "file": "weeks/week-04.json"
+  },
+  {
+   "week": 5,
+   "start": "2026-11-16",
+   "end": "2026-11-22",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Recursion and generators, graphs and BFS/DFS, change of basis, transistors, recursion set",
+   "file": "weeks/week-05.json"
+  },
+  {
+   "week": 6,
+   "start": "2026-11-23",
+   "end": "2026-11-29",
+   "phase": "A",
+   "consolidation": true,
+   "theme": "Consolidation: retake the diagnostic, redo flagged tasks, clean up projects",
+   "file": null
+  },
+  {
+   "week": 7,
+   "start": "2026-11-30",
+   "end": "2026-12-06",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "CS50P final project, trees and Dijkstra, eigenvectors, first Arduino, first data project",
+   "file": "weeks/week-07.json"
+  },
+  {
+   "week": 8,
+   "start": "2026-12-07",
+   "end": "2026-12-13",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ setup, arrays and hashing, derivatives, digital and analog Arduino I/O, SQL basics",
+   "file": "weeks/week-08.json"
+  },
+  {
+   "week": 9,
+   "start": "2026-12-14",
+   "end": "2026-12-20",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ control flow and references, two pointers, chain rule, PWM and servos, SQL joins",
+   "file": "weeks/week-09.json"
+  },
+  {
+   "week": 10,
+   "start": "2026-12-21",
+   "end": "2026-12-27",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ classes, sliding window and stack, gradient descent, distance and IR sensors, SQL aggregates",
+   "file": "weeks/week-10.json"
+  },
+  {
+   "week": 11,
+   "start": "2026-12-28",
+   "end": "2027-01-03",
+   "phase": "B",
+   "consolidation": true,
+   "theme": "Consolidation over New Year",
+   "file": null
+  },
+  {
+   "week": 12,
+   "start": "2027-01-04",
+   "end": "2027-01-10",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "STL containers, binary search, probability, motors and drivers, hypothesis tests",
+   "file": "weeks/week-12.json"
+  },
+  {
+   "week": 13,
+   "start": "2027-01-11",
+   "end": "2027-01-17",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "Pointers and smart pointers, linked lists, Bayes, interrupts and encoders, regression",
+   "file": "weeks/week-13.json"
+  },
+  {
+   "week": 14,
+   "start": "2027-01-18",
+   "end": "2027-01-24",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "Arduino libraries and CMake, trees, distributions, PID line follower, Kaggle EDA",
+   "file": "weeks/week-14.json"
+  },
+  {
+   "week": 15,
+   "start": "2027-01-25",
+   "end": "2027-01-31",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ project, heaps, MML ch. 6, Arduino to Python over serial, data science mini-capstone",
+   "file": "weeks/week-15.json"
+  },
+  {
+   "week": 16,
+   "start": "2027-02-01",
+   "end": "2027-02-07",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 17,
+   "start": "2027-02-08",
+   "end": "2027-02-14",
+   "phase": "C",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 18,
+   "start": "2027-02-15",
+   "end": "2027-02-21",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 19,
+   "start": "2027-02-22",
+   "end": "2027-02-28",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 20,
+   "start": "2027-03-01",
+   "end": "2027-03-07",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 21,
+   "start": "2027-03-08",
+   "end": "2027-03-14",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 22,
+   "start": "2027-03-15",
+   "end": "2027-03-21",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 23,
+   "start": "2027-03-22",
+   "end": "2027-03-28",
+   "phase": "C",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 24,
+   "start": "2027-03-29",
+   "end": "2027-04-04",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 25,
+   "start": "2027-04-05",
+   "end": "2027-04-11",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 26,
+   "start": "2027-04-12",
+   "end": "2027-04-18",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 27,
+   "start": "2027-04-19",
+   "end": "2027-04-25",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 28,
+   "start": "2027-04-26",
+   "end": "2027-05-02",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 29,
+   "start": "2027-05-03",
+   "end": "2027-05-09",
+   "phase": "D",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 30,
+   "start": "2027-05-10",
+   "end": "2027-05-16",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 31,
+   "start": "2027-05-17",
+   "end": "2027-05-23",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 32,
+   "start": "2027-05-24",
+   "end": "2027-05-30",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 33,
+   "start": "2027-05-31",
+   "end": "2027-06-06",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 34,
+   "start": "2027-06-07",
+   "end": "2027-06-13",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 35,
+   "start": "2027-06-14",
+   "end": "2027-06-20",
+   "phase": "E",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 36,
+   "start": "2027-06-21",
+   "end": "2027-06-27",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 37,
+   "start": "2027-06-28",
+   "end": "2027-07-04",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 38,
+   "start": "2027-07-05",
+   "end": "2027-07-11",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 39,
+   "start": "2027-07-12",
+   "end": "2027-07-18",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 40,
+   "start": "2027-07-19",
+   "end": "2027-07-25",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 41,
+   "start": "2027-07-26",
+   "end": "2027-08-01",
+   "phase": "E",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 42,
+   "start": "2027-08-02",
+   "end": "2027-08-08",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 43,
+   "start": "2027-08-09",
+   "end": "2027-08-15",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 44,
+   "start": "2027-08-16",
+   "end": "2027-08-22",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 45,
+   "start": "2027-08-23",
+   "end": "2027-08-29",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 46,
+   "start": "2027-08-30",
+   "end": "2027-09-05",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 47,
+   "start": "2027-09-06",
+   "end": "2027-09-12",
+   "phase": "F",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 48,
+   "start": "2027-09-13",
+   "end": "2027-09-19",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 49,
+   "start": "2027-09-20",
+   "end": "2027-09-26",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 50,
+   "start": "2027-09-27",
+   "end": "2027-10-03",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 51,
+   "start": "2027-10-04",
+   "end": "2027-10-10",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 52,
+   "start": "2027-10-11",
+   "end": "2027-10-17",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 53,
+   "start": "2027-10-18",
+   "end": "2027-10-24",
+   "phase": "F",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 54,
+   "start": "2027-10-25",
+   "end": "2027-10-31",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 55,
+   "start": "2027-11-01",
+   "end": "2027-11-07",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 56,
+   "start": "2027-11-08",
+   "end": "2027-11-14",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 57,
+   "start": "2027-11-15",
+   "end": "2027-11-21",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 58,
+   "start": "2027-11-22",
+   "end": "2027-11-28",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 59,
+   "start": "2027-11-29",
+   "end": "2027-12-05",
+   "phase": "F",
+   "consolidation": true,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 60,
+   "start": "2027-12-06",
+   "end": "2027-12-12",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 61,
+   "start": "2027-12-13",
+   "end": "2027-12-19",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 62,
+   "start": "2027-12-20",
+   "end": "2027-12-26",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 63,
+   "start": "2027-12-27",
+   "end": "2028-01-02",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "",
+   "file": null,
+   "outline": {}
+  }
+ ],
+ "diagnostic": {
+  "title": "Week 0 diagnostic",
+  "rules": "No AI, no Googling. 60–90 minutes. Mark each problem solved, partly solved or stuck, and note what stopped you.",
+  "retakeWeek": 6,
+  "reading": "If 1–3 and 6 come easily, you can move faster. Getting stuck on 2, 3 or 7 is normal and shows where to begin."
+ },
+ "rosVersion": {
+  "default": "Lyrical Luth",
+  "fallback": "Jazzy Jalisco"
+ }
+}

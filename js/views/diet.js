@@ -57,7 +57,7 @@ export function render(root) {
   root.querySelectorAll('[data-d]').forEach(b => (b.onclick = () => { day = addDays(day, Number(b.dataset.d)); render(root); }));
   root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => {
     const n = Number(b.dataset.w);
-    db.setSetting(`water:${day}`, d.water === n ? n - 1 : n);
+    D.setWater(d.water === n ? n - 1 : n, day);
   }));
   root.querySelector('[data-snap]').onclick = () => { openAssistant(); document.querySelector('[data-file]').click(); };
   root.querySelector('[data-ai]').onclick = () => openAssistant('Given what I ate today and my goals, suggest 3 simple options for my next meal with rough calories and protein.');
