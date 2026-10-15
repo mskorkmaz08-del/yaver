@@ -2888,7 +2888,7 @@
    "title": "pandas on the tracker data",
    "objectives": [
     "Load the tracker CSV into a DataFrame and check its shape, types and missing values",
-    "Compute per-student and per-topic completion with boolean masks and `groupby`",
+    "Compute per-student and per-module completion with boolean masks and `groupby`",
     "Write tested functions that return DataFrames or Series instead of printing"
    ],
    "prereqs": [
@@ -2916,7 +2916,7 @@
      "title": "Recall",
      "questions": [
       {
-       "q": "`df.loc[\"S01\":\"S03\"]` vs `df.iloc[0:3]`: which includes the end?",
+       "q": "`df.loc[\"S001\":\"S003\"]` vs `df.iloc[0:3]`: which includes the end?",
        "a": "`loc` includes the end label; `iloc` excludes position 3, like Python slicing."
       },
       {
@@ -2937,13 +2937,13 @@
      "kind": "pretest",
      "minutes": 5,
      "title": "Predict first",
-     "body": "Your Tracker v2 computed per-student completion with loops over CSV rows. Before reading on, write down: if the CSV is loaded into a DataFrame with columns `student_id, topic, lesson, completed, score`, what one pandas expression would give the **fraction of completed lessons per student**? Also predict the dtype of the `score` column if some rows have an empty score."
+     "body": "Your Tracker v2 computed per-student completion with loops over parsed rows. Before reading on, write down: if the export (`student_id,module,lesson,completed_at,score`, with `completed_at` and `score` blank when a lesson isn't done) is loaded into a DataFrame, what pandas expressions would give **(a)** a True/False \"done\" column and **(b)** the fraction of completed lessons per student? Also predict the dtype of `score` and of `completed_at` after `read_csv`."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "From rows and loops to columns and groups",
-     "body": "(Pretest: `df.groupby(\"student_id\")[\"completed\"].mean()`, because the mean of a 0/1 column *is* the completion fraction. And `score` becomes `float64`, because empty cells are read as `NaN`, which only exists in float columns.)\n\nYour tracker so far thinks in **rows**: read a line, update a dict, move on. pandas thinks in **columns**: you describe an operation on a whole column and it runs in compiled code. The two most useful moves today are **boolean masks** (pick rows by a condition) and **group-by** (split rows into groups, apply a function to each group, combine the results). Group-by gets a full chapter in Week 7; today you only need the basic form `df.groupby(key)[column].agg_function()`.\n\n**Step 1: load and look.** `pd.read_csv` accepts a path or any file-like object. The first four things to do with any new dataset: `shape`, `dtypes`, `head()`, `isna().sum()`.\n\n**Step 2: per-student completion.** Because `completed` is 0/1, its mean per student is the completion rate, and its sum is the number done.\n\n**Step 3: per-topic stats.** Same pattern with `topic` as the key. Using `agg` you can compute several statistics at once and name the result columns.\n\n**Step 4: masks.** `df[df[\"completed\"] == 0]` lists the open lessons; `value_counts()` counts them per student.\n\n**Worked example** (the CSV is inlined with `io.StringIO`, so the block runs anywhere; with your real file, pass the path instead):\n\n```python\nimport io\nimport pandas as pd\n\nCSV = '''student_id,topic,lesson,completed,score\nS01,python,functions,1,92\nS01,python,loops,1,85\nS01,algo,binary search,1,78\nS01,algo,sorting,0,\nS02,python,functions,1,70\nS02,python,loops,0,\nS02,algo,binary search,0,\nS02,algo,sorting,0,\nS03,python,functions,1,88\nS03,python,loops,1,90\nS03,algo,binary search,1,95\nS03,algo,sorting,1,81\n'''\n\ndf = pd.read_csv(io.StringIO(CSV))\nprint(df.shape)\nprint(df.dtypes)\nprint(df.isna().sum())\n\nper_student = df.groupby(\"student_id\")[\"completed\"].mean()\nprint(per_student)\n\nper_topic = df.groupby(\"topic\").agg(\n    done=(\"completed\", \"sum\"),\n    lessons=(\"completed\", \"size\"),\n    mean_score=(\"score\", \"mean\"),\n)\nper_topic[\"rate\"] = per_topic[\"done\"] / per_topic[\"lessons\"]\nprint(per_topic.round(2))\n\nopen_items = df[df[\"completed\"] == 0]\nprint(open_items[\"student_id\"].value_counts())\n\nbehind = per_student[per_student < 0.5].index.tolist()\nprint(\"behind:\", behind)\nassert behind == [\"S02\"]\nassert per_topic.loc[\"python\", \"done\"] == 5\n```\n\nRead the output carefully:\n- `mean_score` ignores `NaN` automatically (pandas aggregations skip missing values by default). Whether that's right depends on the meaning: an unscored, unfinished lesson shouldn't count as zero in an *average score*, but it should count in *completion*. Make that decision explicitly in your code and write it in a comment.\n- `size` counts rows including those with `NaN`; `count` counts non-missing values. Mixing them up is a classic bug.\n- The results are Series and DataFrames indexed by student or topic, so they're easy to test: `per_student[\"S02\"] == 0.25`.\n\n**Design for testing.** As in the Python lessons, keep each step a function that takes a DataFrame and returns a Series or DataFrame: `load(path_or_buffer)`, `completion_by_student(df)`, `topic_summary(df)`, `behind(df, threshold)`. Printing and file paths stay in `main()`. You'll reuse exactly these functions in the Tracker v3 build and next week when you clean real messy data."
+     "body": "(Pretest: (a) `df[\"done\"] = df[\"completed_at\"].notna()`, since blank cells are read as `NaN`; (b) `df.groupby(\"student_id\")[\"done\"].mean()`, because the mean of a True/False column *is* the fraction of True. `score` becomes `float64` (NaN only exists in float columns) and `completed_at` is `object` (strings), until you parse it as dates in Week 4.)\n\nYour tracker so far thinks in **rows**: read a line, update a dict, move on. pandas thinks in **columns**: you describe an operation on a whole column and it runs in compiled code. The two most useful moves today are **boolean masks** (pick rows by a condition) and **group-by** (split rows into groups, apply a function to each group, combine the results). Group-by gets a full chapter in Week 7; today you only need `df.groupby(key)[column].agg_function()`.\n\n**Step 1: load and look.** `pd.read_csv` accepts a path or any file-like object. The first four things to do with any new dataset: `shape`, `dtypes`, `head()`, `isna().sum()`.\n\n**Step 2: derive `done`.** The export has no 0/1 column; a lesson is done when `completed_at` is filled in. One vectorised line replaces v2's `bool(rec[\"completed_at\"].strip())`.\n\n**Step 3: per-student and per-module stats.** Group by the key and aggregate. With named aggregation (`agg(new=(\"col\", \"func\"))`) you get several statistics with readable column names at once.\n\n**Step 4: masks.** `df[~df[\"done\"]]` lists the open lessons; `value_counts()` counts them per student.\n\n**Worked example** (the CSV is inlined with `io.StringIO`, so the block runs anywhere; with your real file, pass the path):\n\n```python\nimport io\nimport pandas as pd\n\nCSV = '''student_id,module,lesson,completed_at,score\nS001,Python,Variables,2026-10-02,92\nS001,Python,Loops,2026-10-05,78\nS001,Web,HTML,2026-10-09,85\nS001,Web,CSS,,\nS002,Python,Variables,2026-10-03,65\nS002,Python,Loops,,\nS002,Web,HTML,,\nS002,Web,CSS,,\nS003,Python,Variables,2026-10-02,88\nS003,Python,Loops,2026-10-04,91\nS003,Web,HTML,2026-10-06,79\nS003,Web,CSS,2026-10-08,84\n'''\n\ndf = pd.read_csv(io.StringIO(CSV))\nprint(df.shape)\nprint(df.dtypes)\nprint(df.isna().sum())\n\ndf[\"done\"] = df[\"completed_at\"].notna()\nper_student = df.groupby(\"student_id\")[\"done\"].mean()\nprint(per_student)\n\nper_module = df.groupby(\"module\").agg(\n    done=(\"done\", \"sum\"),\n    lessons=(\"done\", \"size\"),\n    mean_score=(\"score\", \"mean\"),\n)\nper_module[\"rate\"] = per_module[\"done\"] / per_module[\"lessons\"]\nprint(per_module.round(2))\n\nprint(df.loc[~df[\"done\"], \"student_id\"].value_counts())\n\nbehind = per_student[per_student < 0.5].index.tolist()\nprint(\"behind:\", behind)\nassert behind == [\"S002\"]\nassert per_module.loc[\"Python\", \"done\"] == 5\n```\n\nRead the output carefully:\n- `mean_score` skips `NaN` automatically (pandas aggregations do by default). Here that matches v2's rule, a mean over completed scores only. When it doesn't match what you mean, say so explicitly in code.\n- `size` counts rows including those with `NaN`; `count` counts non-missing values. Mixing them up is a classic bug: `(\"score\", \"count\")` would give the number of *scored* lessons, not all lessons.\n- The results are Series and DataFrames indexed by student or module, so they're easy to test: `per_student[\"S002\"] == 0.25`.\n\n**Design for testing.** As in the Python lessons, keep each step a function that takes a DataFrame and returns a Series or DataFrame: `load(source)`, `completion_by_student(df)`, `module_summary(df)`, `behind(df, threshold)`. Printing and file paths stay in `main()`. In today's Tracker v3 build you'll use these to cross-check v3's numbers, and next week you'll reuse them on messy real data."
     },
     {
      "kind": "practice",
@@ -2951,40 +2951,40 @@
      "title": "Practice without notes",
      "tasks": [
       {
-       "prompt": "Write `load(source)` that reads the tracker CSV (path or file-like object) and guarantees: `completed` is `bool`, `score` is float (NaN where missing), and string columns are stripped of surrounding spaces. Then `completion_by_student(df)` returning a Series of completion rates indexed by `student_id`, sorted from lowest to highest.",
+       "prompt": "Write `load(source)` that reads the tracker CSV (path or file-like object) and guarantees: a bool column `done` (True when `completed_at` is filled in), `score` as float (NaN where missing), and string columns stripped of surrounding spaces. Then `completion_by_student(df)` returning a Series of completion rates indexed by `student_id`, sorted from lowest to highest.",
        "hints": [
-        "`pd.read_csv(source, skipinitialspace=True)` handles spaces after commas; `.str.strip()` handles the rest.",
-        "`df[\"completed\"] = df[\"completed\"].astype(bool)`; the mean of a bool column is the fraction of True.",
-        "`df.groupby(\"student_id\")[\"completed\"].mean().sort_values()`."
+        "`pd.read_csv(source, skipinitialspace=True)`; `.str.strip()` for the text columns.",
+        "A cell with only spaces isn't NaN; strip `completed_at` first, then treat empty strings as missing: `.replace(\"\", pd.NA)` or compare `!= \"\"`.",
+        "`df.groupby(\"student_id\")[\"done\"].mean().sort_values()`."
        ],
-       "check": "On the lesson CSV: S02 first with 0.25, then S01 0.75, then S03 1.0; `df[\"completed\"].dtype == bool`.",
-       "solution": "```python\nimport io\nimport pandas as pd\n\ndef load(source):\n    df = pd.read_csv(source, skipinitialspace=True)\n    for col in (\"student_id\", \"topic\", \"lesson\"):\n        df[col] = df[col].astype(str).str.strip()\n    df[\"completed\"] = df[\"completed\"].astype(bool)\n    df[\"score\"] = pd.to_numeric(df[\"score\"], errors=\"coerce\")\n    return df\n\ndef completion_by_student(df):\n    return df.groupby(\"student_id\")[\"completed\"].mean().sort_values()\n\nCSV = \"student_id,topic,lesson,completed,score\\nS01,python,a,1,90\\nS01,python,b,0,\\nS02,algo,a,1,70\\n\"\nprint(completion_by_student(load(io.StringIO(CSV))))\n```",
+       "check": "On the lesson CSV: S002 first with 0.25, then S001 0.75, then S003 1.0; `df[\"done\"].dtype == bool`.",
+       "solution": "```python\nimport io\nimport pandas as pd\n\ndef load(source):\n    df = pd.read_csv(source, skipinitialspace=True, dtype={\"completed_at\": str})\n    for col in (\"student_id\", \"module\", \"lesson\"):\n        df[col] = df[col].astype(str).str.strip()\n    completed = df[\"completed_at\"].fillna(\"\").str.strip()\n    df[\"done\"] = completed != \"\"\n    df[\"score\"] = pd.to_numeric(df[\"score\"], errors=\"coerce\")\n    return df\n\ndef completion_by_student(df):\n    return df.groupby(\"student_id\")[\"done\"].mean().sort_values()\n\nCSV = \"student_id,module,lesson,completed_at,score\\nS001,Python,A,2026-10-02,90\\nS001,Python,B,,\\nS002,Web,A,2026-10-03,70\\n\"\nprint(completion_by_student(load(io.StringIO(CSV))))\n```",
        "lang": "python",
-       "tests": "import io\nCSV = '''student_id,topic,lesson,completed,score\nS01,python,functions,1,92\nS01,python,loops,1,85\nS01,algo,binary search,1,78\nS01,algo,sorting,0,\nS02,python,functions,1,70\nS02,python,loops,0,\nS02,algo,binary search,0,\nS02,algo,sorting,0,\nS03,python,functions,1,88\nS03,python,loops,1,90\nS03,algo,binary search,1,95\nS03,algo,sorting,1,81\n'''\n\ndef test_load_types():\n    df = load(io.StringIO(CSV))\n    assert df[\"completed\"].dtype == bool\n    assert df[\"score\"].isna().sum() == 4\n\ndef test_completion():\n    s = completion_by_student(load(io.StringIO(CSV)))\n    assert list(s.index) == [\"S02\", \"S01\", \"S03\"]\n    assert s[\"S02\"] == 0.25 and s[\"S03\"] == 1.0\n"
+       "tests": "import io\nCSV = '''student_id,module,lesson,completed_at,score\nS001,Python,Variables,2026-10-02,92\nS001,Python,Loops,2026-10-05,78\nS001,Web,HTML,2026-10-09,85\nS001,Web,CSS,,\nS002,Python,Variables,2026-10-03,65\nS002,Python,Loops,,\nS002,Web,HTML,,\nS002,Web,CSS,,\nS003,Python,Variables,2026-10-02,88\nS003,Python,Loops,2026-10-04,91\nS003,Web,HTML,2026-10-06,79\nS003,Web,CSS,2026-10-08,84\n'''\n\ndef test_load_types():\n    df = load(io.StringIO(CSV))\n    assert df[\"done\"].dtype == bool\n    assert df[\"done\"].sum() == 8\n    assert df[\"score\"].isna().sum() == 4\n\ndef test_completion():\n    s = completion_by_student(load(io.StringIO(CSV)))\n    assert list(s.index) == [\"S002\", \"S001\", \"S003\"]\n    assert s[\"S002\"] == 0.25 and s[\"S003\"] == 1.0\n"
       },
       {
-       "prompt": "Write `topic_summary(df)` returning a DataFrame indexed by topic with columns `done` (int), `lessons` (int), `rate` (float, 0–1) and `mean_score` (mean of the available scores, rounded to 1 decimal). Use the `load` from the previous task.",
+       "prompt": "Write `module_summary(df)` returning a DataFrame indexed by module with columns `done` (int), `lessons` (int), `rate` (float, 0–1) and `mean_score` (mean of the available scores, rounded to 1 decimal). Use the `load` from the previous task.",
        "hints": [
-        "Named aggregation: `df.groupby(\"topic\").agg(done=(\"completed\", \"sum\"), ...)`.",
+        "Named aggregation: `df.groupby(\"module\").agg(done=(\"done\", \"sum\"), ...)`.",
         "`size` counts all rows; use it for `lessons`.",
-        "Add `rate` as `done / lessons` after the `agg`, then `round(1)` only the score column."
+        "Add `rate` as `done / lessons` after the `agg`, then round only the score column."
        ],
-       "check": "On the lesson CSV: python → done 5, lessons 6, rate ≈ 0.833, mean_score 85.0; algo → done 4, lessons 6, mean_score 84.7.",
-       "solution": "```python\nimport io\nimport pandas as pd\n\ndef load(source):\n    df = pd.read_csv(source, skipinitialspace=True)\n    df[\"completed\"] = df[\"completed\"].astype(bool)\n    df[\"score\"] = pd.to_numeric(df[\"score\"], errors=\"coerce\")\n    return df\n\ndef topic_summary(df):\n    out = df.groupby(\"topic\").agg(\n        done=(\"completed\", \"sum\"),\n        lessons=(\"completed\", \"size\"),\n        mean_score=(\"score\", \"mean\"),\n    )\n    out[\"done\"] = out[\"done\"].astype(int)\n    out[\"rate\"] = out[\"done\"] / out[\"lessons\"]\n    out[\"mean_score\"] = out[\"mean_score\"].round(1)\n    return out[[\"done\", \"lessons\", \"rate\", \"mean_score\"]]\n\nCSV = \"student_id,topic,lesson,completed,score\\nS01,python,a,1,90\\nS01,python,b,0,\\nS02,algo,a,1,70\\n\"\nprint(topic_summary(load(io.StringIO(CSV))))\n```",
+       "check": "On the lesson CSV: Python → done 5, lessons 6, rate ≈ 0.833, mean_score 82.8; Web → done 3, lessons 6, rate 0.5, mean_score 82.7.",
+       "solution": "```python\nimport io\nimport pandas as pd\n\ndef load(source):\n    df = pd.read_csv(source, skipinitialspace=True, dtype={\"completed_at\": str})\n    df[\"done\"] = df[\"completed_at\"].fillna(\"\").str.strip() != \"\"\n    df[\"score\"] = pd.to_numeric(df[\"score\"], errors=\"coerce\")\n    return df\n\ndef module_summary(df):\n    out = df.groupby(\"module\").agg(\n        done=(\"done\", \"sum\"),\n        lessons=(\"done\", \"size\"),\n        mean_score=(\"score\", \"mean\"),\n    )\n    out[\"done\"] = out[\"done\"].astype(int)\n    out[\"rate\"] = out[\"done\"] / out[\"lessons\"]\n    out[\"mean_score\"] = out[\"mean_score\"].round(1)\n    return out[[\"done\", \"lessons\", \"rate\", \"mean_score\"]]\n\nCSV = \"student_id,module,lesson,completed_at,score\\nS001,Python,A,2026-10-02,90\\nS001,Python,B,,\\nS002,Web,A,2026-10-03,70\\n\"\nprint(module_summary(load(io.StringIO(CSV))))\n```",
        "lang": "python",
-       "tests": "import io\nCSV = '''student_id,topic,lesson,completed,score\nS01,python,functions,1,92\nS01,python,loops,1,85\nS01,algo,binary search,1,78\nS01,algo,sorting,0,\nS02,python,functions,1,70\nS02,python,loops,0,\nS02,algo,binary search,0,\nS02,algo,sorting,0,\nS03,python,functions,1,88\nS03,python,loops,1,90\nS03,algo,binary search,1,95\nS03,algo,sorting,1,81\n'''\n\ndef test_topic_summary():\n    t = topic_summary(load(io.StringIO(CSV)))\n    assert list(t.columns) == [\"done\", \"lessons\", \"rate\", \"mean_score\"]\n    assert t.loc[\"python\", \"done\"] == 5 and t.loc[\"python\", \"lessons\"] == 6\n    assert abs(t.loc[\"python\", \"rate\"] - 5 / 6) < 1e-9\n    assert t.loc[\"python\", \"mean_score\"] == 85.0\n    assert t.loc[\"algo\", \"mean_score\"] == 84.7\n"
+       "tests": "import io\nCSV = '''student_id,module,lesson,completed_at,score\nS001,Python,Variables,2026-10-02,92\nS001,Python,Loops,2026-10-05,78\nS001,Web,HTML,2026-10-09,85\nS001,Web,CSS,,\nS002,Python,Variables,2026-10-03,65\nS002,Python,Loops,,\nS002,Web,HTML,,\nS002,Web,CSS,,\nS003,Python,Variables,2026-10-02,88\nS003,Python,Loops,2026-10-04,91\nS003,Web,HTML,2026-10-06,79\nS003,Web,CSS,2026-10-08,84\n'''\n\ndef test_module_summary():\n    t = module_summary(load(io.StringIO(CSV)))\n    assert list(t.columns) == [\"done\", \"lessons\", \"rate\", \"mean_score\"]\n    assert t.loc[\"Python\", \"done\"] == 5 and t.loc[\"Python\", \"lessons\"] == 6\n    assert abs(t.loc[\"Python\", \"rate\"] - 5 / 6) < 1e-9\n    assert t.loc[\"Python\", \"mean_score\"] == 82.8\n    assert t.loc[\"Web\", \"mean_score\"] == 82.7\n"
       },
       {
-       "prompt": "Unguided: write `behind(df, threshold=0.5)` returning a DataFrame with one row per student whose completion rate is below `threshold`, with columns `rate` and `open_lessons` (a comma-separated string of their unfinished lesson names, in file order). Run it on your **real** anonymized export as well as the sample.",
+       "prompt": "Unguided: write `behind(df, threshold=0.5)` returning a DataFrame with one row per student whose completion rate is below `threshold`, with columns `rate` and `open_lessons` (a comma-separated string of their unfinished lesson names, in file order). Run it on your **real** anonymized export as well as the sample, and compare with v2's \"needs attention\" list.",
        "hints": [
         "Start from the per-student completion Series and filter it.",
-        "For open lessons, filter rows with `~df[\"completed\"]`, then group by student and join the lesson names: `.agg(\", \".join)`.",
-        "Build the result with `pd.DataFrame({\"rate\": rates, \"open_lessons\": open_lists})` and keep only the students below the threshold; `.loc[...]` with the filtered index works."
+        "For open lessons, filter rows with `~df[\"done\"]`, group by student and join the names: `.agg(\", \".join)`.",
+        "Build the result with `pd.DataFrame({\"rate\": ..., \"open_lessons\": ...})` for the filtered index; `reindex(...).fillna(\"\")` covers students with nothing open."
        ],
-       "check": "On the sample: one row, S02, rate 0.25, open_lessons `\"loops, binary search, sorting\"`. With threshold 0.8 S01 joins with `\"sorting\"`.",
-       "solution": "```python\nimport io\nimport pandas as pd\n\ndef behind(df, threshold=0.5):\n    rates = df.groupby(\"student_id\")[\"completed\"].mean()\n    open_lists = df[~df[\"completed\"]].groupby(\"student_id\")[\"lesson\"].agg(\", \".join)\n    low = rates[rates < threshold].index\n    return pd.DataFrame({\"rate\": rates.loc[low], \"open_lessons\": open_lists.reindex(low).fillna(\"\")})\n\nCSV = \"student_id,topic,lesson,completed,score\\nS01,python,a,1,90\\nS01,python,b,0,\\nS02,algo,a,1,70\\n\"\ndf = pd.read_csv(io.StringIO(CSV))\ndf[\"completed\"] = df[\"completed\"].astype(bool)\nprint(behind(df, 0.8))\n```",
+       "check": "On the sample: one row, S002, rate 0.25, open_lessons `\"Loops, HTML, CSS\"`. With threshold 0.8, S001 joins with `\"CSS\"`.",
+       "solution": "```python\nimport io\nimport pandas as pd\n\ndef behind(df, threshold=0.5):\n    rates = df.groupby(\"student_id\")[\"done\"].mean()\n    open_lists = df[~df[\"done\"]].groupby(\"student_id\")[\"lesson\"].agg(\", \".join)\n    low = rates[rates < threshold].index\n    return pd.DataFrame({\"rate\": rates.loc[low], \"open_lessons\": open_lists.reindex(low).fillna(\"\")})\n\nCSV = \"student_id,module,lesson,completed_at,score\\nS001,Python,A,2026-10-02,90\\nS001,Python,B,,\\nS002,Web,A,2026-10-03,70\\n\"\ndf = pd.read_csv(io.StringIO(CSV))\ndf[\"done\"] = df[\"completed_at\"].notna()\nprint(behind(df, 0.8))\n```",
        "lang": "python",
-       "tests": "import io\nimport pandas as pd\nCSV = '''student_id,topic,lesson,completed,score\nS01,python,functions,1,92\nS01,python,loops,1,85\nS01,algo,binary search,1,78\nS01,algo,sorting,0,\nS02,python,functions,1,70\nS02,python,loops,0,\nS02,algo,binary search,0,\nS02,algo,sorting,0,\nS03,python,functions,1,88\nS03,python,loops,1,90\nS03,algo,binary search,1,95\nS03,algo,sorting,1,81\n'''\n\ndef _df():\n    d = pd.read_csv(io.StringIO(CSV))\n    d[\"completed\"] = d[\"completed\"].astype(bool)\n    return d\n\ndef test_behind_default():\n    b = behind(_df())\n    assert list(b.index) == [\"S02\"]\n    assert b.loc[\"S02\", \"rate\"] == 0.25\n    assert b.loc[\"S02\", \"open_lessons\"] == \"loops, binary search, sorting\"\n\ndef test_behind_higher_threshold():\n    b = behind(_df(), 0.8)\n    assert sorted(b.index) == [\"S01\", \"S02\"]\n    assert b.loc[\"S01\", \"open_lessons\"] == \"sorting\"\n"
+       "tests": "import io\nimport pandas as pd\nCSV = '''student_id,module,lesson,completed_at,score\nS001,Python,Variables,2026-10-02,92\nS001,Python,Loops,2026-10-05,78\nS001,Web,HTML,2026-10-09,85\nS001,Web,CSS,,\nS002,Python,Variables,2026-10-03,65\nS002,Python,Loops,,\nS002,Web,HTML,,\nS002,Web,CSS,,\nS003,Python,Variables,2026-10-02,88\nS003,Python,Loops,2026-10-04,91\nS003,Web,HTML,2026-10-06,79\nS003,Web,CSS,2026-10-08,84\n'''\n\ndef _df():\n    d = pd.read_csv(io.StringIO(CSV))\n    d[\"done\"] = d[\"completed_at\"].notna()\n    return d\n\ndef test_behind_default():\n    b = behind(_df())\n    assert list(b.index) == [\"S002\"]\n    assert b.loc[\"S002\", \"rate\"] == 0.25\n    assert b.loc[\"S002\", \"open_lessons\"] == \"Loops, HTML, CSS\"\n\ndef test_behind_higher_threshold():\n    b = behind(_df(), 0.8)\n    assert sorted(b.index) == [\"S001\", \"S002\"]\n    assert b.loc[\"S001\", \"open_lessons\"] == \"CSS\"\n"
       }
      ]
     },
@@ -2994,8 +2994,8 @@
      "title": "Exit ticket",
      "questions": [
       {
-       "q": "Why is `df.groupby(\"student_id\")[\"completed\"].mean()` the completion rate?",
-       "a": "`completed` is 0/1 (or bool); the mean of such a column in each group is the fraction of 1s, i.e. done / total."
+       "q": "Why is `df.groupby(\"student_id\")[\"done\"].mean()` the completion rate?",
+       "a": "`done` is True/False (1/0); the mean in each group is the fraction of True, i.e. done / total."
       },
       {
        "q": "`size` vs `count` in an aggregation?",
@@ -3016,15 +3016,15 @@
    "cards": [
     {
      "front": "Completion rate per student in one pandas line",
-     "back": "`df.groupby('student_id')['completed'].mean()`"
+     "back": "`df.groupby('student_id')['done'].mean()`"
     },
     {
      "front": "Named aggregation syntax",
      "back": "`df.groupby(key).agg(new_name=('column', 'func'), ...)`"
     },
     {
-     "front": "Rows where completed is False (bool column)",
-     "back": "`df[~df['completed']]`"
+     "front": "Rows where `done` is False (bool column)",
+     "back": "`df[~df['done']]`"
     },
     {
      "front": "Four first checks on any new DataFrame",
@@ -3035,7 +3035,7 @@
      "back": "`df.groupby(key)['col'].agg(', '.join)`"
     }
    ],
-   "deliverable": "learning-log/week03/tracker_pandas.py with load, completion_by_student, topic_summary, behind and tests; output on the real anonymized export noted in the log.",
+   "deliverable": "learning-log/tracker/tracker_pandas.py with load, completion_by_student, module_summary, behind and tests; output on the real anonymized export noted in the log.",
    "teachBy": null,
    "safety": null
   },
