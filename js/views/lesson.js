@@ -12,15 +12,19 @@ let tick;
 let state = {}; // per-render UI state that isn't worth storing: revealed answers, marks
 let keyHandler = null;
 
-export function cleanup() {
+function stop() {
   clearInterval(tick);
   if (keyHandler) document.removeEventListener('keydown', keyHandler);
   keyHandler = null;
+}
+// Leaving the lesson undocks the tutor; a redraw of the same lesson keeps it docked.
+export function cleanup() {
+  stop();
   document.body.classList.remove('lesson-docked');
 }
 
 export function render(root, go, arg) {
-  cleanup();
+  stop();
   if (!C.ready()) { root.innerHTML = '<p class="muted small">Loading the course…</p>'; return; }
   if (state.arg !== arg) state = { arg, revealed: {}, marks: {}, hints: {}, answers: {}, i: 0, flipped: false };
   if (arg === 'review') return review(root, go);
