@@ -1,11 +1,13 @@
 // The Yaver chat: a full-screen sheet that opens from the glowing button.
 import * as db from '../db.js';
 import { runTurn } from './claude.js';
+import { runTurnGemini, userMessage } from './gemini.js';
+import { provider } from './provider.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 
 const CHAT_ID = 'main';
-let chat;          // { id, api: [...API messages], view: [...what the user sees] }
+let chat;          // { id, api: [Claude messages], gapi: [Gemini messages], view: [what the user sees] }
 let busy = false;
 let abort;
 let pendingImage = null;
@@ -51,7 +53,7 @@ export function initAssistant() {
 
   const input = el.querySelector('[data-input]');
   el.querySelector('[data-close]').onclick = closeAssistant;
-  el.querySelector('[data-new]').onclick = () => { if (busy) return; chat = { id: CHAT_ID, api: [], view: [] }; save(); render(); };
+  el.querySelector('[data-new]').onclick = () => { if (busy) return; chat = { id: CHAT_ID, api: [], gapi: [], view: [] }; save(); render(); };
   el.querySelector('[data-send]').onclick = () => (busy ? abort?.abort() : send(input.value));
   input.addEventListener('input', () => autosize(input));
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !matchMedia('(pointer:coarse)').matches) { e.preventDefault(); send(input.value); } });
@@ -137,17 +139,20 @@ async function send(textIn) {
   autosize(input);
   speechSynthesis?.cancel?.();
 
-  const content = [];
-  if (pendingImage) content.push({ type: 'image', source: { type: 'base64', media_type: pendingImage.media_type, data: pendingImage.data } });
-  content.push({ type: 'text', text: text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.' });
+  // Each AI keeps its own history format; switching AI starts that one's context fresh.
+  const gem = provider() === 'gemini';
+  const prompt = text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.';
+  const img = pendingImage && { media_type: pendingImage.media_type, data: pendingImage.data };
   chat.view.push({ role: 'user', text, image: pendingImage?.url });
   pendingImage = null;
   el.querySelector('[data-preview]').hidden = true;
 
   const reply = { role: 'bot', text: '', actions: [] };
   chat.view.push(reply);
-  const before = chat.api.length;
-  chat.api.push({ role: 'user', content });
+  const history = gem ? (chat.gapi ||= []) : chat.api;
+  const before = history.length;
+  if (gem) history.push(userMessage(prompt, img));
+  else history.push({ role: 'user', content: [...(img ? [{ type: 'image', source: { type: 'base64', ...img } }] : []), { type: 'text', text: prompt }] });
   busy = true;
   el.classList.add('busy');
   el.querySelector('[data-send]').innerHTML = icon('stop');
@@ -158,7 +163,7 @@ async function send(textIn) {
   const live = () => log.lastElementChild;
   abort = new AbortController();
   try {
-    const { text: out } = await runTurn(chat.api, {
+    const { text: out } = await (gem ? runTurnGemini : runTurn)(history, {
       signal: abort.signal,
       onText: t => { reply.text = t; live().outerHTML = bubble(reply); scrollDown(); },
       onAction: a => { reply.actions.push(a); haptic(); live().outerHTML = bubble(reply); },
@@ -168,18 +173,18 @@ async function send(textIn) {
     if (db.setting('speak', false)) speak(reply.text);
   } catch (e) {
     // Drop the unfinished turn from what we send next time, so the conversation stays valid.
-    chat.api.length = before;
+    history.length = before;
     reply.error = e.code !== 'abort';
     reply.text = e.code === 'abort' ? (reply.text || 'Stopped.') : e.message;
-    if (e.code === 'nokey') reply.text += ' (Settings → Claude)';
+    if (e.code === 'nokey') reply.text += ' (Settings → AI)';
   } finally {
     busy = false;
     el.classList.remove('busy');
     el.querySelector('[data-send]').innerHTML = icon('send');
     setStatus('');
-    // Long conversations: start a fresh context for Claude (the screen keeps the old bubbles).
-    // We never edit earlier turns in place, because Claude's saved reasoning is tied to them.
-    if (chat.api.length > 80) { chat.api = []; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
+    // Long conversations: start a fresh context (the screen keeps the old bubbles).
+    // We never edit earlier turns in place, because the model's saved reasoning is tied to them.
+    if (history.length > 80) { history.length = 0; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
     save();
     render();
   }

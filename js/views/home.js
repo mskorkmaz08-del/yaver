@@ -6,7 +6,7 @@ import { icon } from '../icons.js';
 import { reminders } from '../reminders.js';
 import { expenseForm, meetingForm, studyForm, mealForm, taskForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
-import { testKey } from '../ai/claude.js';
+import { hasKey as aiReady, saveKey } from '../ai/provider.js';
 
 function greeting() {
   const h = new Date().getHours();
@@ -25,7 +25,7 @@ export function weekSegments(perDay, goal) {
 
 export function render(root, go) {
   const name = db.setting('userName', '');
-  const hasKey = !!db.setting('apiKey', '');
+  const hasKey = aiReady();
   const m = D.moneySummary();
   const s = D.studySummary();
   const d = D.dietDay();
@@ -47,12 +47,11 @@ export function render(root, go) {
       <section class="setup">
         <h3>${raw(icon('key'))} Connect the AI</h3>
         <ol>
-          <li>Open <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener"><b>console.anthropic.com</b></a> and sign up.</li>
-          <li><b>Billing</b>: add a little credit, and set a monthly limit.</li>
-          <li><b>API Keys → Create Key</b>, copy it, paste it here.</li>
+          <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"><b>aistudio.google.com/apikey</b></a> and sign in with Google.</li>
+          <li>Tap <b>Create API key</b>, copy it, paste it here. Free, no card needed.</li>
         </ol>
-        <div class="key-row"><input type="password" data-key placeholder="sk-ant-…" autocomplete="off"><button class="btn primary" data-save-key>Save</button></div>
-        <p class="small muted">Stored only on this phone, sent only to Anthropic.</p>
+        <div class="key-row"><input type="password" data-key placeholder="AIza… (Gemini) or sk-ant-… (Claude)" autocomplete="off"><button class="btn primary" data-save-key>Save</button></div>
+        <p class="small muted">Stored only on this phone. A Claude key also works here if you have one.</p>
       </section>`)}
 
     <button class="ask" data-ask>
@@ -137,9 +136,6 @@ export function render(root, go) {
     setTimeout(() => db.put('tasks', { ...t, done: true, doneAt: new Date().toISOString() }), 350);
   }));
   root.querySelector('[data-save-key]')?.addEventListener('click', async () => {
-    const v = root.querySelector('[data-key]').value.trim();
-    if (!v.startsWith('sk-ant-')) return toast('That doesn\'t look like an Anthropic key (sk-ant-…)');
-    await db.setSetting('apiKey', v);
-    try { await testKey(); toast('Key works. Yaver is connected.'); } catch (e) { toast(e.message, 4000); }
+    try { toast(await saveKey(root.querySelector('[data-key]').value)); } catch (e) { toast(e.message, 4000); }
   });
 }

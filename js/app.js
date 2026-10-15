@@ -3,6 +3,7 @@
 import * as db from './db.js';
 import { $, sheet, toast } from './util.js';
 import { initAssistant, openAssistant } from './ai/assistant.js';
+import { saveKey } from './ai/provider.js';
 import * as home from './views/home.js';
 import * as money from './views/money.js';
 import * as calendar from './views/calendar.js';
@@ -44,14 +45,14 @@ async function onboarding() {
     fields: [
       { name: 'userName', label: 'What should I call you?', placeholder: 'Mustafa' },
       { name: 'currency', label: 'Currency', type: 'select', options: currencyOptions().filter(([c]) => c), value: 'TRY' },
-      { name: 'apiKey', label: 'Anthropic API key (console.anthropic.com → API Keys)', type: 'password', placeholder: 'sk-ant-… (can add later)' },
+      { name: 'apiKey', label: 'AI key: free Gemini key from aistudio.google.com/apikey (or a Claude key)', type: 'password', placeholder: 'AIza… (can add later)' },
     ],
     submit: 'Start',
   });
   if (v) {
     if (v.userName) await db.setSetting('userName', v.userName.trim());
     if (v.currency) await db.setSetting('currency', v.currency);
-    if (v.apiKey) await db.setSetting('apiKey', v.apiKey.trim());
+    if (v.apiKey) saveKey(v.apiKey).then(toast, e => toast(e.message, 4000));
   }
   await db.setSetting('onboarded', true);
 }

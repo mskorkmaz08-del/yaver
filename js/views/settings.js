@@ -1,12 +1,17 @@
 import * as db from '../db.js';
 import { html, raw, toast, confirmSheet } from '../util.js';
-import { MODELS, testKey } from '../ai/claude.js';
+import { MODELS } from '../ai/claude.js';
+import { PROVIDERS, provider, testCurrent } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
 
 export function render(root, go) {
   const s = (k, f) => db.setting(k, f);
   const key = s('apiKey', '');
+  const gkey = s('geminiKey', '');
+  const prov = provider();
+  const gmodels = s('geminiModels', []);
+  const gmodel = s('geminiModel', '');
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
   root.innerHTML = html`
@@ -21,13 +26,17 @@ export function render(root, go) {
       <p class="muted small">Yaver then opens full screen like a normal app and works offline.</p></section>`)}
 
     <form class="card form" data-form>
-      <p class="label">claude</p>
-      <label class="field"><span>Anthropic API key</span><input name="apiKey" type="password" autocomplete="off" value="${key}" placeholder="sk-ant-…"></label>
-      <p class="muted small">Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> → API Keys. Add credit under Billing and set a monthly limit. The key stays on this phone and is sent only to Anthropic.</p>
-      <div class="btn-row"><button type="button" class="btn ghost" data-test>Test key</button></div>
-      <label class="field"><span>Model</span><select name="model">${raw(MODELS.map(([id, label]) => `<option value="${id}" ${id === s('model', 'claude-opus-5-5') ? 'selected' : ''}>${label}</option>`).join(''))}</select></label>
-      <label class="field"><span>Thinking effort</span><select name="effort">${raw([['low', 'Low · quickest replies'], ['medium', 'Medium · balanced'], ['high', 'High · deepest thinking']].map(([v, l]) => `<option value="${v}" ${v === s('effort', 'low') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
-      <label class="field check"><span>Web search for fresh answers</span><input type="checkbox" name="webSearch" ${raw(s('webSearch', true) ? 'checked' : '')}></label>
+      <p class="label">ai</p>
+      <label class="field"><span>Assistant</span><select name="provider">${raw(PROVIDERS.map(([v, l]) => `<option value="${v}" ${v === prov ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Gemini API key (free)</span><input name="geminiKey" type="password" autocomplete="off" value="${gkey}" placeholder="AIza…"></label>
+      <p class="muted small">Free at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → Create API key. The free tier has per-minute and per-day limits, and Google may use free-tier chats to improve its models.</p>
+      <label class="field"><span>Gemini model</span><select name="geminiModel"><option value="">Auto (best free flash model)</option>${raw(gmodels.map(m => `<option value="${m}" ${m === gmodel ? 'selected' : ''}>${m}</option>`).join(''))}</select></label>
+      <label class="field"><span>Anthropic API key (paid)</span><input name="apiKey" type="password" autocomplete="off" value="${key}" placeholder="sk-ant-…"></label>
+      <p class="muted small">Optional. From <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> → API Keys, with credit under Billing. Keys stay on this phone.</p>
+      <label class="field"><span>Claude model</span><select name="model">${raw(MODELS.map(([id, label]) => `<option value="${id}" ${id === s('model', 'claude-opus-5-5') ? 'selected' : ''}>${label}</option>`).join(''))}</select></label>
+      <label class="field"><span>Claude thinking effort</span><select name="effort">${raw([['low', 'Low · quickest replies'], ['medium', 'Medium · balanced'], ['high', 'High · deepest thinking']].map(([v, l]) => `<option value="${v}" ${v === s('effort', 'low') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field check"><span>Claude web search</span><input type="checkbox" name="webSearch" ${raw(s('webSearch', true) ? 'checked' : '')}></label>
+      <div class="btn-row"><button type="button" class="btn ghost" data-test>Test assistant</button></div>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
 
@@ -57,7 +66,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v2</p>`;
+    <p class="small dim center mono">yaver v3</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   const form = root.querySelector('[data-form]');
@@ -73,7 +82,7 @@ export function render(root, go) {
   form.onsubmit = async e => { e.preventDefault(); await saveForm(); toast('Saved'); };
   root.querySelector('[data-test]').onclick = async () => {
     await saveForm();
-    try { await testKey(); toast('Key works. Yaver is connected.'); } catch (e) { toast(e.message, 4000); }
+    try { toast(await testCurrent()); } catch (e) { toast(e.message, 4000); }
   };
   root.querySelector('[data-export]').onclick = async () => {
     const blob = new Blob([JSON.stringify(db.exportAll(), null, 1)], { type: 'application/json' });

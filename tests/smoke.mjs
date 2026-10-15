@@ -40,6 +40,29 @@ await page.route('https://api.anthropic.com/**', async route => {
   await route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream', 'access-control-allow-origin': '*' }, body: sse(evs) });
 });
 
+// Gemini: list models, then stream a function call, then a text answer.
+const gRequests = [];
+await page.route('https://generativelanguage.googleapis.com/**', async route => {
+  const url = route.request().url();
+  const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
+  if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { ...cors, 'access-control-allow-methods': 'GET,POST' } });
+  if (url.includes('/models?')) {
+    return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ models: [
+      { name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/gemini-2.5-flash-lite', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/gemini-3-flash-preview', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/text-embedding-004', supportedGenerationMethods: ['embedContent'] }] }) });
+  }
+  const body = route.request().postDataJSON();
+  gRequests.push({ url, headers: route.request().headers(), body });
+  const last = body.contents.at(-1);
+  const isResult = last.parts.some(p => p.functionResponse);
+  const chunks = isResult
+    ? [{ candidates: [{ content: { role: 'model', parts: [{ text: 'Logged 45 min of ' }] } }] }, { candidates: [{ content: { role: 'model', parts: [{ text: 'Algorithms.' }] }, finishReason: 'STOP' }] }]
+    : [{ candidates: [{ content: { role: 'model', parts: [{ functionCall: { name: 'log_study', args: { subject: 'Algorithms', minutes: 45 } }, thoughtSignature: 'sig123' }] }, finishReason: 'STOP' }] }];
+  await route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/event-stream' }, body: chunks.map(c => `data: ${JSON.stringify(c)}\r\n\r\n`).join('') });
+});
+
 await page.route('https://tile.openstreetmap.org/**', r => r.fulfill({ status: 204 }));
 await page.route('https://overpass-api.de/**', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ elements: [
   { type: 'node', lat: 43.2395, lon: 76.8905, tags: { name: 'Arbat Pharmacy', 'addr:street': 'Abay Ave', 'addr:housenumber': '12', opening_hours: '08:00-22:00' } },
@@ -49,7 +72,7 @@ await page.waitForSelector('.sheet');
 await page.screenshot({ path: 'tests/shots/0-onboarding.png' });
 await page.fill('input[name=userName]', 'Mustafa');
 await page.selectOption('select[name=currency]', 'KZT');
-await page.fill('input[name=apiKey]', 'sk-ant-test');
+await page.fill('input[name=apiKey]', 'AIzaTestKey');
 await page.click('.sheet button[type=submit]');
 await page.waitForTimeout(500);
 
@@ -100,8 +123,23 @@ await page.goto(base + '#settings');
 await page.waitForTimeout(400);
 await page.screenshot({ path: 'tests/shots/4-settings.png', fullPage: true });
 
-// Assistant
+// Assistant on Gemini (free)
 await page.click('#fab');
+await page.fill('[data-input]', 'log 45 min of algorithms');
+await page.click('[data-send]');
+await page.waitForFunction(() => document.querySelector('.chat-wrap:not(.busy)') && document.querySelectorAll('.receipt').length >= 1, null, { timeout: 10000 });
+await page.screenshot({ path: 'tests/shots/5-chat-gemini.png' });
+const gstate = await page.evaluate(async () => {
+  const db = await import('./js/db.js');
+  return { provider: db.setting('provider'), model: db.setting('geminiModel'), gapi: db.get('chats', 'main').gapi.map(m => m.role + ':' + m.parts.map(p => Object.keys(p).join('+')).join('|')), lastBot: document.querySelector('.msg.bot:last-child .bot-text').textContent };
+});
+console.log('GEMINI', JSON.stringify(gstate));
+console.log('G-REQ', gRequests.length, gRequests[0].url, 'key', gRequests[0].headers['x-goog-api-key'], 'tools', gRequests[0].body.tools[0].functionDeclarations.length, 'sigBack', JSON.stringify(gRequests[1].body.contents.at(-2).parts[0].thoughtSignature));
+await page.click('[data-new]');
+
+// Switch to Claude
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('apiKey', 'sk-ant-test'); await db.setSetting('provider', 'anthropic'); });
+await page.waitForTimeout(300);
 await page.waitForTimeout(500);
 await page.screenshot({ path: 'tests/shots/5-chat-empty.png' });
 await page.fill('[data-input]', 'spent 120 on lunch, and set a meeting with Ayşe tomorrow at 3');

@@ -14,7 +14,7 @@ export const MODELS = [
   ['claude-haiku-5-5', 'Claude Haiku 5.5 · fastest & cheapest'],
 ];
 
-const STATIC_SYSTEM = `You are Yaver (Turkish for "aide"), a personal assistant inside the user's iPhone app.
+export const STATIC_SYSTEM = `You are Yaver (Turkish for "aide"), a personal assistant inside the user's iPhone app.
 The app tracks the user's expenses, meetings, study sessions, learning roadmap and streak, diet, water and to-dos, and finds places nearby. You can read and change all of it with your tools.
 
 The user is building a strong programming and computer-science foundation on the way to becoming a machine learning engineer, while working as a mentor for first-year CS students. Help them study well: explain concepts clearly with small examples, quiz them when asked, break topics into milestones on their roadmap, and point out what to do next based on their actual data.
@@ -29,7 +29,7 @@ How to work:
 - You are read on a phone: lead with the answer, keep it short, short bullet lists when listing, no tables. Code in fenced blocks.
 - Reply in the language the user writes in.`;
 
-function dynamicContext() {
+export function dynamicContext() {
   const name = db.setting('userName', '');
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const d = new Date();
@@ -151,7 +151,7 @@ async function streamOnce(c, messages, onDelta, signal, onStatus) {
   throw new Error('Could not reach Claude.');
 }
 
-function statusFor(name) {
+export function statusFor(name) {
   if (name.includes('meeting')) return 'Checking your calendar…';
   if (name.includes('expense')) return 'Updating your expenses…';
   if (name.includes('study')) return 'Looking at your studies…';

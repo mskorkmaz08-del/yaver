@@ -97,6 +97,16 @@ Key ideas:
 
 **Your API key** is stored in the phone's database and sent only to `api.anthropic.com`. Because the app calls the API straight from the phone, anyone holding your unlocked phone could read the key, the same as any saved password. The spend limit is your safety net.
 
+## 3b. Free mode: Gemini (added in v3)
+
+Yaver can use either brain. **Gemini** (Google) has a free tier: get a key at aistudio.google.com/apikey, paste it on Home or in Settings → AI. **Claude** is paid and smarter. Yaver tells the keys apart by their start (`AIza…` is Gemini, `sk-ant-…` is Claude) and switches to whichever you pasted; Settings → AI → Assistant switches back and forth.
+
+- `js/ai/gemini.js` runs the same agent loop as `claude.js`, over Gemini's REST API (`streamGenerateContent`). The 21 tools are translated into Gemini "function declarations", so both brains do exactly the same things to your data.
+- On first use it asks Google which models your key can use and picks the best stable free "flash" model.
+- Each brain keeps its own conversation history, because their message formats differ.
+- Limits: the free tier caps requests per minute and per day, Google may use free-tier chats to improve its models, and web search is Claude-only.
+- `js/ai/provider.js` holds the switch: which brain is active, saving a pasted key, and testing it.
+
 ## 4. Offline and updates
 
 `sw.js` is a **service worker**: a small script Safari runs in the background for the app. On first launch it saves a copy of every app file. After that:
@@ -141,6 +151,8 @@ yaver/
     ├── icons.js            Line icons
     ├── views/              One file per screen: home, study, calendar, money, diet, map, settings
     └── ai/
+        ├── provider.js     Picks Gemini (free) or Claude; saves and tests keys
+        ├── gemini.js       Talks to Google's Gemini API; same agent loop
         ├── claude.js       Talks to the Anthropic API; the agent loop
         ├── tools.js        The 21 tools Claude can call, and the code behind each
         └── assistant.js    The chat screen: messages, photos, voice in/out
