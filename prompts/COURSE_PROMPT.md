@@ -10,6 +10,8 @@
 
 Add a **Course** to Yaver that teaches its owner, Mustafa, day by day, the foundations he needs to become an expert-level **AI engineer** (data science, machine learning, deep learning) and **robotics engineer**.
 
+He will use it on **both his iPhone and his laptop/desktop**: the same app at the same address, a layout made for each screen, and the same progress on both devices (§10b).
+
 When he opens Yaver at 05:30, it must show exactly what to learn in each study block today, then **teach** it: a lesson of **at least 60 minutes** per subject block, built on proven learning methods (retrieval, spacing, interleaving, worked examples, practice at the edge, teaching back). It checks that he actually learned it, schedules reviews so he doesn't forget, keeps every subject on pace without ever skipping a topic, and gets him building real projects from week 1.
 
 Subjects (called **tracks** below): **Python, C++, Algorithms & data structures, Math for AI and robotics, AI (data science → ML → deep learning), Robotics (electronics → Arduino → ROS 2), Projects, Engineering tools (Linux, Git).**
@@ -57,7 +59,7 @@ Read these before writing anything, and follow their conventions exactly:
 - Screens and AI tools share the same functions in `js/data.js` (or a new `js/course.js` that both import). Never duplicate logic between a view and a tool.
 - Every DB write goes through `db.put`/`db.remove` so the change event redraws the screen.
 - Everything works **offline** (only the AI needs a connection). Add every new file to `FILES` in `sw.js` and **bump `VERSION`**.
-- Phone-first: one column, big tap targets (≥ 44 px), respects safe areas, the existing dark theme and CSS variables in `css/app.css`, the existing `~/yaver › section` header style.
+- **Phone and desktop from one codebase.** On the phone: one column, big tap targets (≥ 44 px), safe areas. On a laptop: the desktop layout, mouse and keyboard support in §10b. Both use the existing dark theme, the CSS variables in `css/app.css` and the `~/yaver › section` header style. No separate desktop pages and no duplicated view code: responsive CSS plus small JS checks where behaviour differs.
 - Don't break any existing feature or test.
 
 ---
@@ -622,10 +624,71 @@ Also add **Quiz me on this week** to the Course screen (uses `get_course_progres
 
 ## 10. Storage and migration
 
-- `DB_VERSION` 2 → **3**. New stores: `courseProgress` (key `lessonId`), `cards`, `courseLessons` (generated lessons), `courseTests`. Add them to `STORES` so backup export/import includes them automatically, and check the import of an old v2 backup still works.
+- `DB_VERSION` 2 → **3**. New stores: `courseProgress` (key `lessonId`), `cards`, `courseLessons` (generated lessons), `courseTests`, and `tombstones` for sync (§10b). Add them to `STORES` so backup export/import includes them automatically, and check the import of an old v2 backup still works.
 - Settings keys (via `db.setSetting`): `course` (active, start date, slot overrides, show work blocks), `lessonTimer`.
 - **Course activation:** on first launch after this update, show the Today card with **"Start the course"**. Activating sets the daily study goal from the slot template (about 400 min) and the minimum-day rule to "60 minutes: review cards plus one lesson; never miss two days in a row".
 - **Old roadmap:** keep `data/ml-roadmap.json`, `importPlan`, `planStatus` and their tools working, untouched. When the course is active, hide the old plan card and the "Load the ML Engineer roadmap" button; `get_study_plan` should mention that the course is the active plan.
+
+---
+
+## 10b. Laptop and iPhone: one app on both devices
+
+Mustafa studies at his desk for the deep blocks and writes code in VS Code on his laptop, and uses his iPhone the rest of the day. Yaver must work fully on both, and both must show the same progress.
+
+### Running on the laptop
+
+- Same files and the same GitHub Pages URL. It opens in any current desktop browser (Chrome, Edge, Safari, Firefox). No separate build.
+- **Installable as a desktop app.** Chrome and Edge: listen for `beforeinstallprompt` and show "Install Yaver on this computer" in Settings when it's available. macOS Safari: File → Add to Dock. Explain both in the README and in Settings.
+- Works offline on the laptop too (same service worker).
+
+### Responsive layout
+
+| Width | Layout |
+| --- | --- |
+| < 700 px (phone) | Today's layout, unchanged. |
+| 700–1099 px (tablet or narrow window) | Content up to about 760 px wide; bottom tab bar stays. |
+| ≥ 1100 px (laptop, desktop) | A **left sidebar** with the same sections (icon + label) replaces the bottom tab bar; the assistant button becomes a sidebar item; content up to about 1200 px. |
+
+Screen by screen on a laptop:
+- **Today:** a vertical day timeline with every slot and a "now" line, and the week as a strip across the top.
+- **Lesson runner:** two columns. Left (about 65%): the lesson itself (learn text, worked examples, practice tasks). Right (about 35%, sticky): timer, step checklist with minutes, hints, a notes box, exit-ticket progress and **Tutor me**. From 1400 px, Tutor me opens the chat **docked as a third column** beside the lesson instead of covering it.
+- **Course overview:** track cards in a grid (2–3 per row); the week as a 7-column calendar.
+- **Review cards:** one centred card, graded from the keyboard.
+- Every existing screen (Home, Money, Calendar, Diet, Map, Settings, chat) must also look right at desktop widths: no stretched full-width lines of text (cap line length around 75 characters), sheets centred as dialogs instead of bottom sheets, the map filling the content area.
+
+### Mouse and keyboard
+
+- Visible hover and focus states on everything clickable; sensible Tab order; nothing that only works by touch.
+- Keyboard shortcuts, listed in a `?` overlay and ignored while typing in a field:
+  - Review cards: `Space` reveal, `1` Again, `2` Hard, `3` Good, `4` Easy.
+  - Lesson: `S` start or stop the timer, `N` finish this step and go to the next, `H` next hint, `T` Tutor me, `Esc` back.
+  - Anywhere: `G` then `T` → Today, `G` then `C` → Course, `/` → ask Yaver, `?` → shortcuts.
+- A **Copy** button on every code block (useful on both devices).
+
+### Helpers that matter most at the laptop
+
+- **Download starter files** on coding practice tasks: a `.py` (or `.cpp`) file with the task as a comment and its `check` turned into runnable tests (pytest for Python, asserts in `main` for C++), named after the lesson, so he can open it straight in VS Code. On the iPhone the same button uses the share sheet.
+- Resource links open in a new tab.
+- **Desktop notifications** when a slot starts while Yaver is open (Notification API). Ask for permission from a button, never on page load. The `.ics` export (§8.8) also works on the laptop: the downloaded file opens in the computer's calendar app.
+
+### Sync between laptop and iPhone
+
+IndexedDB lives on each device and there is no Yaver server, so without sync the two devices would show different progress. Build sync that needs no server.
+
+- **Where the data goes: one private GitHub Gist** holding a single encrypted file (`yaver-sync.enc`; split into parts if it grows past about 900 KB). The browser talks straight to `api.github.com`. He creates a token that can only touch gists: a fine-grained personal access token with the Gists read-and-write permission if GitHub supports it, otherwise a classic token with only the `gist` scope. Verify which one works and put the exact steps in Settings → Sync.
+- **End-to-end encryption.** A secret gist is unlisted, not private, so everything is encrypted on the device before upload with Web Crypto: AES-GCM 256, key derived from a **sync passphrase** with PBKDF2-SHA-256 (at least 310,000 iterations, random salt stored with the ciphertext), a fresh random IV on every upload. The token and passphrase stay on the device like the API keys: never synced, never exported in backups, never logged, never sent to the AI. A wrong passphrase gives a clear error and overwrites nothing.
+- **Setting up the second device:** paste the token and passphrase; the app finds the gist by its description ("Yaver sync, encrypted") and pulls it. If none exists, it creates one.
+- **What syncs:** every store (course progress, cards, tests, generated lessons, sessions, subjects, milestones, expenses, meetings, meals, tasks) and shared settings (name, about me, currency, budgets and goals, the old plan, course settings, the focus and lesson timers, so he can start a lesson on the laptop and stop it on the phone).
+  **Stays on each device:** `apiKey`, `geminiKey`, `provider`, `model`, `effort`, `geminiModel`, `geminiModels`, `speak`, `voiceLang`, `lastLoc`, `onboarded`, all sync settings, and the `chats` store (chat history can be large and holds photos).
+- **Merging, record by record:**
+  - `db.put` stamps `updatedAt` (ISO time) and `deviceId` on every write; a migration sets `updatedAt = createdAt` on existing rows.
+  - `db.remove` records a tombstone `{ store, id, deletedAt }` in a new `tombstones` store.
+  - Newest `updatedAt` wins; a tombstone newer than the record deletes it; tombstones older than 90 days are pruned.
+  - **Counters must not lose increments.** The practice counters are stored today as one number per day (`practice:<kind>:<date>` in `kv`), so two devices would overwrite each other. Change them to one key per device (`practice:<kind>:<date>:<deviceId>`) and sum across devices in `practiceOn`/`practiceTotal`, migrating existing values. Check for any other incremented value and treat it the same way.
+- **When it syncs:** when the app opens, when it comes back to the foreground (`visibilitychange`), 10 seconds after the last local change, and on **Sync now**. Order: pull → merge → push. Use the gist's `updated_at` to detect a push from the other device in between; if it changed, pull and merge again before pushing (at most 3 tries). Offline: keep working and sync later. Never block the screen while syncing.
+- **Safety nets:** before the first sync on a device that already has data, save an automatic local backup, and keep the last 3. Never push an empty database over a non-empty one without asking. Keep manual Export/Import working, and change Import to merge by `updatedAt` instead of blindly overwriting (say so next to the button).
+- **Where it shows:** Settings → Sync (set up, status such as "Synced 2 min ago from iPhone" or "Offline, will sync later", Sync now, turn off, forget this device), plus a small status dot in the header or sidebar.
+- New files: `js/sync.js` (merge and GitHub calls) and `js/crypto.js` (encryption), both added to `sw.js` `FILES`. `DB_VERSION` goes to 3 with the course stores plus `tombstones`.
 
 ---
 
@@ -648,7 +711,14 @@ Also add **Quiz me on this week** to the Course screen (uses `get_course_progres
    - Sunday shows `test` and `ship`.
    - A simulated Claude turn calls `get_course_today` then `complete_lesson`; a simulated Gemini turn calls `get_course_today`.
    - No console errors on any screen.
-4. Run all three, plus the existing smoke test, before every commit.
+4. **Desktop run of the smoke test** at 1440×900 (desktop Chrome profile, mouse, no touch): sidebar shows instead of the tab bar; every screen renders without horizontal scrolling; the lesson runner has two columns; keyboard grading (`Space`, `1`–`4`) and `?` work; Tutor me docks beside the lesson at 1440 px.
+5. **Sync test** with two browser contexts ("iPhone" and "laptop") and a mocked `api.github.com`:
+   - Each device makes different changes (complete different lessons, grade cards, log practice), then syncs → both end with the union of changes.
+   - The same record edited on both → newest `updatedAt` wins. A deletion on one device removes the record on the other.
+   - Practice counts added on both devices on the same day add up instead of overwriting.
+   - The uploaded gist content is not readable JSON (encrypted); a wrong passphrase fails without changing any data.
+   - API keys and chat history never appear in the uploaded payload, even after decrypting it.
+6. Run all of these, plus the existing smoke test, before every commit.
 
 ---
 
@@ -662,7 +732,9 @@ Also add **Quiz me on this week** to the Course screen (uses `get_course_progres
 6. Review cards, weekly test, Sunday ship, consolidation, buffer and mixed slots.
 7. AI: `STATIC_SYSTEM` update, the 8 tools, Tutor me, Prepare week N.
 8. Calendar export, Home reminders, course settings.
-9. Smoke tests, `docs/ARCHITECTURE.md` section "Course (added in v5)", README line, add files to `sw.js` `FILES`, bump `VERSION`.
+9. Desktop: responsive layout for every screen, sidebar, two-column lesson runner, docked tutor, keyboard shortcuts, starter-file download, desktop notifications, install prompt.
+10. Sync: `updatedAt`/`deviceId` stamping, tombstones, per-device practice counters (with migration), encryption, GitHub Gist sync, Settings → Sync, merge-based Import.
+11. Smoke tests (phone and desktop), sync test, `docs/ARCHITECTURE.md` sections "Course" and "Using Yaver on a laptop, and sync" (update the "only on this phone" wording), README (install on a computer; set up sync), add files to `sw.js` `FILES`, bump `VERSION`.
 
 Keep `main` deployable after every commit (GitHub Pages serves it to his phone).
 
@@ -680,8 +752,10 @@ Keep `main` deployable after every commit (GitHub Pages serves it to his phone).
 - [ ] Both Claude and Gemini can read today's plan, tutor a lesson with hints-first rules, complete lessons and grade cards.
 - [ ] "Prepare week N" generates and validates weeks 16+.
 - [ ] Works offline; backup export/import includes course data; old features and the old roadmap still work.
-- [ ] All validators and smoke tests pass; `sw.js` version bumped; ARCHITECTURE.md updated.
+- [ ] On a laptop, every screen uses the desktop layout (sidebar, two-column lesson runner, docked tutor), works fully by mouse and keyboard, and can be installed as an app.
+- [ ] A lesson completed on the laptop shows as done on the iPhone after sync, and the reverse; deletions, timers and practice counts sync correctly; the gist content is encrypted; keys and chats never leave the device.
+- [ ] All validators, smoke tests (phone and desktop) and the sync test pass; `sw.js` version bumped; ARCHITECTURE.md and README updated.
 
 ## 14. Final summary to write when you finish
 
-Tell Mustafa, in plain language: what was built, how to start (open Yaver → Study → Start the course), how a day works, any choices you made that this prompt didn't cover, and anything you couldn't verify (for example a resource link you replaced with a home page).
+Tell Mustafa, in plain language: what was built, how to start (open Yaver → Study → Start the course), how a day works, how to install Yaver on his laptop and connect sync (token and passphrase steps, written for someone doing it for the first time), any choices you made that this prompt didn't cover, and anything you couldn't verify (for example a resource link you replaced with a home page).
