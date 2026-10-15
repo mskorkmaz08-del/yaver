@@ -1,107 +1,576 @@
 {
-  "verifiedOn": "2026-10-15",
-  "urls": [
-    {"key": "cs50p", "title": "CS50's Introduction to Programming with Python", "url": "https://cs50.harvard.edu/python/", "how": "fetched"},
-    {"key": "cs50p-weeks", "title": "CS50P - Weeks index", "url": "https://cs50.harvard.edu/python/weeks/", "how": "search-result"},
-    {"key": "cs50p-week-0", "title": "CS50P Week 0: Functions, Variables", "url": "https://cs50.harvard.edu/python/weeks/0/", "how": "fetched"},
-    {"key": "cs50p-week-1", "title": "CS50P Week 1: Conditionals", "url": "https://cs50.harvard.edu/python/weeks/1/", "how": "search-result"},
-    {"key": "cs50p-week-2", "title": "CS50P Week 2: Loops", "url": "https://cs50.harvard.edu/python/weeks/2/", "how": "search-result"},
-    {"key": "cs50p-week-3", "title": "CS50P Week 3: Exceptions", "url": "https://cs50.harvard.edu/python/weeks/3/", "how": "fetched"},
-    {"key": "cs50p-week-4", "title": "CS50P Week 4: Libraries", "url": "https://cs50.harvard.edu/python/weeks/4/", "how": "search-result"},
-    {"key": "cs50p-week-5", "title": "CS50P Week 5: Unit Tests", "url": "https://cs50.harvard.edu/python/weeks/5/", "how": "search-result"},
-    {"key": "cs50p-week-6", "title": "CS50P Week 6: File I/O", "url": "https://cs50.harvard.edu/python/weeks/6/", "how": "search-result"},
-    {"key": "cs50p-week-7", "title": "CS50P Week 7: Regular Expressions", "url": "https://cs50.harvard.edu/python/weeks/7/", "how": "fetched"},
-    {"key": "cs50p-week-8", "title": "CS50P Week 8: Object-Oriented Programming", "url": "https://cs50.harvard.edu/python/weeks/8/", "how": "fetched"},
-    {"key": "cs50p-week-9", "title": "CS50P Week 9: Et Cetera", "url": "https://cs50.harvard.edu/python/weeks/9/", "how": "search-result"},
-    {"key": "exercism-python", "title": "Python on Exercism", "url": "https://exercism.org/tracks/python", "how": "fetched"},
-    {"key": "python-tutorial", "title": "The Python Tutorial", "url": "https://docs.python.org/3/tutorial/", "how": "fetched"},
-    {"key": "python-library", "title": "The Python Standard Library", "url": "https://docs.python.org/3/library/", "how": "fetched"},
-    {"key": "fluent-python", "title": "Fluent Python, 2nd Edition (O'Reilly)", "url": "https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/", "how": "fetched"},
-    {"key": "fluent-python-site", "title": "Fluent Python companion site", "url": "https://fluentpython.com/", "how": "fetched"},
-    {"key": "learncpp", "title": "Learn C++", "url": "https://www.learncpp.com/", "how": "fetched"},
-    {"key": "tour-cpp", "title": "A Tour of C++ (Third edition) - Stroustrup", "url": "https://www.stroustrup.com/tour3.html", "how": "fetched"},
-    {"key": "grokking-algorithms", "title": "Grokking Algorithms, Second Edition (Manning)", "url": "https://www.manning.com/books/grokking-algorithms-second-edition", "how": "fetched"},
-    {"key": "neetcode", "title": "NeetCode 150 - Coding Interview Questions", "url": "https://neetcode.io/practice/practice/neetcode150", "how": "fetched"},
-    {"key": "neetcode-practice", "title": "NeetCode practice", "url": "https://neetcode.io/practice", "how": "fetched"},
-    {"key": "algorist", "title": "The Algorithm Design Manual, 3rd ed. (Skiena)", "url": "https://www.algorist.com/", "how": "fetched"},
-    {"key": "eola", "title": "Essence of linear algebra (3Blue1Brown YouTube playlist)", "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab", "how": "fetched"},
-    {"key": "eola-site", "title": "3Blue1Brown - Vectors (first lesson of Essence of linear algebra)", "url": "https://www.3blue1brown.com/lessons/vectors/", "how": "search-result"},
-    {"key": "eola-topic", "title": "3Blue1Brown - Linear Algebra topic", "url": "https://www.3blue1brown.com/topics/linear-algebra", "how": "fetched"},
-    {"key": "eoc", "title": "Essence of calculus (3Blue1Brown YouTube playlist)", "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr", "how": "fetched"},
-    {"key": "eoc-site", "title": "3Blue1Brown - The Essence of Calculus (first lesson)", "url": "https://www.3blue1brown.com/lessons/essence-of-calculus/", "how": "search-result"},
-    {"key": "eoc-topic", "title": "3Blue1Brown - Calculus topic", "url": "https://www.3blue1brown.com/topics/calculus", "how": "fetched"},
-    {"key": "mml", "title": "Mathematics for Machine Learning", "url": "https://mml-book.github.io/", "how": "fetched"},
-    {"key": "khan-stats", "title": "Khan Academy - Statistics and probability", "url": "https://www.khanacademy.org/math/statistics-probability", "how": "fetched"},
-    {"key": "modern-robotics", "title": "Modern Robotics (Lynch & Park) - Northwestern Mechatronics Wiki", "url": "https://hades.mech.northwestern.edu/index.php/Modern_Robotics", "how": "fetched"},
-    {"key": "probabilistic-robotics", "title": "Probabilistic Robotics (Thrun, Burgard, Fox) - Stanford page", "url": "https://robots.stanford.edu/probabilistic-robotics/", "how": "fetched"},
-    {"key": "pid-mathworks", "title": "Understanding PID Control (MATLAB Tech Talks, Brian Douglas)", "url": "https://www.mathworks.com/videos/series/understanding-pid-control.html", "how": "search-result"},
-    {"key": "pid-part1", "title": "Understanding PID Control, Part 1: What Is PID Control?", "url": "https://www.mathworks.com/videos/understanding-pid-control-part-1-what-is-pid-control--1527089264373.html", "how": "search-result"},
-    {"key": "mckinney", "title": "Python for Data Analysis, 3E (open access)", "url": "https://wesmckinney.com/book/", "how": "fetched"},
-    {"key": "practical-stats", "title": "Practical Statistics for Data Scientists, 2nd Edition (O'Reilly)", "url": "https://www.oreilly.com/library/view/practical-statistics-for/9781492072935/", "how": "search-result"},
-    {"key": "sqlbolt", "title": "SQLBolt - Learn SQL", "url": "https://sqlbolt.com/", "how": "fetched"},
-    {"key": "sqlbolt-lesson-1", "title": "SQLBolt Lesson 1: SELECT queries 101", "url": "https://sqlbolt.com/lesson/select_queries_introduction", "how": "fetched"},
-    {"key": "sqlbolt-lesson-2", "title": "SQLBolt Lesson 2: Queries with constraints (Pt. 1)", "url": "https://sqlbolt.com/lesson/select_queries_with_constraints", "how": "fetched"},
-    {"key": "sqlbolt-lesson-6", "title": "SQLBolt Lesson 6: Multi-table queries with JOINs", "url": "https://sqlbolt.com/lesson/select_queries_with_joins", "how": "fetched"},
-    {"key": "sqlbolt-lesson-10", "title": "SQLBolt Lesson 10: Queries with aggregates (Pt. 1)", "url": "https://sqlbolt.com/lesson/select_queries_with_aggregates", "how": "fetched"},
-    {"key": "sqlbolt-lesson-12", "title": "SQLBolt Lesson 12: Order of execution of a Query", "url": "https://sqlbolt.com/lesson/select_queries_order_of_execution", "how": "fetched"},
-    {"key": "sqlbolt-lesson-16", "title": "SQLBolt Lesson 16: Creating tables", "url": "https://sqlbolt.com/lesson/creating_tables", "how": "fetched"},
-    {"key": "islp", "title": "An Introduction to Statistical Learning (ISL / ISLP)", "url": "https://www.statlearning.com/", "how": "fetched"},
-    {"key": "ng-ml-coursera", "title": "Machine Learning Specialization (Coursera; Stanford Online & DeepLearning.AI)", "url": "https://www.coursera.org/specializations/machine-learning-introduction", "how": "fetched"},
-    {"key": "ng-ml-dlai", "title": "Machine Learning Specialization - DeepLearning.AI", "url": "https://www.deeplearning.ai/specializations/machine-learning", "how": "search-result"},
-    {"key": "homl", "title": "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow, 3rd Edition (O'Reilly)", "url": "https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125967/", "how": "search-result"},
-    {"key": "zero-to-hero", "title": "Neural Networks: Zero To Hero (Karpathy)", "url": "https://karpathy.ai/zero-to-hero.html", "how": "fetched"},
-    {"key": "fastai", "title": "Practical Deep Learning for Coders (fast.ai)", "url": "https://course.fast.ai/", "how": "fetched"},
-    {"key": "d2l", "title": "Dive into Deep Learning", "url": "https://d2l.ai/", "how": "fetched"},
-    {"key": "aima", "title": "Artificial Intelligence: A Modern Approach, 4th US ed.", "url": "https://aima.cs.berkeley.edu/", "how": "fetched"},
-    {"key": "sutton-barto", "title": "Reinforcement Learning: An Introduction (2nd ed.)", "url": "https://incompleteideas.net/book/the-book-2nd.html", "how": "fetched"},
-    {"key": "huyen-dmls", "title": "Designing Machine Learning Systems (O'Reilly)", "url": "https://www.oreilly.com/library/view/designing-machine-learning/9781098107956", "how": "search-result"},
-    {"key": "make-electronics", "title": "Make: Electronics, 3rd Edition (O'Reilly)", "url": "https://oreilly.com/library/view/make-electronics-3rd/9781680456868", "how": "fetched"},
-    {"key": "pefi", "title": "Practical Electronics for Inventors (McGraw Hill AccessEngineering)", "url": "https://www.accessengineeringlibrary.com/content/book/9781259587542", "how": "search-result"},
-    {"key": "wokwi", "title": "Wokwi simulator", "url": "https://wokwi.com/", "how": "fetched"},
-    {"key": "tinkercad-circuits", "title": "Circuits on Tinkercad", "url": "https://www.tinkercad.com/circuits", "how": "fetched"},
-    {"key": "exploring-arduino", "title": "Exploring Arduino (2nd ed.) companion site - Jeremy Blum", "url": "https://www.exploringarduino.com/", "how": "fetched"},
-    {"key": "arduino-docs", "title": "Arduino Documentation", "url": "https://docs.arduino.cc/", "how": "fetched"},
-    {"key": "arduino-reference", "title": "Arduino Language Reference", "url": "https://docs.arduino.cc/language-reference/", "how": "fetched"},
-    {"key": "arduino-millis", "title": "Arduino millis() reference", "url": "https://docs.arduino.cc/language-reference/en/functions/time/millis/", "how": "search-result"},
-    {"key": "arduino-blink-without-delay", "title": "Arduino Blink Without Delay example", "url": "https://docs.arduino.cc/built-in-examples/digital/BlinkWithoutDelay", "how": "search-result"},
-    {"key": "ros2-lyrical", "title": "ROS 2 Documentation: Lyrical", "url": "https://docs.ros.org/en/lyrical/", "how": "search-result"},
-    {"key": "ros2-lyrical-release", "title": "ROS 2 Release: Lyrical Luth", "url": "https://docs.ros.org/en/lyrical/Releases/Release-Lyrical-Luth.html", "how": "search-result"},
-    {"key": "ros2-lyrical-announcement", "title": "ROS 2 Lyrical Luth Released! (ROS Discourse)", "url": "https://discourse.openrobotics.org/t/ros-2-lyrical-luth-released/55021", "how": "fetched"},
-    {"key": "ros2-jazzy", "title": "ROS 2 Documentation: Jazzy", "url": "https://docs.ros.org/en/jazzy/", "how": "search-result"},
-    {"key": "ros2-concise-book", "title": "A Concise Introduction to Robot Programming with ROS 2, 2nd Edition (Routledge, 2025)", "url": "https://www.routledge.com/A-Concise-Introduction-to-Robot-Programming-with-ROS-2/MartinRico/p/book/9781032851488", "how": "fetched"},
-    {"key": "articulated-robotics", "title": "Articulated Robotics", "url": "https://articulatedrobotics.xyz/", "how": "fetched"},
-    {"key": "articulated-robotics-yt", "title": "Articulated Robotics (YouTube channel)", "url": "https://www.youtube.com/@ArticulatedRobotics", "how": "fetched"},
-    {"key": "lerobot", "title": "Hugging Face LeRobot (GitHub)", "url": "https://github.com/huggingface/lerobot", "how": "fetched"},
-    {"key": "tlcl", "title": "The Linux Command Line (William Shotts)", "url": "https://linuxcommand.org/tlcl.php", "how": "fetched"},
-    {"key": "pro-git", "title": "Pro Git, 2nd Edition", "url": "https://git-scm.com/book/en/v2", "how": "fetched"},
-    {"key": "kaggle-learn", "title": "Kaggle Learn", "url": "https://www.kaggle.com/learn", "how": "fetched"},
-    {"key": "kaggle-pandas", "title": "Kaggle Learn - Pandas", "url": "https://www.kaggle.com/learn/pandas", "how": "fetched"},
-    {"key": "kaggle", "title": "Kaggle", "url": "https://www.kaggle.com/", "how": "fetched"},
-    {"key": "pytest", "title": "pytest documentation", "url": "https://docs.pytest.org/en/stable/", "how": "fetched"},
-    {"key": "vscode-python-debug", "title": "Python debugging in VS Code", "url": "https://code.visualstudio.com/docs/python/debugging", "how": "fetched"},
-    {"key": "numpy-docs", "title": "NumPy documentation", "url": "https://numpy.org/doc/stable/", "how": "fetched"},
-    {"key": "pandas-docs", "title": "pandas documentation", "url": "https://pandas.pydata.org/docs/", "how": "fetched"},
-    {"key": "github-pat", "title": "Managing your personal access tokens - GitHub Docs", "url": "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens", "how": "fetched"},
-    {"key": "github-pat-permissions", "title": "Permissions required for fine-grained personal access tokens - GitHub Docs", "url": "https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens", "how": "fetched"},
-    {"key": "github-gists-api", "title": "REST API endpoints for gists - GitHub Docs", "url": "https://docs.github.com/en/rest/gists/gists", "how": "fetched"},
-    {"key": "wsl-install", "title": "How to install Linux on Windows with WSL", "url": "https://learn.microsoft.com/en-us/windows/wsl/install", "how": "fetched"},
-    {"key": "ubuntu-desktop", "title": "Download Ubuntu Desktop", "url": "https://ubuntu.com/download/desktop", "how": "fetched"},
-    {"key": "anki", "title": "Anki - powerful, intelligent flashcards", "url": "https://apps.ankiweb.net/", "how": "fetched"},
-    {"key": "cmake-tutorial", "title": "CMake Tutorial", "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html", "how": "fetched"},
-    {"key": "pyserial", "title": "pySerial documentation", "url": "https://pyserial.readthedocs.io/en/latest/", "how": "fetched"},
-    {"key": "spinning-up", "title": "Spinning Up in Deep RL (OpenAI)", "url": "https://spinningup.openai.com/en/latest/", "how": "fetched"},
-    {"key": "tb6612fng", "title": "TB6612FNG Hookup Guide - SparkFun Learn", "url": "https://learn.sparkfun.com/tutorials/tb6612fng-hookup-guide/all", "how": "fetched"}
-  ],
-  "notes": [
-    "GitHub fine-grained PATs DO support gists: docs.github.com/en/rest/gists/gists states that 'Create a gist' and 'Update a gist' work with fine-grained personal access tokens and require the \"Gists\" user permissions (write). The managing-your-personal-access-tokens page lists Gists (write) under Account permissions, noting account permissions apply only when the current user is the resource owner. Sources: https://docs.github.com/en/rest/gists/gists and https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens . The permissions reference page has a 'User permissions for \"Gists\"' section (seen in its TOC) but its body was not readable via fetch.",
-    "ROS 2 Lyrical Luth was released on May 22, 2026 (ROS Discourse announcement). It is an LTS release supported until May 2031. Tier 1: Ubuntu 26.04 (Resolute) amd64/arm64 and Windows 11; Tier 2: RHEL 10; Tier 3: Ubuntu 24.04 Noble, macOS, Debian Trixie, OpenEmbedded. docs.ros.org/en/lyrical/ exists (seen in search results) but docs.ros.org blocks direct fetches (Anubis bot protection), so docs.ros.org URLs are search-result verified. Jazzy (LTS) targets Ubuntu 24.04.",
-    "Ubuntu Desktop download page currently offers Ubuntu 26.04.1 LTS (Resolute Raccoon).",
-    "cs50.harvard.edu week pages 1, 2, 4, 5, 6, 9 returned server errors on fetch (rate limiting); each was verified via a search result with matching title.",
-    "probabilistic-robotics.org disallows robot fetching and never appeared in search results; used Thrun's Stanford page robots.stanford.edu/probabilistic-robotics/ instead.",
-    "Practical Electronics for Inventors: no official publisher page (mheducation) found; the AccessEngineering URL (ISBN 9781259587542, likely 4th ed.) is search-result only and may require institutional login. Many search hits for this title are pirate PDF sites - do not use.",
-    "3Blue1Brown topic pages (topics/linear-algebra, topics/calculus) load but are generic filter pages; prefer the YouTube playlists or the lessons/ URLs.",
-    "Arduino docs are JS-rendered; millis() page verified by search result.",
-    "Hands-On ML 3rd ed., Practical Statistics 2nd ed., Designing ML Systems: O'Reilly URLs are search-result verified.",
-    "incompleteideas.net loads via HTTPS upgrade."
-  ]
+ "verifiedOn": "2026-10-15",
+ "urls": [
+  {
+   "key": "cs50p",
+   "title": "CS50's Introduction to Programming with Python",
+   "url": "https://cs50.harvard.edu/python/",
+   "how": "fetched"
+  },
+  {
+   "key": "cs50p-weeks",
+   "title": "CS50P - Weeks index",
+   "url": "https://cs50.harvard.edu/python/weeks/",
+   "how": "search-result"
+  },
+  {
+   "key": "cs50p-week-0",
+   "title": "CS50P Week 0: Functions, Variables",
+   "url": "https://cs50.harvard.edu/python/weeks/0/",
+   "how": "fetched"
+  },
+  {
+   "key": "cs50p-week-1",
+   "title": "CS50P Week 1: Conditionals",
+   "url": "https://cs50.harvard.edu/python/weeks/1/",
+   "how": "search-result"
+  },
+  {
+   "key": "cs50p-week-2",
+   "title": "CS50P Week 2: Loops",
+   "url": "https://cs50.harvard.edu/python/weeks/2/",
+   "how": "search-result"
+  },
+  {
+   "key": "cs50p-week-3",
+   "title": "CS50P Week 3: Exceptions",
+   "url": "https://cs50.harvard.edu/python/weeks/3/",
+   "how": "fetched"
+  },
+  {
+   "key": "cs50p-week-4",
+   "title": "CS50P Week 4: Libraries",
+   "url": "https://cs50.harvard.edu/python/weeks/4/",
+   "how": "search-result"
+  },
+  {
+   "key": "cs50p-week-5",
+   "title": "CS50P Week 5: Unit Tests",
+   "url": "https://cs50.harvard.edu/python/weeks/5/",
+   "how": "search-result"
+  },
+  {
+   "key": "cs50p-week-6",
+   "title": "CS50P Week 6: File I/O",
+   "url": "https://cs50.harvard.edu/python/weeks/6/",
+   "how": "search-result"
+  },
+  {
+   "key": "cs50p-week-7",
+   "title": "CS50P Week 7: Regular Expressions",
+   "url": "https://cs50.harvard.edu/python/weeks/7/",
+   "how": "fetched"
+  },
+  {
+   "key": "cs50p-week-8",
+   "title": "CS50P Week 8: Object-Oriented Programming",
+   "url": "https://cs50.harvard.edu/python/weeks/8/",
+   "how": "fetched"
+  },
+  {
+   "key": "cs50p-week-9",
+   "title": "CS50P Week 9: Et Cetera",
+   "url": "https://cs50.harvard.edu/python/weeks/9/",
+   "how": "search-result"
+  },
+  {
+   "key": "exercism-python",
+   "title": "Python on Exercism",
+   "url": "https://exercism.org/tracks/python",
+   "how": "fetched"
+  },
+  {
+   "key": "python-tutorial",
+   "title": "The Python Tutorial",
+   "url": "https://docs.python.org/3/tutorial/",
+   "how": "fetched"
+  },
+  {
+   "key": "python-library",
+   "title": "The Python Standard Library",
+   "url": "https://docs.python.org/3/library/",
+   "how": "fetched"
+  },
+  {
+   "key": "fluent-python",
+   "title": "Fluent Python, 2nd Edition (O'Reilly)",
+   "url": "https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/",
+   "how": "fetched"
+  },
+  {
+   "key": "fluent-python-site",
+   "title": "Fluent Python companion site",
+   "url": "https://fluentpython.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "learncpp",
+   "title": "Learn C++",
+   "url": "https://www.learncpp.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "tour-cpp",
+   "title": "A Tour of C++ (Third edition) - Stroustrup",
+   "url": "https://www.stroustrup.com/tour3.html",
+   "how": "fetched"
+  },
+  {
+   "key": "grokking-algorithms",
+   "title": "Grokking Algorithms, Second Edition (Manning)",
+   "url": "https://www.manning.com/books/grokking-algorithms-second-edition",
+   "how": "fetched"
+  },
+  {
+   "key": "neetcode",
+   "title": "NeetCode 150 - Coding Interview Questions",
+   "url": "https://neetcode.io/practice/practice/neetcode150",
+   "how": "fetched"
+  },
+  {
+   "key": "neetcode-practice",
+   "title": "NeetCode practice",
+   "url": "https://neetcode.io/practice",
+   "how": "fetched"
+  },
+  {
+   "key": "algorist",
+   "title": "The Algorithm Design Manual, 3rd ed. (Skiena)",
+   "url": "https://www.algorist.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "eola",
+   "title": "Essence of linear algebra (3Blue1Brown YouTube playlist)",
+   "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab",
+   "how": "fetched"
+  },
+  {
+   "key": "eola-site",
+   "title": "3Blue1Brown - Vectors (first lesson of Essence of linear algebra)",
+   "url": "https://www.3blue1brown.com/lessons/vectors/",
+   "how": "search-result"
+  },
+  {
+   "key": "eola-topic",
+   "title": "3Blue1Brown - Linear Algebra topic",
+   "url": "https://www.3blue1brown.com/topics/linear-algebra",
+   "how": "fetched"
+  },
+  {
+   "key": "eoc",
+   "title": "Essence of calculus (3Blue1Brown YouTube playlist)",
+   "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr",
+   "how": "fetched"
+  },
+  {
+   "key": "eoc-site",
+   "title": "3Blue1Brown - The Essence of Calculus (first lesson)",
+   "url": "https://www.3blue1brown.com/lessons/essence-of-calculus/",
+   "how": "search-result"
+  },
+  {
+   "key": "eoc-topic",
+   "title": "3Blue1Brown - Calculus topic",
+   "url": "https://www.3blue1brown.com/topics/calculus",
+   "how": "fetched"
+  },
+  {
+   "key": "mml",
+   "title": "Mathematics for Machine Learning",
+   "url": "https://mml-book.github.io/",
+   "how": "fetched"
+  },
+  {
+   "key": "khan-stats",
+   "title": "Khan Academy - Statistics and probability",
+   "url": "https://www.khanacademy.org/math/statistics-probability",
+   "how": "fetched"
+  },
+  {
+   "key": "modern-robotics",
+   "title": "Modern Robotics (Lynch & Park) - Northwestern Mechatronics Wiki",
+   "url": "https://hades.mech.northwestern.edu/index.php/Modern_Robotics",
+   "how": "fetched"
+  },
+  {
+   "key": "probabilistic-robotics",
+   "title": "Probabilistic Robotics (Thrun, Burgard, Fox) - Stanford page",
+   "url": "https://robots.stanford.edu/probabilistic-robotics/",
+   "how": "fetched"
+  },
+  {
+   "key": "pid-mathworks",
+   "title": "Understanding PID Control (MATLAB Tech Talks, Brian Douglas)",
+   "url": "https://www.mathworks.com/videos/series/understanding-pid-control.html",
+   "how": "search-result"
+  },
+  {
+   "key": "pid-part1",
+   "title": "Understanding PID Control, Part 1: What Is PID Control?",
+   "url": "https://www.mathworks.com/videos/understanding-pid-control-part-1-what-is-pid-control--1527089264373.html",
+   "how": "search-result"
+  },
+  {
+   "key": "mckinney",
+   "title": "Python for Data Analysis, 3E (open access)",
+   "url": "https://wesmckinney.com/book/",
+   "how": "fetched"
+  },
+  {
+   "key": "practical-stats",
+   "title": "Practical Statistics for Data Scientists, 2nd Edition (O'Reilly)",
+   "url": "https://www.oreilly.com/library/view/practical-statistics-for/9781492072935/",
+   "how": "search-result"
+  },
+  {
+   "key": "sqlbolt",
+   "title": "SQLBolt - Learn SQL",
+   "url": "https://sqlbolt.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "sqlbolt-lesson-1",
+   "title": "SQLBolt Lesson 1: SELECT queries 101",
+   "url": "https://sqlbolt.com/lesson/select_queries_introduction",
+   "how": "fetched"
+  },
+  {
+   "key": "sqlbolt-lesson-2",
+   "title": "SQLBolt Lesson 2: Queries with constraints (Pt. 1)",
+   "url": "https://sqlbolt.com/lesson/select_queries_with_constraints",
+   "how": "fetched"
+  },
+  {
+   "key": "sqlbolt-lesson-6",
+   "title": "SQLBolt Lesson 6: Multi-table queries with JOINs",
+   "url": "https://sqlbolt.com/lesson/select_queries_with_joins",
+   "how": "fetched"
+  },
+  {
+   "key": "sqlbolt-lesson-10",
+   "title": "SQLBolt Lesson 10: Queries with aggregates (Pt. 1)",
+   "url": "https://sqlbolt.com/lesson/select_queries_with_aggregates",
+   "how": "fetched"
+  },
+  {
+   "key": "sqlbolt-lesson-12",
+   "title": "SQLBolt Lesson 12: Order of execution of a Query",
+   "url": "https://sqlbolt.com/lesson/select_queries_order_of_execution",
+   "how": "fetched"
+  },
+  {
+   "key": "sqlbolt-lesson-16",
+   "title": "SQLBolt Lesson 16: Creating tables",
+   "url": "https://sqlbolt.com/lesson/creating_tables",
+   "how": "fetched"
+  },
+  {
+   "key": "islp",
+   "title": "An Introduction to Statistical Learning (ISL / ISLP)",
+   "url": "https://www.statlearning.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "ng-ml-coursera",
+   "title": "Machine Learning Specialization (Coursera; Stanford Online & DeepLearning.AI)",
+   "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+   "how": "fetched"
+  },
+  {
+   "key": "ng-ml-dlai",
+   "title": "Machine Learning Specialization - DeepLearning.AI",
+   "url": "https://www.deeplearning.ai/specializations/machine-learning",
+   "how": "search-result"
+  },
+  {
+   "key": "homl",
+   "title": "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow, 3rd Edition (O'Reilly)",
+   "url": "https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125967/",
+   "how": "search-result"
+  },
+  {
+   "key": "zero-to-hero",
+   "title": "Neural Networks: Zero To Hero (Karpathy)",
+   "url": "https://karpathy.ai/zero-to-hero.html",
+   "how": "fetched"
+  },
+  {
+   "key": "fastai",
+   "title": "Practical Deep Learning for Coders (fast.ai)",
+   "url": "https://course.fast.ai/",
+   "how": "fetched"
+  },
+  {
+   "key": "d2l",
+   "title": "Dive into Deep Learning",
+   "url": "https://d2l.ai/",
+   "how": "fetched"
+  },
+  {
+   "key": "aima",
+   "title": "Artificial Intelligence: A Modern Approach, 4th US ed.",
+   "url": "https://aima.cs.berkeley.edu/",
+   "how": "fetched"
+  },
+  {
+   "key": "sutton-barto",
+   "title": "Reinforcement Learning: An Introduction (2nd ed.)",
+   "url": "https://incompleteideas.net/book/the-book-2nd.html",
+   "how": "fetched"
+  },
+  {
+   "key": "huyen-dmls",
+   "title": "Designing Machine Learning Systems (O'Reilly)",
+   "url": "https://www.oreilly.com/library/view/designing-machine-learning/9781098107956",
+   "how": "search-result"
+  },
+  {
+   "key": "make-electronics",
+   "title": "Make: Electronics, 3rd Edition (O'Reilly)",
+   "url": "https://oreilly.com/library/view/make-electronics-3rd/9781680456868",
+   "how": "fetched"
+  },
+  {
+   "key": "pefi",
+   "title": "Practical Electronics for Inventors (McGraw Hill AccessEngineering)",
+   "url": "https://www.accessengineeringlibrary.com/content/book/9781259587542",
+   "how": "search-result"
+  },
+  {
+   "key": "wokwi",
+   "title": "Wokwi simulator",
+   "url": "https://wokwi.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "tinkercad-circuits",
+   "title": "Circuits on Tinkercad",
+   "url": "https://www.tinkercad.com/circuits",
+   "how": "fetched"
+  },
+  {
+   "key": "exploring-arduino",
+   "title": "Exploring Arduino (2nd ed.) companion site - Jeremy Blum",
+   "url": "https://www.exploringarduino.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "arduino-docs",
+   "title": "Arduino Documentation",
+   "url": "https://docs.arduino.cc/",
+   "how": "fetched"
+  },
+  {
+   "key": "arduino-reference",
+   "title": "Arduino Language Reference",
+   "url": "https://docs.arduino.cc/language-reference/",
+   "how": "fetched"
+  },
+  {
+   "key": "arduino-millis",
+   "title": "Arduino millis() reference",
+   "url": "https://docs.arduino.cc/language-reference/en/functions/time/millis/",
+   "how": "search-result"
+  },
+  {
+   "key": "arduino-blink-without-delay",
+   "title": "Arduino Blink Without Delay example",
+   "url": "https://docs.arduino.cc/built-in-examples/digital/BlinkWithoutDelay",
+   "how": "search-result"
+  },
+  {
+   "key": "ros2-lyrical",
+   "title": "ROS 2 Documentation: Lyrical",
+   "url": "https://docs.ros.org/en/lyrical/",
+   "how": "search-result"
+  },
+  {
+   "key": "ros2-lyrical-release",
+   "title": "ROS 2 Release: Lyrical Luth",
+   "url": "https://docs.ros.org/en/lyrical/Releases/Release-Lyrical-Luth.html",
+   "how": "search-result"
+  },
+  {
+   "key": "ros2-lyrical-announcement",
+   "title": "ROS 2 Lyrical Luth Released! (ROS Discourse)",
+   "url": "https://discourse.openrobotics.org/t/ros-2-lyrical-luth-released/55021",
+   "how": "fetched"
+  },
+  {
+   "key": "ros2-jazzy",
+   "title": "ROS 2 Documentation: Jazzy",
+   "url": "https://docs.ros.org/en/jazzy/",
+   "how": "search-result"
+  },
+  {
+   "key": "ros2-concise-book",
+   "title": "A Concise Introduction to Robot Programming with ROS 2, 2nd Edition (Routledge, 2025)",
+   "url": "https://www.routledge.com/A-Concise-Introduction-to-Robot-Programming-with-ROS-2/MartinRico/p/book/9781032851488",
+   "how": "fetched"
+  },
+  {
+   "key": "articulated-robotics",
+   "title": "Articulated Robotics",
+   "url": "https://articulatedrobotics.xyz/",
+   "how": "fetched"
+  },
+  {
+   "key": "articulated-robotics-yt",
+   "title": "Articulated Robotics (YouTube channel)",
+   "url": "https://www.youtube.com/@ArticulatedRobotics",
+   "how": "fetched"
+  },
+  {
+   "key": "lerobot",
+   "title": "Hugging Face LeRobot (GitHub)",
+   "url": "https://github.com/huggingface/lerobot",
+   "how": "fetched"
+  },
+  {
+   "key": "tlcl",
+   "title": "The Linux Command Line (William Shotts)",
+   "url": "https://linuxcommand.org/tlcl.php",
+   "how": "fetched"
+  },
+  {
+   "key": "pro-git",
+   "title": "Pro Git, 2nd Edition",
+   "url": "https://git-scm.com/book/en/v2",
+   "how": "fetched"
+  },
+  {
+   "key": "kaggle-learn",
+   "title": "Kaggle Learn",
+   "url": "https://www.kaggle.com/learn",
+   "how": "fetched"
+  },
+  {
+   "key": "kaggle-pandas",
+   "title": "Kaggle Learn - Pandas",
+   "url": "https://www.kaggle.com/learn/pandas",
+   "how": "fetched"
+  },
+  {
+   "key": "kaggle",
+   "title": "Kaggle",
+   "url": "https://www.kaggle.com/",
+   "how": "fetched"
+  },
+  {
+   "key": "pytest",
+   "title": "pytest documentation",
+   "url": "https://docs.pytest.org/en/stable/",
+   "how": "fetched"
+  },
+  {
+   "key": "vscode-python-debug",
+   "title": "Python debugging in VS Code",
+   "url": "https://code.visualstudio.com/docs/python/debugging",
+   "how": "fetched"
+  },
+  {
+   "key": "numpy-docs",
+   "title": "NumPy documentation",
+   "url": "https://numpy.org/doc/stable/",
+   "how": "fetched"
+  },
+  {
+   "key": "pandas-docs",
+   "title": "pandas documentation",
+   "url": "https://pandas.pydata.org/docs/",
+   "how": "fetched"
+  },
+  {
+   "key": "github-pat",
+   "title": "Managing your personal access tokens - GitHub Docs",
+   "url": "https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens",
+   "how": "fetched"
+  },
+  {
+   "key": "github-pat-permissions",
+   "title": "Permissions required for fine-grained personal access tokens - GitHub Docs",
+   "url": "https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens",
+   "how": "fetched"
+  },
+  {
+   "key": "github-gists-api",
+   "title": "REST API endpoints for gists - GitHub Docs",
+   "url": "https://docs.github.com/en/rest/gists/gists",
+   "how": "fetched"
+  },
+  {
+   "key": "wsl-install",
+   "title": "How to install Linux on Windows with WSL",
+   "url": "https://learn.microsoft.com/en-us/windows/wsl/install",
+   "how": "fetched"
+  },
+  {
+   "key": "ubuntu-desktop",
+   "title": "Download Ubuntu Desktop",
+   "url": "https://ubuntu.com/download/desktop",
+   "how": "fetched"
+  },
+  {
+   "key": "anki",
+   "title": "Anki - powerful, intelligent flashcards",
+   "url": "https://apps.ankiweb.net/",
+   "how": "fetched"
+  },
+  {
+   "key": "cmake-tutorial",
+   "title": "CMake Tutorial",
+   "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html",
+   "how": "fetched"
+  },
+  {
+   "key": "pyserial",
+   "title": "pySerial documentation",
+   "url": "https://pyserial.readthedocs.io/en/latest/",
+   "how": "fetched"
+  },
+  {
+   "key": "spinning-up",
+   "title": "Spinning Up in Deep RL (OpenAI)",
+   "url": "https://spinningup.openai.com/en/latest/",
+   "how": "fetched"
+  },
+  {
+   "key": "tb6612fng",
+   "title": "TB6612FNG Hookup Guide - SparkFun Learn",
+   "url": "https://learn.sparkfun.com/tutorials/tb6612fng-hookup-guide/all",
+   "how": "fetched"
+  },
+  {
+   "key": "homebrew",
+   "title": "Homebrew installation",
+   "url": "https://docs.brew.sh/Installation",
+   "how": "search-result"
+  },
+  {
+   "key": "utm-ubuntu",
+   "title": "UTM: Ubuntu guest guide",
+   "url": "https://docs.getutm.app/guides/ubuntu/",
+   "how": "search-result"
+  },
+  {
+   "key": "vscode-mac",
+   "title": "Visual Studio Code on macOS",
+   "url": "https://code.visualstudio.com/docs/setup/mac",
+   "how": "search-result"
+  }
+ ],
+ "notes": [
+  "GitHub fine-grained PATs DO support gists: docs.github.com/en/rest/gists/gists states that 'Create a gist' and 'Update a gist' work with fine-grained personal access tokens and require the \"Gists\" user permissions (write). The managing-your-personal-access-tokens page lists Gists (write) under Account permissions, noting account permissions apply only when the current user is the resource owner. Sources: https://docs.github.com/en/rest/gists/gists and https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens . The permissions reference page has a 'User permissions for \"Gists\"' section (seen in its TOC) but its body was not readable via fetch.",
+  "ROS 2 Lyrical Luth was released on May 22, 2026 (ROS Discourse announcement). It is an LTS release supported until May 2031. Tier 1: Ubuntu 26.04 (Resolute) amd64/arm64 and Windows 11; Tier 2: RHEL 10; Tier 3: Ubuntu 24.04 Noble, macOS, Debian Trixie, OpenEmbedded. docs.ros.org/en/lyrical/ exists (seen in search results) but docs.ros.org blocks direct fetches (Anubis bot protection), so docs.ros.org URLs are search-result verified. Jazzy (LTS) targets Ubuntu 24.04.",
+  "Ubuntu Desktop download page currently offers Ubuntu 26.04.1 LTS (Resolute Raccoon).",
+  "cs50.harvard.edu week pages 1, 2, 4, 5, 6, 9 returned server errors on fetch (rate limiting); each was verified via a search result with matching title.",
+  "probabilistic-robotics.org disallows robot fetching and never appeared in search results; used Thrun's Stanford page robots.stanford.edu/probabilistic-robotics/ instead.",
+  "Practical Electronics for Inventors: no official publisher page (mheducation) found; the AccessEngineering URL (ISBN 9781259587542, likely 4th ed.) is search-result only and may require institutional login. Many search hits for this title are pirate PDF sites - do not use.",
+  "3Blue1Brown topic pages (topics/linear-algebra, topics/calculus) load but are generic filter pages; prefer the YouTube playlists or the lessons/ URLs.",
+  "Arduino docs are JS-rendered; millis() page verified by search result.",
+  "Hands-On ML 3rd ed., Practical Statistics 2nd ed., Designing ML Systems: O'Reilly URLs are search-result verified.",
+  "incompleteideas.net loads via HTTPS upgrade.",
+  "2026-10-15: Mustafa studies on a MacBook. Setup is macOS-first (Homebrew, Xcode Command Line Tools); Linux work (apt, ROS 2) goes in an Ubuntu 26.04 arm64 VM under UTM."
+ ]
 }

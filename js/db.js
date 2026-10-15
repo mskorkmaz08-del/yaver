@@ -86,7 +86,7 @@ export async function put(store, row) {
   row.deviceId = device;
   await write(store, row);
   if (mem.tombstones.has(`${store}/${row.id}`)) await dropTombstone(`${store}/${row.id}`);
-  notify(store);
+  notify(store, row.id);
   return row;
 }
 
@@ -96,7 +96,7 @@ export async function remove(store, id) {
   if (store !== 'tombstones' && !(store === 'kv' && isLocalKey(id))) {
     await write('tombstones', { id: `${store}/${id}`, store, rid: id, deletedAt: new Date().toISOString() });
   }
-  notify(store);
+  notify(store, id);
   return existed;
 }
 
@@ -120,8 +120,8 @@ export function onChange(fn) {
   return () => listeners.delete(fn);
 }
 
-export function notify(store) {
-  for (const fn of listeners) fn(store);
+export function notify(store, id) {
+  for (const fn of listeners) fn(store, id);
 }
 
 // ---------- Merging (used by sync and by Import) ----------

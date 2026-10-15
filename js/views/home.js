@@ -63,7 +63,7 @@ export function render(root, go) {
     ${raw(notes.length ? html`
       <section class="card">
         <p class="label">today</p>
-        ${raw(notes.map(n => html`<div class="agenda-row"><span class="dot" style="background:${n.kind === 'money' ? 'var(--amber)' : n.kind === 'task' ? 'var(--red)' : 'var(--accent)'}"></span><span class="what"><span>${n.text}</span></span></div>`).join(''))}
+        ${raw(notes.map(n => html`<${raw(n.open ? 'button' : 'div')} class="agenda-row" ${raw(n.open ? `data-open="${n.open}"` : '')}><span class="dot" style="background:${n.kind === 'money' ? 'var(--amber)' : n.kind === 'task' ? 'var(--red)' : 'var(--accent)'}"></span><span class="what"><span>${n.text}</span></span></${raw(n.open ? 'button' : 'div')}>`).join(''))}
       </section>` : '')}
 
     <div class="quick">
@@ -125,6 +125,7 @@ export function render(root, go) {
     else openAssistant();
   };
   root.querySelectorAll('[data-go]').forEach(b => (b.onclick = () => go(b.dataset.go)));
+  root.querySelectorAll('[data-open]').forEach(b => (b.onclick = () => go(b.dataset.open)));
   const q = { expense: () => expenseForm(), meeting: () => meetingForm(), study: () => studyForm(), meal: () => mealForm() };
   root.querySelectorAll('[data-q]').forEach(b => (b.onclick = q[b.dataset.q]));
   root.querySelectorAll('[data-ev]').forEach(b => (b.onclick = () => meetingForm(db.get('events', b.dataset.ev))));

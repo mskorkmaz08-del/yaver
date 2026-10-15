@@ -11,24 +11,24 @@
    "kind": "setup",
    "minutes": 120,
    "date": "2026-10-15",
-   "title": "Set up your machine",
+   "title": "Set up your MacBook",
    "objectives": [
-    "Install a Linux environment (WSL2 or Ubuntu), VS Code, Python 3 and Git",
+    "Install the developer tools on macOS: Xcode Command Line Tools, Homebrew, Python 3, Git and VS Code",
     "Create a learning-log repository on GitHub and push a first commit",
     "Run and debug a Python file from VS Code"
    ],
    "prereqs": [],
    "resources": [
     {
-     "title": "Install WSL (Microsoft Learn)",
-     "url": "https://learn.microsoft.com/en-us/windows/wsl/install",
-     "part": "install with one command",
+     "title": "Homebrew installation",
+     "url": "https://docs.brew.sh/Installation",
+     "part": "the install command and the PATH step at the end",
      "type": "docs"
     },
     {
-     "title": "Ubuntu Desktop download",
-     "url": "https://ubuntu.com/download/desktop",
-     "part": "only if you choose dual boot",
+     "title": "Visual Studio Code on macOS",
+     "url": "https://code.visualstudio.com/docs/setup/mac",
+     "part": "installation and launching from the command line",
      "type": "docs"
     },
     {
@@ -42,14 +42,20 @@
      "url": "https://git-scm.com/book/en/v2",
      "part": "the chapter on getting started",
      "type": "book"
+    },
+    {
+     "title": "UTM: Ubuntu guest guide",
+     "url": "https://docs.getutm.app/guides/ubuntu/",
+     "part": "for later: the Ubuntu VM before the ROS 2 weeks",
+     "type": "docs"
     }
    ],
    "steps": [
     {
      "kind": "learn",
      "minutes": 15,
-     "title": "Choose the setup",
-     "body": "Everything in this course runs on Linux sooner or later: ROS 2 is built for Ubuntu, most ML tooling assumes a Unix shell, and the robot's Raspberry Pi runs Linux. So the first decision is how you get Linux on your laptop.\n\n**Option 1: WSL2 (Windows Subsystem for Linux).** A real Ubuntu running inside Windows. Five minutes to install, no repartitioning, VS Code connects to it directly with the WSL extension. Good for Python, C++, Git and data work. Weak spots: USB devices (an Arduino) need an extra step (`usbipd`), and graphical robot tools (RViz, Gazebo) work but are slower.\n\n**Option 2: Dual boot Ubuntu.** Native speed and hardware access, which matters from the ROS 2 weeks (spring 2027) onward. Costs an hour or two and some disk space, and you reboot to switch systems.\n\n**Option 3: You're on a Mac.** The macOS terminal is already Unix. Install Homebrew, then Python and Git through it. For ROS 2 later you'll want an Ubuntu machine or VM anyway.\n\nThe default here: **start with WSL2 today**, and plan a dual boot before ROS 2 starts (it shows up in your plan around Week 16). Nothing you set up today is wasted, because your code lives in Git.\n\nWhat you'll have at the end of this session:\n\n1. A Linux shell with `python3 --version` showing 3.12 or newer, and `git --version`.\n2. VS Code with the Python extension (and WSL extension on Windows).\n3. A GitHub account and a repository called `learning-log`, cloned on your machine.\n4. A file `hello.py` you've run, debugged with a breakpoint, committed and pushed.\n\nAnki is optional: Yaver's review cards replace it for course material."
+     "title": "What you're setting up, and why",
+     "body": "macOS is a Unix system, so the terminal you already have speaks almost the same language as the Linux machines this course ends up on (the robot's Raspberry Pi, servers, ROS 2). Python, Git, C++, data work and Arduino all run natively on a Mac. Today's setup covers everything you need until the spring.\n\n**What goes where:**\n\n- **Natively on macOS (today):** Python 3, Git, a C++ compiler (Apple's clang, which also answers to `g++`), VS Code, and later the Arduino IDE. Homebrew is the package manager that installs and updates these, the way `apt` does on Ubuntu.\n- **In an Ubuntu virtual machine (later, around Week 16):** ROS 2 is built for Ubuntu. On a Mac the practical route is a free virtual machine app called UTM running Ubuntu 26.04 for ARM, which ROS 2 Lyrical supports. You don't need it yet; the link is in the resources so you know where it's coming from. Week 5's tools lesson on `apt` will use it too, or you can follow along with Homebrew equivalents.\n\nThe terminal on macOS uses `zsh`, not `bash`. For everything in Phase A the difference doesn't matter: `ls`, `cd`, pipes, `grep` and scripts all work the same.\n\nWhat you'll have at the end of this session:\n\n1. `python3 --version` showing 3.12 or newer, `git --version`, and `g++ --version` working in Terminal.\n2. VS Code with the Python extension, openable from Terminal with `code .`.\n3. A GitHub account and a repository called `learning-log`, cloned on your Mac.\n4. A file `hello.py` you've run, debugged with a breakpoint, committed and pushed.\n\nAnki is optional: Yaver's review cards replace it for course material."
     },
     {
      "kind": "build",
@@ -58,34 +64,34 @@
      "body": "Work through the tasks in order. Each has a check: don't move on until it passes.",
      "tasks": [
       {
-       "prompt": "Install Linux. On Windows: open PowerShell as administrator and run `wsl --install`, reboot, then create your Ubuntu user. (Dual boot or Mac: follow the resource links instead.)",
+       "prompt": "Install Apple's command line developer tools. Open Terminal (Cmd+Space, type Terminal) and run `xcode-select --install`, then accept the dialog.",
        "hints": [
-        "If `wsl --install` says WSL is already installed, run `wsl --list --verbose` to see what you have.",
-        "Virtualization must be enabled in BIOS/UEFI if WSL complains about it.",
-        "`wsl --install -d Ubuntu` picks Ubuntu explicitly."
+        "If it says the tools are already installed, you're done with this step.",
+        "This gives you git, clang and make; the download can take several minutes.",
+        "Check with `g++ --version` afterwards: on a Mac it prints Apple clang, which is fine for this course."
        ],
-       "check": "In the Ubuntu terminal, `uname -a` prints a line containing Linux.",
-       "solution": "Run `wsl --install`, reboot, open *Ubuntu* from the Start menu, choose a username and password. `uname -a` should mention `microsoft-standard-WSL2`."
+       "check": "`git --version` and `g++ --version` both print versions.",
+       "solution": "`xcode-select --install` opens a dialog; click Install. When it finishes, `git --version` and `g++ --version` (Apple clang) both work."
       },
       {
-       "prompt": "Install Python tools and Git inside Linux: `sudo apt update && sudo apt install -y python3 python3-pip python3-venv git build-essential`.",
+       "prompt": "Install Homebrew with the command from its installation page, run the two `echo`/`eval` lines it prints at the end (they add brew to your PATH), then `brew install python`.",
        "hints": [
-        "`build-essential` gives you g++ for the C++ weeks.",
-        "If apt is slow, let it finish: the first update downloads package lists.",
-        "Check versions afterwards."
+        "Copy the install command exactly from the Homebrew page; it asks for your Mac password.",
+        "On Apple Silicon Macs brew lives in /opt/homebrew; the final lines it prints set this up in ~/.zprofile.",
+        "Open a new Terminal window after the PATH step, then `brew --version`."
        ],
-       "check": "`python3 --version`, `git --version` and `g++ --version` all print versions.",
-       "solution": "The single apt command above installs all of it. On a Mac: `brew install python git`."
+       "check": "`brew --version` works, and `python3 --version` prints 3.12 or newer.",
+       "solution": "After installing Homebrew and running its PATH lines, `brew install python` gives you a current Python 3 as `python3`, with `pip3` and `python3 -m venv`."
       },
       {
-       "prompt": "Install VS Code on the host system, add the Python extension (and the WSL extension on Windows). From the Ubuntu terminal run `code .` in your home folder.",
+       "prompt": "Install VS Code (download it, or `brew install --cask visual-studio-code`), add the Python extension, and enable the `code` command: in VS Code press Cmd+Shift+P and run *Shell Command: Install 'code' command in PATH*.",
        "hints": [
-        "VS Code installs on Windows, not inside Ubuntu.",
-        "`code .` from WSL opens a window connected to Linux; the bottom-left corner says WSL: Ubuntu.",
-        "Install the Python extension again inside the WSL window if VS Code asks."
+        "Drag VS Code into Applications if you downloaded the zip.",
+        "The Python extension is the one published by Microsoft.",
+        "Test with `code .` in a Terminal folder."
        ],
-       "check": "The VS Code window's bottom-left corner shows the Linux connection (or you're on a Mac/Ubuntu natively).",
-       "solution": "Install VS Code from its website, add *Python* and *WSL* extensions, then `code .` from the Ubuntu shell."
+       "check": "`code .` in Terminal opens VS Code on that folder.",
+       "solution": "Install VS Code, add the Python extension, run the *Install 'code' command* step, then `code .` works from any folder."
       },
       {
        "prompt": "Create a GitHub account if needed, then a public repository `learning-log`. Set your identity (`git config --global user.name ...` and `user.email ...`), create an SSH key (`ssh-keygen -t ed25519`), add the public key to GitHub, and clone the repo.",
@@ -103,7 +109,7 @@
      "kind": "test",
      "minutes": 25,
      "title": "First run, first breakpoint, first push",
-     "body": "In `learning-log`, create `week00/hello.py`:\n\n```python\ndef greet(name):\n    message = f\"Hello, {name}. Week 1 starts Monday.\"\n    return message\n\nfor person in [\"Mustafa\", \"first-year students\"]:\n    print(greet(person))\n```\n\nRun it from the terminal (`python3 week00/hello.py`). Then set a breakpoint on the `return` line (click left of the line number), start the debugger (F5, choose *Python File*), and step through: watch `message` change in the Variables panel. You'll use the debugger in Week 1's Python lesson, so this is the moment it stops being unfamiliar.\n\nFinally:\n\n```bash\ngit add week00/hello.py\ngit commit -m \"Week 0: first run\"\ngit push\n```"
+     "body": "In `learning-log`, create `week00/hello.py`:\n\n```python\ndef greet(name):\n    message = f\"Hello, {name}. Week 1 starts Monday.\"\n    return message\n\nfor person in [\"Mustafa\", \"first-year students\"]:\n    print(greet(person))\n```\n\nRun it from Terminal (`python3 week00/hello.py`). Then set a breakpoint on the `return` line (click left of the line number), start the debugger (F5, choose *Python File*), and step through: watch `message` change in the Variables panel. You'll use the debugger in Week 1's Python lesson, so this is the moment it stops being unfamiliar.\n\nFinally:\n\n```bash\ngit add week00/hello.py\ngit commit -m \"Week 0: first run\"\ngit push\n```"
     },
     {
      "kind": "log",
@@ -114,7 +120,7 @@
    ],
    "cards": [
     {
-     "front": "Command to check which Python version Linux will run",
+     "front": "Command to check which Python version the terminal will run",
      "back": "python3 --version"
     },
     {

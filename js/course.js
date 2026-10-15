@@ -121,8 +121,30 @@ export function status(id) {
   return 'in progress';
 }
 // The lane's next unfinished lesson (never skip, just shift).
-export function nextInLane(lane) {
-  return laneLessons(lane).find(l => !completed(l.id)) || null;
+// skip > 0 looks further ahead (for slots later in the week that the same lane fills).
+export function nextInLane(lane, skip = 0) {
+  return laneLessons(lane).filter(l => !completed(l.id))[skip] || null;
+}
+// How many sessions of a lane come between now and a slot (so Wednesday shows the lesson after Monday's).
+function sessionsBefore(lane, key, startHM, at = new Date()) {
+  const t = dayKey(at), nm = nowMin(at);
+  if (key < t) return 0;
+  let n = 0;
+  for (let k = t; k <= key; k = addDays(k, 1)) {
+    const w = weekOf(k);
+    if (w === 0) { if (lane === 'setup' && k < key) n++; continue; }
+    const ph = phaseOf(w);
+    if (!ph || isConsolidation(w)) continue;
+    const d = dow(k);
+    if (d > 5) continue;
+    for (const s of slotsFor(d < 5 ? 'weekday' : 'sat')) {
+      if (ph.rotation[s.id]?.[d] !== lane) continue;
+      if (k === t && toMin(s.end) <= nm) continue;
+      if (k === key && toMin(s.start) >= toMin(startHM)) continue;
+      n++;
+    }
+  }
+  return n;
 }
 export const doneInLane = lane => laneLessons(lane).filter(l => completed(l.id)).length;
 
@@ -207,7 +229,7 @@ export function day(key = today()) {
   if (w < 0) return { ...base, beforeStart: true };
   const all = slotsFor(kind).filter(s => s.type !== 'fixed' || settings().showWork);
   if (w === 0) {
-    const l = nextInLane('setup');
+    const l = nextInLane('setup', sessionsBefore('setup', key, '00:00'));
     base.slots = all.filter(s => s.type === 'info' || s.id === 'deep1' || s.type === 'review')
       .map(s => (s.id === 'deep1' ? withLesson({ ...s, end: fromMin(toMin(s.start) + (l?.minutes || 90)), minutes: l?.minutes || 90, label: 'Week 0 · setup' }, l, w) : s));
     return base;
@@ -221,7 +243,7 @@ export function day(key = today()) {
     if (!lane) continue;
     if (lane === 'mixed') { base.slots.push({ ...s, special: 'mixed', lesson: mixedLesson(key), lane, track: 'mixed' }); continue; }
     if (lane === 'buffer') { base.slots.push(bufferSlot(s, w, key)); continue; }
-    base.slots.push(withLesson({ ...s, lane, track: META.lanes[lane].track }, nextInLane(lane), w, lane));
+    base.slots.push(withLesson({ ...s, lane, track: META.lanes[lane].track }, nextInLane(lane, sessionsBefore(lane, key, s.start)), w, lane));
   }
   return base;
 }

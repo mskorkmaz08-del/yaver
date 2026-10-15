@@ -6,9 +6,28 @@ import * as D from '../data.js';
 import { today, addDays } from '../util.js';
 import { reminders } from '../reminders.js';
 import * as Places from '../places.js';
+import * as C from '../course.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
+
+const QA = { type: 'array', items: { type: 'object', properties: { q: { type: 'string' }, a: { type: 'string' } }, required: ['q', 'a'] } };
+const LESSON_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' }, track: { type: 'string' }, lane: { type: 'string' }, week: { type: 'number' }, kind: { type: 'string' }, minutes: { type: 'number' },
+    title: { type: 'string' }, objectives: { type: 'array', items: { type: 'string' } },
+    resources: { type: 'array', items: { type: 'object', properties: { title: { type: 'string' }, url: { type: 'string' }, part: { type: 'string' } }, required: ['title', 'url'] } },
+    steps: { type: 'array', items: { type: 'object', properties: {
+      kind: { type: 'string' }, minutes: { type: 'number' }, title: { type: 'string' }, body: { type: 'string' }, questions: QA, teachBack: { type: 'string' },
+      tasks: { type: 'array', items: { type: 'object', properties: { prompt: { type: 'string' }, hints: { type: 'array', items: { type: 'string' } }, check: { type: 'string' }, solution: { type: 'string' } }, required: ['prompt', 'check'] } },
+    }, required: ['kind', 'minutes', 'title'] } },
+    cards: { type: 'array', items: { type: 'object', properties: { front: { type: 'string' }, back: { type: 'string' } }, required: ['front', 'back'] } },
+    deliverable: { type: 'string' }, safety: { type: 'string' },
+  },
+  required: ['id', 'track', 'lane', 'week', 'kind', 'minutes', 'title', 'objectives', 'steps', 'cards'],
+};
+const attempts = {};
 
 const TOOLS = [
   {
@@ -118,7 +137,7 @@ const TOOLS = [
   },
   {
     name: 'log_practice',
-    description: 'Add to today\'s practice counters: coding problems solved and/or Anki flashcard reviews done.',
+    description: 'Add to today\'s practice counters: coding problems solved and/or flashcard reviews done outside Yaver (course review cards count themselves).',
     input_schema: obj({ problems: { type: 'number' }, anki_reviews: { type: 'number' } }),
     run: async ({ problems, anki_reviews }) => {
       if (problems) await D.addPractice('problems', problems);
@@ -130,7 +149,73 @@ const TOOLS = [
     name: 'get_study_plan',
     description: 'The user\'s long-term study plan (the ML Engineer roadmap if loaded): current week and phase, phase progress, next topics, weekly hours target, daily template and minimum-day rule.',
     input_schema: obj({}),
-    run: () => { const p = D.planStatus(); return p ? { title: p.title, start: p.start, end: p.end, week: p.week, started: p.started, phase: p.phase, phaseProgress: `${p.phaseDone}/${p.phaseTotal}`, nextTopics: p.next.map(m => ({ id: m.id, title: m.title })), weeklyHoursTarget: p.weeklyHours, template: p.template, minimumDay: p.minimumDay } : { plan: null, hint: 'No plan loaded. The user can load the ML Engineer roadmap from the Study tab.' }; },
+    run: () => { if (C.ready() && C.active()) return { active: 'Yaver Course', note: 'The day-by-day course is the active plan; use get_course_today and get_course_progress. The old 52-week roadmap below is kept for reference.', oldPlan: D.planStatus()?.title || null }; const p = D.planStatus(); return p ? { title: p.title, start: p.start, end: p.end, week: p.week, started: p.started, phase: p.phase, phaseProgress: `${p.phaseDone}/${p.phaseTotal}`, nextTopics: p.next.map(m => ({ id: m.id, title: m.title })), weeklyHoursTarget: p.weeklyHours, template: p.template, minimumDay: p.minimumDay } : { plan: null, hint: 'No plan loaded. The user can load the ML Engineer roadmap from the Study tab.' }; },
+  },
+  // ----- Course -----
+  {
+    name: 'get_course_today',
+    description: 'The course plan for a day: week, phase, consolidation flag, each slot with time, track, lesson id, title, minutes and status; review cards due; pace per track; teaching deadlines. Call first for anything about today\'s studying.',
+    input_schema: obj({ date }),
+    run: async ({ date: k = today() }) => {
+      await C.init();
+      const d = C.day(k);
+      return {
+        date: k, week: d.week, phase: d.phaseName, consolidation: d.consolidation, courseActive: C.active(),
+        slots: (d.slots || []).filter(s => s.type !== 'info').map(s => ({ slot: s.id, start: s.start, end: s.end, minutes: s.minutes, track: s.track || undefined, lessonId: s.lesson?.id, title: C.slotTitle(s), status: s.status, ahead: s.ahead || undefined, urgent: s.urgent || undefined, prepareWeek: s.prepare || undefined })),
+        cardsDue: C.dueCount(),
+        pace: Object.values(C.pace()).map(t => ({ track: t.name, status: t.label })),
+        deadlines: C.deadlines(14),
+      };
+    },
+  },
+  {
+    name: 'get_lesson',
+    description: 'A full course lesson (objectives, resources, steps with explanations, practice tasks with hints and solutions, exit ticket, cards) plus the user\'s progress on it. Use it to tutor; keep solutions hidden until he has attempted and asks.',
+    input_schema: obj({ lessonId: { type: 'string' } }, ['lessonId']),
+    run: async ({ lessonId }) => { await C.init(); const l = C.lesson(lessonId); if (!l) throw new Error('No lesson with that id'); return { lesson: l, progress: C.progress(lessonId), teachBy: l.track === 'robo' ? C.teachBy(l) : undefined }; },
+  },
+  {
+    name: 'complete_lesson',
+    description: 'Complete a course lesson: logs the minutes as study, schedules its review cards, applies the 80% mastery rule (score is the exit-ticket fraction 0–1; below 0.8 the lesson is flagged and comes back). Returns the next lesson in that track.',
+    input_schema: obj({ lessonId: { type: 'string' }, minutes: { type: 'number' }, score: { type: 'number', description: 'Exit-ticket score 0–1' }, notes: { type: 'string' } }, ['lessonId']),
+    run: async i => { await C.init(); return C.completeLesson(i); },
+  },
+  {
+    name: 'get_review_cards',
+    description: 'Review cards due now (spaced repetition), interleaved across tracks.',
+    input_schema: obj({ limit: { type: 'number' }, track: { type: 'string', enum: ['python', 'cpp', 'algo', 'math', 'ai', 'robo', 'build', 'tools'] } }),
+    run: async ({ limit = 10, track }) => { await C.init(); return { due: C.dueCount(), cards: C.dueCards({ limit, track }).map(c => ({ id: c.id, track: c.track, front: c.front, back: c.back, box: c.box })) }; },
+  },
+  {
+    name: 'grade_card',
+    description: 'Grade a review card after the user answered it: again (forgot), hard, good, easy. Moves its next due date.',
+    input_schema: obj({ cardId: { type: 'string' }, grade: { type: 'string', enum: ['again', 'hard', 'good', 'easy'] } }, ['cardId', 'grade']),
+    run: async ({ cardId, grade }) => { await C.init(); const c = await C.gradeCard(cardId, grade); return { cardId, box: c.box, due: c.due }; },
+  },
+  {
+    name: 'get_course_progress',
+    description: 'Course progress per track: done/total, pace (on plan / behind / ahead), mastery rate, flagged lessons, weekly test scores, consolidation weeks, teaching deadlines, diagnostic scores.',
+    input_schema: obj({}),
+    run: async () => { await C.init(); return C.progressSummary(); },
+  },
+  {
+    name: 'record_test_result',
+    description: 'Store the Sunday weekly test result per track. Tracks under 70% get that week\'s lessons flagged and their cards due Monday.',
+    input_schema: obj({ week: { type: 'number' }, scores: { type: 'array', items: { type: 'object', properties: { track: { type: 'string' }, right: { type: 'number' }, total: { type: 'number' } }, required: ['track', 'right', 'total'] } } }, ['week', 'scores']),
+    run: async i => { await C.init(); return C.recordTest(i); },
+  },
+  {
+    name: 'save_week_lessons',
+    description: 'Save AI-written day-level lessons for a course week (16 or later). Validates them against the lesson rules and the rotation\'s session counts; returns precise errors to fix and retry (at most 3 attempts, then tell the user).',
+    input_schema: obj({ week: { type: 'number' }, lessons: { type: 'array', items: LESSON_SCHEMA } }, ['week', 'lessons']),
+    run: async ({ week, lessons }) => {
+      await C.init();
+      attempts[week] = (attempts[week] || 0) + 1;
+      const r = await C.saveWeekLessons(week, lessons);
+      if (!r.saved && attempts[week] >= 3) return { ...r, stop: 'Third failed attempt: stop retrying and tell the user plainly which problems remain.' };
+      if (r.saved) attempts[week] = 0;
+      return r;
+    },
   },
   // ----- Places -----
   {
@@ -194,7 +279,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -221,8 +306,12 @@ export function describeAction(name, input) {
     case 'complete_task': return 'Completed a task';
     case 'add_roadmap_milestones': return `Roadmap: +${input.milestones?.length || 0} milestones in ${input.subject}`;
     case 'complete_milestone': return input.done === false ? 'Milestone reopened' : 'Milestone done';
-    case 'log_practice': return `Practice +${input.problems || 0} problems, +${input.anki_reviews || 0} Anki`;
+    case 'log_practice': return `Practice +${input.problems || 0} problems, +${input.anki_reviews || 0} card reviews`;
     case 'set_goal': return `Goal ${input.goal} = ${input.value}`;
+    case 'complete_lesson': return `Lesson complete${input.score != null ? ` · ${Math.round((input.score > 1 ? input.score / 100 : input.score) * 100)}%` : ''}`;
+    case 'grade_card': return `Card: ${input.grade}`;
+    case 'record_test_result': return `Week ${input.week} test saved`;
+    case 'save_week_lessons': return `Week ${input.week}: ${input.lessons?.length || 0} lessons saved`;
     default: return null;
   }
 }
