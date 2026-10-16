@@ -622,3 +622,4 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 @media (min-width: 1400px) {
   body.lesson-docked.chat-open .view { margin-right: 460px; }
 }
+.msg.bot .via { margin-top: 4px; font: 10px/1.2 var(--mono, ui-monospace, monospace); color: var(--dim, #5c5c66); letter-spacing: .04em; }

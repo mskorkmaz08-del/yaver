@@ -10,7 +10,7 @@ export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 't
   'courseProgress', 'cards', 'courseLessons', 'courseTests', 'tombstones'];
 
 // Settings that belong to this device only: never synced, never in backups' sync payload.
-export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups']);
+export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel']);
 export const isLocalKey = id => LOCAL_KEYS.has(id) || id.startsWith('sync');
 // Stores that never leave the device (chat history can be large and holds photos).
 export const LOCAL_STORES = new Set(['chats']);
@@ -178,7 +178,7 @@ export function isEmpty() {
 }
 
 // Backup: the whole database as one JSON file, and back.
-const SECRET = new Set(['apiKey', 'geminiKey']);
+const SECRET = new Set(['apiKey', 'geminiKey', 'macToken']);
 export function exportAll() {
   const data = {};
   for (const s of STORES) data[s] = all(s).filter(r => !(s === 'kv' && (SECRET.has(r.id) || r.id.startsWith('sync') || r.id === 'autoBackups')));

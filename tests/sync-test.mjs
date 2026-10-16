@@ -59,6 +59,7 @@ async function device(name, opts) {
     await db.setSetting('deviceName', nm);
     await db.setSetting('apiKey', 'sk-ant-SECRET-KEY');
     await db.setSetting('geminiKey', 'AIzaSECRETGEMINI');
+    await db.setSetting('macToken', 'MACTOKEN-secret'); await db.setSetting('macUrl', 'https://mac.example.ts.net');
     await db.put('chats', { id: 'main', api: [{ role: 'user', content: 'private chat' }], view: [] });
   }, name);
   return { page, errors, name };
@@ -87,13 +88,13 @@ check(g.description === 'Yaver sync, encrypted' && g.public === false && Object.
 const env = JSON.parse(g.files['yaver-sync.enc']);
 check(env.alg === 'AES-GCM-256/PBKDF2-SHA256' && env.iter >= 310000 && env.salt && env.iv, 'Payload is an AES-GCM envelope with PBKDF2 ≥ 310k', `iter ${env.iter}`);
 const raw = uploads.join('\n');
-check(!/Plov|Taxi|python-w01|sk-ant|AIza|SECRET|private chat|correct horse|TESTTOKEN/.test(raw), 'Uploads contain no readable data, keys, token, passphrase or chats');
+check(!/Plov|Taxi|python-w01|sk-ant|AIza|SECRET|private chat|correct horse|TESTTOKEN|MACTOKEN/.test(raw), 'Uploads contain no readable data, keys, token, passphrase or chats');
 check(!(await run(phone, async () => localStorage.length)), 'Nothing in localStorage');
 
 // Payload content (decrypted with the passphrase): no keys or chats inside either
 const inner = await run(phone, async ([text, p]) => { const c = await import('./js/crypto.js'); return c.decryptJSON(text, p); }, [g.files['yaver-sync.enc'], PASS]);
 const kvIds = inner.data.kv.map(r => r.id);
-check(!inner.data.chats && !kvIds.some(id => /^(apiKey|geminiKey|provider|sync|deviceId$|deviceName$|autoBackups)/.test(id)), 'Decrypted payload has no API keys, sync settings, device settings or chats', `${kvIds.length} kv rows`);
+check(!inner.data.chats && !kvIds.some(id => /^(apiKey|geminiKey|provider|sync|deviceId$|deviceName$|autoBackups|mac)/.test(id)), 'Decrypted payload has no API keys, sync settings, device settings or chats', `${kvIds.length} kv rows`);
 
 // MacBook with a wrong passphrase: clear error, nothing changed on either side
 const before = g.updated_at;

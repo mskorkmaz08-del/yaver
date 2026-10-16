@@ -108,6 +108,10 @@ Yaver can use either brain. **Gemini** (Google) has a free tier: get a key at ai
 - Limits: the free tier caps requests per minute and per day, Google may use free-tier chats to improve its models, and web search is Claude-only.
 - `js/ai/provider.js` holds the switch: which brain is active, saving a pasted key, and testing it.
 
+## 3c. Claude on your Mac (added in v5)
+
+`bridge/yaver-bridge.mjs` is a tiny web server you run on your MacBook. It receives Yaver's conversation and tool list, runs Claude Code in print mode (`claude -p`, no built-in tools, structured JSON output) under your Claude subscription, and returns the reply and any tool calls. Tailscale gives the phone a private HTTPS address for it. `js/ai/mac.js` is the phone side: before each text message it checks `/health` (remembered for 30 seconds), uses the Mac when it answers, and otherwise falls back to the chosen AI, usually Gemini. A token protects the bridge. Setup steps: `bridge/README.md`.
+
 ## 4. Offline and updates
 
 `sw.js` is a **service worker**: a small script Safari runs in the background for the app. On first launch it saves a copy of every app file. After that:
@@ -154,6 +158,7 @@ yaver/
     └── ai/
         ├── provider.js     Picks Gemini (free) or Claude; saves and tests keys
         ├── gemini.js       Talks to Google's Gemini API; same agent loop
+        ├── mac.js          Talks to the bridge on your Mac (Claude via your subscription)
         ├── claude.js       Talks to the Anthropic API; the agent loop
         ├── tools.js        The 21 tools Claude can call, and the code behind each
         └── assistant.js    The chat screen: messages, photos, voice in/out

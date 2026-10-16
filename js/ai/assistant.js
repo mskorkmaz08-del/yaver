@@ -3,11 +3,12 @@ import * as db from '../db.js';
 import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
+import { macConfigured, macOnline, runTurnMac } from './mac.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 
 const CHAT_ID = 'main';
-let chat;          // { id, api: [Claude messages], gapi: [Gemini messages], view: [what the user sees] }
+let chat;          // { id, api: [Claude], gapi: [Gemini], mapi: [Claude on Mac], view: [what the user sees] }
 let busy = false;
 let abort;
 let pendingImage = null;
@@ -53,7 +54,7 @@ export function initAssistant() {
 
   const input = el.querySelector('[data-input]');
   el.querySelector('[data-close]').onclick = closeAssistant;
-  el.querySelector('[data-new]').onclick = () => { if (busy) return; chat = { id: CHAT_ID, api: [], gapi: [], view: [] }; save(); render(); };
+  el.querySelector('[data-new]').onclick = () => { if (busy) return; chat = { id: CHAT_ID, api: [], gapi: [], mapi: [], view: [] }; save(); render(); };
   el.querySelector('[data-send]').onclick = () => (busy ? abort?.abort() : send(input.value));
   input.addEventListener('input', () => autosize(input));
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !matchMedia('(pointer:coarse)').matches) { e.preventDefault(); send(input.value); } });
@@ -119,7 +120,8 @@ function bubble(m) {
   }
   const actions = (m.actions || []).map(a => html`<div class="receipt">${raw(icon('check'))}${a}</div>`).join('');
   const body = m.error ? html`<p class="err">${m.text}</p>` : m.text ? md(m.text) : '<span class="typing"><i></i><i></i><i></i></span>';
-  return `<div class="msg bot">${actions}<div class="bot-text">${body}</div></div>`;
+  const via = m.via && !m.error ? `<div class="via">${{ mac: 'claude · your mac', gemini: 'gemini', anthropic: 'claude' }[m.via]}</div>` : '';
+  return `<div class="msg bot">${actions}<div class="bot-text">${body}</div>${via}</div>`;
 }
 
 function scrollDown() {
@@ -140,7 +142,6 @@ async function send(textIn) {
   speechSynthesis?.cancel?.();
 
   // Each AI keeps its own history format; switching AI starts that one's context fresh.
-  const gem = provider() === 'gemini';
   const prompt = text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.';
   const img = pendingImage && { media_type: pendingImage.media_type, data: pendingImage.data };
   chat.view.push({ role: 'user', text, image: pendingImage?.url });
@@ -149,10 +150,6 @@ async function send(textIn) {
 
   const reply = { role: 'bot', text: '', actions: [] };
   chat.view.push(reply);
-  const history = gem ? (chat.gapi ||= []) : chat.api;
-  const before = history.length;
-  if (gem) history.push(userMessage(prompt, img));
-  else history.push({ role: 'user', content: [...(img ? [{ type: 'image', source: { type: 'base64', ...img } }] : []), { type: 'text', text: prompt }] });
   busy = true;
   el.classList.add('busy');
   el.querySelector('[data-send]').innerHTML = icon('stop');
@@ -162,31 +159,51 @@ async function send(textIn) {
   const log = el.querySelector('[data-log]');
   const live = () => log.lastElementChild;
   abort = new AbortController();
-  try {
-    const { text: out } = await (gem ? runTurnGemini : runTurn)(history, {
-      signal: abort.signal,
-      onText: t => { reply.text = t; live().outerHTML = bubble(reply); scrollDown(); },
-      onAction: a => { reply.actions.push(a); haptic(); live().outerHTML = bubble(reply); },
-      onStatus: setStatus,
-    });
-    reply.text = out || (reply.actions.length ? 'Done.' : '…');
-    if (db.setting('speak', false)) speak(reply.text);
-  } catch (e) {
-    // Drop the unfinished turn from what we send next time, so the conversation stays valid.
-    history.length = before;
-    reply.error = e.code !== 'abort';
-    reply.text = e.code === 'abort' ? (reply.text || 'Stopped.') : e.message;
-  } finally {
-    busy = false;
-    el.classList.remove('busy');
-    el.querySelector('[data-send]').innerHTML = icon('send');
-    setStatus('');
-    // Long conversations: start a fresh context (the screen keeps the old bubbles).
-    // We never edit earlier turns in place, because the model's saved reasoning is tied to them.
-    if (history.length > 80) { history.length = 0; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
-    save();
-    render();
+  const callbacks = {
+    signal: abort.signal,
+    onText: t => { reply.text = t; live().outerHTML = bubble(reply); scrollDown(); },
+    onAction: a => { reply.actions.push(a); haptic(); live().outerHTML = bubble(reply); },
+    onStatus: setStatus,
+  };
+
+  // Route: Claude on the Mac when it's reachable (text only), otherwise the chosen AI.
+  const routes = [];
+  if (!img && macConfigured()) { setStatus('Checking your Mac…'); if (await macOnline()) routes.push('mac'); }
+  routes.push(provider());
+
+  let history;
+  for (const route of routes) {
+    history = route === 'mac' ? (chat.mapi ||= []) : route === 'gemini' ? (chat.gapi ||= []) : chat.api;
+    const before = history.length;
+    if (route === 'mac') history.push({ role: 'user', text: prompt });
+    else if (route === 'gemini') history.push(userMessage(prompt, img));
+    else history.push({ role: 'user', content: [...(img ? [{ type: 'image', source: { type: 'base64', ...img } }] : []), { type: 'text', text: prompt }] });
+    const run = route === 'mac' ? runTurnMac : route === 'gemini' ? runTurnGemini : runTurn;
+    try {
+      const { text: out } = await run(history, callbacks);
+      reply.text = out || (reply.actions.length ? 'Done.' : '…');
+      reply.via = route;
+      if (db.setting('speak', false)) speak(reply.text);
+      break;
+    } catch (e) {
+      // Drop the unfinished turn from what we send next time, so the conversation stays valid.
+      history.length = before;
+      // The Mac dropped off mid-message: quietly try the next AI, unless something was already done.
+      if (route === 'mac' && e.code === 'offline' && !reply.actions.length) { reply.text = ''; continue; }
+      reply.error = e.code !== 'abort';
+      reply.text = e.code === 'abort' ? (reply.text || 'Stopped.') : e.message;
+      break;
+    }
   }
+  busy = false;
+  el.classList.remove('busy');
+  el.querySelector('[data-send]').innerHTML = icon('send');
+  setStatus('');
+  // Long conversations: start a fresh context (the screen keeps the old bubbles).
+  // We never edit earlier turns in place, because the model's saved reasoning is tied to them.
+  if (history.length > 80) { history.length = 0; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
+  save();
+  render();
 }
 
 function speak(text) {
