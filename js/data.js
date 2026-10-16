@@ -196,18 +196,33 @@ export function planStatus(key = today()) {
   return { ...plan, week, started: key >= plan.start, phase, phaseDone: rm?.done || 0, phaseTotal: rm?.total || 0, next: rm?.items.filter(m => !m.done).slice(0, 4) || [] };
 }
 
-// ---------- Practice counters (problems solved, Anki reviews) ----------
-export const PRACTICE = { problems: 'Problems solved', anki: 'Anki reviews' };
-export const practiceOn = (kind, key = today()) => db.setting(`practice:${kind}:${key}`, 0);
+// ---------- Practice counters (problems solved, card reviews) ----------
+// Counters are stored one key per device per day (practice:<kind>:<date>:<deviceId>)
+// so two synced devices add up instead of overwriting each other.
+// The 'anki' key is kept for backup compatibility; it counts Yaver's review cards.
+export const PRACTICE = { problems: 'Problems solved', anki: 'Card reviews' };
+export function counterOn(prefix) {
+  const p = prefix + ':';
+  return db.all('kv').filter(r => r.id.startsWith(p) && r.id.split(':').length === prefix.split(':').length + 1).reduce((a, r) => a + (Number(r.value) || 0), 0);
+}
+async function addCounter(prefix, n) {
+  const k = `${prefix}:${db.deviceId()}`;
+  const mine = db.setting(k, 0);
+  const v = Math.max(-(counterOn(prefix) - mine), mine + Number(n || 0)); // total never below 0
+  await db.setSetting(k, v);
+  return counterOn(prefix);
+}
+export const practiceOn = (kind, key = today()) => counterOn(`practice:${kind}:${key}`);
 export function practiceTotal(kind) {
   return db.all('kv').filter(r => r.id.startsWith(`practice:${kind}:`)).reduce((a, r) => a + (Number(r.value) || 0), 0);
 }
 export async function addPractice(kind, n, key = today()) {
   if (!PRACTICE[kind]) throw new Error('kind must be problems or anki');
-  const v = Math.max(0, practiceOn(kind, key) + Number(n || 0));
-  await db.setSetting(`practice:${kind}:${key}`, v);
-  return v;
+  return addCounter(`practice:${kind}:${key}`, n);
 }
+export const waterOn = (key = today()) => counterOn(`water:${key}`);
+export const addWater = (n, key = today()) => addCounter(`water:${key}`, n);
+export const setWater = (total, key = today()) => addWater(total - waterOn(key), key);
 
 // ---------- Diet ----------
 export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today() }) {
@@ -217,7 +232,7 @@ export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, m
 }
 export function dietDay(key = today()) {
   const meals = db.all('meals').filter(m => m.date === key).sort((a, b) => MEAL_TYPES.indexOf(a.meal) - MEAL_TYPES.indexOf(b.meal));
-  const water = db.setting(`water:${key}`, 0);
+  const water = waterOn(key);
   return {
     date: key,
     meals,

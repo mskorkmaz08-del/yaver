@@ -11,20 +11,32 @@ import * as study from './views/study.js';
 import * as diet from './views/diet.js';
 import * as settings from './views/settings.js';
 import * as mapView from './views/map.js';
+import * as courseView from './views/course.js';
+import * as lessonView from './views/lesson.js';
+import * as C from './course.js';
+import { initShortcuts } from './keys.js';
+import { initSync } from './sync.js';
 import { currencyOptions } from './data.js';
 import { icon } from './icons.js';
 
-const TABS = { home: ['home', 'home'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'] };
+const TABS = { home: ['home', 'home'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'], settings: ['settings', 'settings'] };
 
-const VIEWS = { home, money, calendar, study, diet, map: mapView, settings };
+const VIEWS = { home, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView };
+// Screens that belong to a tab for highlighting.
+const PARENT = { course: 'study', lesson: 'study' };
 let current = 'home';
+let param = '';
 
-function go(name) {
+export function go(name, arg = '') {
+  if (name.includes('/')) [name, arg] = [name.slice(0, name.indexOf('/')), decodeURIComponent(name.slice(name.indexOf('/') + 1))];
   if (!VIEWS[name]) name = 'home';
-  if (current === 'study' && name !== 'study') study.cleanup();
+  if (current !== name || param !== arg) VIEWS[current].cleanup?.();
   current = name;
-  if (location.hash.slice(1) !== name) history.replaceState(null, '', `#${name}`);
-  document.querySelectorAll('.tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  param = arg;
+  const hash = arg ? `${name}/${encodeURIComponent(arg)}` : name;
+  if (location.hash.slice(1) !== hash) history.replaceState(null, '', `#${hash}`);
+  document.body.dataset.view = name;
+  document.querySelectorAll('.tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === (PARENT[name] || name)));
   draw();
   $('#view').scrollTo?.(0, 0);
   window.scrollTo(0, 0);
@@ -33,7 +45,7 @@ function go(name) {
 function draw() {
   const root = $('#view');
   const y = window.scrollY;
-  VIEWS[current].render(root, go);
+  VIEWS[current].render(root, go, param);
   window.scrollTo(0, y);
 }
 
@@ -68,14 +80,26 @@ async function start() {
     b.onclick = () => go(b.dataset.tab);
   });
   $('#fab').onclick = () => openAssistant();
+  // On a laptop the assistant button lives in the sidebar.
+  const ask = $('.tabbar [data-ask]');
+  ask.innerHTML = `${icon('sparkle')}<span>ask yaver</span><kbd>/</kbd>`;
+  ask.onclick = () => openAssistant();
+  // Course content loads in the background; screens that need it redraw when it arrives.
+  C.init().catch(() => {});
+  window.addEventListener('course-ready', () => { if (current !== 'map') draw(); });
+  initShortcuts(go);
+  // Chrome/Edge on a computer: keep the install prompt for the button in Settings.
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.yaverInstall = e; });
+  initSync();
+  courseView.initSlotAlerts();
 
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
   // (The map keeps its own state, so data changes don't redraw it.)
-  db.onChange(() => { if (current === 'map') return; clearTimeout(pending); pending = setTimeout(draw, 30); });
+  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && /^sync/.test(String(id)))) return; clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
-  window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });
 
   go(location.hash.slice(1) || 'home');
   document.body.classList.add('ready');

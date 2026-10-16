@@ -2,14 +2,16 @@
 // Shown on Home, and given to Claude so its briefings say the same thing.
 import * as db from './db.js';
 import * as D from './data.js';
-import { today, addDays, weekStart, sum, mins, money, timeHM } from './util.js';
+import { today, addDays, weekStart, sum, mins, money, timeHM, parseDay } from './util.js';
+import * as C from './course.js';
 
 export function reminders() {
   const out = [];
   const now = new Date();
   const s = D.studySummary();
   const need = D.streakMin();
-  const plan = D.planStatus();
+  const course = C.ready() && C.active();
+  const plan = course ? null : D.planStatus();
   const missedYesterday = (s.streak.perDay[addDays(today(), -1)] || 0) < need;
 
   // Study
@@ -33,6 +35,21 @@ export function reminders() {
   } else {
     const next = D.nextMilestone();
     if (next) out.push({ kind: 'roadmap', text: `Next on your roadmap: ${next.title} (${next.subject}).` });
+  }
+
+  // Course: next block, cards, pace, teaching deadlines
+  if (course) {
+    if (now.getDay() === 0 && C.weekOf() >= 1) out.push({ kind: 'course', text: 'Weekly test and ship today.' });
+    const nb = C.nextBlock(now);
+    if (nb) out.push({ kind: 'course', text: `${nb.date === today() ? '' : nb.date === addDays(today(), 1) ? 'Tomorrow ' : nb.date + ' '}${nb.start} · ${C.slotTitle(nb)}${nb.minutes ? ` (${nb.minutes} min)` : ''}.`, open: nb.lesson ? `lesson/${nb.lesson.id}` : null });
+    const due = C.dueCount();
+    if (due) out.push({ kind: 'course', text: `${due} review card${due > 1 ? 's' : ''} due.`, open: 'lesson/review' });
+    for (const t of Object.values(C.pace()).filter(t => t.behind > 0).sort((a, b) => b.behind - a.behind).slice(0, 2)) {
+      out.push({ kind: t.color === 'red' ? 'task' : 'course', text: `${t.name} is ${t.behind} lesson${t.behind > 1 ? 's' : ''} behind.` });
+    }
+    for (const d of C.deadlines(7).slice(0, 2)) {
+      out.push({ kind: 'task', text: d.days < 0 ? `Robotics: ${d.title} was due to be taught ${-d.days} day${d.days < -1 ? 's' : ''} ago and isn't prepared.` : `Robotics: ${d.title} is taught ${d.days === 0 ? 'today' : `in ${d.days} day${d.days > 1 ? 's' : ''}`} and not prepared.`, open: `lesson/${d.lessonId}` });
+    }
   }
 
   // Calendar

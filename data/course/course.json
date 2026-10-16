@@ -1,0 +1,3571 @@
+{
+ "version": 1,
+ "title": "Yaver Course: AI and robotics engineer",
+ "start": "2026-10-19",
+ "week0": "2026-10-15",
+ "sleep": {
+  "start": "22:30",
+  "end": "05:30",
+  "minHours": 7
+ },
+ "masteryThreshold": 0.8,
+ "testThreshold": 0.7,
+ "cardIntervals": [
+  1,
+  3,
+  7,
+  14,
+  30,
+  60
+ ],
+ "tracks": [
+  {
+   "id": "python",
+   "name": "Python",
+   "color": "#5aa9ff"
+  },
+  {
+   "id": "cpp",
+   "name": "C++",
+   "color": "#a78bfa"
+  },
+  {
+   "id": "algo",
+   "name": "Algorithms",
+   "color": "#ffb547"
+  },
+  {
+   "id": "math",
+   "name": "Math",
+   "color": "#4fd1c5"
+  },
+  {
+   "id": "ai",
+   "name": "AI",
+   "color": "#7ddc6b"
+  },
+  {
+   "id": "robo",
+   "name": "Robotics",
+   "color": "#ff8a4c"
+  },
+  {
+   "id": "build",
+   "name": "Projects",
+   "color": "#ff5a5f"
+  },
+  {
+   "id": "tools",
+   "name": "Tools",
+   "color": "#8b8b96"
+  }
+ ],
+ "lanes": {
+  "setup": {
+   "track": "build",
+   "minutes": 60,
+   "kind": "setup",
+   "label": "Week 0 setup"
+  },
+  "python": {
+   "track": "python",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "python-inter": {
+   "track": "python",
+   "minutes": 90,
+   "kind": "light"
+  },
+  "cpp": {
+   "track": "cpp",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "algo": {
+   "track": "algo",
+   "minutes": 90,
+   "kind": "practice"
+  },
+  "math-learn": {
+   "track": "math",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "math-practice": {
+   "track": "math",
+   "minutes": 90,
+   "kind": "practice"
+  },
+  "ai-main": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "ai-read": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "ai-read-long": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "light"
+  },
+  "ai-sql": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "ai-stats": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "ai-deep": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "deep"
+  },
+  "ai-practice": {
+   "track": "ai",
+   "minutes": 90,
+   "kind": "practice"
+  },
+  "ai-breadth": {
+   "track": "ai",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "tools": {
+   "track": "tools",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "robo-prep": {
+   "track": "robo",
+   "minutes": 60,
+   "kind": "prep"
+  },
+  "robo-lab": {
+   "track": "robo",
+   "minutes": 120,
+   "kind": "lab"
+  },
+  "robo-read": {
+   "track": "robo",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "cpp-ros": {
+   "track": "cpp",
+   "minutes": 60,
+   "kind": "light"
+  },
+  "build": {
+   "track": "build",
+   "minutes": 90,
+   "kind": "build"
+  },
+  "build-long": {
+   "track": "build",
+   "minutes": 120,
+   "kind": "build"
+  }
+ },
+ "slots": {
+  "weekday": [
+   {
+    "id": "wake",
+    "start": "05:30",
+    "end": "05:50",
+    "label": "Wake, water, 15-min walk, no phone",
+    "type": "info"
+   },
+   {
+    "id": "deep1",
+    "start": "05:50",
+    "end": "07:20",
+    "label": "Deep 1 · hardest new material",
+    "type": "lesson"
+   },
+   {
+    "id": "break",
+    "start": "07:20",
+    "end": "07:35",
+    "label": "Break",
+    "type": "info"
+   },
+   {
+    "id": "deep2",
+    "start": "07:35",
+    "end": "09:05",
+    "label": "Deep 2 · practice at the edge",
+    "type": "lesson"
+   },
+   {
+    "id": "work",
+    "start": "10:00",
+    "end": "12:00",
+    "label": "Work tasks",
+    "type": "fixed"
+   },
+   {
+    "id": "students",
+    "start": "13:00",
+    "end": "15:00",
+    "label": "Students",
+    "type": "fixed"
+   },
+   {
+    "id": "build",
+    "start": "15:20",
+    "end": "16:50",
+    "label": "Build · weekly project",
+    "type": "lesson"
+   },
+   {
+    "id": "exercise",
+    "start": "16:50",
+    "end": "17:30",
+    "label": "Exercise",
+    "type": "info"
+   },
+   {
+    "id": "prep",
+    "start": "17:30",
+    "end": "18:30",
+    "label": "Prep · robotics, ahead of students",
+    "type": "lesson"
+   },
+   {
+    "id": "light",
+    "start": "19:30",
+    "end": "20:30",
+    "label": "Light · reading and lectures",
+    "type": "lesson"
+   },
+   {
+    "id": "review",
+    "start": "20:30",
+    "end": "21:00",
+    "label": "Review · cards, log, plan tomorrow",
+    "type": "review"
+   },
+   {
+    "id": "screens",
+    "start": "22:00",
+    "end": "22:30",
+    "label": "Screens off",
+    "type": "info"
+   }
+  ],
+  "sat": [
+   {
+    "id": "wake",
+    "start": "05:30",
+    "end": "05:50",
+    "label": "Wake, water, walk",
+    "type": "info"
+   },
+   {
+    "id": "deep1",
+    "start": "05:50",
+    "end": "07:20",
+    "label": "Deep 1 · AI main lesson",
+    "type": "lesson"
+   },
+   {
+    "id": "break",
+    "start": "07:20",
+    "end": "07:35",
+    "label": "Break",
+    "type": "info"
+   },
+   {
+    "id": "deep2",
+    "start": "07:35",
+    "end": "09:05",
+    "label": "Mixed practice · all tracks",
+    "type": "lesson"
+   },
+   {
+    "id": "build",
+    "start": "10:00",
+    "end": "12:00",
+    "label": "Build · weekly project",
+    "type": "lesson"
+   },
+   {
+    "id": "lab",
+    "start": "13:00",
+    "end": "15:00",
+    "label": "Lab · robotics on real hardware",
+    "type": "lesson"
+   },
+   {
+    "id": "light",
+    "start": "15:20",
+    "end": "16:50",
+    "label": "Light · reading",
+    "type": "lesson"
+   },
+   {
+    "id": "review",
+    "start": "20:30",
+    "end": "20:45",
+    "label": "Review cards",
+    "type": "review"
+   },
+   {
+    "id": "screens",
+    "start": "22:00",
+    "end": "22:30",
+    "label": "Screens off",
+    "type": "info"
+   }
+  ],
+  "sun": [
+   {
+    "id": "wake",
+    "start": "05:30",
+    "end": "05:50",
+    "label": "Wake, water, walk",
+    "type": "info"
+   },
+   {
+    "id": "test",
+    "start": "05:50",
+    "end": "07:20",
+    "label": "Weekly retrieval test",
+    "type": "test"
+   },
+   {
+    "id": "break",
+    "start": "07:20",
+    "end": "07:35",
+    "label": "Break",
+    "type": "info"
+   },
+   {
+    "id": "ship",
+    "start": "07:35",
+    "end": "09:05",
+    "label": "Ship & weekly review",
+    "type": "ship"
+   },
+   {
+    "id": "plan",
+    "start": "20:30",
+    "end": "20:40",
+    "label": "Confirm Monday's first block",
+    "type": "plan"
+   },
+   {
+    "id": "screens",
+    "start": "22:00",
+    "end": "22:30",
+    "label": "Screens off",
+    "type": "info"
+   }
+  ]
+ },
+ "phases": [
+  {
+   "id": "A",
+   "name": "Foundations: Python, algorithms, linear algebra, electronics",
+   "weeks": [
+    1,
+    7
+   ],
+   "rotation": {
+    "deep1": [
+     "python",
+     "math-learn",
+     "python",
+     "math-learn",
+     "python",
+     "ai-main"
+    ],
+    "deep2": [
+     "algo",
+     "math-practice",
+     "algo",
+     "math-practice",
+     "algo",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "tools",
+     "ai-read",
+     "tools",
+     "ai-read",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "B",
+   "name": "C++, calculus and probability, statistics and SQL, Arduino",
+   "weeks": [
+    8,
+    15
+   ],
+   "rotation": {
+    "deep1": [
+     "cpp",
+     "math-learn",
+     "cpp",
+     "math-learn",
+     "cpp",
+     "ai-main"
+    ],
+    "deep2": [
+     "algo",
+     "math-practice",
+     "algo",
+     "math-practice",
+     "algo",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "ai-sql",
+     "ai-stats",
+     "ai-sql",
+     "ai-stats",
+     "buffer",
+     "python-inter"
+    ]
+   }
+  },
+  {
+   "id": "C",
+   "name": "Algorithms to the finish, classical ML, AI search, ROS 2 basics",
+   "weeks": [
+    16,
+    24
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "algo",
+     "math-practice",
+     "algo",
+     "math-practice",
+     "algo",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "D",
+   "name": "Deep learning, robot kinematics, ROS 2 core",
+   "weeks": [
+    25,
+    33
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "E",
+   "name": "Probabilistic robotics, the course robot, ML engineering",
+   "weeks": [
+    34,
+    46
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  },
+  {
+   "id": "F",
+   "name": "Teach ROS 2, reinforcement learning, capstone robot",
+   "weeks": [
+    47,
+    63
+   ],
+   "rotation": {
+    "deep1": [
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "math-learn",
+     "ai-deep",
+     "ai-main"
+    ],
+    "deep2": [
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "math-practice",
+     "ai-practice",
+     "mixed"
+    ],
+    "build": [
+     "build",
+     "build",
+     "build",
+     "build",
+     "build",
+     "build-long"
+    ],
+    "prep": [
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     "robo-prep",
+     null
+    ],
+    "lab": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     "robo-lab"
+    ],
+    "light": [
+     "robo-read",
+     "cpp-ros",
+     "robo-read",
+     "ai-breadth",
+     "buffer",
+     "ai-read-long"
+    ]
+   }
+  }
+ ],
+ "consolidation": [
+  6,
+  11,
+  17,
+  23,
+  29,
+  35,
+  41,
+  47,
+  53,
+  59
+ ],
+ "weeks": [
+  {
+   "week": 0,
+   "start": "2026-10-15",
+   "end": "2026-10-18",
+   "phase": "0",
+   "consolidation": false,
+   "theme": "Setup: machine, diagnostic, first project spec, lock in week 1",
+   "file": "weeks/week-00.json"
+  },
+  {
+   "week": 1,
+   "start": "2026-10-19",
+   "end": "2026-10-25",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Functions, Big-O, vectors, electricity basics, Tracker v1",
+   "file": "weeks/week-01.json"
+  },
+  {
+   "week": 2,
+   "start": "2026-10-26",
+   "end": "2026-11-01",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Exceptions and modules, linked lists and recursion, matrix multiplication, series and parallel circuits, Tracker v2",
+   "file": "weeks/week-02.json"
+  },
+  {
+   "week": 3,
+   "start": "2026-11-02",
+   "end": "2026-11-08",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Unit tests and files, sorting, determinants and inverses, diodes and LEDs, Tracker v3",
+   "file": "weeks/week-03.json"
+  },
+  {
+   "week": 4,
+   "start": "2026-11-09",
+   "end": "2026-11-15",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Regex and OOP, hash tables and stacks, dot products, capacitors, Tracker v4",
+   "file": "weeks/week-04.json"
+  },
+  {
+   "week": 5,
+   "start": "2026-11-16",
+   "end": "2026-11-22",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "Recursion and generators, graphs and BFS/DFS, change of basis, transistors, recursion set",
+   "file": "weeks/week-05.json"
+  },
+  {
+   "week": 6,
+   "start": "2026-11-23",
+   "end": "2026-11-29",
+   "phase": "A",
+   "consolidation": true,
+   "theme": "Consolidation: retake the diagnostic, redo flagged tasks, clean up projects",
+   "file": null
+  },
+  {
+   "week": 7,
+   "start": "2026-11-30",
+   "end": "2026-12-06",
+   "phase": "A",
+   "consolidation": false,
+   "theme": "CS50P final project, trees and Dijkstra, eigenvectors, first Arduino, first data project",
+   "file": "weeks/week-07.json"
+  },
+  {
+   "week": 8,
+   "start": "2026-12-07",
+   "end": "2026-12-13",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ setup, arrays and hashing, derivatives, digital and analog Arduino I/O, SQL basics",
+   "file": "weeks/week-08.json"
+  },
+  {
+   "week": 9,
+   "start": "2026-12-14",
+   "end": "2026-12-20",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ control flow and references, two pointers, chain rule, PWM and servos, SQL joins",
+   "file": "weeks/week-09.json"
+  },
+  {
+   "week": 10,
+   "start": "2026-12-21",
+   "end": "2026-12-27",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ classes, sliding window and stack, gradient descent, distance and IR sensors, SQL aggregates",
+   "file": "weeks/week-10.json"
+  },
+  {
+   "week": 11,
+   "start": "2026-12-28",
+   "end": "2027-01-03",
+   "phase": "B",
+   "consolidation": true,
+   "theme": "Consolidation over New Year",
+   "file": null
+  },
+  {
+   "week": 12,
+   "start": "2027-01-04",
+   "end": "2027-01-10",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "STL containers, binary search, probability, motors and drivers, hypothesis tests",
+   "file": "weeks/week-12.json"
+  },
+  {
+   "week": 13,
+   "start": "2027-01-11",
+   "end": "2027-01-17",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "Pointers and smart pointers, linked lists, Bayes, interrupts and encoders, regression",
+   "file": "weeks/week-13.json"
+  },
+  {
+   "week": 14,
+   "start": "2027-01-18",
+   "end": "2027-01-24",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "Arduino libraries and CMake, trees, distributions, PID line follower, Kaggle EDA",
+   "file": "weeks/week-14.json"
+  },
+  {
+   "week": 15,
+   "start": "2027-01-25",
+   "end": "2027-01-31",
+   "phase": "B",
+   "consolidation": false,
+   "theme": "C++ project, heaps, MML ch. 6, Arduino to Python over serial, data science mini-capstone",
+   "file": "weeks/week-15.json"
+  },
+  {
+   "week": 16,
+   "start": "2027-02-01",
+   "end": "2027-02-07",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "Backtracking, statistical learning and linear regression, AIMA search formulation, ROS 2 install, pathfinding visualizer",
+   "file": null,
+   "outline": {
+    "algo": [
+     "Backtracking: subsets and combinations",
+     "Backtracking: permutations and combination sum",
+     "Backtracking: word search and N-Queens"
+    ],
+    "ai-deep": [
+     "Statistical learning: what f is and how we estimate it (ISLP)",
+     "Assessing model accuracy and the bias-variance trade-off",
+     "Simple linear regression: least squares and inference"
+    ],
+    "math-learn": [
+     "Problem formulation: states, actions, goal tests (AIMA)",
+     "Uninformed search: BFS, DFS and uniform-cost search"
+    ],
+    "math-practice": [
+     "Formulate five puzzles as search problems",
+     "Hand-trace BFS vs uniform-cost search on small graphs"
+    ],
+    "ai-main": [
+     "scikit-learn workflow: fit, predict, score"
+    ],
+    "build": [
+     "Pathfinding visualizer: spec and grid model",
+     "Grid rendering (pygame or web canvas)",
+     "Draw walls, set start and goal",
+     "BFS with step-by-step animation",
+     "DFS and comparing explored cells"
+    ],
+    "build-long": [
+     "Visualizer: put all algorithms behind one interface"
+    ],
+    "robo-prep": [
+     "Plan the Arduino course: outcomes and lesson list",
+     "Ubuntu 26.04 arm64 VM in UTM on the MacBook: setup",
+     "ROS 2 Lyrical Luth in the VM: install and workspace",
+     "Arduino lessons 1–2 prep: digital output and buttons",
+     "ROS 2 concepts: nodes and the graph"
+    ],
+    "robo-lab": [
+     "Lab: ROS 2 in the UTM VM: install check and first talker/listener"
+    ],
+    "robo-read": [
+     "UTM and Ubuntu 26.04 arm64: VM setup guide",
+     "ROS 2 docs: concepts overview"
+    ],
+    "cpp-ros": [
+     "Modern C++ refresher for ROS 2: lambdas and smart pointers"
+    ],
+    "ai-breadth": [
+     "AIMA: intelligent agents and environments"
+    ],
+    "ai-read-long": [
+     "Géron: the machine learning landscape"
+    ]
+   }
+  },
+  {
+   "week": 17,
+   "start": "2027-02-08",
+   "end": "2027-02-14",
+   "phase": "C",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 18,
+   "start": "2027-02-15",
+   "end": "2027-02-21",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "Tries and graphs, regression to classification, informed search, ROS 2 topics, Dijkstra and A* in the visualizer",
+   "file": null,
+   "outline": {
+    "algo": [
+     "Tries: implement a trie and word dictionary",
+     "Graphs: number of islands and grid BFS/DFS",
+     "Graphs: clone graph and adjacency lists"
+    ],
+    "ai-deep": [
+     "Multiple linear regression and qualitative predictors",
+     "Ng course 1: gradient descent, feature scaling, learning rate",
+     "Classification: logistic regression (ISLP and Ng course 1)"
+    ],
+    "math-learn": [
+     "Iterative deepening and search complexity",
+     "Informed search: heuristics and greedy best-first"
+    ],
+    "math-practice": [
+     "Count nodes expanded: DFS vs iterative deepening",
+     "Score heuristics on the 8-puzzle"
+    ],
+    "ai-main": [
+     "Pipelines and preprocessing with ColumnTransformer"
+    ],
+    "build": [
+     "Dijkstra with weighted cells",
+     "A* with Manhattan and Euclidean heuristics",
+     "Stats panel: nodes expanded, path length, time",
+     "Maze generator",
+     "Tests and README for the visualizer"
+    ],
+    "build-long": [
+     "Visualizer: polish, speed controls and demo video"
+    ],
+    "robo-prep": [
+     "ROS 2 CLI: ros2 node, topic and run",
+     "Topics: publisher and subscriber in rclpy",
+     "Arduino lesson 3 prep: analog input and sensors",
+     "Turtlesim: drive the turtle and inspect topics",
+     "Arduino lesson 4 prep: PWM, LEDs and servos"
+    ],
+    "robo-lab": [
+     "Lab: turtlesim controller with publisher and subscriber"
+    ],
+    "robo-read": [
+     "Martín Rico: introduction and first ROS 2 programs",
+     "ROS 2 docs: understanding nodes and topics"
+    ],
+    "cpp-ros": [
+     "First rclcpp node: package.xml and CMakeLists"
+    ],
+    "ai-breadth": [
+     "AIMA: solving problems by searching (reading)"
+    ],
+    "ai-read-long": [
+     "Géron: end-to-end ML project (reading)"
+    ]
+   }
+  },
+  {
+   "week": 19,
+   "start": "2027-02-22",
+   "end": "2027-02-28",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "Graphs and topological sort, LDA/QDA and resampling, A* and heuristics, services and actions, Kaggle entry starts",
+   "file": null,
+   "outline": {
+    "algo": [
+     "Graphs: rotting oranges and multi-source BFS",
+     "Graphs: course schedule and topological sort",
+     "Graphs: union-find and connected components"
+    ],
+    "ai-deep": [
+     "LDA, QDA and naive Bayes",
+     "K-nearest neighbours and comparing classifiers",
+     "Resampling: cross-validation and the bootstrap"
+    ],
+    "math-learn": [
+     "A* search: admissibility and consistency",
+     "Designing heuristics from relaxed problems"
+    ],
+    "math-practice": [
+     "Prove a heuristic admissible and trace A* by hand",
+     "Compare heuristics by effective branching factor"
+    ],
+    "ai-main": [
+     "Kaggle: choose a competition, EDA and baseline"
+    ],
+    "build": [
+     "Kaggle entry: repo layout and data loading",
+     "Kaggle: EDA notebook to a clean module",
+     "Kaggle: baseline model and CV harness",
+     "Kaggle: feature pipeline",
+     "Kaggle: experiment log"
+    ],
+    "build-long": [
+     "Kaggle: full pipeline from raw data to submission"
+    ],
+    "robo-prep": [
+     "ROS 2 interfaces: standard and custom messages",
+     "Services: server and client",
+     "Arduino lesson 5 prep: serial monitor and debugging",
+     "Actions: goals, feedback and results",
+     "Arduino lesson 6 prep: motors and drivers"
+    ],
+    "robo-lab": [
+     "Lab: a service and an action for a turtlesim task"
+    ],
+    "robo-read": [
+     "ROS 2 docs: understanding services and actions",
+     "ROS 2 docs: interfaces"
+    ],
+    "cpp-ros": [
+     "rclcpp publisher and subscriber"
+    ],
+    "ai-breadth": [
+     "AIMA: search in complex environments"
+    ],
+    "ai-read-long": [
+     "Géron: classification"
+    ]
+   }
+  },
+  {
+   "week": 20,
+   "start": "2027-03-01",
+   "end": "2027-03-07",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "Advanced graphs, regularization and Ng course 2, local search, launch files and parameters, Kaggle submission",
+   "file": null,
+   "outline": {
+    "algo": [
+     "Advanced graphs: Dijkstra (network delay time)",
+     "Advanced graphs: minimum spanning trees (Prim and Kruskal)",
+     "Advanced graphs: Bellman-Ford and cheapest flights"
+    ],
+    "ai-deep": [
+     "Regularization: ridge and lasso",
+     "Model selection: subset selection and choosing lambda",
+     "Ng course 2: neural network basics and forward propagation"
+    ],
+    "math-learn": [
+     "Local search: hill climbing and simulated annealing",
+     "Local search in continuous spaces and gradient methods"
+    ],
+    "math-practice": [
+     "Hill climbing on N-Queens with random restarts",
+     "Simulated annealing schedule experiments"
+    ],
+    "ai-main": [
+     "Kaggle: cross-validation setup and feature engineering"
+    ],
+    "build": [
+     "Kaggle: compare linear, forest and boosting models",
+     "Kaggle: tuning runs",
+     "Kaggle: simple ensembling",
+     "Kaggle: final submission",
+     "Kaggle: clean up and publish the notebook"
+    ],
+    "build-long": [
+     "Kaggle: leaderboard review and write-up"
+    ],
+    "robo-prep": [
+     "Launch files in Python",
+     "Parameters: declare, set and YAML files",
+     "Arduino lesson 7 prep: distance sensors",
+     "colcon, packages and overlays",
+     "Arduino lesson 8 prep: interrupts and encoders"
+    ],
+    "robo-lab": [
+     "Lab: launch file with parameters for a multi-node system"
+    ],
+    "robo-read": [
+     "ROS 2 docs: launch",
+     "ROS 2 docs: parameters"
+    ],
+    "cpp-ros": [
+     "rclcpp timers and parameters"
+    ],
+    "ai-breadth": [
+     "AIMA: constraint satisfaction problems"
+    ],
+    "ai-read-long": [
+     "Géron: training models"
+    ]
+   }
+  },
+  {
+   "week": 21,
+   "start": "2027-03-08",
+   "end": "2027-03-14",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "1-D DP, trees and ensembles, constraint satisfaction, ros2 bag and QoS, end-to-end prediction project",
+   "file": null,
+   "outline": {
+    "algo": [
+     "1-D DP: climbing stairs and house robber",
+     "1-D DP: coin change and decode ways",
+     "1-D DP: longest increasing subsequence and word break"
+    ],
+    "ai-deep": [
+     "Ng course 2: training neural networks and advice for applying ML",
+     "Tree-based methods: decision trees",
+     "Bagging, random forests and boosting"
+    ],
+    "math-learn": [
+     "Constraint satisfaction: variables, domains, constraints",
+     "CSP solving: backtracking, forward checking, arc consistency"
+    ],
+    "math-practice": [
+     "Model map colouring and Sudoku as CSPs",
+     "Hand-run AC-3 and backtracking with MRV"
+    ],
+    "ai-main": [
+     "Kaggle: hyperparameter search (grid and random)"
+    ],
+    "build": [
+     "End-to-end prediction: pick a problem and dataset",
+     "Data collection and cleaning script",
+     "Train/validation/test split and baseline",
+     "Feature engineering",
+     "Training and evaluation report"
+    ],
+    "build-long": [
+     "Prediction project: end-to-end first version"
+    ],
+    "robo-prep": [
+     "rqt tools and ros2 bag",
+     "QoS basics",
+     "Arduino lesson 9 prep: line follower project",
+     "Timers and callbacks in ROS 2",
+     "Arduino class assessment: quiz and mini-project"
+    ],
+    "robo-lab": [
+     "Lab: record and replay a run with ros2 bag"
+    ],
+    "robo-read": [
+     "ROS 2 docs: quality of service settings",
+     "ROS 2 docs: executors and callback groups"
+    ],
+    "cpp-ros": [
+     "rclcpp service server and client"
+    ],
+    "ai-breadth": [
+     "AIMA: adversarial search and games"
+    ],
+    "ai-read-long": [
+     "Géron: decision trees"
+    ]
+   }
+  },
+  {
+   "week": 22,
+   "start": "2027-03-15",
+   "end": "2027-03-21",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "2-D DP, unsupervised learning and Géron, adversarial search and planning, Arduino to ROS 2 bridge, prediction web demo",
+   "file": null,
+   "outline": {
+    "algo": [
+     "2-D DP: unique paths and grid DP",
+     "2-D DP: longest common subsequence",
+     "2-D DP: edit distance and knapsack-style problems"
+    ],
+    "ai-deep": [
+     "Ng course 2: decision trees and tree ensembles in practice",
+     "Unsupervised learning: PCA and k-means clustering",
+     "Géron part I: end-to-end ML project"
+    ],
+    "math-learn": [
+     "Adversarial search: minimax and alpha-beta pruning",
+     "Classical planning: representing actions and states"
+    ],
+    "math-practice": [
+     "Minimax and alpha-beta on game trees by hand",
+     "Write a blocks-world planning domain"
+    ],
+    "ai-main": [
+     "Kaggle: gradient boosting and first submission"
+    ],
+    "build": [
+     "Save the model and load it for inference",
+     "Command-line prediction tool",
+     "Simple web demo (Streamlit or Flask)",
+     "Error analysis and model iteration",
+     "Tests for data and model code"
+    ],
+    "build-long": [
+     "Prediction project: run the web demo locally"
+    ],
+    "robo-prep": [
+     "Bridge Arduino to ROS 2 over serial",
+     "Teleop and cmd_vel in turtlesim",
+     "Arduino lesson 10 prep: final project kickoff",
+     "ROS 2 logging and ros2 doctor",
+     "Arduino teaching retrospective notes"
+    ],
+    "robo-lab": [
+     "Lab: Arduino sensor data into a ROS 2 topic over serial"
+    ],
+    "robo-read": [
+     "Articulated Robotics: ROS 2 overview videos",
+     "Martín Rico: simple robot behaviours"
+    ],
+    "cpp-ros": [
+     "Composable nodes and callbacks with lambdas"
+    ],
+    "ai-breadth": [
+     "AIMA: automated planning"
+    ],
+    "ai-read-long": [
+     "Géron: ensemble learning and random forests"
+    ]
+   }
+  },
+  {
+   "week": 23,
+   "start": "2027-03-22",
+   "end": "2027-03-28",
+   "phase": "C",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 24,
+   "start": "2027-03-29",
+   "end": "2027-04-04",
+   "phase": "C",
+   "consolidation": false,
+   "theme": "Greedy, intervals and bits (NeetCode 150 done), SVMs, planning as search, ROS 2 basics review, Phase C showcase",
+   "file": null,
+   "outline": {
+    "algo": [
+     "Greedy: maximum subarray and jump game",
+     "Intervals: merge, insert and meeting rooms",
+     "Math & bit manipulation: single number, counting bits, pow(x, n)"
+    ],
+    "ai-deep": [
+     "Géron part I: support vector machines",
+     "Géron part I: dimensionality reduction",
+     "Classical ML wrap-up: choosing a model for a problem"
+    ],
+    "math-learn": [
+     "Planning as state-space search",
+     "Optimisation for ML: gradients and convexity review"
+    ],
+    "math-practice": [
+     "Plan search for a delivery-robot domain",
+     "Gradient and Hessian exercises for loss functions"
+    ],
+    "ai-main": [
+     "Kaggle: error analysis and write-up"
+    ],
+    "build": [
+     "Packaging: requirements and reproducible runs",
+     "README with results",
+     "Demo screenshots and short video",
+     "Portfolio review: visualizer, Kaggle, prediction",
+     "Plan the deep learning projects"
+    ],
+    "build-long": [
+     "Phase C showcase: present three projects"
+    ],
+    "robo-prep": [
+     "ROS 2 basics review: a talker-listener system from memory",
+     "Simulated range sensor publisher",
+     "Arduino course: final project showcase prep",
+     "Packaging ROS 2 nodes for others",
+     "Plan Phase D robotics: TF2, URDF, Gazebo"
+    ],
+    "robo-lab": [
+     "Lab: teach an Arduino class session end-to-end"
+    ],
+    "robo-read": [
+     "ROS 2 docs: client libraries",
+     "Review: concept map of ROS 2 basics"
+    ],
+    "cpp-ros": [
+     "rclcpp action server"
+    ],
+    "ai-breadth": [
+     "AIMA: knowledge-based agents overview"
+    ],
+    "ai-read-long": [
+     "Géron: unsupervised learning"
+    ]
+   }
+  },
+  {
+   "week": 25,
+   "start": "2027-04-05",
+   "end": "2027-04-11",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "micrograd and backprop, configuration space, TF2, micrograd project",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "micrograd: implement backward for +, * and tanh",
+     "Train a micrograd MLP on a toy dataset",
+     "Gradient check micrograd against PyTorch"
+    ],
+    "ai-deep": [
+     "micrograd: derivatives and backprop by hand",
+     "micrograd: the Value class and computational graph",
+     "micrograd: neurons, layers and an MLP"
+    ],
+    "math-learn": [
+     "Configuration space: degrees of freedom and Grübler's formula",
+     "C-space topology and representation"
+    ],
+    "math-practice": [
+     "Count degrees of freedom of mechanisms",
+     "Draw C-spaces of planar robots"
+    ],
+    "ai-main": [
+     "Neural Networks: Zero to Hero overview and setup"
+    ],
+    "build": [
+     "micrograd: repo and the Value class",
+     "micrograd: operations and topological sort",
+     "micrograd: backward pass and tests",
+     "micrograd: Neuron, Layer, MLP",
+     "micrograd: training demo"
+    ],
+    "build-long": [
+     "micrograd end-to-end in one session"
+    ],
+    "robo-prep": [
+     "TF2 concepts: frames and the transform tree",
+     "Static transform broadcaster",
+     "Dynamic transform broadcaster",
+     "TF2 listener",
+     "TF tools: tf2_echo and view_frames"
+    ],
+    "robo-lab": [
+     "Lab: TF2 tree for two turtles"
+    ],
+    "robo-read": [
+     "ROS 2 docs: tf2 tutorials",
+     "Martín Rico: the TF chapter"
+    ],
+    "cpp-ros": [
+     "tf2_ros in C++: broadcaster"
+    ],
+    "ai-breadth": [
+     "AIMA: probabilistic reasoning overview"
+    ],
+    "ai-read-long": [
+     "Karpathy: A Recipe for Training Neural Networks"
+    ]
+   }
+  },
+  {
+   "week": 26,
+   "start": "2027-04-12",
+   "end": "2027-04-18",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "makemore bigram and MLP, rigid-body rotations, URDF and xacro, micrograd polish",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "makemore: bigram counts and sampling",
+     "Train an MLP name generator",
+     "Tune learning rate and weight initialisation"
+    ],
+    "ai-deep": [
+     "makemore: bigram character model",
+     "makemore: MLP language model",
+     "makemore: activations, gradients and BatchNorm"
+    ],
+    "math-learn": [
+     "Configuration and velocity constraints, task space and workspace",
+     "Rigid-body motions: rotation matrices"
+    ],
+    "math-practice": [
+     "Holonomic vs nonholonomic constraint exercises",
+     "Rotation matrix exercises in numpy"
+    ],
+    "ai-main": [
+     "PyTorch fundamentals: tensors, devices and dtypes"
+    ],
+    "build": [
+     "micrograd: draw the graph with graphviz",
+     "micrograd: compare with PyTorch",
+     "micrograd: ReLU, pow and more ops",
+     "micrograd: optimizer and loss functions",
+     "micrograd: README and write-up"
+    ],
+    "build-long": [
+     "micrograd: train on the moons dataset and plot the decision boundary"
+    ],
+    "robo-prep": [
+     "URDF: links and joints",
+     "URDF: visual and collision geometry",
+     "URDF: inertial properties",
+     "Xacro macros",
+     "robot_state_publisher and joint_state_publisher"
+    ],
+    "robo-lab": [
+     "Lab: write a URDF for a two-wheel robot"
+    ],
+    "robo-read": [
+     "ROS 2 docs: URDF tutorials",
+     "Xacro documentation"
+    ],
+    "cpp-ros": [
+     "tf2_ros in C++: listener and buffer"
+    ],
+    "ai-breadth": [
+     "AIMA: learning from examples overview"
+    ],
+    "ai-read-long": [
+     "d2l: preliminaries (data, linear algebra, autograd)"
+    ]
+   }
+  },
+  {
+   "week": 27,
+   "start": "2027-04-19",
+   "end": "2027-04-25",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "BatchNorm and manual backprop, homogeneous transforms, RViz, small GPT starts",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Manual backprop exercises through BatchNorm",
+     "Diagnose dead and saturated neurons with activation stats",
+     "PyTorch autograd exercises"
+    ],
+    "ai-deep": [
+     "makemore: backprop ninja (manual backprop)",
+     "makemore: WaveNet-style hierarchical model",
+     "PyTorch tensors and autograd"
+    ],
+    "math-learn": [
+     "Angular velocity and exponential coordinates of rotation",
+     "Homogeneous transformation matrices"
+    ],
+    "math-practice": [
+     "Matrix exponential and log of rotations in code",
+     "Compose transforms in numpy"
+    ],
+    "ai-main": [
+     "Datasets and DataLoaders"
+    ],
+    "build": [
+     "Small GPT: dataset and character tokenizer",
+     "Small GPT: bigram baseline in PyTorch",
+     "Small GPT: training loop and evaluation",
+     "Small GPT: one self-attention head",
+     "Small GPT: multi-head attention"
+    ],
+    "build-long": [
+     "Small GPT: from bigram to attention in one sitting"
+    ],
+    "robo-prep": [
+     "RViz: displays and configs",
+     "RViz: TF and robot models",
+     "Publishing RViz markers from a node",
+     "Interactive markers basics",
+     "Launching RViz with saved configs"
+    ],
+    "robo-lab": [
+     "Lab: view the robot in RViz with joint sliders"
+    ],
+    "robo-read": [
+     "RViz user guide",
+     "Articulated Robotics: URDF and RViz videos"
+    ],
+    "cpp-ros": [
+     "Publishing visualization markers in rclcpp"
+    ],
+    "ai-breadth": [
+     "Deep learning history: perceptrons to transformers"
+    ],
+    "ai-read-long": [
+     "d2l: linear neural networks"
+    ]
+   }
+  },
+  {
+   "week": 28,
+   "start": "2027-04-26",
+   "end": "2027-05-02",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "PyTorch training loops and d2l MLPs, twists and screws, Gazebo, small GPT core",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Training loop with Dataset and DataLoader",
+     "Softmax regression on Fashion-MNIST",
+     "MLP with dropout: overfitting experiments"
+    ],
+    "ai-deep": [
+     "PyTorch nn.Module, optimizers and the training loop",
+     "d2l: linear and softmax regression from scratch",
+     "d2l: multilayer perceptrons, dropout and weight decay"
+    ],
+    "math-learn": [
+     "Twists",
+     "Screw motions and exponential coordinates of rigid-body motion"
+    ],
+    "math-practice": [
+     "Compute twists for given motions",
+     "Screw axis exercises"
+    ],
+    "ai-main": [
+     "Saving, loading and checkpointing models"
+    ],
+    "build": [
+     "Small GPT: feed-forward and residual connections",
+     "Small GPT: LayerNorm and dropout",
+     "Small GPT: training on a small corpus",
+     "Small GPT: sampling and temperature",
+     "Small GPT: loss curves and logging"
+    ],
+    "build-long": [
+     "Small GPT: full training run"
+    ],
+    "robo-prep": [
+     "Gazebo: install and worlds (matching Lyrical)",
+     "Spawn a URDF robot in Gazebo",
+     "ros_gz bridge for topics",
+     "Differential drive plugin",
+     "Teleop in Gazebo"
+    ],
+    "robo-lab": [
+     "Lab: drive the robot in Gazebo with teleop"
+    ],
+    "robo-read": [
+     "Gazebo docs: getting started",
+     "ros_gz documentation"
+    ],
+    "cpp-ros": [
+     "rclcpp odometry node from wheel speeds"
+    ],
+    "ai-breadth": [
+     "Paper: Attention Is All You Need"
+    ],
+    "ai-read-long": [
+     "d2l: multilayer perceptrons"
+    ]
+   }
+  },
+  {
+   "week": 29,
+   "start": "2027-05-03",
+   "end": "2027-05-09",
+   "phase": "D",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 30,
+   "start": "2027-05-10",
+   "end": "2027-05-16",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "Build GPT: attention and transformer blocks, wrenches and product of exponentials, Gazebo sensors, small GPT training",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Self-attention on toy sequences",
+     "Transformer block shape debugging",
+     "Train a tiny GPT on a Shakespeare corpus"
+    ],
+    "ai-deep": [
+     "Let's build GPT: self-attention from scratch",
+     "Build GPT: multi-head attention and the transformer block",
+     "Build GPT: training and sampling"
+    ],
+    "math-learn": [
+     "Wrenches",
+     "Forward kinematics: product of exponentials in the space frame"
+    ],
+    "math-practice": [
+     "Wrench transformation exercises",
+     "Implement forward kinematics (space-frame PoE) in Python"
+    ],
+    "ai-main": [
+     "Tokenization basics: characters and BPE"
+    ],
+    "build": [
+     "Small GPT: train on your own text corpus",
+     "Small GPT: hyperparameter sweep",
+     "Small GPT: checkpointing and resume",
+     "Small GPT: evaluate samples",
+     "Small GPT: write-up"
+    ],
+    "build-long": [
+     "Small GPT: polish and publish"
+    ],
+    "robo-prep": [
+     "Gazebo sensors: camera",
+     "Gazebo sensors: lidar",
+     "Gazebo sensors: IMU",
+     "Odometry and the odom frame",
+     "ros2_control overview"
+    ],
+    "robo-lab": [
+     "Lab: add lidar and camera and view them in RViz"
+    ],
+    "robo-read": [
+     "Gazebo docs: sensors",
+     "REP 105: coordinate frames for mobile robots"
+    ],
+    "cpp-ros": [
+     "Lifecycle (managed) nodes in rclcpp"
+    ],
+    "ai-breadth": [
+     "GPT-style models: pretraining and scaling"
+    ],
+    "ai-read-long": [
+     "d2l: attention mechanisms and transformers"
+    ]
+   }
+  },
+  {
+   "week": 31,
+   "start": "2027-05-17",
+   "end": "2027-05-23",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "CNNs and transfer learning, PoE body form and DH, ros2_control, face recognition rebuild starts",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Small CNN on CIFAR-10",
+     "Fine-tune a pretrained ResNet",
+     "Data augmentation experiments"
+    ],
+    "ai-deep": [
+     "d2l: convolutional neural networks",
+     "d2l: modern CNNs and residual connections",
+     "fast.ai: image classification with transfer learning"
+    ],
+    "math-learn": [
+     "Product of exponentials in the body frame",
+     "Denavit–Hartenberg parameters (overview)"
+    ],
+    "math-practice": [
+     "Body-frame FK and check against space-frame FK",
+     "Write a DH table for a simple arm"
+    ],
+    "ai-main": [
+     "Experiment hygiene: seeds, logging, validation"
+    ],
+    "build": [
+     "Face recognition rebuild: review the old project and plan",
+     "Face rec: detection and alignment pipeline",
+     "Face rec: pretrained embedding model",
+     "Face rec: gallery and cosine-similarity matching",
+     "Face rec: evaluation split"
+    ],
+    "build-long": [
+     "Face rec: end-to-end pipeline v1"
+    ],
+    "robo-prep": [
+     "ros2_control: controllers and hardware interfaces",
+     "diff_drive_controller",
+     "Launch a full simulated robot",
+     "Debugging TF problems",
+     "Simulation time and use_sim_time"
+    ],
+    "robo-lab": [
+     "Lab: ros2_control diff drive in simulation"
+    ],
+    "robo-read": [
+     "ros2_control docs",
+     "Articulated Robotics: ros2_control videos"
+    ],
+    "cpp-ros": [
+     "A simple ros2_control hardware interface"
+    ],
+    "ai-breadth": [
+     "Computer vision overview: tasks and datasets"
+    ],
+    "ai-read-long": [
+     "d2l: convolutional neural networks"
+    ]
+   }
+  },
+  {
+   "week": 32,
+   "start": "2027-05-24",
+   "end": "2027-05-30",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "fast.ai deployment and embeddings, workspace and FK, course robot model, face verification metrics",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "fast.ai: classifier on your own images",
+     "Embeddings exercise: a small recommender",
+     "Tabular deep learning exercise"
+    ],
+    "ai-deep": [
+     "fast.ai: from model to production",
+     "fast.ai: collaborative filtering and embeddings",
+     "fast.ai: tabular data and NLP basics"
+    ],
+    "math-learn": [
+     "Forward kinematics of a planar 3R arm",
+     "From kinematics math to URDF"
+    ],
+    "math-practice": [
+     "Plot the workspace of a planar 3R arm",
+     "Compare your FK with TF2 output"
+    ],
+    "ai-main": [
+     "Loading pretrained models from Hugging Face"
+    ],
+    "build": [
+     "Face rec: verification metrics (ROC, false accepts and rejects)",
+     "Face rec: threshold selection",
+     "Face rec: train a small embedding head",
+     "Face rec: live camera demo",
+     "Face rec: error analysis"
+    ],
+    "build-long": [
+     "Face rec: live webcam demo"
+    ],
+    "robo-prep": [
+     "Design the course robot's URDF",
+     "Course robot: sensor placement",
+     "Course robot in Gazebo",
+     "Bill of materials for the real robot",
+     "Choose the motor/encoder board and lidar"
+    ],
+    "robo-lab": [
+     "Lab: course robot model in sim end-to-end"
+    ],
+    "robo-read": [
+     "REP 103: units and coordinate conventions",
+     "Raspberry Pi docs: getting started"
+    ],
+    "cpp-ros": [
+     "Unit tests with gtest for rclcpp code"
+    ],
+    "ai-breadth": [
+     "Ethics and fairness in face recognition"
+    ],
+    "ai-read-long": [
+     "fast.ai book: from model to production"
+    ]
+   }
+  },
+  {
+   "week": 33,
+   "start": "2027-05-31",
+   "end": "2027-06-06",
+   "phase": "D",
+   "consolidation": false,
+   "theme": "Face embeddings and evaluation, differential-drive kinematics, Raspberry Pi and robot parts plan, Phase D showcase",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Face embeddings with a pretrained model",
+     "Verification threshold tuning",
+     "Error analysis on misidentified faces"
+    ],
+    "ai-deep": [
+     "Embeddings and metric learning for faces",
+     "Evaluation: ROC, precision-recall and thresholds",
+     "Deep learning review: a training recipe and debugging"
+    ],
+    "math-learn": [
+     "Kinematics of a differential-drive robot",
+     "Review: frames, transforms and forward kinematics"
+    ],
+    "math-practice": [
+     "Differential-drive odometry by hand",
+     "Mixed problem set: transforms and kinematics"
+    ],
+    "ai-main": [
+     "Phase D deep learning review and quiz"
+    ],
+    "build": [
+     "Face rec: tests and packaging",
+     "Face rec: write-up comparing old and new",
+     "Face rec: demo video",
+     "Portfolio update",
+     "Plan the course robot build"
+    ],
+    "build-long": [
+     "Phase D showcase"
+    ],
+    "robo-prep": [
+     "Raspberry Pi with Ubuntu 26.04 and ROS 2: setup plan",
+     "Power and wiring plan",
+     "Safety and e-stop design",
+     "Parts and tools order checklist",
+     "Review: ROS 2 core concepts"
+    ],
+    "robo-lab": [
+     "Lab: bench-test the Raspberry Pi with ROS 2"
+    ],
+    "robo-read": [
+     "Lidar driver docs for the chosen model",
+     "Review: ROS 2 core reading"
+    ],
+    "cpp-ros": [
+     "C++ performance: copies, moves and allocation in callbacks"
+    ],
+    "ai-breadth": [
+     "AI breadth review: map of the field"
+    ],
+    "ai-read-long": [
+     "d2l: optimization algorithms"
+    ]
+   }
+  },
+  {
+   "week": 34,
+   "start": "2027-06-07",
+   "end": "2027-06-13",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "ML systems framing, Bayes rule for robots, micro-ROS, course robot assembly",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Write an ML problem-framing doc",
+     "Data validation checks in pandas",
+     "Write a dataset card"
+    ],
+    "ai-deep": [
+     "Huyen: ML in production vs ML in research",
+     "Framing ML problems and objectives",
+     "Data engineering fundamentals"
+    ],
+    "math-learn": [
+     "Probability for robotics: Bayes rule and conditional independence",
+     "Robot-environment interaction: state and belief"
+    ],
+    "math-practice": [
+     "Bayes rule problem set",
+     "Belief updates by hand"
+    ],
+    "ai-main": [
+     "ML engineering overview and project plan"
+    ],
+    "build": [
+     "Robot build: chassis assembly",
+     "Mount motors and encoders",
+     "Wire the motor driver to the motor/encoder board",
+     "Firmware: motor control and encoder counting",
+     "Firmware: PID wheel-speed control"
+    ],
+    "build-long": [
+     "Robot build: assemble and spin the wheels"
+    ],
+    "robo-prep": [
+     "ROS 2 course: outcomes, audience and schedule",
+     "ROS 2 course outline: 12 lab sessions",
+     "micro-ROS: concepts and the agent",
+     "micro-ROS on the motor board: setup",
+     "micro-ROS: publish encoder data"
+    ],
+    "robo-lab": [
+     "Lab: micro-ROS agent and a publisher on the board"
+    ],
+    "robo-read": [
+     "micro-ROS docs: overview",
+     "micro-ROS docs: supported hardware"
+    ],
+    "cpp-ros": [
+     "micro-ROS C client basics (rclc)"
+    ],
+    "ai-breadth": [
+     "ML systems design overview"
+    ],
+    "ai-read-long": [
+     "Huyen: data engineering fundamentals"
+    ]
+   }
+  },
+  {
+   "week": 35,
+   "start": "2027-06-14",
+   "end": "2027-06-20",
+   "phase": "E",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 36,
+   "start": "2027-06-21",
+   "end": "2027-06-27",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Training data and offline evaluation, Bayes filter, Nav2 concepts, robot drives under ROS 2",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Label a small robot-camera dataset",
+     "Handle class imbalance with resampling and weights",
+     "Offline evaluation report"
+    ],
+    "ai-deep": [
+     "Training data: sampling, labelling and class imbalance",
+     "Feature engineering for production",
+     "Model development and offline evaluation"
+    ],
+    "math-learn": [
+     "The Bayes filter algorithm",
+     "Bayes filter example: localizing with a door sensor"
+    ],
+    "math-practice": [
+     "Implement a discrete Bayes filter in Python",
+     "Histogram filter on a 1-D corridor"
+    ],
+    "ai-main": [
+     "Data versioning (DVC or similar)"
+    ],
+    "build": [
+     "Raspberry Pi: install Ubuntu 26.04 and ROS 2 Lyrical",
+     "Serial link between board and Pi",
+     "ROS 2 base driver: cmd_vel to motors",
+     "Wheel odometry publisher",
+     "Drive the robot with teleop"
+    ],
+    "build-long": [
+     "Robot drives under ROS 2 teleop"
+    ],
+    "robo-prep": [
+     "micro-ROS: subscribe to motor commands",
+     "micro-ROS vs serial bridge: decide",
+     "Nav2 concepts: costmaps, planners, controllers",
+     "Nav2 in simulation with the course robot",
+     "Nav2 behaviour trees overview"
+    ],
+    "robo-lab": [
+     "Lab: Nav2 in sim, send goals from RViz"
+    ],
+    "robo-read": [
+     "Nav2 docs: concepts",
+     "Nav2 docs: getting started"
+    ],
+    "cpp-ros": [
+     "Nav2 plugin structure in C++"
+    ],
+    "ai-breadth": [
+     "The MLOps landscape"
+    ],
+    "ai-read-long": [
+     "Huyen: training data"
+    ]
+   }
+  },
+  {
+   "week": 37,
+   "start": "2027-06-28",
+   "end": "2027-07-04",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Deployment and monitoring, Kalman filter, Nav2 tuning, lidar and camera on the robot",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Batch vs online prediction exercise",
+     "Simulate data drift and detect it",
+     "Write tests for a model"
+    ],
+    "ai-deep": [
+     "Model deployment and prediction services",
+     "Data distribution shifts and monitoring",
+     "Continual learning and testing in production"
+    ],
+    "math-learn": [
+     "Gaussian filters: the Kalman filter",
+     "Kalman filter: prediction and update intuition"
+    ],
+    "math-practice": [
+     "Implement a 1-D Kalman filter",
+     "Multivariate Kalman filter in numpy"
+    ],
+    "ai-main": [
+     "Monitoring metrics and logging"
+    ],
+    "build": [
+     "Mount and wire the lidar",
+     "Lidar driver node and scans in RViz",
+     "Mount the camera and run the camera node",
+     "Make the real robot's URDF match the sim",
+     "TF tree on the real robot"
+    ],
+    "build-long": [
+     "Robot sees: lidar and camera in RViz"
+    ],
+    "robo-prep": [
+     "Nav2 costmap layers and parameters",
+     "Nav2 planners overview",
+     "Nav2 controllers overview",
+     "Nav2 simple commander API",
+     "Waypoint following"
+    ],
+    "robo-lab": [
+     "Lab: waypoint following in sim"
+    ],
+    "robo-read": [
+     "Nav2 docs: configuration guide",
+     "Nav2 docs: tuning guide"
+    ],
+    "cpp-ros": [
+     "Study a Nav2 costmap layer plugin"
+    ],
+    "ai-breadth": [
+     "Feature stores and data platforms"
+    ],
+    "ai-read-long": [
+     "Huyen: feature engineering"
+    ]
+   }
+  },
+  {
+   "week": 38,
+   "start": "2027-07-05",
+   "end": "2027-07-11",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "FastAPI and Docker, EKF, SLAM Toolbox, Kalman filter odometry project",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "FastAPI predict endpoint",
+     "Pydantic schemas and API tests",
+     "Dockerize the API"
+    ],
+    "ai-deep": [
+     "FastAPI: building a prediction service",
+     "FastAPI: validation with pydantic and testing",
+     "Docker: images, containers and a Dockerfile for ML"
+    ],
+    "math-learn": [
+     "Extended Kalman filter: linearisation",
+     "Unscented Kalman filter (overview)"
+    ],
+    "math-practice": [
+     "Tune Q and R on simulated data",
+     "EKF for a nonlinear motion model"
+    ],
+    "ai-main": [
+     "CI for ML projects with GitHub Actions"
+    ],
+    "build": [
+     "Kalman filter project: fuse wheel odometry and IMU",
+     "Kalman filter: tune and evaluate",
+     "Compare with robot_localization",
+     "Battery monitoring node",
+     "Robot bring-up launch file"
+    ],
+    "build-long": [
+     "Kalman filter odometry run and plots"
+    ],
+    "robo-prep": [
+     "SLAM Toolbox concepts",
+     "SLAM Toolbox in simulation",
+     "Mapping modes: online async vs sync",
+     "Localization: AMCL vs SLAM Toolbox",
+     "Saving and serving maps"
+    ],
+    "robo-lab": [
+     "Lab: SLAM Toolbox map of a sim world"
+    ],
+    "robo-read": [
+     "SLAM Toolbox README and docs",
+     "Probabilistic Robotics: occupancy grid mapping (reading)"
+    ],
+    "cpp-ros": [
+     "Kalman filter in C++ with Eigen"
+    ],
+    "ai-breadth": [
+     "Edge AI and TinyML overview"
+    ],
+    "ai-read-long": [
+     "Huyen: model development and offline evaluation"
+    ]
+   }
+  },
+  {
+   "week": 39,
+   "start": "2027-07-12",
+   "end": "2027-07-18",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Experiment tracking and model registry, motion models, writing ROS 2 course lessons 1–4, ML service",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Docker Compose: API plus tracking server",
+     "Log experiments for a model",
+     "Register and load model versions"
+    ],
+    "ai-deep": [
+     "Docker Compose and ARM builds for the Raspberry Pi",
+     "Experiment tracking (MLflow or Weights & Biases)",
+     "Model registry and versioning"
+    ],
+    "math-learn": [
+     "Motion models: the velocity model",
+     "Motion models: the odometry model"
+    ],
+    "math-practice": [
+     "Sample from the velocity motion model",
+     "Odometry motion model with noise"
+    ],
+    "ai-main": [
+     "Reproducible environments"
+    ],
+    "build": [
+     "ML service: FastAPI model server",
+     "ML service: Docker image",
+     "ML service: experiment tracking",
+     "ML service: tests and CI",
+     "ML service: deploy"
+    ],
+    "build-long": [
+     "ML service end-to-end"
+    ],
+    "robo-prep": [
+     "Write course lesson 1: setup and the ROS 2 graph",
+     "Write lesson 2: topics",
+     "Write lesson 3: services and actions",
+     "Write lesson 4: launch and parameters",
+     "Review lessons 1–4 with a test reader"
+    ],
+    "robo-lab": [
+     "Lab: run course lessons 1–4 end-to-end"
+    ],
+    "robo-read": [
+     "Teaching: how to write good labs",
+     "ROS 2 tutorials review for course alignment"
+    ],
+    "cpp-ros": [
+     "Eigen basics for robotics"
+    ],
+    "ai-breadth": [
+     "Robot perception approaches"
+    ],
+    "ai-read-long": [
+     "Huyen: model deployment and prediction service"
+    ]
+   }
+  },
+  {
+   "week": 40,
+   "start": "2027-07-19",
+   "end": "2027-07-25",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "OpenCV and detection concepts, measurement models, course lessons 5–8, training a detector on robot data",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "OpenCV: colour thresholding and contours",
+     "Camera calibration with a checkerboard",
+     "Compute IoU and NMS by hand"
+    ],
+    "ai-deep": [
+     "OpenCV basics: images, colour spaces and filtering",
+     "OpenCV: features, contours and camera calibration",
+     "Object detection concepts: boxes, IoU, NMS and mAP"
+    ],
+    "math-learn": [
+     "Measurement models: beam model for range finders",
+     "Measurement models: likelihood fields and landmarks"
+    ],
+    "math-practice": [
+     "Beam model exercise",
+     "Build a likelihood field from a map"
+    ],
+    "ai-main": [
+     "A computer vision pipeline on the laptop"
+    ],
+    "build": [
+     "Perception: plan data collection from the robot camera",
+     "Perception: label data",
+     "Perception: train a detector",
+     "Perception: evaluate",
+     "Perception: export for the edge"
+    ],
+    "build-long": [
+     "Train a detector on robot data"
+    ],
+    "robo-prep": [
+     "Write lesson 5: TF2",
+     "Write lesson 6: URDF and RViz",
+     "Write lesson 7: Gazebo",
+     "Write lesson 8: ros2_control and the real robot",
+     "Review lessons 5–8"
+    ],
+    "robo-lab": [
+     "Lab: run course lessons 5–8 end-to-end"
+    ],
+    "robo-read": [
+     "Martín Rico: navigation chapters",
+     "Articulated Robotics: real robot build videos"
+    ],
+    "cpp-ros": [
+     "OpenCV in C++ basics"
+    ],
+    "ai-breadth": [
+     "Self-supervised learning overview"
+    ],
+    "ai-read-long": [
+     "Huyen: data distribution shifts and monitoring"
+    ]
+   }
+  },
+  {
+   "week": 41,
+   "start": "2027-07-26",
+   "end": "2027-08-01",
+   "phase": "E",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 42,
+   "start": "2027-08-02",
+   "end": "2027-08-08",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Custom detectors and ONNX, particle filters, course lessons 9–12, detector running on the robot",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Run a pretrained detector on images",
+     "Fine-tune a detector on your own objects",
+     "Export to ONNX and benchmark"
+    ],
+    "ai-deep": [
+     "One-stage detectors (YOLO family) overview",
+     "Training a detector on a custom dataset",
+     "Model optimisation for the edge: ONNX and quantization"
+    ],
+    "math-learn": [
+     "Particle filters: sampling and importance weights",
+     "Resampling and particle deprivation"
+    ],
+    "math-practice": [
+     "Implement a particle filter",
+     "Compare resampling strategies"
+    ],
+    "ai-main": [
+     "Collecting a dataset with the robot camera"
+    ],
+    "build": [
+     "Detector as a ROS 2 node on the robot",
+     "Detection messages and RViz overlay",
+     "Performance tuning on the Pi",
+     "Robot follows a detected object",
+     "Integration tests"
+    ],
+    "build-long": [
+     "Detector running on the robot"
+    ],
+    "robo-prep": [
+     "Write lesson 9: sensors",
+     "Write lesson 10: SLAM",
+     "Write lesson 11: Nav2",
+     "Write lesson 12: a perception node",
+     "Review lessons 9–12"
+    ],
+    "robo-lab": [
+     "Lab: run course lessons 9–12 end-to-end"
+    ],
+    "robo-read": [
+     "image_pipeline and cv_bridge docs",
+     "vision_msgs docs"
+    ],
+    "cpp-ros": [
+     "cv_bridge in a C++ node"
+    ],
+    "ai-breadth": [
+     "Large language models overview"
+    ],
+    "ai-read-long": [
+     "Huyen: continual learning and test in production"
+    ]
+   }
+  },
+  {
+   "week": 43,
+   "start": "2027-08-09",
+   "end": "2027-08-15",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Edge inference and a detector ROS 2 node, Monte Carlo localization, slides and assessments, robot maps and navigates",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Benchmark the detector on the Raspberry Pi",
+     "ROS 2 node that publishes detections",
+     "Visualize detections in RViz"
+    ],
+    "ai-deep": [
+     "Running inference on a Raspberry Pi",
+     "Designing a detector as a ROS 2 node",
+     "Image transport and cv_bridge"
+    ],
+    "math-learn": [
+     "Monte Carlo localization",
+     "EKF localization"
+    ],
+    "math-practice": [
+     "Monte Carlo localization in a 2-D grid world",
+     "Kalman filter on real encoder and IMU logs"
+    ],
+    "ai-main": [
+     "Edge inference trade-offs"
+    ],
+    "build": [
+     "Map a room with SLAM Toolbox on the real robot",
+     "Save and load maps",
+     "Nav2 on the real robot: first goals",
+     "Tune Nav2 parameters",
+     "Recovery behaviours"
+    ],
+    "build-long": [
+     "Robot maps the room and navigates"
+    ],
+    "robo-prep": [
+     "Assessment design: quizzes and lab rubrics",
+     "Slides for lessons 1–4",
+     "Slides for lessons 5–8",
+     "Slides for lessons 9–12",
+     "Teaching notes and common errors"
+    ],
+    "robo-lab": [
+     "Lab: SLAM map of a real room"
+    ],
+    "robo-read": [
+     "ROS 2 docs: DDS and security basics",
+     "ROS 2 docs: multi-machine setup"
+    ],
+    "cpp-ros": [
+     "Executors, threads and real-time considerations"
+    ],
+    "ai-breadth": [
+     "Vision-language models overview"
+    ],
+    "ai-read-long": [
+     "Huyen: infrastructure and tooling for MLOps"
+    ]
+   }
+  },
+  {
+   "week": 44,
+   "start": "2027-08-16",
+   "end": "2027-08-22",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Transformer basics, occupancy grid mapping, classroom and fleet setup, course lab packs",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Attention exercises in numpy",
+     "Implement positional encoding",
+     "ViT patch embedding exercise"
+    ],
+    "ai-deep": [
+     "Transformer basics: attention revisited",
+     "Encoder vs decoder and positional encoding",
+     "Vision transformers overview"
+    ],
+    "math-learn": [
+     "Occupancy grid mapping",
+     "SLAM overview: the EKF SLAM idea"
+    ],
+    "math-practice": [
+     "Occupancy grid updates by hand",
+     "Log-odds mapping in code"
+    ],
+    "ai-main": [
+     "Transformers in practice"
+    ],
+    "build": [
+     "Course lab repo: structure and templates",
+     "Lab starter code: nodes and topics",
+     "Lab starter code: TF and URDF",
+     "Lab starter code: SLAM and Nav2",
+     "Lab solutions and tests"
+    ],
+    "build-long": [
+     "Write the lab packs"
+    ],
+    "robo-prep": [
+     "Classroom setup: machines and network",
+     "Robot fleet: namespaces and ROS_DOMAIN_ID",
+     "Student safety briefing",
+     "Troubleshooting guide",
+     "Instructor checklist"
+    ],
+    "robo-lab": [
+     "Lab: Nav2 on the real robot in the mapped room"
+    ],
+    "robo-read": [
+     "Teaching: assessment and feedback",
+     "Teaching: managing a lab classroom"
+    ],
+    "cpp-ros": [
+     "Code review of the course's C++ examples"
+    ],
+    "ai-breadth": [
+     "Robot learning landscape: imitation and RL"
+    ],
+    "ai-read-long": [
+     "Huyen: the human side of ML"
+    ]
+   }
+  },
+  {
+   "week": 45,
+   "start": "2027-08-23",
+   "end": "2027-08-29",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "Fine-tuning pretrained transformers, graph SLAM and grid planning, lesson rehearsals, full lab dry run",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Fine-tune a small text classifier",
+     "Fine-tune a small image model",
+     "Quantize and compare speed and accuracy"
+    ],
+    "ai-deep": [
+     "Pretrained transformers with Hugging Face",
+     "Fine-tuning a small transformer",
+     "Efficient transformer inference on small devices"
+    ],
+    "math-learn": [
+     "Graph-based SLAM (how SLAM Toolbox works)",
+     "Path planning on occupancy grids"
+    ],
+    "math-practice": [
+     "Solve a toy pose graph",
+     "A* on an occupancy grid"
+    ],
+    "ai-main": [
+     "Model cards and documentation"
+    ],
+    "build": [
+     "Run labs 1–4 end-to-end",
+     "Run labs 5–8 end-to-end",
+     "Run labs 9–12 end-to-end",
+     "Fix problems found in the runs",
+     "Student setup guide (Ubuntu 26.04 and Lyrical)"
+    ],
+    "build-long": [
+     "Full lab dry-run day"
+    ],
+    "robo-prep": [
+     "Rehearse lesson 1",
+     "Rehearse lessons 2–3",
+     "Rehearse lessons 4–6",
+     "Rehearse lessons 7–9",
+     "Rehearse lessons 10–12"
+    ],
+    "robo-lab": [
+     "Lab: full student-role dry run"
+    ],
+    "robo-read": [
+     "Hugging Face LeRobot overview",
+     "Review: Phase E robotics reading"
+    ],
+    "cpp-ros": [
+     "Debugging ROS 2 nodes with gdb"
+    ],
+    "ai-breadth": [
+     "AI safety and reliability basics"
+    ],
+    "ai-read-long": [
+     "d2l: attention and transformers (re-read)"
+    ]
+   }
+  },
+  {
+   "week": 46,
+   "start": "2027-08-30",
+   "end": "2027-09-05",
+   "phase": "E",
+   "consolidation": false,
+   "theme": "ML engineering and CV review, PID intro, course launch readiness, Phase E robot demo",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "End-to-end: camera to detector to topic",
+     "Load test the prediction API",
+     "Phase E practice review"
+    ],
+    "ai-deep": [
+     "Privacy and responsible use of camera data",
+     "ML engineering review",
+     "Computer vision on the robot review"
+    ],
+    "math-learn": [
+     "Control intro: PID basics (Brian Douglas)",
+     "Review: filters, localization and mapping"
+    ],
+    "math-practice": [
+     "PID tuning in simulation",
+     "Mixed problem set: estimation and mapping"
+    ],
+    "ai-main": [
+     "Phase E AI review and quiz"
+    ],
+    "build": [
+     "Spare parts kit and second robot",
+     "Robot maintenance checklist",
+     "Final lab dry run on the robot",
+     "Course robot documentation",
+     "Phase E retrospective"
+    ],
+    "build-long": [
+     "Phase E showcase: robot demo"
+    ],
+    "robo-prep": [
+     "Final edits after the dry run",
+     "Freeze ROS 2 version and dependencies",
+     "Prepare and share student materials",
+     "Plan the capstone robot",
+     "Course launch readiness review"
+    ],
+    "robo-lab": [
+     "Lab: final end-to-end check before September"
+    ],
+    "robo-read": [
+     "Lyrical Luth release notes and known issues",
+     "Review: reading for teaching"
+    ],
+    "cpp-ros": [
+     "Final polish of the course's C++ examples"
+    ],
+    "ai-breadth": [
+     "AI breadth review"
+    ],
+    "ai-read-long": [
+     "Paper: a modern real-time object detector"
+    ]
+   }
+  },
+  {
+   "week": 47,
+   "start": "2027-09-06",
+   "end": "2027-09-12",
+   "phase": "F",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 48,
+   "start": "2027-09-13",
+   "end": "2027-09-19",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching ROS 2 lesson 1, bandits and RL basics, control overview and motor model, capstone kickoff",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Bandit testbed in Python",
+     "UCB vs epsilon-greedy experiments",
+     "Gridworld MDP setup"
+    ],
+    "ai-deep": [
+     "RL introduction: agent, reward, policy, value",
+     "Multi-armed bandits: action-value methods",
+     "Bandits: exploration with epsilon-greedy and UCB"
+    ],
+    "math-learn": [
+     "Control systems overview: open vs closed loop",
+     "Modelling a DC motor"
+    ],
+    "math-practice": [
+     "Step response of a motor model in Python",
+     "Identify motor parameters from logged data"
+    ],
+    "ai-main": [
+     "RL roadmap and environment setup"
+    ],
+    "build": [
+     "Capstone: spec, success criteria and milestones",
+     "Capstone: repo and bring-up",
+     "Capstone: hardware check and upgrades",
+     "Capstone: teleop and sensor baseline",
+     "Capstone: task board"
+    ],
+    "build-long": [
+     "Capstone kickoff session"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 1 (setup and the ROS 2 graph): slides and demo",
+     "Lesson 1: lab dry run on a student machine",
+     "Lesson 1: question bank and common errors",
+     "Lesson 1: grade labs and give feedback",
+     "Capstone robot: hardware audit"
+    ],
+    "robo-lab": [
+     "Teach lab 1: setup and the ROS 2 graph"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 1",
+     "LeRobot docs: getting started"
+    ],
+    "cpp-ros": [
+     "Capstone: C++ node architecture"
+    ],
+    "ai-breadth": [
+     "Sutton & Barto: the reinforcement learning problem (reading)"
+    ],
+    "ai-read-long": [
+     "Sutton & Barto: tabular methods overview"
+    ]
+   }
+  },
+  {
+   "week": 49,
+   "start": "2027-09-20",
+   "end": "2027-09-26",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching topics, finite MDPs and Bellman equations, transfer functions, capstone mapping",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Compute returns by hand",
+     "Bellman equations for a gridworld",
+     "Find optimal policies by inspection"
+    ],
+    "ai-deep": [
+     "Finite MDPs: returns and episodes",
+     "Value functions and Bellman equations",
+     "Optimal policies and optimal value functions"
+    ],
+    "math-learn": [
+     "Transfer functions and Laplace basics",
+     "First- and second-order system responses"
+    ],
+    "math-practice": [
+     "Laplace transform exercises",
+     "Simulate first- and second-order systems"
+    ],
+    "ai-main": [
+     "Gymnasium basics"
+    ],
+    "build": [
+     "Capstone mapping: tune SLAM Toolbox for the room",
+     "Evaluate map quality",
+     "Localize in a saved map",
+     "Map management launch files",
+     "Mapping tests"
+    ],
+    "build-long": [
+     "Capstone: map the room end-to-end"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 2 (topics): slides and demo",
+     "Lesson 2: lab dry run on a student machine",
+     "Lesson 2: question bank and common errors",
+     "Lesson 2: grade labs and give feedback",
+     "Capstone robot: sensor mounts and cabling"
+    ],
+    "robo-lab": [
+     "Teach lab 2: topics"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 2",
+     "Nav2 docs: behaviour trees"
+    ],
+    "cpp-ros": [
+     "Capstone: custom messages and interfaces"
+    ],
+    "ai-breadth": [
+     "Sutton & Barto: multi-armed bandits (reading)"
+    ],
+    "ai-read-long": [
+     "Sutton & Barto: bandits in depth"
+    ]
+   }
+  },
+  {
+   "week": 50,
+   "start": "2027-09-27",
+   "end": "2027-10-03",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching services and actions, dynamic programming, PID tuning, capstone navigation",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Policy evaluation in code",
+     "Policy iteration in code",
+     "Value iteration on FrozenLake"
+    ],
+    "ai-deep": [
+     "Dynamic programming: policy evaluation",
+     "Policy iteration",
+     "Value iteration and generalized policy iteration"
+    ],
+    "math-learn": [
+     "PID: proportional, integral and derivative actions",
+     "PID tuning methods: manual and Ziegler–Nichols"
+    ],
+    "math-practice": [
+     "Implement a discrete PID controller",
+     "Tune PID on a simulated motor"
+    ],
+    "ai-main": [
+     "Plotting learning curves and comparing seeds"
+    ],
+    "build": [
+     "Capstone navigation: Nav2 configuration",
+     "Costmap tuning for the room",
+     "Controller tuning",
+     "Goal-sending app",
+     "Navigation reliability tests"
+    ],
+    "build-long": [
+     "Capstone: Nav2 goal run end-to-end"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 3 (services and actions): slides and demo",
+     "Lesson 3: lab dry run on a student machine",
+     "Lesson 3: question bank and common errors",
+     "Lesson 3: grade labs and give feedback",
+     "Capstone robot: Nav2 parameters for the room"
+    ],
+    "robo-lab": [
+     "Teach lab 3: services and actions"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 3",
+     "Teaching: active learning in labs"
+    ],
+    "cpp-ros": [
+     "Capstone: a C++ behaviour node"
+    ],
+    "ai-breadth": [
+     "Sutton & Barto: finite MDPs (reading)"
+    ],
+    "ai-read-long": [
+     "Sutton & Barto: MDPs in depth"
+    ]
+   }
+  },
+  {
+   "week": 51,
+   "start": "2027-10-04",
+   "end": "2027-10-10",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching launch and parameters, Monte Carlo methods, anti-windup and feedforward, capstone dataset",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Monte Carlo prediction on Blackjack",
+     "Monte Carlo control",
+     "Importance sampling exercise"
+    ],
+    "ai-deep": [
+     "Monte Carlo prediction",
+     "Monte Carlo control",
+     "Off-policy Monte Carlo and importance sampling"
+    ],
+    "math-learn": [
+     "Integrator windup and derivative filtering",
+     "Feedforward control"
+    ],
+    "math-practice": [
+     "Implement anti-windup",
+     "Add feedforward and compare tracking"
+    ],
+    "ai-main": [
+     "Reproducibility in RL"
+    ],
+    "build": [
+     "Capstone perception: dataset plan for people and objects",
+     "Collect data with the robot camera",
+     "Label data",
+     "Train model v1",
+     "Evaluate model v1"
+    ],
+    "build-long": [
+     "Capstone: data collection day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 4 (launch files and parameters): slides and demo",
+     "Lesson 4: lab dry run on a student machine",
+     "Lesson 4: question bank and common errors",
+     "Lesson 4: grade labs and give feedback",
+     "Capstone robot: camera placement for perception"
+    ],
+    "robo-lab": [
+     "Teach lab 4: launch files and parameters"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 4",
+     "ROS 2 docs: debugging tips"
+    ],
+    "cpp-ros": [
+     "Capstone: parameters and dynamic reconfiguration"
+    ],
+    "ai-breadth": [
+     "Sutton & Barto: dynamic programming (reading)"
+    ],
+    "ai-read-long": [
+     "Sutton & Barto: DP and GPI in depth"
+    ]
+   }
+  },
+  {
+   "week": 52,
+   "start": "2027-10-11",
+   "end": "2027-10-17",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching TF2, TD learning and Q-learning, cascade and discrete control, capstone model on the robot",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "TD(0) on the random walk",
+     "SARSA on windy gridworld",
+     "Q-learning on cliff walking"
+    ],
+    "ai-deep": [
+     "TD prediction: TD(0)",
+     "SARSA: on-policy TD control",
+     "Q-learning and expected SARSA"
+    ],
+    "math-learn": [
+     "Cascade control: velocity and position loops",
+     "Discrete-time control and sampling"
+    ],
+    "math-practice": [
+     "Cascade loops on the robot's wheels",
+     "Sampling rate experiments"
+    ],
+    "ai-main": [
+     "Tabular RL review"
+    ],
+    "build": [
+     "Model v2: augmentation and retraining",
+     "Export and quantize",
+     "Deploy on the robot as a ROS 2 node",
+     "Detections as markers on the map",
+     "Perception latency tuning"
+    ],
+    "build-long": [
+     "Capstone: model running on the robot"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 5 (TF2): slides and demo",
+     "Lesson 5: lab dry run on a student machine",
+     "Lesson 5: question bank and common errors",
+     "Lesson 5: grade labs and give feedback",
+     "Capstone robot: on-board compute budget"
+    ],
+    "robo-lab": [
+     "Teach lab 5: TF2"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 5",
+     "ROS 2 docs: tf2 debugging"
+    ],
+    "cpp-ros": [
+     "Capstone: C++ detection-to-map node"
+    ],
+    "ai-breadth": [
+     "Sutton & Barto: Monte Carlo methods (reading)"
+    ],
+    "ai-read-long": [
+     "Sutton & Barto: Monte Carlo in depth"
+    ]
+   }
+  },
+  {
+   "week": 53,
+   "start": "2027-10-18",
+   "end": "2027-10-24",
+   "phase": "F",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 54,
+   "start": "2027-10-25",
+   "end": "2027-10-31",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching URDF and RViz, Spinning Up and DQN, stability and frequency response, capstone integration",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "From tabular to function approximation",
+     "DQN on CartPole",
+     "Debugging DQN"
+    ],
+    "ai-deep": [
+     "Spinning Up: key concepts in RL",
+     "Spinning Up: kinds of RL algorithms",
+     "Deep Q-networks"
+    ],
+    "math-learn": [
+     "Stability: poles and root locus intuition",
+     "Frequency response: Bode plot intuition"
+    ],
+    "math-practice": [
+     "Pole location exercises",
+     "Bode plots with python-control"
+    ],
+    "ai-main": [
+     "Stable-Baselines3 basics"
+    ],
+    "build": [
+     "Integration: navigate to found objects",
+     "Behaviour logic: state machine or behaviour tree",
+     "Patrol mode with waypoints",
+     "Log and announce detections",
+     "Integration tests"
+    ],
+    "build-long": [
+     "Capstone: integrated run v1"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 6 (URDF and RViz): slides and demo",
+     "Lesson 6: lab dry run on a student machine",
+     "Lesson 6: question bank and common errors",
+     "Lesson 6: grade labs and give feedback",
+     "Capstone robot: behaviour tree design"
+    ],
+    "robo-lab": [
+     "Teach lab 6: URDF and RViz"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 6",
+     "Articulated Robotics: URDF refresher"
+    ],
+    "cpp-ros": [
+     "Behaviour tree nodes in C++ (BehaviorTree.CPP)"
+    ],
+    "ai-breadth": [
+     "Sutton & Barto: temporal-difference learning (reading)"
+    ],
+    "ai-read-long": [
+     "Sutton & Barto: TD learning in depth"
+    ]
+   }
+  },
+  {
+   "week": 55,
+   "start": "2027-11-01",
+   "end": "2027-11-07",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching Gazebo, policy gradients and PPO, state-space models, capstone field tests",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "REINFORCE on CartPole",
+     "Actor-critic implementation",
+     "PPO with Stable-Baselines3"
+    ],
+    "ai-deep": [
+     "Policy gradients: REINFORCE",
+     "Actor-critic methods",
+     "PPO overview (Spinning Up)"
+    ],
+    "math-learn": [
+     "State-space representation",
+     "From transfer function to state space"
+    ],
+    "math-practice": [
+     "Write state-space models",
+     "Convert transfer functions to state space with python-control"
+    ],
+    "ai-main": [
+     "Hyperparameters in deep RL"
+    ],
+    "build": [
+     "Retune wheel PID with state-space insight",
+     "Velocity smoothing",
+     "Return-home behaviour",
+     "Battery-aware behaviour",
+     "Field tests"
+    ],
+    "build-long": [
+     "Capstone: field test day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 7 (Gazebo simulation): slides and demo",
+     "Lesson 7: lab dry run on a student machine",
+     "Lesson 7: question bank and common errors",
+     "Lesson 7: grade labs and give feedback",
+     "Capstone robot: safety and e-stop check"
+    ],
+    "robo-lab": [
+     "Teach lab 7: Gazebo simulation"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 7",
+     "Gazebo docs: troubleshooting"
+    ],
+    "cpp-ros": [
+     "A C++ PID controller node"
+    ],
+    "ai-breadth": [
+     "Spinning Up: intro to policy optimization"
+    ],
+    "ai-read-long": [
+     "Spinning Up: DQN and its variants"
+    ]
+   }
+  },
+  {
+   "week": 56,
+   "start": "2027-11-08",
+   "end": "2027-11-14",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching ros2_control, RL environments and reward design, pole placement, RL sim side project",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Custom Gymnasium environment: robot on a grid",
+     "Train an agent in the custom environment",
+     "Reward shaping experiments"
+    ],
+    "ai-deep": [
+     "Gymnasium environments and wrappers",
+     "RL for robots: sim-to-real gap",
+     "Reward design"
+    ],
+    "math-learn": [
+     "Controllability and observability",
+     "State feedback and pole placement"
+    ],
+    "math-practice": [
+     "Controllability and observability checks",
+     "Pole placement in code"
+    ],
+    "ai-main": [
+     "Simulation environments for robots"
+    ],
+    "build": [
+     "RL side project: train a policy in sim for a robot task",
+     "Evaluate the sim policy",
+     "Compare with a classic controller",
+     "Write-up",
+     "Decide what goes into the capstone"
+    ],
+    "build-long": [
+     "RL sim project day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 8 (ros2_control and the real robot): slides and demo",
+     "Lesson 8: lab dry run on a student machine",
+     "Lesson 8: question bank and common errors",
+     "Lesson 8: grade labs and give feedback",
+     "Capstone robot: power and runtime tests"
+    ],
+    "robo-lab": [
+     "Teach lab 8: ros2_control and the real robot"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 8",
+     "ros2_control docs: hardware interfaces"
+    ],
+    "cpp-ros": [
+     "State-space controller in C++ with Eigen"
+    ],
+    "ai-breadth": [
+     "Sim-to-real in robot learning"
+    ],
+    "ai-read-long": [
+     "Spinning Up: PPO"
+    ]
+   }
+  },
+  {
+   "week": 57,
+   "start": "2027-11-15",
+   "end": "2027-11-21",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching sensors, LeRobot and behaviour cloning, LQR and observers, LeRobot side project",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Install LeRobot and run a pretrained policy",
+     "Behaviour cloning on a small dataset",
+     "Record demonstrations in simulation"
+    ],
+    "ai-deep": [
+     "LeRobot: overview, datasets and policies",
+     "Imitation learning: behaviour cloning",
+     "LeRobot: recording demonstrations"
+    ],
+    "math-learn": [
+     "LQR basics",
+     "Observers and the link to the Kalman filter"
+    ],
+    "math-practice": [
+     "LQR on a cart model",
+     "Simulate a state observer"
+    ],
+    "ai-main": [
+     "LeRobot datasets on the Hugging Face Hub"
+    ],
+    "build": [
+     "LeRobot side project: collect a dataset",
+     "Train a policy",
+     "Evaluate",
+     "Write-up",
+     "Integration decision"
+    ],
+    "build-long": [
+     "LeRobot project day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 9 (sensors: lidar and camera): slides and demo",
+     "Lesson 9: lab dry run on a student machine",
+     "Lesson 9: question bank and common errors",
+     "Lesson 9: grade labs and give feedback",
+     "Capstone robot: network and remote access"
+    ],
+    "robo-lab": [
+     "Teach lab 9: sensors: lidar and camera"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 9",
+     "Lidar and camera driver docs refresher"
+    ],
+    "cpp-ros": [
+     "Calling a policy from C++ (ONNX Runtime)"
+    ],
+    "ai-breadth": [
+     "Foundation models for robotics"
+    ],
+    "ai-read-long": [
+     "LeRobot docs: datasets and policies"
+    ]
+   }
+  },
+  {
+   "week": 58,
+   "start": "2027-11-22",
+   "end": "2027-11-28",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching SLAM, training LeRobot policies, pure pursuit and tracking, capstone robustness",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Train a LeRobot policy",
+     "Measure policy success rate",
+     "Compare two policies"
+    ],
+    "ai-deep": [
+     "LeRobot: training a policy",
+     "LeRobot: evaluating a policy",
+     "ACT and diffusion policies overview"
+    ],
+    "math-learn": [
+     "Trajectory tracking for a differential-drive robot",
+     "The pure pursuit controller"
+    ],
+    "math-practice": [
+     "Implement pure pursuit",
+     "Tune path tracking on the simulated robot"
+    ],
+    "ai-main": [
+     "Deploying learned policies: considerations"
+    ],
+    "build": [
+     "Capstone monitoring dashboard",
+     "Logging and rosbag recording",
+     "Remote operation and safety stop",
+     "Robustness tests",
+     "Bug fixing"
+    ],
+    "build-long": [
+     "Capstone: robustness day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 10 (SLAM): slides and demo",
+     "Lesson 10: lab dry run on a student machine",
+     "Lesson 10: question bank and common errors",
+     "Lesson 10: grade labs and give feedback",
+     "Capstone robot: logging setup"
+    ],
+    "robo-lab": [
+     "Teach lab 10: SLAM"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 10",
+     "SLAM Toolbox docs refresher"
+    ],
+    "cpp-ros": [
+     "Capstone: C++ robustness and error handling"
+    ],
+    "ai-breadth": [
+     "Imitation learning beyond behaviour cloning"
+    ],
+    "ai-read-long": [
+     "Paper: ACT (action chunking with transformers)"
+    ]
+   }
+  },
+  {
+   "week": 59,
+   "start": "2027-11-29",
+   "end": "2027-12-05",
+   "phase": "F",
+   "consolidation": true,
+   "theme": "Consolidation",
+   "file": null,
+   "outline": {}
+  },
+  {
+   "week": 60,
+   "start": "2027-12-06",
+   "end": "2027-12-12",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching Nav2, system design basics, MPC overview and wheel loops, capstone demo runs",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "System design exercise: URL shortener",
+     "Exercise: a prediction API at scale",
+     "Exercise: a telemetry pipeline for robots"
+    ],
+    "ai-deep": [
+     "System design basics: requirements and trade-offs",
+     "Scalability: load balancing, caching and queues",
+     "Choosing data storage"
+    ],
+    "math-learn": [
+     "Model predictive control overview",
+     "Control design for the course robot's wheel loops"
+    ],
+    "math-practice": [
+     "Toy MPC example",
+     "Tune the real robot's wheel loops"
+    ],
+    "ai-main": [
+     "System design review checklist"
+    ],
+    "build": [
+     "Capstone full demo run 1",
+     "Fix issues",
+     "Full demo run 2",
+     "Performance metrics",
+     "Documentation"
+    ],
+    "build-long": [
+     "Capstone: demo run day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 11 (Nav2): slides and demo",
+     "Lesson 11: lab dry run on a student machine",
+     "Lesson 11: question bank and common errors",
+     "Lesson 11: grade labs and give feedback",
+     "Capstone robot: demo course layout"
+    ],
+    "robo-lab": [
+     "Teach lab 11: Nav2"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 11",
+     "Nav2 docs: tuning refresher"
+    ],
+    "cpp-ros": [
+     "Capstone: C++ profiling"
+    ],
+    "ai-breadth": [
+     "System design: well-known architectures"
+    ],
+    "ai-read-long": [
+     "System design primer: core concepts"
+    ]
+   }
+  },
+  {
+   "week": 61,
+   "start": "2027-12-13",
+   "end": "2027-12-19",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Teaching perception node, designing ML and robot systems, line following and heading control, capstone write-up",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Design doc: capstone software architecture",
+     "Logging and metrics for the robot",
+     "Failure modes analysis"
+    ],
+    "ai-deep": [
+     "Designing an ML serving system",
+     "Designing the robot's software architecture",
+     "Reliability and observability"
+    ],
+    "math-learn": [
+     "Line-following controller design",
+     "Heading control with an IMU"
+    ],
+    "math-practice": [
+     "Line-following controller on the robot",
+     "Heading control with the IMU"
+    ],
+    "ai-main": [
+     "Writing design docs"
+    ],
+    "build": [
+     "Capstone video recording",
+     "Capstone write-up",
+     "Code cleanup",
+     "Turn the capstone into teaching material",
+     "Portfolio site update"
+    ],
+    "build-long": [
+     "Capstone: video and write-up day"
+    ],
+    "robo-prep": [
+     "Teach prep lesson 12 (a perception node): slides and demo",
+     "Lesson 12: lab dry run on a student machine",
+     "Lesson 12: question bank and common errors",
+     "Lesson 12: grade labs and give feedback",
+     "Capstone robot: final hardware fixes"
+    ],
+    "robo-lab": [
+     "Teach lab 12: a perception node"
+    ],
+    "robo-read": [
+     "Teaching reflection: lesson 12",
+     "vision_msgs and image_pipeline refresher"
+    ],
+    "cpp-ros": [
+     "Capstone: C++ code cleanup"
+    ],
+    "ai-breadth": [
+     "Distributed systems basics"
+    ],
+    "ai-read-long": [
+     "Huyen: designing ML systems revisited"
+    ]
+   }
+  },
+  {
+   "week": 62,
+   "start": "2027-12-20",
+   "end": "2027-12-26",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Student projects, capstone deployment and evaluation, control review, capstone final demo",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Retrain the capstone model",
+     "Benchmark the capstone model on the robot",
+     "Capstone evaluation run"
+    ],
+    "ai-deep": [
+     "Capstone: model deployment review",
+     "Capstone: integration architecture",
+     "Capstone: evaluation plan"
+    ],
+    "math-learn": [
+     "Control review: PID vs state feedback",
+     "Estimation plus control: the LQG idea"
+    ],
+    "math-practice": [
+     "Control problem set",
+     "LQG simulation"
+    ],
+    "ai-main": [
+     "Capstone AI demo prep"
+    ],
+    "build": [
+     "Capstone final rehearsal",
+     "Capstone final demo",
+     "Retrospective",
+     "Archive and release",
+     "Plan the next year"
+    ],
+    "build-long": [
+     "Capstone: final demo"
+    ],
+    "robo-prep": [
+     "Student projects: brief and team setup",
+     "Student projects: mentoring session plan",
+     "Student projects: robot booking and fleet setup",
+     "Student projects: progress reviews",
+     "Capstone robot: demo checklist"
+    ],
+    "robo-lab": [
+     "Teach lab: student project session"
+    ],
+    "robo-read": [
+     "Teaching reflection: student projects",
+     "Teaching: running student project reviews"
+    ],
+    "cpp-ros": [
+     "Capstone: C++ tests"
+    ],
+    "ai-breadth": [
+     "Edge vs cloud trade-offs for robots"
+    ],
+    "ai-read-long": [
+     "Capstone: write the technical report"
+    ]
+   }
+  },
+  {
+   "week": 63,
+   "start": "2027-12-27",
+   "end": "2028-01-02",
+   "phase": "F",
+   "consolidation": false,
+   "theme": "Final assessment, course-wide review, portfolio and next steps",
+   "file": null,
+   "outline": {
+    "ai-practice": [
+     "Mixed AI practice set",
+     "Interview-style ML questions",
+     "Final AI practice review"
+    ],
+    "ai-deep": [
+     "Course AI review: from classical ML to RL",
+     "What to learn next in AI",
+     "Final AI self-assessment"
+    ],
+    "math-learn": [
+     "Course-wide math review: linear algebra to control",
+     "Next steps in math for robotics"
+    ],
+    "math-practice": [
+     "Final math problem set",
+     "Self-assessment and gaps list"
+    ],
+    "ai-main": [
+     "Final AI quiz"
+    ],
+    "build": [
+     "Portfolio: CV and project summaries",
+     "Open-source contribution",
+     "Course review: what worked",
+     "Plan 2028 learning",
+     "Rest and celebration plan"
+    ],
+    "build-long": [
+     "Year review and showcase"
+    ],
+    "robo-prep": [
+     "Final assessment: practical exam design",
+     "Final assessment: run and grade",
+     "Course retrospective and student feedback",
+     "Update the ROS 2 course for the next cohort",
+     "Capstone robot: storage and handover"
+    ],
+    "robo-lab": [
+     "Teach lab: final practical assessment"
+    ],
+    "robo-read": [
+     "Teaching reflection: the whole course",
+     "Teaching: course evaluation and improvements"
+    ],
+    "cpp-ros": [
+     "C++ review: what to learn next"
+    ],
+    "ai-breadth": [
+     "AI breadth: year review"
+    ],
+    "ai-read-long": [
+     "Year in review: reading list for 2028"
+    ]
+   }
+  }
+ ],
+ "diagnostic": {
+  "title": "Week 0 diagnostic",
+  "rules": "No AI, no Googling. 60–90 minutes. Mark each problem solved, partly solved or stuck, and note what stopped you.",
+  "retakeWeek": 6,
+  "reading": "If 1–3 and 6 come easily, you can move faster. Getting stuck on 2, 3 or 7 is normal and shows where to begin."
+ },
+ "rosVersion": {
+  "default": "Lyrical Luth",
+  "fallback": "Jazzy Jalisco"
+ }
+}

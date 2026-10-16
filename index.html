@@ -21,7 +21,10 @@
 
   <button id="fab" class="fab" aria-label="Ask Yaver"><span class="mark">Y</span></button>
 
+  <span id="sync-dot" class="sync-dot" hidden></span>
+
   <nav class="tabbar" aria-label="Sections">
+    <div class="side-brand side-only"><span class="mark sm">Y</span><b>yaver</b></div>
     <button data-tab="home"></button>
     <button data-tab="study"></button>
     <button data-tab="calendar"></button>
@@ -29,6 +32,8 @@
     <button data-tab="money"></button>
     <button data-tab="diet"></button>
     <button data-tab="map"></button>
+    <button class="side-only side-ask" data-ask></button>
+    <button class="side-only" data-tab="settings"></button>
   </nav>
 
   <script type="module" src="js/app.js"></script>

@@ -1,0 +1,379 @@
+{
+ "week": 0,
+ "theme": "Setup: machine, diagnostic, first project spec, lock in week 1",
+ "lessons": [
+  {
+   "id": "tools-w00-1",
+   "track": "tools",
+   "lane": "setup",
+   "week": 0,
+   "seq": 1,
+   "kind": "setup",
+   "minutes": 120,
+   "date": "2026-10-15",
+   "title": "Set up your MacBook",
+   "objectives": [
+    "Install the developer tools on macOS: Xcode Command Line Tools, Homebrew, Python 3, Git and VS Code",
+    "Create a learning-log repository on GitHub and push a first commit",
+    "Run and debug a Python file from VS Code"
+   ],
+   "prereqs": [],
+   "resources": [
+    {
+     "title": "Homebrew installation",
+     "url": "https://docs.brew.sh/Installation",
+     "part": "the install command and the PATH step at the end",
+     "type": "docs"
+    },
+    {
+     "title": "Visual Studio Code on macOS",
+     "url": "https://code.visualstudio.com/docs/setup/mac",
+     "part": "installation and launching from the command line",
+     "type": "docs"
+    },
+    {
+     "title": "VS Code: Python debugging",
+     "url": "https://code.visualstudio.com/docs/python/debugging",
+     "part": "the debugger walkthrough",
+     "type": "docs"
+    },
+    {
+     "title": "Pro Git",
+     "url": "https://git-scm.com/book/en/v2",
+     "part": "the chapter on getting started",
+     "type": "book"
+    },
+    {
+     "title": "UTM: Ubuntu guest guide",
+     "url": "https://docs.getutm.app/guides/ubuntu/",
+     "part": "for later: the Ubuntu VM before the ROS 2 weeks",
+     "type": "docs"
+    }
+   ],
+   "steps": [
+    {
+     "kind": "learn",
+     "minutes": 15,
+     "title": "What you're setting up, and why",
+     "body": "macOS is a Unix system, so the terminal you already have speaks almost the same language as the Linux machines this course ends up on (the robot's Raspberry Pi, servers, ROS 2). Python, Git, C++, data work and Arduino all run natively on a Mac. Today's setup covers everything you need until the spring.\n\n**What goes where:**\n\n- **Natively on macOS (today):** Python 3, Git, a C++ compiler (Apple's clang, which also answers to `g++`), VS Code, and later the Arduino IDE. Homebrew is the package manager that installs and updates these, the way `apt` does on Ubuntu.\n- **In an Ubuntu virtual machine (later, around Week 16):** ROS 2 is built for Ubuntu. On a Mac the practical route is a free virtual machine app called UTM running Ubuntu 26.04 for ARM, which ROS 2 Lyrical supports. You don't need it yet; the link is in the resources so you know where it's coming from. Week 5's tools lesson on `apt` will use it too, or you can follow along with Homebrew equivalents.\n\nThe terminal on macOS uses `zsh`, not `bash`. For everything in Phase A the difference doesn't matter: `ls`, `cd`, pipes, `grep` and scripts all work the same.\n\nWhat you'll have at the end of this session:\n\n1. `python3 --version` showing 3.12 or newer, `git --version`, and `g++ --version` working in Terminal.\n2. VS Code with the Python extension, openable from Terminal with `code .`.\n3. A GitHub account and a repository called `learning-log`, cloned on your Mac.\n4. A file `hello.py` you've run, debugged with a breakpoint, committed and pushed.\n\nAnki is optional: Yaver's review cards replace it for course material."
+    },
+    {
+     "kind": "build",
+     "minutes": 75,
+     "title": "Install and connect",
+     "body": "Work through the tasks in order. Each has a check: don't move on until it passes.",
+     "tasks": [
+      {
+       "prompt": "Install Apple's command line developer tools. Open Terminal (Cmd+Space, type Terminal) and run `xcode-select --install`, then accept the dialog.",
+       "hints": [
+        "If it says the tools are already installed, you're done with this step.",
+        "This gives you git, clang and make; the download can take several minutes.",
+        "Check with `g++ --version` afterwards: on a Mac it prints Apple clang, which is fine for this course."
+       ],
+       "check": "`git --version` and `g++ --version` both print versions.",
+       "solution": "`xcode-select --install` opens a dialog; click Install. When it finishes, `git --version` and `g++ --version` (Apple clang) both work."
+      },
+      {
+       "prompt": "Install Homebrew with the command from its installation page, run the two `echo`/`eval` lines it prints at the end (they add brew to your PATH), then `brew install python`.",
+       "hints": [
+        "Copy the install command exactly from the Homebrew page; it asks for your Mac password.",
+        "On Apple Silicon Macs brew lives in /opt/homebrew; the final lines it prints set this up in ~/.zprofile.",
+        "Open a new Terminal window after the PATH step, then `brew --version`."
+       ],
+       "check": "`brew --version` works, and `python3 --version` prints 3.12 or newer.",
+       "solution": "After installing Homebrew and running its PATH lines, `brew install python` gives you a current Python 3 as `python3`, with `pip3` and `python3 -m venv`."
+      },
+      {
+       "prompt": "Install VS Code (download it, or `brew install --cask visual-studio-code`), add the Python extension, and enable the `code` command: in VS Code press Cmd+Shift+P and run *Shell Command: Install 'code' command in PATH*.",
+       "hints": [
+        "Drag VS Code into Applications if you downloaded the zip.",
+        "The Python extension is the one published by Microsoft.",
+        "Test with `code .` in a Terminal folder."
+       ],
+       "check": "`code .` in Terminal opens VS Code on that folder.",
+       "solution": "Install VS Code, add the Python extension, run the *Install 'code' command* step, then `code .` works from any folder."
+      },
+      {
+       "prompt": "Create a GitHub account if needed, then a public repository `learning-log`. Set your identity (`git config --global user.name ...` and `user.email ...`), create an SSH key (`ssh-keygen -t ed25519`), add the public key to GitHub, and clone the repo.",
+       "hints": [
+        "The public key is the `.pub` file: `cat ~/.ssh/id_ed25519.pub`.",
+        "GitHub → Settings → SSH and GPG keys → New SSH key.",
+        "Clone with the SSH address (git@github.com:...), not HTTPS."
+       ],
+       "check": "`ssh -T git@github.com` greets you by username, and `git clone` worked.",
+       "solution": "After adding the key, `ssh -T git@github.com` prints *Hi <you>! You've successfully authenticated*. Then `git clone git@github.com:<you>/learning-log.git`."
+      }
+     ]
+    },
+    {
+     "kind": "test",
+     "minutes": 25,
+     "title": "First run, first breakpoint, first push",
+     "body": "In `learning-log`, create `week00/hello.py`:\n\n```python\ndef greet(name):\n    message = f\"Hello, {name}. Week 1 starts Monday.\"\n    return message\n\nfor person in [\"Mustafa\", \"first-year students\"]:\n    print(greet(person))\n```\n\nRun it from Terminal (`python3 week00/hello.py`). Then set a breakpoint on the `return` line (click left of the line number), start the debugger (F5, choose *Python File*), and step through: watch `message` change in the Variables panel. You'll use the debugger in Week 1's Python lesson, so this is the moment it stops being unfamiliar.\n\nFinally:\n\n```bash\ngit add week00/hello.py\ngit commit -m \"Week 0: first run\"\ngit push\n```"
+    },
+    {
+     "kind": "log",
+     "minutes": 5,
+     "title": "Log",
+     "body": "Write two lines in `learning-log/README.md`: what you installed, and anything that fought back. Mark this lesson complete in Yaver."
+    }
+   ],
+   "cards": [
+    {
+     "front": "Command to check which Python version the terminal will run",
+     "back": "python3 --version"
+    },
+    {
+     "front": "What does `git push` do?",
+     "back": "Sends your local commits to the remote repository (GitHub)."
+    },
+    {
+     "front": "Which file of an SSH key pair do you give to GitHub?",
+     "back": "The public key, the .pub file. The private key never leaves your machine."
+    }
+   ],
+   "deliverable": "learning-log repository on GitHub with week00/hello.py committed.",
+   "teachBy": null,
+   "safety": null
+  },
+  {
+   "id": "algo-w00-1",
+   "track": "algo",
+   "lane": "setup",
+   "week": 0,
+   "seq": 2,
+   "kind": "diagnostic",
+   "minutes": 90,
+   "date": "2026-10-16",
+   "title": "Diagnostic test",
+   "objectives": [
+    "Solve seven short problems without help, to find where to start",
+    "Record exactly which problems stopped you and why"
+   ],
+   "prereqs": [
+    "tools-w00-1"
+   ],
+   "resources": [
+    {
+     "title": "Python tutorial",
+     "url": "https://docs.python.org/3/tutorial/",
+     "part": "only after you finish, to look things up",
+     "type": "docs"
+    }
+   ],
+   "steps": [
+    {
+     "kind": "learn",
+     "minutes": 5,
+     "title": "Rules",
+     "body": "No AI, no Googling, no notes. Write code in VS Code (problems 1–5), paper is fine for 6 and 7. Give each problem up to 12 minutes; if you're stuck at 12, write one line about *what* stopped you and move on.\n\nThis isn't graded against anyone. It's a snapshot: the same test comes back in **Week 6**, and the difference between the two is the clearest progress measure you'll get this autumn.\n\nHow to read your result: if 1–3 and 6 come easily, you can move faster through the early Python and algorithms lessons. Getting stuck on 2, 3 or 7 is normal and shows exactly where the course begins."
+    },
+    {
+     "kind": "practice",
+     "minutes": 75,
+     "title": "Seven problems",
+     "body": "Mark each one Solved, Partly or Stuck. Open the model answer only after you've marked it.",
+     "tasks": [
+      {
+       "prompt": "**1. Second largest.** Write `second_largest(nums)` that returns the second-largest value in a list of at least two numbers, in one pass and without sorting. Duplicates count once: for `[5, 5, 3]` the answer is 3.",
+       "lang": "python",
+       "hints": [
+        "Keep two variables while you scan: the largest so far and the second largest so far.",
+        "When a number beats the largest, the old largest becomes the second.",
+        "Start both at negative infinity: `float('-inf')`, and skip numbers equal to the current largest."
+       ],
+       "check": "second_largest([3, 9, 4]) == 4; second_largest([5, 5, 3]) == 3; second_largest([-2, -7]) == -7",
+       "tests": "def test_basic():\n    assert second_largest([3, 9, 4]) == 4\n\ndef test_duplicates():\n    assert second_largest([5, 5, 3]) == 3\n\ndef test_negative():\n    assert second_largest([-2, -7]) == -7",
+       "solution": "One pass, two trackers. O(n) time, O(1) memory.\n\n```python\ndef second_largest(nums):\n    first = second = float(\"-inf\")\n    for x in nums:\n        if x > first:\n            first, second = x, first\n        elif first > x > second:\n            second = x\n    return second\n\nprint(second_largest([3, 9, 4]), second_largest([5, 5, 3]), second_largest([-2, -7]))\n```",
+       "rubric": "Solved: one pass, handles duplicates and negatives. Partly: works but sorts, or fails on duplicates."
+      },
+      {
+       "prompt": "**2. Balanced brackets.** Write `balanced(s)` that returns True if every `(`, `[`, `{` in `s` is closed in the right order, e.g. `{[()]}` is balanced, `([)]` is not.",
+       "lang": "python",
+       "hints": [
+        "The most recently opened bracket must be closed first. Which data structure gives you 'most recent first'?",
+        "Push opening brackets on a stack; on a closing bracket, the top of the stack must be its partner.",
+        "At the end the stack must be empty; a closing bracket with an empty stack is an immediate False."
+       ],
+       "check": "balanced('{[()]}') is True; balanced('([)]') is False; balanced('((') is False; balanced('') is True",
+       "tests": "def test_balanced():\n    assert balanced('{[()]}')\n    assert balanced('')\n\ndef test_unbalanced():\n    assert not balanced('([)]')\n    assert not balanced('((')\n    assert not balanced(')(')",
+       "solution": "A stack: the last bracket opened is the first that must close.\n\n```python\ndef balanced(s):\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in s:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif ch in pairs:\n            if not stack or stack.pop() != pairs[ch]:\n                return False\n    return not stack\n\nprint(balanced(\"{[()]}\"), balanced(\"([)]\"), balanced(\"((\"), balanced(\"\"))\n```",
+       "rubric": "Solved: uses a stack and handles the empty and leftover cases. Partly: counts brackets (fails on `([)]`)."
+      },
+      {
+       "prompt": "**3. All subsets.** Write a recursive `subsets(items)` that returns a list of all subsets of a list (as lists). `subsets([1, 2])` has 4 subsets: `[], [1], [2], [1, 2]` in any order.",
+       "lang": "python",
+       "hints": [
+        "Think about the first element: every subset either contains it or doesn't.",
+        "Subsets of `items` = subsets of `items[1:]`, plus each of those with `items[0]` added.",
+        "Base case: the only subset of an empty list is the empty list: `[[]]`."
+       ],
+       "check": "len(subsets([1, 2, 3])) == 8, and the result contains [] and [1, 2, 3]",
+       "tests": "def test_count():\n    assert len(subsets([1, 2, 3])) == 8\n\ndef test_contents():\n    got = sorted(sorted(s) for s in subsets([1, 2]))\n    assert got == [[], [1], [1, 2], [2]]",
+       "solution": "Include-or-exclude recursion. There are 2ⁿ subsets, so any correct solution is O(2ⁿ · n).\n\n```python\ndef subsets(items):\n    if not items:\n        return [[]]\n    rest = subsets(items[1:])\n    return rest + [[items[0]] + s for s in rest]\n\nprint(subsets([1, 2, 3]))\n```",
+       "rubric": "Solved: correct recursion with a base case. Partly: correct idea, wrong base case or duplicates."
+      },
+      {
+       "prompt": "**4. From O(n²) to O(n).** First, in two sentences, explain why two nested loops over the same list cost O(n²). Then write `has_pair_sum(nums, target)` that returns True if two different elements add up to `target`, in O(n) using a set.",
+       "lang": "python",
+       "hints": [
+        "Nested loops: for each of n elements you do up to n steps.",
+        "For each number x, the partner you need is `target - x`. Have you seen it before?",
+        "Keep a set of numbers seen so far; check membership before adding x."
+       ],
+       "check": "has_pair_sum([3, 8, 1, 5], 9) is True (8+1); has_pair_sum([3, 8, 1, 5], 2) is False; has_pair_sum([4], 8) is False",
+       "tests": "def test_found():\n    assert has_pair_sum([3, 8, 1, 5], 9)\n\ndef test_not_found():\n    assert not has_pair_sum([3, 8, 1, 5], 2)\n    assert not has_pair_sum([4], 8)",
+       "solution": "The outer loop runs n times and the inner loop up to n times for each, so the work grows like n·n. A set lookup is O(1) on average, so one pass is O(n).\n\n```python\ndef has_pair_sum(nums, target):\n    seen = set()\n    for x in nums:\n        if target - x in seen:\n            return True\n        seen.add(x)\n    return False\n\nprint(has_pair_sum([3, 8, 1, 5], 9), has_pair_sum([3, 8, 1, 5], 2), has_pair_sum([4], 8))\n```",
+       "rubric": "Solved: correct explanation and a one-pass set solution. Partly: one of the two."
+      },
+      {
+       "prompt": "**5. BankAccount.** Write a class `BankAccount` with `deposit(amount)`, `withdraw(amount)` and a `balance` attribute. Withdrawing more than the balance must raise `ValueError` and leave the balance unchanged; non-positive amounts also raise `ValueError`. Write tests for these rules.",
+       "lang": "python",
+       "hints": [
+        "Check the rule before changing anything, so a failed withdraw leaves no trace.",
+        "`raise ValueError('insufficient funds')` stops the method.",
+        "A test for an exception: call it inside `try`, and fail if no exception happened."
+       ],
+       "check": "Depositing 100 then withdrawing 30 leaves 70; withdrawing 100 more raises ValueError and the balance stays 70.",
+       "tests": "def test_deposit_withdraw():\n    a = BankAccount()\n    a.deposit(100)\n    a.withdraw(30)\n    assert a.balance == 70\n\ndef test_no_overdraft():\n    a = BankAccount()\n    a.deposit(70)\n    try:\n        a.withdraw(100)\n        assert False, 'expected ValueError'\n    except ValueError:\n        pass\n    assert a.balance == 70",
+       "solution": "Validate first, then mutate. That ordering is the whole lesson.\n\n```python\nclass BankAccount:\n    def __init__(self, balance=0):\n        self.balance = balance\n\n    def deposit(self, amount):\n        if amount <= 0:\n            raise ValueError(\"amount must be positive\")\n        self.balance += amount\n\n    def withdraw(self, amount):\n        if amount <= 0:\n            raise ValueError(\"amount must be positive\")\n        if amount > self.balance:\n            raise ValueError(\"insufficient funds\")\n        self.balance -= amount\n\n\ndef test_rules():\n    a = BankAccount()\n    a.deposit(100)\n    a.withdraw(30)\n    assert a.balance == 70\n    try:\n        a.withdraw(100)\n        raise AssertionError(\"expected ValueError\")\n    except ValueError:\n        pass\n    assert a.balance == 70\n\ntest_rules()\nprint(\"all tests passed\")\n```",
+       "rubric": "Solved: class plus at least two tests including the overdraft case. Partly: class without tests."
+      },
+      {
+       "prompt": "**6. LED resistor.** A 9 V battery drives a red LED with a 2 V forward voltage at 20 mA. Which resistor do you use, what current flows with it, and what wattage rating does the resistor need?",
+       "hints": [
+        "The resistor takes whatever voltage the LED doesn't.",
+        "R = (V_supply − V_LED) / I.",
+        "Standard resistors come in fixed values (E12 series): round up so the current stays at or under 20 mA. Power P = I² · R."
+       ],
+       "check": "About 350 Ω calculated, 390 Ω chosen, ≈ 18 mA, ≈ 0.13 W, so a ¼ W resistor is fine.",
+       "solution": "The resistor drops 9 − 2 = 7 V. At 20 mA: R = 7 / 0.020 = 350 Ω. 350 Ω isn't a standard value, so go up to **390 Ω** (E12). Current: 7 / 390 ≈ 0.018 A = **18 mA**, slightly dimmer and safer. Power in the resistor: 0.018² × 390 ≈ **0.13 W**, so a common ¼ W (0.25 W) resistor has comfortable margin.",
+       "rubric": "Solved: value, rounding up to a standard value, and power. Partly: R = 350 Ω only."
+      },
+      {
+       "prompt": "**7. Blink and button without delay().** Sketch an Arduino program (on paper or in Wokwi) that blinks an LED on pin 13 every 500 ms *and* turns a second LED on pin 12 on while a button on pin 2 is pressed. The button must respond instantly, so `delay()` is not allowed.",
+       "hints": [
+        "`delay(500)` freezes the whole loop: nothing else runs for half a second.",
+        "`millis()` returns milliseconds since start. Store when you last toggled.",
+        "Each pass of `loop()`: if `millis() - lastToggle >= 500`, toggle and update lastToggle; then read the button."
+       ],
+       "check": "loop() contains no delay(); the blink uses millis() with a stored timestamp; the button is read every pass.",
+       "solution": "The loop runs thousands of times a second and only *checks* whether it's time to toggle.\n\n```arduino\nconst int BLINK_LED = 13, BUTTON_LED = 12, BUTTON = 2;\nunsigned long lastToggle = 0;\nbool blinkOn = false;\n\nvoid setup() {\n  pinMode(BLINK_LED, OUTPUT);\n  pinMode(BUTTON_LED, OUTPUT);\n  pinMode(BUTTON, INPUT_PULLUP);   // pressed = LOW\n}\n\nvoid loop() {\n  unsigned long now = millis();\n  if (now - lastToggle >= 500) {   // subtraction stays correct when millis() wraps\n    lastToggle = now;\n    blinkOn = !blinkOn;\n    digitalWrite(BLINK_LED, blinkOn);\n  }\n  digitalWrite(BUTTON_LED, digitalRead(BUTTON) == LOW);\n}\n```",
+       "rubric": "Solved: millis() pattern with no delay(). Partly: the idea is right but the timing logic is off. Getting stuck here is normal: it's Week 7 and Week 12 material."
+      }
+     ]
+    },
+    {
+     "kind": "reflect",
+     "minutes": 10,
+     "title": "Record what stopped you",
+     "body": "Mark each problem in Yaver (Solved / Partly / Stuck), then write two lines: which problem cost the most time, and what kind of gap it was (didn't know the idea, knew it but couldn't code it, made a small bug). Yaver keeps the score and shows it again next to your Week 6 retake."
+    }
+   ],
+   "cards": [],
+   "deliverable": "week00/diagnostic.py in learning-log with your attempts (unedited), plus your score saved in Yaver.",
+   "teachBy": null,
+   "safety": null
+  },
+  {
+   "id": "build-w00-1",
+   "track": "build",
+   "lane": "setup",
+   "week": 0,
+   "seq": 3,
+   "kind": "setup",
+   "minutes": 90,
+   "date": "2026-10-17",
+   "title": "Plan the first project and the first month of teaching",
+   "objectives": [
+    "Write a one-page spec for the student progress tracker",
+    "List the electronics lessons for the next four weeks and check the parts"
+   ],
+   "prereqs": [
+    "algo-w00-1"
+   ],
+   "resources": [
+    {
+     "title": "Pro Git",
+     "url": "https://git-scm.com/book/en/v2",
+     "part": "the chapter on Git basics, for the README habit",
+     "type": "book"
+    }
+   ],
+   "steps": [
+    {
+     "kind": "plan",
+     "minutes": 45,
+     "title": "Spec: student progress tracker",
+     "body": "Your Week 1–7 project grows one piece at a time: v1 reads a CSV, v2 computes statistics, v3 gets tests, v4 becomes classes and flags students falling behind, and Week 7 turns it into a full data analysis. Today you write the one-page spec that all of that hangs on.\n\nWrite `learning-log/tracker/SPEC.md` with these sections:\n\n1. **Problem.** One paragraph: what you want to see about your students that the AQL portal doesn't show you well today.\n2. **Input.** What the portal can export (check it: CSV? Excel? per student, per module?). List the columns you expect, for example `student_id, module, lesson, completed_at, score`.\n3. **Privacy.** Use anonymized data only: replace names with IDs (S001, S002…) before the file ever reaches your laptop's project folder, and never commit real names. Write down how you'll anonymize.\n4. **Output for v1.** One line per student: ID and percentage of lessons completed.\n5. **Later questions.** Who is falling behind? Which topic takes longest? Which week did activity drop? These become v2–v4 and the Week 7 analysis.\n\nIf you can't get a real export yet, write a fake one by hand with 8 students and 10 lessons: realistic is better than big.\n\nExample of the shape (anonymized, made up):\n\n```csv\nstudent_id,module,lesson,completed_at,score\nS001,Python Basics,Variables,2026-10-02,92\nS001,Python Basics,Loops,2026-10-05,78\nS002,Python Basics,Variables,2026-10-03,65\n```"
+    },
+    {
+     "kind": "plan",
+     "minutes": 35,
+     "title": "Teaching: the next four weeks",
+     "body": "Your robotics students meet electronics first. The course's robotics track runs 3–4 weeks ahead of them, so plan what *they* see when.\n\nWrite `learning-log/teaching/electronics-plan.md` with one line per student lesson for the next 4 weeks, following the order in the Robotics track (Week 1: charge, voltage, current, resistance, Ohm's law, multimeter, power; Week 2: series, parallel, dividers, Kirchhoff, breadboards; Week 3: diodes, LEDs, resistor codes, datasheets; Week 4: capacitors and RC). For each, add the date you plan to teach it. Yaver uses those dates as **teach-by deadlines**: open the Course screen and enter them on the robotics lessons, and anything close and not yet prepared turns red.\n\nThen check parts for one kit (yours) and count what you need for the class:\n\n- Breadboard, jumper wires, 9 V battery + clip, AA pack (2×AA or 4×AA)\n- Resistors: an E12 kit (at least 100 Ω, 220 Ω, 330 Ω, 390 Ω, 1 kΩ, 4.7 kΩ, 10 kΩ)\n- Red, green, yellow LEDs; 1N4148 or 1N4007 diodes\n- Electrolytic capacitors (10 µF, 100 µF, 470 µF)\n- A digital multimeter per pair of students\n- Pushbuttons, a potentiometer (10 kΩ)\n- An Arduino Uno (or clone) for you now, for students from January"
+    },
+    {
+     "kind": "log",
+     "minutes": 10,
+     "title": "Commit",
+     "body": "Commit both files and push. In Yaver, add the teach-by dates to the robotics lessons on the Course screen."
+    }
+   ],
+   "cards": [],
+   "deliverable": "tracker/SPEC.md and teaching/electronics-plan.md committed; teach-by dates entered in Yaver.",
+   "teachBy": null,
+   "safety": null
+  },
+  {
+   "id": "build-w00-2",
+   "track": "build",
+   "lane": "setup",
+   "week": 0,
+   "seq": 4,
+   "kind": "setup",
+   "minutes": 60,
+   "date": "2026-10-18",
+   "title": "Lock in Week 1",
+   "objectives": [
+    "Export Week 1's study blocks to the iPhone Calendar with alarms",
+    "Set up the evening routine that protects 22:30 bedtime"
+   ],
+   "prereqs": [
+    "build-w00-1"
+   ],
+   "resources": [
+    {
+     "title": "Anki (optional)",
+     "url": "https://apps.ankiweb.net/",
+     "part": "only if you also want cards outside the course",
+     "type": "app"
+    }
+   ],
+   "steps": [
+    {
+     "kind": "learn",
+     "minutes": 15,
+     "title": "How a course day works",
+     "body": "From tomorrow every day has fixed blocks. The time is part of the plan on purpose: \"at 05:50 I open the Python lesson\" is far more likely to happen than \"I'll study Python tomorrow\" (that's what implementation intentions research shows).\n\n- **05:50 Deep 1** (90 min): the hardest new material. Phone face down, one lesson.\n- **07:35 Deep 2** (90 min): practice at the edge. Hints unlock after 30 minutes stuck.\n- **15:20 Build** (90 min): the weekly project, a concrete goal each day.\n- **17:30 Prep** (60 min): robotics, 3–4 weeks ahead of your students.\n- **19:30 Light** (60 min): reading and lectures.\n- **20:30 Review** (30 min): due cards, two lines of log, and tomorrow's plan, confirmed.\n\nWork tasks and students fit in 10:00–12:00 and 13:00–15:00 by default; move them in Course settings if your week needs it. Sleep 22:30–05:30 is fixed and Yaver won't schedule into it.\n\nIf a day goes wrong, nothing is skipped: each track simply continues where you left off, and the Friday evening buffer goes to whichever track is most behind."
+    },
+    {
+     "kind": "build",
+     "minutes": 30,
+     "title": "Put Week 1 in your calendar",
+     "body": "Open Course → **Add this week to iPhone Calendar**, and add the events (each has an alarm at the start). Check Monday: 05:50 Deep 1 · Python, 07:35 Deep 2 · Algorithms, 15:20 Build, 17:30 Prep · Robotics, 19:30 Light · Tools, 20:30 Review.\n\nThen prepare the morning: laptop charged, `learning-log` open in VS Code, CS50P lecture 0 page bookmarked, water by the bed."
+    },
+    {
+     "kind": "log",
+     "minutes": 15,
+     "title": "Bedtime plan",
+     "body": "If you normally sleep later than 22:30, move bedtime 20–30 minutes earlier each night rather than all at once, and keep the 05:30 wake time fixed (a fixed wake time is what resets the body clock). Screens off at 22:00. Write tonight's bedtime and Monday's first block in the evening review, and confirm it."
+    }
+   ],
+   "cards": [],
+   "deliverable": "Week 1 blocks in the iPhone Calendar; Monday's first block confirmed.",
+   "teachBy": null,
+   "safety": null
+  }
+ ]
+}

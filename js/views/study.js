@@ -7,19 +7,22 @@ import { weekCompare } from '../reminders.js';
 import { weekSegments } from './home.js';
 import { studyForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
+import * as C from '../course.js';
+import { todayCard, startCard, bindToday } from './course.js';
 
 let tick;
 
 // The focus timer survives the app being closed: we store when it started, not a running count.
 const timer = () => db.setting('timer', null);
 
-export function render(root) {
+export function render(root, go) {
   clearInterval(tick);
   const s = D.studySummary();
   const w = weekCompare();
   const subjects = db.all('subjects');
   const t = timer();
-  const plan = D.planStatus();
+  const course = C.ready() && C.active();
+  const plan = course ? null : D.planStatus();
   const rm = D.roadmap();
   const recent = db.all('sessions').sort((a, b) => (b.date + b.createdAt).localeCompare(a.date + a.createdAt)).slice(0, 8);
   const delta = w.thisWeek - w.lastWeekSamePoint;
@@ -36,6 +39,8 @@ export function render(root) {
       <div><b>${(w.totalMin / 60).toFixed(w.totalMin < 600 ? 1 : 0)}h</b><small>total · best ${s.streak.best}d</small></div>
     </div>
     ${raw(weekSegments(s.streak.perDay, s.dailyGoalMin))}
+
+    ${raw(course ? todayCard() + html`<div class="btn-row"><button class="btn ghost" data-course>${raw(icon('book'))} Open course</button><button class="btn ghost" data-cards>${raw(icon('check'))} ${C.dueCount()} cards due</button></div>` : C.ready() ? startCard() : '')}
 
     ${raw(plan ? html`
       <section class="card">
@@ -69,7 +74,7 @@ export function render(root) {
 
     <section class="card">
       <div class="card-head"><p class="label">roadmap</p><button class="link" data-add-ms>+ milestones</button></div>
-      ${raw(plan ? '' : html`<button class="btn primary" data-load-plan>${raw(icon('download'))} Load the ML Engineer roadmap (52 weeks)</button>`)}
+      ${raw(plan || course ? '' : html`<button class="btn primary" data-load-plan>${raw(icon('download'))} Load the ML Engineer roadmap (52 weeks)</button>`)}
       ${raw(plan && rm.length ? rm.map(r => html`
           <div class="roadmap compact ${raw(r.subject === plan.phase.subject ? 'current' : '')}">
             <div class="card-head"><span class="small">${r.subject}</span><span class="small mono muted">${r.done}/${r.total}</span></div>
@@ -110,6 +115,9 @@ export function render(root) {
     </section>`;
 
   root.querySelector('[data-add]').onclick = () => studyForm();
+  bindToday(root, go);
+  root.querySelector('[data-course]')?.addEventListener('click', () => go('course'));
+  root.querySelector('[data-cards]')?.addEventListener('click', () => go('lesson/review'));
   root.querySelector('[data-plan]').onclick = () => openAssistant('Using my roadmap, study stats and calendar, plan concrete study blocks for the next 7 days. Keep it realistic around my meetings.');
   root.querySelector('[data-quiz]').onclick = () => openAssistant('Quiz me: 5 short questions on what I have studied recently (check my sessions and roadmap first). One question at a time; wait for my answer, then correct me briefly.');
   root.querySelector('[data-add-ms]').onclick = async () => {

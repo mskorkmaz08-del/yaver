@@ -5,6 +5,7 @@ import { testMac } from '../ai/mac.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
+import * as sync from '../sync.js';
 
 export function render(root, go) {
   const s = (k, f) => db.setting(k, f);
@@ -14,6 +15,7 @@ export function render(root, go) {
   const gmodels = s('geminiModels', []);
   const gmodel = s('geminiModel', '');
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const isPhone = /iPhone|iPad|Android/.test(navigator.userAgent) || navigator.maxTouchPoints > 1 && !matchMedia('(hover: hover)').matches;
 
   root.innerHTML = html`
     <header class="page-head">
@@ -21,10 +23,16 @@ export function render(root, go) {
       <button class="icon-btn" data-back aria-label="Back">${raw(icon('close'))}</button>
     </header>
 
-    ${raw(standalone ? '' : `<section class="card install">
+    ${raw(standalone ? '' : isPhone ? `<section class="card install">
       <p class="label">install on iphone</p>
       <ol class="small" style="margin:0;padding-left:18px"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with an arrow).</li><li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol>
-      <p class="muted small">Yaver then opens full screen like a normal app and works offline.</p></section>`)}
+      <p class="muted small">Yaver then opens full screen like a normal app and works offline.</p></section>` : `<section class="card install">
+      <p class="label">install on this computer</p>
+      ${window.yaverInstall ? '<button class="btn primary" data-install>Install Yaver on this computer</button>' : ''}
+      <ol class="small" style="margin:0;padding-left:18px"><li><b>Chrome or Edge:</b> the install button above, or the install icon at the right end of the address bar.</li><li><b>Safari on a Mac:</b> menu <b>File → Add to Dock</b>, then <b>Add</b>.</li></ol>
+      <p class="muted small">It then opens in its own window from the Dock and works offline. Set up Sync below so it shows the same progress as your iPhone.</p></section>`)}
+
+    ${raw(syncSection())}
 
     <form class="card form" data-form>
       <p class="label">ai</p>
@@ -68,16 +76,19 @@ export function render(root, go) {
 
     <section class="card">
       <p class="label">your data</p>
-      <p class="muted small">Everything lives on this phone. Back it up now and then: if you delete the Home Screen app, its data goes with it.</p>
+      <p class="muted small">Everything lives on this device${raw(sync.configured() ? ', and Sync keeps an encrypted copy for your other devices' : '')}. Back it up now and then: if you delete the app, its data goes with it. Import merges a backup in: for each record the newer version wins, so nothing newer is lost. Backups never include API keys or the sync token and passphrase.</p>
       <div class="btn-row wrap">
         <button class="btn ghost" data-export>${raw(icon('download'))} Export</button>
         <label class="btn ghost">${raw(icon('upload'))} Import<input type="file" accept="application/json,.json" data-import hidden></label>
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v5</p>`;
+    <p class="small dim center mono">yaver v6 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
+  bindSync(root, go);
+  const inst = root.querySelector('[data-install]');
+  if (inst) inst.onclick = async () => { const p = window.yaverInstall; window.yaverInstall = null; p.prompt(); const r = await p.userChoice.catch(() => null); if (r?.outcome === 'accepted') toast('Installed'); render(root, go); };
   const form = root.querySelector('[data-form]');
   const saveForm = async () => {
     const fd = new FormData(form);
@@ -110,7 +121,7 @@ export function render(root, go) {
   root.querySelector('[data-import]').onchange = async e => {
     const f = e.target.files[0];
     if (!f) return;
-    try { await db.importAll(JSON.parse(await f.text())); toast('Backup restored'); } catch (err) { toast(err.message, 4000); }
+    try { const n = await db.importAll(JSON.parse(await f.text())); toast(n ? `Backup merged: ${n} records updated` : 'Nothing newer in that backup'); } catch (err) { toast(err.message, 4000); }
   };
   root.querySelector('[data-wipe]').onclick = async () => {
     if (await confirmSheet('Erase everything?', 'All expenses, meetings, study sessions, meals, chats and settings on this phone will be deleted. Export a backup first if unsure.', 'Erase')) {
@@ -118,5 +129,82 @@ export function render(root, go) {
       toast('All data erased');
       go('home');
     }
+  };
+}
+
+// ---------- Sync ----------
+function syncSection() {
+  const on = sync.configured();
+  const st = sync.status();
+  if (on) return html`<section class="card">
+      <p class="label">sync</p>
+      <p class="sync-status small"><span class="sync-dot" data-state="${st.state}"></span><span>${sync.describe()}</span></p>
+      <p class="muted small">This device: <b>${sync.deviceName()}</b>. Progress, money, meetings, diet and settings sync through an encrypted secret gist on your GitHub. Chats, API keys, the token and the passphrase stay on each device.</p>
+      <div class="btn-row wrap">
+        <button class="btn primary" data-sync-now>Sync now</button>
+        <button class="btn ghost" data-sync-off>Turn off</button>
+        <button class="btn danger" data-sync-forget>Forget this device</button>
+      </div>
+      ${raw((db.setting('autoBackups', []) || []).length ? html`<button class="link" data-sync-restore>restore the backup taken before the first sync</button>` : '')}
+    </section>`;
+  return html`<section class="card">
+      <p class="label">sync with your other devices</p>
+      <p class="muted small">Keep the iPhone and the laptop on the same progress, with no Yaver server: everything is encrypted on this device with your passphrase, then stored in one secret gist on your GitHub account. GitHub can't read it.</p>
+      <p class="small"><b>1. Create a token</b> (once, on any device):</p>
+      <ol class="small muted" style="margin:0;padding-left:18px">
+        <li>On github.com: your photo → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+        <li>Name: <b>Yaver sync</b>. Expiration: up to a year (set a reminder to renew it).</li>
+        <li>Repository access: <b>Public repositories</b> (it needs no repository).</li>
+        <li><b>Permissions → Account permissions → Gists: Read and write.</b> Nothing else.</li>
+        <li><b>Generate token</b> and copy it (it's shown once). Use the same token on both devices, or make one per device.</li>
+      </ol>
+      <p class="small"><b>2. Choose a passphrase</b> of a few words (at least 10 characters). Use the same one on every device. If you lose it, the synced copy can't be opened; your devices keep their own data.</p>
+      <p class="small"><b>3. Paste both below</b>, here and on your other device. The first device creates the gist; the second finds it and pulls everything.</p>
+      <form class="form" data-sync-form style="display:flex;flex-direction:column">
+        <label class="field"><span>GitHub token</span><input name="token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+        <label class="field"><span>Sync passphrase</span><input name="pass" type="password" autocomplete="new-password" placeholder="four or five random words"></label>
+        <label class="field"><span>Name of this device</span><input name="name" value="${sync.deviceName()}"></label>
+        <button class="btn primary">Turn on sync</button>
+      </form>
+    </section>`;
+}
+
+function bindSync(root, go) {
+  const f = root.querySelector('[data-sync-form]');
+  if (f) f.onsubmit = async e => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(f));
+    const b = f.querySelector('button');
+    b.disabled = true; b.textContent = 'Connecting…';
+    try {
+      const r = await sync.setup(v);
+      toast(r?.blocked ? 'Sync is on. This device is empty: open Sync now to pull your data.' : 'Sync is on.', 4000);
+    } catch (err) { toast(err.message, 6000); }
+    render(root, go);
+  };
+  const now = root.querySelector('[data-sync-now]');
+  if (now) now.onclick = async () => {
+    now.disabled = true; now.textContent = 'Syncing…';
+    try {
+      const r = await sync.syncNow({ confirmEmptyPush: () => confirmSheet('Upload an empty Yaver?', 'This device has no data but the synced copy does. Uploading would make your other devices empty too. Usually you want Cancel: the data will be pulled here instead.', 'Upload empty') });
+      toast(r?.blocked ? 'Nothing uploaded.' : 'Synced', 3000);
+    } catch (err) { toast(err.message, 6000); }
+    render(root, go);
+  };
+  const off = root.querySelector('[data-sync-off]');
+  if (off) off.onclick = async () => { await sync.turnOff(); toast('Sync is off on this device'); render(root, go); };
+  const forget = root.querySelector('[data-sync-forget]');
+  if (forget) forget.onclick = async () => {
+    if (!(await confirmSheet('Forget sync on this device?', 'The token and passphrase are removed from this device. Your data here and the synced copy on GitHub both stay.', 'Forget'))) return;
+    await sync.turnOff({ forget: true });
+    toast('Sync forgotten on this device');
+    render(root, go);
+  };
+  const rest = root.querySelector('[data-sync-restore]');
+  if (rest) rest.onclick = async () => {
+    const b = db.setting('autoBackups', [])[0];
+    if (!b || !(await confirmSheet('Restore the earlier backup?', `Taken ${b.at.slice(0, 16).replace('T', ' ')}. It is merged in: records changed since then keep their newer version.`, 'Restore'))) return;
+    const n = await db.importAll(b.backup);
+    toast(`${n} records restored`);
   };
 }

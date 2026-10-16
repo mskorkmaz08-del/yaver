@@ -35,6 +35,7 @@ const ask = async q => {
 };
 await page.click('#fab');
 console.log('MAC', JSON.stringify(await ask('log 30 min of python')));
+console.log('COURSE', JSON.stringify(await ask('what is on today in my course?')));
 console.log('SESSIONS', await page.evaluate(async () => (await import('./js/db.js')).all('sessions').length));
 await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('macUrl', 'http://localhost:8799'); });
 await page.waitForTimeout(31000); // let the 30s online cache expire

@@ -151,7 +151,7 @@ export async function shrinkImage(file, max = 1280) {
 // Minimal, safe Markdown for chat replies: escape first, then format.
 export function md(text) {
   let s = esc(text);
-  s = s.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c.replace(/^\w*\n/, '')}</code></pre>`);
+  s = s.replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c.replace(/^[\w-]*\n/, '')}</code></pre>`);
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
   s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
@@ -160,4 +160,83 @@ export function md(text) {
   s = s.replace(/^(?:[-*•] )(.*)$/gm, '<span class="li">$1</span>');
   s = s.replace(/^(\d+)\. (.*)$/gm, '<span class="li num" data-n="$1">$2</span>');
   return s.replace(/\n/g, '<br>').replace(/<\/span><br>/g, '</span>').replace(/<\/pre><br>/g, '</pre>');
+}
+
+// Fuller Markdown for lesson content: headings, paragraphs, lists, tables,
+// code blocks with a language tag and a Copy button. Escapes first, like md().
+export function mdDoc(text) {
+  const lines = String(text || '').split('\n');
+  const out = [];
+  const inline = s => esc(s)
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    const fence = /^```([\w-]*)\s*$/.exec(l);
+    if (fence) {
+      const buf = [];
+      for (i++; i < lines.length && !/^```\s*$/.test(lines[i]); i++) buf.push(lines[i]);
+      i++;
+      const lang = fence[1] || '';
+      out.push(`<div class="code"><div class="code-bar"><span>${esc(lang.replace(/-snippet$/, ''))}</span><button class="copy" data-copy type="button">copy</button></div><pre><code>${esc(buf.join('\n'))}</code></pre></div>`);
+      continue;
+    }
+    if (/^\s*$/.test(l)) { i++; continue; }
+    const h = /^(#{1,4})\s+(.*)$/.exec(l);
+    if (h) { out.push(`<h${Math.min(6, h[1].length + 2)} class="md-h">${inline(h[2])}</h${Math.min(6, h[1].length + 2)}>`); i++; continue; }
+    if (/^\|.*\|\s*$/.test(l)) {
+      const rows = [];
+      for (; i < lines.length && /^\|.*\|\s*$/.test(lines[i]); i++) rows.push(lines[i]);
+      const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      const body = rows.filter(r => !/^\|[\s:|-]+\|\s*$/.test(r));
+      const [head, ...rest] = body;
+      out.push(`<div class="md-table"><table><thead><tr>${cells(head).map(c => `<th>${inline(c)}</th>`).join('')}</tr></thead><tbody>${rest.map(r => `<tr>${cells(r).map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      continue;
+    }
+    if (/^\s*([-*•]|\d+\.)\s+/.test(l)) {
+      const ordered = /^\s*\d+\./.test(l);
+      const items = [];
+      for (; i < lines.length && /^\s*([-*•]|\d+\.)\s+/.test(lines[i]); i++) {
+        let item = lines[i].replace(/^\s*([-*•]|\d+\.)\s+/, '');
+        while (i + 1 < lines.length && /^\s{2,}\S/.test(lines[i + 1]) && !/^\s*([-*•]|\d+\.)\s+/.test(lines[i + 1])) item += ' ' + lines[++i].trim();
+        items.push(`<li>${inline(item)}</li>`);
+      }
+      out.push(ordered ? `<ol>${items.join('')}</ol>` : `<ul>${items.join('')}</ul>`);
+      continue;
+    }
+    if (/^>\s?/.test(l)) {
+      const buf = [];
+      for (; i < lines.length && /^>\s?/.test(lines[i]); i++) buf.push(lines[i].replace(/^>\s?/, ''));
+      out.push(`<blockquote>${inline(buf.join(' '))}</blockquote>`);
+      continue;
+    }
+    const buf = [];
+    for (; i < lines.length && !/^\s*$/.test(lines[i]) && !/^(```|#{1,4}\s|\||\s*([-*•]|\d+\.)\s|>)/.test(lines[i]); i++) buf.push(lines[i]);
+    if (!buf.length) { out.push(`<p>${inline(l)}</p>`); i++; continue; }
+    out.push(`<p>${inline(buf.join(' '))}</p>`);
+  }
+  return `<div class="md">${out.join('')}</div>`;
+}
+
+// One listener for every Copy button on code blocks.
+document.addEventListener('click', e => {
+  const b = e.target.closest?.('[data-copy]');
+  if (!b) return;
+  const code = b.closest('.code')?.querySelector('code')?.textContent || '';
+  navigator.clipboard?.writeText(code).then(() => { b.textContent = 'copied'; setTimeout(() => (b.textContent = 'copy'), 1200); }, () => toast('Copy failed'));
+});
+
+// Save a text file: share sheet on the phone, download on a computer.
+export async function saveFile(name, text, type = 'text/plain') {
+  const file = new File([text], name, { type });
+  if (matchMedia('(pointer:coarse)').matches && navigator.canShare?.({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(file);
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
