@@ -52,6 +52,13 @@ Start the bridge (`caffeinate -i node yaver-bridge.mjs`) when you want Claude. C
 
 ## Troubleshooting
 
+- **`curl https://…ts.net/health` shows `HTTP/2 502`**: the Mac App Store version of Tailscale can't forward to `127.0.0.1`. Run the bridge on the Mac's Tailscale address instead:
+  ```
+  tailscale serve reset
+  cd ~/yaver-bridge && YAVER_HOST=$(tailscale ip -4) caffeinate -i node yaver-bridge.mjs
+  ```
+  and in a second window: `tailscale serve --bg http://$(tailscale ip -4):8787`. The address and token stay the same. (Or install the standalone Tailscale from tailscale.com/download/mac instead of the App Store one.)
+
 - **"Could not reach your Mac"**: Tailscale is off on the phone or Mac, the Mac is asleep, or the bridge window was closed.
 - **"The Mac refused the token"**: copy the token again from the bridge window or `cat ~/.yaver-bridge-token`.
 - **Errors mentioning login**: run `claude` and `/login` again.

@@ -177,7 +177,7 @@ export const SECURITY = [
   'No Yaver server: the phone talks directly to each AI with your own key.',
   'API keys, the bridge token and sync secrets are device-only settings: never synced, never exported in backups.',
   'Sync data is encrypted on the device (AES-GCM 256, PBKDF2-SHA-256 with 310,000 iterations); GitHub only stores ciphertext.',
-  'The Mac bridge listens on 127.0.0.1 only, requires a random token, allows CORS only from the Yaver origin, and runs Claude Code with all built-in tools disabled.',
+  'The Mac bridge listens on 127.0.0.1 (or only the Mac\'s private Tailscale address when the App Store Tailscale needs it), requires a random token, allows CORS only from the Yaver origin, and runs Claude Code with all built-in tools disabled.',
   'Tailscale gives the phone an encrypted, private route to the Mac; nothing is exposed to the public internet.',
   'Risk to know: anyone with your unlocked phone can read stored keys, like any saved password. Use spend limits for paid APIs.',
 ];

@@ -14,6 +14,9 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const PORT = Number(process.env.YAVER_PORT || 8787);
+// 127.0.0.1 by default. The Mac App Store Tailscale can't proxy to localhost
+// (tailscale serve answers 502), so then bind to the Mac's Tailscale address.
+const HOST = process.env.YAVER_HOST || '127.0.0.1';
 const CLAUDE = process.env.CLAUDE_BIN || 'claude';
 const ORIGINS = ['https://mskorkmaz08-del.github.io', 'http://localhost:8765'];
 const TOKEN_FILE = join(homedir(), '.yaver-bridge-token');
@@ -115,8 +118,8 @@ const server = http.createServer(async (req, res) => {
   send(404, { error: 'Not found' });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Yaver bridge running on http://127.0.0.1:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Yaver bridge running on http://${HOST}:${PORT}`);
   console.log(`Bridge token (paste into Yaver → Settings → Claude on your Mac):\n\n  ${TOKEN}\n`);
-  console.log('To reach it from your iPhone: tailscale serve --bg 8787');
+  console.log(HOST === '127.0.0.1' ? 'To reach it from your iPhone: tailscale serve --bg 8787' : `To reach it from your iPhone: tailscale serve --bg http://${HOST}:${PORT}`);
 });
