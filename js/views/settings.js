@@ -1,7 +1,7 @@
 import * as db from '../db.js';
 import { html, raw, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
-import { testMac } from '../ai/mac.js';
+import { testMac, useCode } from '../ai/mac.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
@@ -49,8 +49,10 @@ export function render(root, go) {
       <div class="btn-row"><button type="button" class="btn ghost" data-test>Test assistant</button></div>
 
       <p class="label">claude on your mac</p>
-      <p class="muted small">Uses your Claude subscription through Claude Code on your MacBook. When the Mac is reachable, Yaver asks it first; otherwise it uses the assistant above. Setup: run the Yaver bridge on the Mac and turn on Tailscale on both devices (steps in the repo, bridge/README.md).</p>
-      <label class="field"><span>Bridge address</span><input name="macUrl" type="url" autocomplete="off" value="${s('macUrl', '')}" placeholder="https://your-mac.tailnet.ts.net"></label>
+      <p class="muted small">Uses your Claude subscription through Claude Code on your MacBook. When the Mac is reachable, Yaver asks it first; otherwise it uses the assistant above. Start the Yaver bridge on the Mac (steps in the repo, bridge/README.md), then paste the connection code it shows.</p>
+      <div class="btn-row"><button type="button" class="btn" data-paste-code>Paste connection code</button></div>
+      <label class="field"><span>Or type the code</span><input name="macCode" autocomplete="off" placeholder="yaver1.…"></label>
+      <label class="field"><span>Bridge address</span><input name="macUrl" type="url" autocomplete="off" value="${s('macUrl', '')}" placeholder="filled in by the connection code"></label>
       <label class="field"><span>Bridge token</span><input name="macToken" type="password" autocomplete="off" value="${s('macToken', '')}" placeholder="shown when the bridge starts"></label>
       <label class="field"><span>Model on the Mac</span><select name="macModel">${raw([['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']].map(([v, l]) => `<option value="${v}" ${v === s('macModel', 'sonnet') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-test-mac>Test Mac connection</button></div>
@@ -98,22 +100,34 @@ export function render(root, go) {
   const saveForm = async () => {
     const fd = new FormData(form);
     for (const [k, v] of fd.entries()) {
+      if (k === 'macCode') continue;
       const num = ['monthlyBudget', 'dailyStudyMin', 'dailyCalories', 'dailyProtein', 'dailyWater'].includes(k);
       const val = num ? Number(v) || 0 : /Key$|^macToken$/.test(k) ? cleanKey(v) : String(v).trim();
       if (k === 'geminiKey' && val !== db.setting('geminiKey', '')) await db.setSetting('geminiModel', '');
       await db.setSetting(k, val);
     }
     await sortKeys();
+    if (String(fd.get('macCode') || '').trim()) await useCode(fd.get('macCode'));
     await db.setSetting('webSearch', fd.has('webSearch'));
     await db.setSetting('speak', fd.has('speak'));
   };
-  form.onsubmit = async e => { e.preventDefault(); await saveForm(); toast('Saved'); };
+  form.onsubmit = async e => { e.preventDefault(); try { await saveForm(); toast('Saved'); render(root, go); } catch (err) { toast(err.message, 5000); } };
+  const connect = async code => {
+    try { await useCode(code); } catch (e) { return toast(e.message, 5000); }
+    render(root, go);
+    try { toast(await testMac()); } catch (e) { toast(`Code saved. ${e.message}`, 6000); }
+  };
+  root.querySelector('[data-paste-code]').onclick = async () => {
+    let text = '';
+    try { text = await navigator.clipboard.readText(); } catch { return toast('Could not read the clipboard. Paste the code into the box below and tap Save.', 5000); }
+    connect(text);
+  };
   root.querySelector('[data-test]').onclick = async () => {
     await saveForm();
     try { toast(await testCurrent()); } catch (e) { toast(e.message, 4000); }
   };
   root.querySelector('[data-test-mac]').onclick = async () => {
-    await saveForm();
+    try { await saveForm(); } catch (e) { return toast(e.message, 5000); }
     try { toast(await testMac()); } catch (e) { toast(e.message, 5000); }
   };
   root.querySelector('[data-export]').onclick = async () => {

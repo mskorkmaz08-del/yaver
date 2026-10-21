@@ -4,6 +4,7 @@ import * as db from './db.js';
 import { $, sheet, toast } from './util.js';
 import { initAssistant, openAssistant } from './ai/assistant.js';
 import { saveKey, sortKeys } from './ai/provider.js';
+import { useCode } from './ai/mac.js';
 import * as home from './views/home.js';
 import * as money from './views/money.js';
 import * as calendar from './views/calendar.js';
@@ -69,6 +70,15 @@ async function onboarding() {
   await db.setSetting('onboarded', true);
 }
 
+// A link like …/yaver/#connect=yaver1.… sets up the Mac bridge in one tap.
+function takeConnectLink() {
+  if (!location.hash.startsWith('#connect=')) return false;
+  const code = decodeURIComponent(location.hash.slice(9));
+  history.replaceState(null, '', '#settings');
+  useCode(code).then(() => toast('Connected to the bridge on your Mac.'), e => toast(e.message, 5000));
+  return true;
+}
+
 async function start() {
   await db.openDB();
   await sortKeys();
@@ -99,8 +109,9 @@ async function start() {
   db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && /^sync/.test(String(id)))) return; clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
-  window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });
+  window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });
 
+  takeConnectLink();
   go(location.hash.slice(1) || 'home');
   document.body.classList.add('ready');
 

@@ -12,6 +12,25 @@ export const macConfigured = () => !!(base() && db.setting('macToken', ''));
 
 let last = { at: 0, ok: false };
 
+// The bridge prints a connection code: "yaver1." + base64url of {u: address, t: token}.
+export function parseCode(raw) {
+  const m = String(raw || '').match(/yaver1\.([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  try {
+    const { u, t } = JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return /^https?:\/\//.test(u) && t ? { url: u, token: t } : null;
+  } catch { return null; }
+}
+
+export async function useCode(raw) {
+  const c = parseCode(raw);
+  if (!c) throw new Error('That is not a Yaver connection code. Copy it again from the bridge window.');
+  await db.setSetting('macUrl', c.url);
+  await db.setSetting('macToken', c.token);
+  last = { at: 0, ok: false };
+  return c;
+}
+
 // Quick check before each message; remembered for 30 seconds so a chat stays snappy.
 export async function macOnline(force = false) {
   if (!macConfigured()) return false;
@@ -27,9 +46,10 @@ export async function macOnline(force = false) {
 
 export async function testMac() {
   if (!macConfigured()) throw new Error('Add the bridge address and token first.');
+  if (location.protocol === 'https:' && /^http:\/\/(?!localhost|127\.)/.test(base())) throw new Error('The iPhone blocks plain http:// addresses from Yaver. The bridge address must start with https://.');
   let res;
   try { res = await fetch(`${base()}/health`, { headers: headers(), signal: AbortSignal.timeout(5000) }); }
-  catch { throw new Error('Could not reach your Mac. Is it awake, the bridge running, and Tailscale on for both devices?'); }
+  catch { throw new Error('Could not reach your Mac. Is it awake with the bridge window open?'); }
   if (res.status === 401) throw new Error('The Mac refused the token. Copy it again from the bridge window.');
   if (!res.ok) throw new Error(`The bridge answered ${res.status}.`);
   last = { at: Date.now(), ok: true };
