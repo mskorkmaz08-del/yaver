@@ -74,6 +74,11 @@ export function render(root, go) {
       <button class="btn primary">Save</button>
     </form>
 
+    <a class="card" href="handbook/" style="display:block;color:inherit;text-decoration:none">
+      <p class="label">system handbook</p>
+      <p class="muted small" style="margin:0">How Yaver works: interactive architecture, every file, data model, AI tools and specs. Updates itself as the app changes. ↗</p>
+    </a>
+
     <section class="card">
       <p class="label">your data</p>
       <p class="muted small">Everything lives on this device${raw(sync.configured() ? ', and Sync keeps an encrypted copy for your other devices' : '')}. Back it up now and then: if you delete the app, its data goes with it. Import merges a backup in: for each record the newer version wins, so nothing newer is lost. Backups never include API keys or the sync token and passphrase.</p>
@@ -83,7 +88,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v6 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v7 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);

@@ -1,5 +1,7 @@
 # How Yaver works
 
+There is also an interactive version of this guide, with a 3D system map, animated diagrams and live reference tables, at `/handbook/` (Settings → System handbook). It reads tools, stores, settings and the changelog straight from the code, and `tests/docs-coverage.mjs` fails if a file is left undocumented.
+
 This guide explains Yaver from the outside in: what kind of app it is, where your data lives, how the AI part works, and what each file does. You don't need to be a programmer to follow the first half.
 
 ## 1. The big picture

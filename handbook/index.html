@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<title>Yaver Handbook</title>
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="stylesheet" href="handbook.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#top"><span class="mark">Y</span><b>yaver</b><span class="dim">/handbook</span></a>
+  <nav class="toc" aria-label="Sections">
+    <a href="#map">map</a><a href="#flow">flow</a><a href="#modules">modules</a><a href="#data">data</a><a href="#ai">ai</a><a href="#course">course</a><a href="#offline">offline</a><a href="#sync">sync</a><a href="#specs">specs</a><a href="#ship">ship</a><a href="#changes">changes</a>
+  </nav>
+  <a class="open-app" href="../">open app ↗</a>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <p class="path">~/yaver <b>›</b> handbook</p>
+    <h1>How Yaver works</h1>
+    <p class="lede">A personal assistant that runs entirely on your phone: no server, your data on the device, and an AI agent that acts on it through tools. This page reads the live code, so its numbers change when the app changes.</p>
+    <div class="stats" id="stats">
+      <div><b data-live="version">…</b><span>app version</span></div>
+      <div><b data-live="tools">…</b><span>AI tools</span></div>
+      <div><b data-live="stores">…</b><span>data stores</span></div>
+      <div><b data-live="lessons">…</b><span>course lessons</span></div>
+      <div><b data-live="files">…</b><span>source files</span></div>
+      <div><b data-live="updated">…</b><span>last change</span></div>
+    </div>
+  </section>
+
+  <section id="map">
+    <p class="label">01 · system map</p>
+    <h2>Four layers on the phone, six services around it</h2>
+    <p class="muted">Drag to rotate. Tap a layer or a service to see what it does and which files implement it.</p>
+    <div class="map-wrap">
+      <div class="scene" id="scene"><div class="stage" id="stage"></div></div>
+      <aside class="panel" id="map-panel"></aside>
+    </div>
+    <div class="row-btns"><button class="btn" data-explode>spread layers</button><button class="btn ghost" data-reset>reset view</button></div>
+  </section>
+
+  <section id="flow">
+    <p class="label">02 · follow a message</p>
+    <h2>One message, start to finish</h2>
+    <p class="muted">The same agent loop runs on three routes. Pick one and step through it.</p>
+    <div class="seg" id="flow-route"></div>
+    <div class="flow-wrap"><svg id="flow-svg" role="img" aria-label="Sequence diagram of one chat message"></svg></div>
+    <div class="flow-ctrl"><button class="btn" data-flow="prev">‹ back</button><button class="btn primary" data-flow="play">▶ play</button><button class="btn" data-flow="next">next ›</button><span class="mono dim" id="flow-count"></span></div>
+    <div class="callout" id="flow-text"></div>
+  </section>
+
+  <section id="modules">
+    <p class="label">03 · modules</p>
+    <h2>Every file and what it does</h2>
+    <p class="muted">Sizes come live from GitHub. Files are grouped by layer; filter to find one.</p>
+    <input class="filter" id="file-filter" placeholder="filter: sync, course, gemini…" autocomplete="off">
+    <div id="files"></div>
+  </section>
+
+  <section id="data">
+    <p class="label">04 · data model</p>
+    <h2>Stores in IndexedDB</h2>
+    <p class="muted">Read live from <code>js/db.js</code>. Every record also has <code>id</code>, <code>createdAt</code>, <code>updatedAt</code> and <code>deviceId</code>. Tap a store.</p>
+    <div class="grid stores" id="stores"></div>
+    <div class="callout" id="store-detail">Tap a store to see its fields and whether it syncs.</div>
+    <h3>Device-only settings</h3>
+    <p class="muted">These keys never sync and never go into backups. Read live from <code>LOCAL_KEYS</code>.</p>
+    <div class="chips" id="local-keys"></div>
+  </section>
+
+  <section id="ai">
+    <p class="label">05 · ai layer</p>
+    <h2>Routing, providers and tools</h2>
+    <div class="route-diagram" id="route-diagram"></div>
+    <div class="table-wrap"><table class="t">
+      <thead><tr><th></th><th>Claude on your Mac</th><th>Gemini</th><th>Claude API</th></tr></thead>
+      <tbody>
+        <tr><td>Cost</td><td>Subscription usage limits</td><td>Free tier limits</td><td>Pay per token</td></tr>
+        <tr><td>Used when</td><td>Bridge set up and /health answers</td><td>Default fallback</td><td>sk-ant- key chosen</td></tr>
+        <tr><td>Streaming</td><td>No (whole reply)</td><td>Yes (SSE)</td><td>Yes (SSE)</td></tr>
+        <tr><td>Photos</td><td>No, goes to fallback</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Web search</td><td>No</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Tool format</td><td>JSON schema → {reply, tool_calls}</td><td>functionDeclarations</td><td>tools / tool_use</td></tr>
+        <tr><td>Models</td><td>sonnet · opus · haiku</td><td data-live="gemini-model">auto: stable Flash</td><td data-live="claude-models">…</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Tools the AI can call <span class="dim mono" data-live="tools-n"></span></h3>
+    <p class="muted">Read live from <code>js/ai/tools.js</code>. Lime ones change your data and show a receipt in chat.</p>
+    <input class="filter" id="tool-filter" placeholder="filter tools…" autocomplete="off">
+    <div class="tools" id="tools"></div>
+  </section>
+
+  <section id="course">
+    <p class="label">06 · course engine</p>
+    <h2>The day-by-day course</h2>
+    <p class="muted">Numbers below are read from <code>data/course/course.json</code>.</p>
+    <div class="stats small" id="course-stats"></div>
+    <h3>Phases</h3>
+    <div class="timeline" id="phases"></div>
+    <h3>Tracks</h3>
+    <div class="chips" id="tracks"></div>
+    <h3>Spaced repetition</h3>
+    <p class="muted">A card moves up a box each time you grade it Good or Easy, and back to the start on Again. Press grade to watch one card.</p>
+    <div class="boxes" id="boxes"></div>
+    <div class="row-btns"><button class="btn" data-grade="1">again</button><button class="btn" data-grade="3">good</button><button class="btn ghost" data-grade="0">reset</button></div>
+  </section>
+
+  <section id="offline">
+    <p class="label">07 · offline and updates</p>
+    <h2>How the service worker serves a file</h2>
+    <div class="seg" id="net-mode"></div>
+    <div class="sw" id="sw"></div>
+    <div class="callout" id="sw-text"></div>
+    <p class="muted small">Cache name: <code data-live="version">…</code>. Changing <code>VERSION</code> in <code>sw.js</code> makes phones drop the old cache; the first launch installs the new worker, the second uses it.</p>
+  </section>
+
+  <section id="sync">
+    <p class="label">08 · sync and security</p>
+    <h2>Laptop ⇄ iPhone, encrypted end to end</h2>
+    <div class="pipe" id="pipe"></div>
+    <div class="row-btns"><button class="btn primary" data-sync>▶ run a sync</button></div>
+    <div class="callout" id="pipe-text">Pull, merge, push. GitHub only ever holds ciphertext.</div>
+    <h3>Security model</h3>
+    <ul class="list" id="security"></ul>
+  </section>
+
+  <section id="specs">
+    <p class="label">09 · specifications</p>
+    <h2>For engineers</h2>
+    <div class="cols">
+      <div><h3>Stack</h3><table class="t kv" id="stack"></table></div>
+      <div><h3>Browser APIs used</h3><table class="t kv" id="apis"></table></div>
+    </div>
+    <div class="cols">
+      <div><h3>External services</h3><table class="t kv" id="services"></table></div>
+      <div><h3>Change recipes</h3><div id="recipes"></div></div>
+    </div>
+  </section>
+
+  <section id="ship">
+    <p class="label">10 · build, test, ship</p>
+    <h2>From a change to your phone</h2>
+    <div class="ship" id="ship-steps"></div>
+    <h3>Tests</h3>
+    <table class="t kv" id="tests"></table>
+  </section>
+
+  <section id="changes">
+    <p class="label">11 · changelog</p>
+    <h2>Recent changes</h2>
+    <p class="muted">Live from the repository's commit history.</p>
+    <ol class="log" id="log"><li class="dim">loading…</li></ol>
+  </section>
+</main>
+<footer class="foot mono dim">yaver handbook · reads live from <a href="https://github.com/mskorkmaz08-del/yaver">github.com/mskorkmaz08-del/yaver</a></footer>
+<script type="module" src="handbook.js"></script>
+</body>
+</html>
