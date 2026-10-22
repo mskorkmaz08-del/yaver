@@ -8,58 +8,44 @@ Note: the subscription is meant for Anthropic's own apps, including Claude Code.
 
 ## One-time setup on the Mac
 
-1. **Node.js.** In Terminal run `node -v`. If it says "command not found", install it with `brew install node` (or from nodejs.org).
-2. **Claude Code, signed in with your subscription.** Run `claude`. If it's missing, install it from claude.com/claude-code. Inside it, type `/login` and choose your Claude account (Pro or Max), then exit with `/exit`. Make sure `echo $ANTHROPIC_API_KEY` prints nothing; if a key is set, Claude Code bills the API instead of your subscription.
-3. **Get the bridge.**
+1. **Claude Code, signed in with your subscription.** Run `claude`. If it's missing, install it from claude.com/claude-code. Inside it, type `/login`, choose your Claude account (Pro or Max), then `/exit`. Make sure `echo $ANTHROPIC_API_KEY` prints nothing; if a key is set, Claude Code bills the API instead of your subscription.
+2. **Everything else, in one paste** (Node, cloudflared and the bridge):
    ```
-   mkdir -p ~/yaver-bridge && cd ~/yaver-bridge
-   curl -O https://raw.githubusercontent.com/mskorkmaz08-del/yaver/main/bridge/yaver-bridge.mjs
+   brew install node cloudflared; mkdir -p ~/yaver-bridge && curl -fsSL -o ~/yaver-bridge/yaver-bridge.mjs https://raw.githubusercontent.com/mskorkmaz08-del/yaver/main/bridge/yaver-bridge.mjs
    ```
-4. **Tailscale on both devices** (free; it gives your phone a private, encrypted route to your Mac from anywhere).
-   - Mac: install Tailscale from the Mac App Store and sign in.
-   - iPhone: install Tailscale from the App Store and sign in with the same account. Turn it on.
+
+No Tailscale needed. If you set it up earlier, you can turn it off (`tailscale funnel reset` and `tailscale serve reset`).
 
 ## Start it
 
 ```
-cd ~/yaver-bridge
-caffeinate -i node yaver-bridge.mjs
+caffeinate -i node ~/yaver-bridge/yaver-bridge.mjs
 ```
 
-`caffeinate -i` stops the Mac from sleeping while the bridge runs. The first start prints a **bridge token**; it's saved in `~/.yaver-bridge-token` and stays the same.
+It opens a free secure link (Cloudflare) and prints a **connection code** starting with `yaver1.`. On a Mac the code is also copied to your clipboard. `caffeinate -i` keeps the Mac awake while the bridge runs.
 
-In a second Terminal window, publish it to your Tailscale network:
+## Connect Yaver (once)
 
-```
-tailscale serve --bg 8787
-```
+On the iPhone: Yaver → Settings → **Claude on your Mac** → **Paste connection code**. With the same Apple ID on the Mac and iPhone, the clipboard carries over by itself; otherwise AirDrop or message the code to yourself and paste it into the box under the button, then tap Save.
 
-If `tailscale` isn't found, use `/Applications/Tailscale.app/Contents/MacOS/Tailscale serve --bg 8787`. If it asks you to enable HTTPS, open the link it shows and turn it on. It prints an address like `https://your-mac.tail1234.ts.net`. You only run `tailscale serve` once; it remembers.
-
-## Connect Yaver
-
-Yaver → Settings → **Claude on your Mac**:
-
-- Bridge address: the `https://…ts.net` address.
-- Bridge token: the token from the bridge window.
-- Model: Sonnet is the default. Opus is smarter but uses more of your limit.
-
-Tap **Test Mac connection**. Chat replies that came from the Mac are labelled "claude · your mac" under the message; Gemini replies say "gemini".
+Yaver tests the connection straight away. Chat replies from the Mac say "claude · your mac" under the message; Gemini replies say "gemini".
 
 ## Everyday use
 
-Start the bridge (`caffeinate -i node yaver-bridge.mjs`) when you want Claude. Close the window to stop it; Yaver switches to Gemini on its own.
+Run `caffeinate -i node ~/yaver-bridge/yaver-bridge.mjs` when you want Claude. Close the window (or Ctrl+C) to stop; Yaver switches to Gemini on its own.
+
+The secure link changes every time the bridge starts. You don't need a new code: the bridge posts its new link to a private ntfy.sh mailbox named after a scramble of your token, and Yaver looks there when the old link stops answering.
+
+## Security
+
+- While the bridge runs, its link is on the public internet. Every request needs your token, and Claude Code runs with all its tools switched off, so the most anyone could do with a stolen token is chat on your subscription.
+- The connection code contains the token: don't post it anywhere. To make a new token, delete `~/.yaver-bridge-token`, restart the bridge, and paste the new code.
 
 ## Troubleshooting
 
-- **`curl https://…ts.net/health` shows `HTTP/2 502`**: the Mac App Store version of Tailscale can't forward to `127.0.0.1`. Run the bridge on the Mac's Tailscale address instead:
-  ```
-  tailscale serve reset
-  cd ~/yaver-bridge && YAVER_HOST=$(tailscale ip -4) caffeinate -i node yaver-bridge.mjs
-  ```
-  and in a second window: `tailscale serve --bg http://$(tailscale ip -4):8787`. The address and token stay the same. (Or install the standalone Tailscale from tailscale.com/download/mac instead of the App Store one.)
-
-- **"Could not reach your Mac"**: Tailscale is off on the phone or Mac, the Mac is asleep, or the bridge window was closed.
-- **"The Mac refused the token"**: copy the token again from the bridge window or `cat ~/.yaver-bridge-token`.
+- **"cloudflared is not installed"**: run `brew install cloudflared` and start the bridge again.
+- **"Could not reach your Mac"**: the bridge window was closed or the Mac is asleep. Start it again and give it about 10 seconds.
+- **"The Mac refused the token"**: paste the connection code again.
 - **Errors mentioning login**: run `claude` and `/login` again.
+- **Using Tailscale instead**: start with `YAVER_HOST=<address> node yaver-bridge.mjs` to skip the Cloudflare link; the address you enter in Yaver must start with https://.
 - The bridge window logs each reply and how long it took.

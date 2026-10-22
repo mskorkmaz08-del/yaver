@@ -35,19 +35,45 @@ export async function useCode(raw) {
 export async function macOnline(force = false) {
   if (!macConfigured()) return false;
   if (!force && Date.now() - last.at < 30000) return last.ok;
-  let ok = false;
-  try {
-    const res = await fetch(`${base()}/health`, { headers: headers(), signal: AbortSignal.timeout(2500) });
-    ok = res.ok;
-  } catch {}
+  let ok = await healthy();
+  // The bridge's link changes when it restarts; look up the new one it posted.
+  if (!ok && await rediscover()) ok = await healthy();
   last = { at: Date.now(), ok };
   return ok;
+}
+
+async function healthy() {
+  try { return (await fetch(`${base()}/health`, { headers: headers(), signal: AbortSignal.timeout(2500) })).ok; }
+  catch { return false; }
+}
+
+// Same topic name as the bridge: a hash of the token, so only this phone can find it.
+const NTFY = 'https://ntfy.sh';
+async function topicFor(token) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('yaver-bridge:' + token));
+  return 'yaver-' + [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+// Reads the newest link the bridge posted. Only trycloudflare.com links are
+// accepted, so the token is never sent anywhere else.
+export async function rediscover() {
+  const token = db.setting('macToken', '').trim();
+  if (!token) return false;
+  try {
+    const res = await fetch(`${NTFY}/${await topicFor(token)}/json?poll=1&since=24h`, { signal: AbortSignal.timeout(3000) });
+    const msgs = (await res.text()).split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch { return {}; } });
+    const url = msgs.filter(m => m.event === 'message').map(m => String(m.message || '').trim()).filter(u => /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(u)).at(-1);
+    if (!url || url === base()) return false;
+    await db.setSetting('macUrl', url);
+    return true;
+  } catch { return false; }
 }
 
 export async function testMac() {
   if (!macConfigured()) throw new Error('Add the bridge address and token first.');
   if (location.protocol === 'https:' && /^http:\/\/(?!localhost|127\.)/.test(base())) throw new Error('The iPhone blocks plain http:// addresses from Yaver. The bridge address must start with https://.');
   let res;
+  if (!(await healthy())) await rediscover();
   try { res = await fetch(`${base()}/health`, { headers: headers(), signal: AbortSignal.timeout(5000) }); }
   catch { throw new Error('Could not reach your Mac. Is it awake with the bridge window open?'); }
   if (res.status === 401) throw new Error('The Mac refused the token. Copy it again from the bridge window.');
