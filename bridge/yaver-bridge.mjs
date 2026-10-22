@@ -14,14 +14,17 @@ import { spawn } from 'node:child_process';
 import { randomBytes, createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, mkdtempSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.YAVER_PORT || 8787);
 // 127.0.0.1 by default; the secure link forwards to it. YAVER_HOST binds
 // elsewhere (for example a Tailscale address) and turns the link off.
 const HOST = process.env.YAVER_HOST || '127.0.0.1';
 const CLAUDE = process.env.CLAUDE_BIN || 'claude';
-const CLOUDFLARED = process.env.CLOUDFLARED_BIN || 'cloudflared';
+// A cloudflared file next to this script wins (the Intel Mac download), then the PATH.
+const LOCAL_CF = join(dirname(fileURLToPath(import.meta.url)), 'cloudflared');
+const CLOUDFLARED = process.env.CLOUDFLARED_BIN || (existsSync(LOCAL_CF) ? LOCAL_CF : 'cloudflared');
 const TUNNEL = process.env.YAVER_TUNNEL !== '0' && !process.env.YAVER_HOST;
 const NTFY = process.env.YAVER_NTFY || 'https://ntfy.sh';
 const ORIGINS = ['https://mskorkmaz08-del.github.io', 'http://localhost:8765'];
@@ -164,7 +167,7 @@ function startTunnel() {
   p.stderr.on('data', read);
   p.on('error', () => {
     missing = true;
-    console.log('\ncloudflared is not installed, so your iPhone cannot reach this Mac yet. Install it once with:\n\n  brew install cloudflared\n\nthen start the bridge again.');
+    console.log('\ncloudflared is not installed, so your iPhone cannot reach this Mac yet. Install it once with:\n\n  brew install cloudflared\n\nor, on an Intel Mac (much faster):\n\n  curl -fL -o /tmp/cf.tgz https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.tgz && tar -xzf /tmp/cf.tgz -C ~/yaver-bridge && chmod +x ~/yaver-bridge/cloudflared\n\nthen start the bridge again.');
   });
   p.on('close', () => {
     if (missing || stopping) return;

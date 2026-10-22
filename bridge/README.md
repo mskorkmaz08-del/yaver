@@ -14,6 +14,11 @@ Note: the subscription is meant for Anthropic's own apps, including Claude Code.
    brew install node cloudflared; mkdir -p ~/yaver-bridge && curl -fsSL -o ~/yaver-bridge/yaver-bridge.mjs https://raw.githubusercontent.com/mskorkmaz08-del/yaver/main/bridge/yaver-bridge.mjs
    ```
 
+On an **Intel Mac**, Homebrew builds from source and can take very long. Download cloudflared straight into the bridge folder instead (the bridge finds it there):
+   ```
+   mkdir -p ~/yaver-bridge && curl -fL -o /tmp/cf.tgz https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.tgz && tar -xzf /tmp/cf.tgz -C ~/yaver-bridge && chmod +x ~/yaver-bridge/cloudflared
+   ```
+
 No Tailscale needed. If you set it up earlier, you can turn it off (`tailscale funnel reset` and `tailscale serve reset`).
 
 ## Start it
