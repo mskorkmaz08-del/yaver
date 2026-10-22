@@ -61,6 +61,7 @@ export function render(root, go) {
       <label class="field"><span>Natural voice</span><select name="ttsVoice">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('ttsVoice', 'Charon') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-try-voice>Hear this voice</button></div>
       <label class="field check"><span>Jarvis style (calm British, slightly synthetic)</span><input type="checkbox" name="jarvis" ${raw(s('jarvis', true) ? 'checked' : '')}></label>
+      <label class="field check"><span>Use Claude on the Mac in voice chat (smarter, a few seconds slower)</span><input type="checkbox" name="voiceMac" ${raw(s('voiceMac', false) ? 'checked' : '')}></label>
       <label class="field check"><span>Voice chat listens again by itself</span><input type="checkbox" name="voiceAuto" ${raw(s('voiceAuto', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
@@ -96,7 +97,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v14 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v15 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
@@ -118,6 +119,7 @@ export function render(root, go) {
     await db.setSetting('speak', fd.has('speak'));
     await db.setSetting('voiceAuto', fd.has('voiceAuto'));
     await db.setSetting('jarvis', fd.has('jarvis'));
+    await db.setSetting('voiceMac', fd.has('voiceMac'));
   };
   form.onsubmit = async e => { e.preventDefault(); try { await saveForm(); toast('Saved'); render(root, go); } catch (err) { toast(err.message, 5000); } };
   const connect = async code => {

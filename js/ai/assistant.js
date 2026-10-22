@@ -4,7 +4,7 @@ import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
 import { macConfigured, macOnline, runTurnMac } from './mac.js';
-import { naturalOn, speakNatural, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
+import { speaker, chunks, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 
@@ -190,17 +190,33 @@ async function send(textIn) {
 
   const log = el.querySelector('[data-log]');
   const live = () => log.lastElementChild;
+  // Speak while the reply is still arriving: each finished sentence goes to the voice queue.
+  const talk = voice || db.setting('speak', false);
+  let said = 0;
+  const feed = (t, final = false) => {
+    if (!talk || t.length < said) return;
+    const rest = t.slice(said);
+    if (final) { const first = said === 0; said = t.length; for (const c of chunks(cleanForSpeech(rest), first)) say(c); return endSpeech(); }
+    const m = rest.match(/^[\s\S]*?[.!?…](?=\s)/);
+    if (!m || (said === 0 && m[0].length < 12)) return;
+    // after the first sentence, wait for a fuller piece so there are fewer voice requests
+    const piece = said === 0 ? m[0] : (rest.match(/^[\s\S]*[.!?…](?=\s)/) || [''])[0];
+    if (said > 0 && piece.length < 140) return;
+    said += piece.length;
+    for (const c of chunks(cleanForSpeech(piece), said === piece.length)) say(c);
+  };
   abort = new AbortController();
   const callbacks = {
     signal: abort.signal,
-    onText: t => { reply.text = t; live().outerHTML = bubble(reply); scrollDown(); },
+    onText: t => { reply.text = t; live().outerHTML = bubble(reply); scrollDown(); feed(t); },
     onAction: a => { reply.actions.push(a); haptic(); live().outerHTML = bubble(reply); },
     onStatus: setStatus,
   };
 
   // Route: Claude on the Mac when it's reachable (text only), otherwise the chosen AI.
   const routes = [];
-  if (!img && macConfigured()) { setStatus('Checking your Mac…'); if (await macOnline()) routes.push('mac'); }
+  // Voice chat skips the Mac unless asked: Claude Code takes several seconds to start each reply.
+  if (!img && macConfigured() && (!voice || db.setting('voiceMac', false))) { setStatus('Checking your Mac…'); if (await macOnline()) routes.push('mac'); }
   routes.push(provider());
 
   let history;
@@ -210,18 +226,19 @@ async function send(textIn) {
     if (route === 'mac') history.push({ role: 'user', text: prompt });
     else if (route === 'gemini') history.push(userMessage(prompt, img));
     else history.push({ role: 'user', content: [...(img ? [{ type: 'image', source: { type: 'base64', ...img } }] : []), { type: 'text', text: prompt }] });
-    const run = route === 'mac' ? runTurnMac : route === 'gemini' ? runTurnGemini : runTurn;
+    const run = route === 'mac' ? runTurnMac : route === 'gemini' ? (h, cb) => runTurnGemini(h, { ...cb, fast: voice }) : runTurn;
     try {
       const { text: out } = await run(history, callbacks);
       reply.text = out || (reply.actions.length ? 'Done.' : '…');
       reply.via = route;
-      if (voice || db.setting('speak', false)) speak(reply.text, () => { if (voice && el.classList.contains('open')) setTimeout(() => { if (voice && !busy && db.setting('voiceAuto', true)) listen(); }, 350); });
+      feed(reply.text, true);
       break;
     } catch (e) {
       // Drop the unfinished turn from what we send next time, so the conversation stays valid.
       history.length = before;
       // The Mac dropped off mid-message: quietly try the next AI, unless something was already done.
-      if (route === 'mac' && e.code === 'offline' && !reply.actions.length) { reply.text = ''; continue; }
+      if (route === 'mac' && e.code === 'offline' && !reply.actions.length) { reply.text = ''; said = 0; continue; }
+      hush();
       reply.error = e.code !== 'abort';
       reply.text = e.code === 'abort' ? (reply.text || 'Stopped.') : e.message;
       break;
@@ -239,8 +256,8 @@ async function send(textIn) {
   render();
 }
 
-let speaking = false, gen = 0;
-const hush = () => { gen++; speechSynthesis?.cancel?.(); stopAudio(); speaking = false; };
+let speaking = false, current = null;
+const hush = () => { current?.stop(); current = null; speechSynthesis?.cancel?.(); stopAudio(); speaking = false; };
 
 // iOS only plays sound after a tap; doing it once during the tap unlocks later replies.
 function unlockSpeech() {
@@ -251,27 +268,30 @@ function unlockSpeech() {
   speechSynthesis.speak(u);
 }
 
-// Strip markdown and code so it reads naturally. Natural (Gemini) voice first,
-// the phone's own voice if that isn't available.
-async function speak(text, done) {
-  hush();
-  const clean = text.replace(/```[\s\S]*?```/g, ' (code on screen) ').replace(/`([^`]*)`/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_#>|]/g, '').replace(/^\s*[-•]\s+/gm, '').slice(0, 2000);
-  speaking = true;
-  const my = gen, stale = () => my !== gen;
-  if (naturalOn()) {
+// Markdown and code read badly; strip them before speaking.
+const cleanForSpeech = text => text.replace(/```[\s\S]*?```/g, ' (code on screen) ').replace(/`([^`]*)`/g, '$1')
+  .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_#>|]/g, '').replace(/^\s*[-•]\s+/gm, '');
+
+// One voice queue per reply: natural (Gemini) voice per piece, the phone's voice
+// for any piece Gemini can't do. When it ends, voice chat listens again.
+function say(piece) {
+  if (!current) {
+    speaking = true;
     orb('voicing');
-    try {
-      await speakNatural(clean, { onStart: () => orb('speaking'), cancelled: stale });
-      if (stale()) return; // interrupted
-      speaking = false; orb(''); return done?.();
-    } catch (e) {
-      if (stale()) return;
-      toast('Natural voice is unavailable right now (free limit or no connection); using the iPhone voice.', 3500);
-    }
+    const me = current = speaker({
+      onStart: () => orb('speaking'),
+      onDone: () => {
+        if (current !== me) return;
+        current = null; speaking = false;
+        if (!busy) orb('');
+        if (voice && el.classList.contains('open') && db.setting('voiceAuto', true)) setTimeout(() => { if (voice && !busy && !current) listen(); }, 350);
+      },
+      device: text => new Promise(res => speakDevice(text, res)),
+    });
   }
-  speakDevice(clean, () => { if (stale()) return; speaking = false; orb(''); done?.(); });
+  current.push(piece);
 }
+const endSpeech = () => current?.finish();
 
 function speakDevice(clean, done) {
   if (!('speechSynthesis' in window)) return done();

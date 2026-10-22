@@ -9,7 +9,7 @@ const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 await page.addInitScript(() => {
   window.__said = []; window.__spoken = []; window.__listens = 0;
-  const queue = ['log 20 minutes of python', '', 'what is a list', ''];
+  const queue = ['log 20 minutes of python', '', 'what is a list', '', 'status report', ''];
   window.SpeechRecognition = window.webkitSpeechRecognition = class {
     start() {
       window.__listens++;
@@ -38,6 +38,10 @@ await page.route('https://generativelanguage.googleapis.com/**', async route => 
     return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/L16;codec=pcm;rate=24000', data: pcm.toString('base64') } }] } }] }) });
   }
   lastBody = route.request().postData() || '';
+  if (lastBody.includes('status report')) {
+    const ev = t => `data: ${JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: t }] } }] })}\r\n\r\n`;
+    return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/event-stream' }, body: ev('Good evening, sir. ') + ev('All systems are running normally and your streak is intact. ') + ev('Nothing needs your attention.') });
+  }
   await route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/event-stream' }, body: `data: ${JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: 'Done, **twenty minutes** of Python logged.' }] }, finishReason: 'STOP' }] })}\r\n\r\n` });
 });
 await page.goto('http://localhost:8765/');
@@ -65,11 +69,33 @@ checks.push(['voice off hides the orb', await page.evaluate(() => document.query
 // Natural voice: Gemini TTS audio plays instead of the phone voice, then it listens again.
 await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('voiceStyle', 'natural'); });
 await page.click('[data-voice]');
-await page.waitForFunction(() => window.__listens >= 4, null, { timeout: 15000 });
+await page.waitForFunction(() => window.__listens >= 4 && !document.querySelector('[data-mic]').classList.contains('listening'), null, { timeout: 15000 });
 const n = await page.evaluate(() => ({ spoken: window.__spoken.length, listens: window.__listens }));
 checks.push(['natural voice used (Gemini TTS called)', ttsCalls === 1]);
 checks.push(['phone voice not used when natural works', n.spoken === 1]);
 checks.push(['listened again after natural voice', n.listens === 4]);
+// Noise trimming and sentence pieces (pure functions).
+const audio = await page.evaluate(async () => {
+  const V = await import('./js/ai/voice.js');
+  const rate = 24000, sine = (s, f) => Array.from({ length: s * rate }, (_, i) => Math.round(8000 * Math.sin(2 * Math.PI * f * i / rate)));
+  const quiet = s => new Array(Math.round(s * rate)).fill(0);
+  const noise = s => Array.from({ length: s * rate }, () => Math.round((Math.random() * 2 - 1) * 6000));
+  const voiced = [...sine(1, 180)];
+  const withNoise = Int16Array.from([...quiet(0.4), ...voiced, ...quiet(0.3), ...noise(0.4)]);
+  const withSir = Int16Array.from([...voiced, ...quiet(0.25), ...sine(0.3, 150)]);
+  const [s1, e1] = V.speechBounds(withNoise, rate), [, e2] = V.speechBounds(withSir, rate);
+  return { start: s1 / rate, noiseCut: e1 / rate, sirKept: e2 / rate, pieces: V.chunks('Good evening, sir. The build passed. Two warnings remain in the parser. Shall I list them?') };
+});
+checks.push(['leading silence trimmed', audio.start > 0.3 && audio.start < 0.4]);
+checks.push(['static burst after the last word cut', audio.noiseCut < 1.55]);
+checks.push(['a short final word is kept', audio.sirKept > 1.5]);
+checks.push(['first sentence voiced on its own', audio.pieces[0] === 'Good evening, sir.' && audio.pieces.length === 2]);
+// Streamed reply: first sentence voiced separately, rest as one more piece; thinking off in voice mode.
+const before = ttsCalls;
+await page.click('[data-orb]');
+await page.waitForFunction(() => window.__listens >= 6, null, { timeout: 15000 });
+checks.push(['streamed reply voiced in two pieces', ttsCalls - before === 2]);
+checks.push(['voice chat turns thinking off', /thinkingBudget":0/.test(lastBody)]);
 checks.push(['still no page errors', !errors.length]);
 for (const [n, ok] of checks) console.log(ok ? 'ok  ' : 'FAIL', n);
 if (errors.length) console.log(errors.join('\n'));

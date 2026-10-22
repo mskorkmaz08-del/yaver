@@ -67,13 +67,20 @@ async function apiError(res) {
   return new Error(msg || `Gemini error ${res.status}`);
 }
 
-async function streamOnce(contents, { onDelta, onStatus, signal }) {
+// Voice chat: answer straight away instead of thinking first (seconds faster).
+function thinkingOff(model) {
+  if (/^gemini-2\.5-flash/.test(model)) return { thinkingConfig: { thinkingBudget: 0 } };
+  if (/^gemini-[3-9]/.test(model)) return { thinkingConfig: { thinkingLevel: 'low' } };
+  return {};
+}
+
+async function streamOnce(contents, { onDelta, onStatus, signal, fast }) {
   const model = db.setting('geminiModel', '') || await pickModel();
   const body = {
     systemInstruction: { parts: [{ text: `${STATIC_SYSTEM}\n\nWeb search is not available in this mode: answer from what you know, and say plainly when something may be out of date.\n\n${dynamicContext()}` }] },
     contents,
     tools: [{ functionDeclarations: functionDeclarations() }],
-    generationConfig: { maxOutputTokens: 8192 },
+    generationConfig: { maxOutputTokens: 8192, ...(fast ? thinkingOff(model) : {}) },
   };
   let res;
   try {
@@ -87,6 +94,8 @@ async function streamOnce(contents, { onDelta, onStatus, signal }) {
     if (e.name === 'AbortError') throw Object.assign(new Error('Stopped.'), { code: 'abort' });
     throw new Error(navigator.onLine ? 'Could not reach Gemini. Check your connection.' : 'You are offline. Your trackers still work; Yaver needs internet to think.');
   }
+  // A model that rejects the thinking setting: ask again without it.
+  if (res.status === 400 && fast) return streamOnce(contents, { onDelta, onStatus, signal, fast: false });
   if (!res.ok) throw await apiError(res);
 
   // Server-sent events: each "data:" line is a partial response.
@@ -121,10 +130,10 @@ async function streamOnce(contents, { onDelta, onStatus, signal }) {
   return { parts, finish };
 }
 
-export async function runTurnGemini(contents, { onText, onAction, onStatus, signal } = {}) {
+export async function runTurnGemini(contents, { onText, onAction, onStatus, signal, fast } = {}) {
   let text = '';
   for (let step = 0; step < 10; step++) {
-    const { parts, finish } = await streamOnce(contents, { onDelta: d => { text += d; onText?.(text); }, onStatus, signal });
+    const { parts, finish } = await streamOnce(contents, { onDelta: d => { text += d; onText?.(text); }, onStatus, signal, fast });
     if (!parts.length) {
       if (finish === 'SAFETY' || finish === 'PROHIBITED_CONTENT') text += "I can't help with that one.";
       break;

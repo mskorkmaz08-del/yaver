@@ -28,7 +28,7 @@ export const FILES = {
   'js/ai/tools.js': 'Every tool the AI can call: name, description, JSON schema and the function that runs it on the phone.',
   'js/ai/claude.js': 'Anthropic API client (official SDK): system prompt, agent loop with streaming, web search, prompt caching, fallbacks, error messages.',
   'js/ai/gemini.js': 'Google Gemini client over REST: same agent loop, tools translated to function declarations, auto-picks a stable free Flash model.',
-  'js/ai/voice.js': 'Natural reply voice: Gemini text-to-speech (free tier, same key), picks a TTS model the key can use, plays the 24 kHz PCM through Web Audio (optional Jarvis style: British delivery prompt plus a light filter and short echo), and falls back to the iPhone voice for 10 minutes when it fails.',
+  'js/ai/voice.js': 'Natural reply voice: Gemini text-to-speech (free tier, same key), voiced sentence by sentence while the reply streams, with leading silence and the static burst after the last word cut out; picks a TTS model the key can use, plays the 24 kHz PCM through Web Audio (optional Jarvis style: British delivery prompt plus a light filter and short echo), and falls back to the iPhone voice for 10 minutes when it fails.',
   'js/ai/mac.js': 'Client for the bridge on the Mac: connection code, health check (cached 30 s), finding the new link after a restart via ntfy, and an agent loop where the Mac thinks and the phone runs the tools.',
   'js/ai/provider.js': 'Chooses Gemini or Claude, sorts keys into the right slot by prefix, saves and tests keys.',
   'js/views/home.js': 'Home: AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
