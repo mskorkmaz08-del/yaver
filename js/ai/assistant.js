@@ -4,7 +4,7 @@ import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
 import { macConfigured, macOnline, runTurnMac } from './mac.js';
-import { speaker, chunks, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
+import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 
@@ -296,12 +296,13 @@ const endSpeech = () => current?.finish();
 function speakDevice(clean, done) {
   if (!('speechSynthesis' in window)) return done();
   const pref = db.setting('voiceLang', navigator.language || 'en-US');
-  const lang = /[çğıöşüÇĞİÖŞÜ]/.test(clean) ? 'tr-TR' : /[а-яё]/i.test(clean) ? (pref.startsWith('kk') ? 'kk-KZ' : 'ru-RU') : pref.startsWith('en') ? pref : 'en-US';
+  const lang = /[çğıöşüÇĞİÖŞÜ]/.test(clean) ? 'tr-TR' : /[а-яё]/i.test(clean) ? (pref.startsWith('kk') ? 'kk-KZ' : 'ru-RU') : 'en-GB';
   const u = new SpeechSynthesisUtterance(clean);
-  u.lang = lang;
-  const voices = speechSynthesis.getVoices().filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()));
-  u.voice = voices.find(v => /premium|enhanced|neural|natural/i.test(v.name)) || voices.find(v => v.lang.replace('_', '-') === lang) || voices[0] || null;
-  u.rate = 1.05;
+  u.voice = pickDeviceVoice(lang);
+  u.lang = u.voice?.lang || lang;
+  // Jarvis: a touch lower and more measured.
+  u.rate = jarvisOn() ? 1.0 : 1.05;
+  u.pitch = jarvisOn() ? 0.9 : 1;
   u.onstart = () => orb('speaking');
   u.onend = u.onerror = done;
   speechSynthesis.speak(u);

@@ -85,6 +85,8 @@ async function start() {
   await db.openDB();
   await sortKeys();
   await CT.seed();
+  // v16: the iPhone voice became the default (the Gemini voice was slow and crackled).
+  if (!db.setting('voiceV16', false)) { await db.setSetting('voiceStyle', 'device'); await db.setSetting('voiceV16', true); }
   initAssistant();
 
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => {

@@ -11,7 +11,29 @@ const key = () => db.setting('geminiKey', '').trim();
 let ctx, playing, models, pausedUntil = 0;
 
 export const jarvisOn = () => db.setting('jarvis', true);
-export const naturalOn = () => db.setting('voiceStyle', 'natural') === 'natural' && !!key() && Date.now() > pausedUntil;
+export const naturalOn = () => db.setting('voiceStyle', 'device') === 'natural' && !!key() && Date.now() > pausedUntil;
+
+// ---------- iPhone voices (default: instant, offline, no artefacts) ----------
+// Jarvis-like first: British male voices, Premium/Enhanced downloads before the basic ones.
+const BRITISH_MALE = ['arthur', 'daniel', 'oliver', 'malcolm', 'jamie', 'george', 'ryan', 'thomas'];
+const quality = v => (/premium/i.test(v.name) ? 0 : /enhanced|neural|natural/i.test(v.name) ? 1 : 2);
+export const deviceVoices = () => ('speechSynthesis' in window ? speechSynthesis.getVoices() : [])
+  .filter(v => /^(en|tr)/i.test(v.lang))
+  .sort((a, b) => a.lang.localeCompare(b.lang) || quality(a) - quality(b) || a.name.localeCompare(b.name));
+
+export function pickDeviceVoice(lang = 'en-GB') {
+  const all = 'speechSynthesis' in window ? speechSynthesis.getVoices() : [];
+  const two = lang.slice(0, 2).toLowerCase();
+  if (two === 'en') {
+    const chosen = all.find(v => v.voiceURI === db.setting('deviceVoice', ''));
+    if (chosen) return chosen;
+    const male = (v) => BRITISH_MALE.findIndex(n => v.name.toLowerCase().includes(n));
+    const gb = all.filter(v => /^en[-_]gb/i.test(v.lang) && male(v) >= 0).sort((a, b) => quality(a) - quality(b) || male(a) - male(b));
+    if (gb[0]) return gb[0];
+  }
+  const same = all.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(two)).sort((a, b) => quality(a) - quality(b));
+  return same.find(v => /^en[-_]gb/i.test(v.lang)) || same[0] || null;
+}
 
 // iOS lets audio start only inside a tap; call this from one, then later replies can play.
 export function unlockAudio() {
@@ -53,8 +75,8 @@ export async function synth(text) {
       method: 'POST',
       headers: { 'x-goog-api-key': key(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        // Gemini's documented style form is "Say <how>: <words>"; anything else gets read out.
-        contents: [{ role: 'user', parts: [{ text: jarvisOn() ? `Say in a calm, precise British accent, like a refined AI assistant: ${text}` : text }] }],
+        // Only the words: Gemini reads any style instruction out loud.
+        contents: [{ role: 'user', parts: [{ text }] }],
         generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: db.setting('ttsVoice', 'Charon') } } } },
       }),
       signal: AbortSignal.timeout(30000),

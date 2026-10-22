@@ -46,7 +46,7 @@ await page.route('https://generativelanguage.googleapis.com/**', async route => 
 });
 await page.goto('http://localhost:8765/');
 await page.waitForSelector('.sheet');
-await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForVoice00000'); await db.setSetting('voiceLang', 'en-US'); await db.setSetting('voiceStyle', 'device'); });
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForVoice00000'); await db.setSetting('voiceLang', 'en-US'); await db.setSetting('voiceStyle', 'device'); await db.setSetting('voiceV16', true); });
 await page.reload();
 await page.waitForTimeout(500);
 await page.click('#fab');
@@ -96,6 +96,13 @@ await page.click('[data-orb]');
 await page.waitForFunction(() => window.__listens >= 6, null, { timeout: 15000 });
 checks.push(['streamed reply voiced in two pieces', ttsCalls - before === 2]);
 checks.push(['voice chat turns thinking off', /thinkingBudget":0/.test(lastBody)]);
+const picked = await page.evaluate(async () => {
+  const V = await import('./js/ai/voice.js');
+  const v = (name, lang) => ({ name, lang, voiceURI: name });
+  speechSynthesis.getVoices = () => [v('Samantha', 'en-US'), v('Kate', 'en-GB'), v('Daniel', 'en-GB'), v('Arthur (Premium)', 'en-GB'), v('Yelda', 'tr-TR')];
+  return [V.pickDeviceVoice('en-GB')?.name, V.pickDeviceVoice('tr-TR')?.name];
+});
+checks.push(['picks a British male Premium voice, Turkish voice for Turkish', picked[0] === 'Arthur (Premium)' && picked[1] === 'Yelda']);
 checks.push(['still no page errors', !errors.length]);
 for (const [n, ok] of checks) console.log(ok ? 'ok  ' : 'FAIL', n);
 if (errors.length) console.log(errors.join('\n'));

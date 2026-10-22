@@ -1,8 +1,8 @@
 import * as db from '../db.js';
-import { html, raw, toast, confirmSheet } from '../util.js';
+import { html, raw, esc, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
 import { testMac, useCode } from '../ai/mac.js';
-import { VOICES, speakNatural, unlockAudio } from '../ai/voice.js';
+import { VOICES, speakNatural, unlockAudio, deviceVoices, pickDeviceVoice } from '../ai/voice.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
@@ -57,10 +57,12 @@ export function render(root, go) {
       <label class="field"><span>Bridge token</span><input name="macToken" type="password" autocomplete="off" value="${s('macToken', '')}" placeholder="shown when the bridge starts"></label>
       <label class="field"><span>Model on the Mac</span><select name="macModel">${raw([['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']].map(([v, l]) => `<option value="${v}" ${v === s('macModel', 'sonnet') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-test-mac>Test Mac connection</button></div>
-      <label class="field"><span>Reply voice</span><select name="voiceStyle">${raw([['natural', 'Natural · Gemini voice (free, uses your Gemini key)'], ['device', 'iPhone voice · works offline']].map(([v, l]) => `<option value="${v}" ${v === s('voiceStyle', 'natural') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
-      <label class="field"><span>Natural voice</span><select name="ttsVoice">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('ttsVoice', 'Charon') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Reply voice</span><select name="voiceStyle">${raw([['device', 'iPhone voice · instant, offline (recommended)'], ['natural', 'Gemini voice · slower, can crackle']].map(([v, l]) => `<option value="${v}" ${v === s('voiceStyle', 'device') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>iPhone voice</span><select name="deviceVoice" data-device-voices><option value="">Auto · British male, best installed</option></select></label>
+      <p class="muted small">For a Jarvis-like voice, download a better one once: iPhone Settings → Accessibility → Spoken Content → Voices → English → <b>English (UK)</b> → <b>Arthur (Premium)</b> or <b>Daniel (Enhanced)</b>. Then reopen Yaver.</p>
+      <label class="field"><span>Gemini voice</span><select name="ttsVoice">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('ttsVoice', 'Charon') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-try-voice>Hear this voice</button></div>
-      <label class="field check"><span>Jarvis style (calm British, slightly synthetic)</span><input type="checkbox" name="jarvis" ${raw(s('jarvis', true) ? 'checked' : '')}></label>
+      <label class="field check"><span>Jarvis style (calm, measured British delivery)</span><input type="checkbox" name="jarvis" ${raw(s('jarvis', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Use Claude on the Mac in voice chat (smarter, a few seconds slower)</span><input type="checkbox" name="voiceMac" ${raw(s('voiceMac', false) ? 'checked' : '')}></label>
       <label class="field check"><span>Voice chat listens again by itself</span><input type="checkbox" name="voiceAuto" ${raw(s('voiceAuto', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
@@ -97,7 +99,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v15 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v16 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
@@ -136,12 +138,32 @@ export function render(root, go) {
     await saveForm();
     try { toast(await testCurrent()); } catch (e) { toast(e.message, 4000); }
   };
+  // Installed voices arrive asynchronously on iOS.
+  const fillVoices = () => {
+    const sel = root.querySelector('[data-device-voices]');
+    if (!sel) return;
+    const cur = db.setting('deviceVoice', '');
+    sel.innerHTML = `<option value="">Auto · ${pickDeviceVoice('en-GB')?.name || 'British male, best installed'}</option>` + deviceVoices().map(v => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === cur ? 'selected' : ''}>${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
+  };
+  fillVoices();
+  if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = fillVoices;
   root.querySelector('[data-try-voice]').onclick = async e => {
     unlockAudio();
     try { await saveForm(); } catch {}
     e.target.disabled = true;
-    try { await speakNatural(`Hi${db.setting('userName', '') ? ' ' + db.setting('userName') : ''}, I'm Yaver. This is how I'll sound when I answer you.`); }
-    catch { toast('Could not get the natural voice. Check your Gemini key, or the free voice limit may be used up for today.', 5000); }
+    const line = `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}${db.setting('userName', '') ? ', ' + db.setting('userName') : ', sir'}. This is how I'll sound when I answer you.`;
+    if (db.setting('voiceStyle', 'device') === 'device') {
+      await new Promise(res => {
+        const u = new SpeechSynthesisUtterance(line);
+        u.voice = pickDeviceVoice('en-GB'); u.lang = u.voice?.lang || 'en-GB';
+        u.rate = db.setting('jarvis', true) ? 1.0 : 1.05; u.pitch = db.setting('jarvis', true) ? 0.9 : 1;
+        u.onend = u.onerror = res;
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      });
+    } else {
+      try { await speakNatural(line); }
+      catch { toast('Could not get the Gemini voice. Check your Gemini key, or the free voice limit may be used up for today.', 5000); }
+    }
     e.target.disabled = false;
   };
   root.querySelector('[data-test-mac]').onclick = async () => {
