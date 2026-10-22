@@ -215,7 +215,7 @@ async function send(textIn) {
       const { text: out } = await run(history, callbacks);
       reply.text = out || (reply.actions.length ? 'Done.' : '…');
       reply.via = route;
-      if (voice || db.setting('speak', false)) speak(reply.text, () => { if (voice && el.classList.contains('open')) listen(); });
+      if (voice || db.setting('speak', false)) speak(reply.text, () => { if (voice && el.classList.contains('open')) setTimeout(() => { if (voice && !busy) listen(); }, 350); });
       break;
     } catch (e) {
       // Drop the unfinished turn from what we send next time, so the conversation stays valid.

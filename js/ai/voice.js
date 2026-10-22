@@ -44,7 +44,7 @@ export async function speakNatural(text, { onStart, cancelled = () => false } = 
       method: 'POST',
       headers: { 'x-goog-api-key': key(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: `Read this aloud in a natural, friendly, conversational way:\n\n${text}` }] }],
+        contents: [{ role: 'user', parts: [{ text }] }], // just the words: any instruction here gets read out too
         generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: db.setting('voiceName', 'Kore') } } } },
       }),
       signal: AbortSignal.timeout(30000),
@@ -71,9 +71,14 @@ function play(b64, rate, onStart) {
   unlockAudio();
   const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   const pcm = new Int16Array(bytes.buffer, 0, bytes.length >> 1);
-  const buf = ctx.createBuffer(1, pcm.length, rate);
+  // Cut the clip after the last spoken sound (+150 ms): Gemini sometimes ends with
+  // a burst of noise. Then fade the edges so playback starts and stops without a click.
+  let end = pcm.length;
+  for (let i = pcm.length - 1; i >= 0; i--) if (Math.abs(pcm[i]) > 900) { end = Math.min(pcm.length, i + Math.round(rate * 0.15)); break; }
+  const buf = ctx.createBuffer(1, Math.max(end, 1), rate);
   const ch = buf.getChannelData(0);
-  for (let i = 0; i < pcm.length; i++) ch[i] = pcm[i] / 32768;
+  const fadeIn = Math.round(rate * 0.01), fadeOut = Math.round(rate * 0.06);
+  for (let i = 0; i < end; i++) ch[i] = (pcm[i] / 32768) * Math.min(1, i / fadeIn, (end - i) / fadeOut);
   stopAudio();
   const src = ctx.createBufferSource();
   src.buffer = buf;
