@@ -175,7 +175,7 @@ yaver/
 - **Plain JavaScript modules, no framework and no build step.** Safari runs the files exactly as written. Fewer moving parts, tiny download, nothing to compile, and easy to read and change.
 - **IndexedDB** over `localStorage`: more storage, structured data, and more durable on iOS.
 - **The official Anthropic SDK** for the API: streaming, retries and typed errors handled for us.
-- **Web Speech API** for the mic button (falls back to the keyboard's dictation key), and speech synthesis to read replies aloud.
+- **Web Speech API** for the mic button (falls back to the keyboard's dictation key), and speech synthesis to read replies aloud. **Voice chat** (the wave button at the top of the chat) chains them: Yaver listens, sends what you said with a note asking for short spoken answers, reads the reply aloud with the best voice installed on the phone, then listens again until you stay silent or tap the wave button. All free and on the device; it works with Gemini, the Mac or the Claude API.
 
 ## 8. Changing things yourself
 

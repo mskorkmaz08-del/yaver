@@ -23,7 +23,7 @@ export const FILES = {
   'js/keys.js': 'Keyboard shortcuts for laptop use (g t, g c, /, ?), plus the shortcuts sheet.',
   'js/sync.js': 'Laptop ⇄ iPhone sync through one secret GitHub Gist: pull, merge record by record (newest updatedAt wins), push. Encrypted before upload.',
   'js/crypto.js': 'AES-GCM 256 encryption with a PBKDF2-SHA-256 key from the sync passphrase; gzip before encrypting; fresh IV per upload.',
-  'js/ai/assistant.js': 'Chat sheet: messages, photos, voice in/out. Picks the route per message (Mac first when reachable, else Gemini or Claude) and keeps one history per route.',
+  'js/ai/assistant.js': 'Chat sheet: messages, photos, voice in/out and hands-free voice chat (listen → answer read aloud → listen again). Picks the route per message (Mac first when reachable, else Gemini or Claude) and keeps one history per route.',
   'js/ai/tools.js': 'Every tool the AI can call: name, description, JSON schema and the function that runs it on the phone.',
   'js/ai/claude.js': 'Anthropic API client (official SDK): system prompt, agent loop with streaming, web search, prompt caching, fallbacks, error messages.',
   'js/ai/gemini.js': 'Google Gemini client over REST: same agent loop, tools translated to function declarations, auto-picks a stable free Flash model.',
@@ -50,6 +50,7 @@ export const FILES = {
   'README.md': 'Repo front page: what Yaver is, install, test.',
   'tests/smoke.mjs': 'Playwright end-to-end test: onboarding, every screen, map, timer, Gemini and Claude agent loops (mocked), key sorting.',
   'tests/mac-bridge.mjs': 'Mac-first routing and Gemini fallback against the real bridge with a fake Claude Code.',
+  'tests/voice-chat.mjs': 'Voice chat loop with fake speech recognition and synthesis: hears the request, reads the reply aloud without markdown, listens again.',
   'tests/mac-connect.mjs': 'Connection code paste and auto-reconnect after the bridge link changes, with fake cloudflared and ntfy.',
   'tests/course-smoke.mjs': 'Course screens on phone and 1440×900 laptop with a faked clock.',
   'tests/sync-test.mjs': 'Sync between three simulated devices against a mocked GitHub.',
@@ -172,7 +173,7 @@ export const STACK = [
 export const BROWSER_APIS = [
   ['IndexedDB', 'all data'], ['Service Worker + Cache Storage', 'offline'], ['Fetch + ReadableStream', 'streaming AI replies (SSE)'],
   ['Web Crypto (subtle)', 'sync encryption'], ['CompressionStream', 'gzip before encryption'], ['Geolocation', 'nearby places'],
-  ['Web Speech (recognition, synthesis)', 'voice in, read aloud'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'],
+  ['Web Speech (recognition, synthesis)', 'voice in, read aloud, voice chat loop'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'],
   ['StorageManager.persist()', 'ask iOS not to evict data'],
 ];
 
@@ -200,6 +201,7 @@ export const TESTS = [
   ['tests/sync-test.mjs', 'Three-device sync with mocked GitHub'],
   ['tests/mac-bridge.mjs', 'Mac-first routing and fallback'],
   ['tests/mac-connect.mjs', 'Connection code and auto-reconnect'],
+  ['tests/voice-chat.mjs', 'Voice chat loop'],
   ['tests/validate-course.mjs', 'Course data validation'],
   ['tests/run-lesson-code.mjs', 'Runs lesson code blocks'],
   ['tests/docs-coverage.mjs', 'Handbook covers every file'],

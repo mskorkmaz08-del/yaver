@@ -13,6 +13,8 @@ let busy = false;
 let abort;
 let pendingImage = null;
 let el;
+let voice = false; // voice chat: speak, hear the answer, then it listens again
+let listen = () => {};
 
 const SUGGESTIONS = [
   'What should I study today?',
@@ -37,9 +39,10 @@ export function initAssistant() {
       <header class="chat-head">
         <button class="icon-btn" data-close aria-label="Close">${icon('chevronDown')}</button>
         <div class="chat-title"><span class="mark sm">Y</span><div><b>Yaver</b><small data-status>ready</small></div></div>
-        <button class="icon-btn" data-new aria-label="New chat">${icon('edit')}</button>
+        <div class="chat-tools"><button class="icon-btn" data-voice aria-label="Voice chat" aria-pressed="false">${icon('wave')}</button><button class="icon-btn" data-new aria-label="New chat">${icon('edit')}</button></div>
       </header>
       <div class="chat-log" data-log></div>
+      <button class="voice-orb" data-orb hidden><span class="orb" aria-hidden="true"></span><b data-orb-label>tap to talk</b><small>voice chat · tap the wave icon at the top to end</small></button>
       <div class="chat-input">
         <div class="attach-preview" data-preview hidden></div>
         <div class="chat-bar">
@@ -69,7 +72,13 @@ export function initAssistant() {
     p.querySelector('[data-x]').onclick = () => { pendingImage = null; p.hidden = true; };
     input.focus();
   };
-  setupVoice(el.querySelector('[data-mic]'), input);
+  listen = setupVoice(el.querySelector('[data-mic]'), input);
+  el.querySelector('[data-voice]').onclick = () => setVoice(!voice);
+  el.querySelector('[data-orb]').onclick = () => {
+    if (busy) return abort?.abort();
+    if (speechSynthesis?.speaking) { speechSynthesis.cancel(); return listen(); }
+    listen();
+  };
   el.addEventListener('click', e => {
     const chip = e.target.closest('[data-suggest]');
     if (chip) send(chip.dataset.suggest);
@@ -86,7 +95,26 @@ export function openAssistant(prompt) {
   else if (!matchMedia('(pointer:coarse)').matches) el.querySelector('[data-input]').focus();
 }
 
+// Voice chat: one big button; each reply is read out and then Yaver listens again.
+function setVoice(on) {
+  voice = on;
+  el.classList.toggle('voice', on);
+  el.querySelector('[data-orb]').hidden = !on;
+  el.querySelector('[data-voice]').setAttribute('aria-pressed', String(on));
+  haptic();
+  if (on) { unlockSpeech(); listen(); }
+  else { speechSynthesis?.cancel?.(); listen.stop?.(); orb(''); }
+}
+
+function orb(state) {
+  const o = el?.querySelector('[data-orb]');
+  if (!o) return;
+  o.dataset.state = state;
+  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', thinking: 'thinking…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
+}
+
 export function closeAssistant() {
+  if (voice) setVoice(false);
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
   speechSynthesis?.cancel?.();
@@ -142,7 +170,10 @@ async function send(textIn) {
   speechSynthesis?.cancel?.();
 
   // Each AI keeps its own history format; switching AI starts that one's context fresh.
-  const prompt = text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.';
+  const asked = text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.';
+  // In voice chat the answer is heard, not read: ask for short, plain sentences.
+  const prompt = voice ? `${asked}\n\n(Voice chat: this reply is read aloud. Answer in a few short spoken sentences, no markdown, lists, tables or code unless I ask.)` : asked;
+  orb('thinking');
   const img = pendingImage && { media_type: pendingImage.media_type, data: pendingImage.data };
   chat.view.push({ role: 'user', text, image: pendingImage?.url });
   pendingImage = null;
@@ -183,7 +214,7 @@ async function send(textIn) {
       const { text: out } = await run(history, callbacks);
       reply.text = out || (reply.actions.length ? 'Done.' : '…');
       reply.via = route;
-      if (db.setting('speak', false)) speak(reply.text);
+      if (voice || db.setting('speak', false)) speak(reply.text, () => { if (voice && el.classList.contains('open')) listen(); });
       break;
     } catch (e) {
       // Drop the unfinished turn from what we send next time, so the conversation stays valid.
@@ -199,6 +230,7 @@ async function send(textIn) {
   el.classList.remove('busy');
   el.querySelector('[data-send]').innerHTML = icon('send');
   setStatus('');
+  if (voice && !speechSynthesis?.speaking && !speechSynthesis?.pending) orb('');
   // Long conversations: start a fresh context (the screen keeps the old bubbles).
   // We never edit earlier turns in place, because the model's saved reasoning is tied to them.
   if (history.length > 80) { history.length = 0; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
@@ -206,11 +238,29 @@ async function send(textIn) {
   render();
 }
 
-function speak(text) {
+// iOS only speaks after a tap; an empty utterance during the tap unlocks later replies.
+function unlockSpeech() {
   if (!('speechSynthesis' in window)) return;
-  const u = new SpeechSynthesisUtterance(text.replace(/[*_`#>]/g, '').slice(0, 1200));
-  u.lang = /[çğıöşüÇĞİÖŞÜ]/.test(text) ? 'tr-TR' : (navigator.language || 'en-US');
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0;
+  speechSynthesis.speak(u);
+}
+
+// Strip markdown and code so it reads naturally, then pick the best local voice.
+function speak(text, done) {
+  if (!('speechSynthesis' in window)) return done?.();
+  speechSynthesis.cancel();
+  const clean = text.replace(/```[\s\S]*?```/g, ' (code on screen) ').replace(/`([^`]*)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_#>|]/g, '').replace(/^\s*[-•]\s+/gm, '').slice(0, 2000);
+  const pref = db.setting('voiceLang', navigator.language || 'en-US');
+  const lang = /[çğıöşüÇĞİÖŞÜ]/.test(text) ? 'tr-TR' : /[а-яё]/i.test(text) ? (pref.startsWith('kk') ? 'kk-KZ' : 'ru-RU') : pref.startsWith('en') ? pref : 'en-US';
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = lang;
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()));
+  u.voice = voices.find(v => /premium|enhanced|neural|natural/i.test(v.name)) || voices.find(v => v.lang.replace('_', '-') === lang) || voices[0] || null;
   u.rate = 1.05;
+  u.onstart = () => orb('speaking');
+  u.onend = u.onerror = () => { orb(''); done?.(); };
   speechSynthesis.speak(u);
 }
 
@@ -218,16 +268,20 @@ function setupVoice(btn, input) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     btn.onclick = () => toast('Use the mic key on your iPhone keyboard to dictate.');
-    return;
+    const fallback = () => { orb(''); if (voice) toast('Speech recognition is not available here: tap the text box and use the keyboard mic. Replies are still read aloud.', 5000); };
+    fallback.stop = () => {};
+    return fallback;
   }
   let rec = null;
-  btn.onclick = () => {
-    if (rec) { rec.stop(); return; }
+  const start = () => {
+    if (rec || busy) return;
+    speechSynthesis?.cancel?.();
     rec = new SR();
     rec.lang = db.setting('voiceLang', navigator.language || 'en-US');
     rec.interimResults = true;
     rec.continuous = false;
     btn.classList.add('listening');
+    orb('listening');
     haptic();
     let finalText = '';
     rec.onresult = e => {
@@ -236,12 +290,19 @@ function setupVoice(btn, input) {
       input.value = finalText || interim;
       autosize(input);
     };
-    rec.onerror = e => { if (e.error !== 'aborted' && e.error !== 'no-speech') toast('Voice input is unavailable here. Use the keyboard mic instead.'); };
+    rec.onerror = e => {
+      if (e.error === 'not-allowed' && voice) toast('Yaver needs the microphone. Allow it in iPhone Settings → Safari → Microphone, or tap the big button to try again.', 6000);
+      else if (e.error !== 'aborted' && e.error !== 'no-speech') toast('Voice input is unavailable here. Use the keyboard mic instead.');
+    };
     rec.onend = () => {
       btn.classList.remove('listening');
       rec = null;
       if (finalText.trim()) send(finalText);
+      else orb('');
     };
-    try { rec.start(); } catch { btn.classList.remove('listening'); rec = null; }
+    try { rec.start(); } catch { btn.classList.remove('listening'); rec = null; orb(''); }
   };
+  start.stop = () => rec?.abort();
+  btn.onclick = () => { if (rec) rec.stop(); else { unlockSpeech(); start(); } };
+  return start;
 }
