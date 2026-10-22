@@ -8,6 +8,7 @@ export const VOICES = [['Charon', 'Charon · male, calm'], ['Orus', 'Orus · mal
 const key = () => db.setting('geminiKey', '').trim();
 let ctx, playing, models, pausedUntil = 0;
 
+export const jarvisOn = () => db.setting('jarvis', true);
 export const naturalOn = () => db.setting('voiceStyle', 'natural') === 'natural' && !!key() && Date.now() > pausedUntil;
 
 // iOS lets audio start only inside a tap; call this from one, then later replies can play.
@@ -16,6 +17,12 @@ export function unlockAudio() {
   if (ctx.state === 'suspended') ctx.resume();
   const b = ctx.createBuffer(1, 1, 24000), s = ctx.createBufferSource();
   s.buffer = b; s.connect(ctx.destination); s.start();
+}
+
+// Before the microphone turns on: a running audio output plus the mic switching
+// on is what makes iOS click. Suspend it; unlockAudio resumes it for the next reply.
+export function suspendAudio() {
+  if (ctx && ctx.state === 'running' && !playing) ctx.suspend().catch(() => {});
 }
 
 export function stopAudio() {
@@ -44,7 +51,8 @@ export async function speakNatural(text, { onStart, cancelled = () => false } = 
       method: 'POST',
       headers: { 'x-goog-api-key': key(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text }] }], // just the words: any instruction here gets read out too
+        // Gemini's documented style form is "Say <how>: <words>"; anything else gets read out.
+        contents: [{ role: 'user', parts: [{ text: jarvisOn() ? `Say in a calm, precise British accent, like a refined AI assistant: ${text}` : text }] }],
         generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: db.setting('ttsVoice', 'Charon') } } } },
       }),
       signal: AbortSignal.timeout(30000),
@@ -60,6 +68,8 @@ export async function speakNatural(text, { onStart, cancelled = () => false } = 
     if (!part) { lastErr = new Error('Gemini sent no audio'); continue; }
     const rate = Number((part.inlineData.mimeType.match(/rate=(\d+)/) || [0, 24000])[1]);
     if (cancelled()) return;
+    // If iOS won't resume the audio output after the mic was on, let the caller use the phone voice.
+    if (ctx?.state === 'suspended') { await ctx.resume().catch(() => {}); if (ctx.state !== 'running') throw new Error('audio output suspended'); }
     return play(part.inlineData.data, rate, onStart);
   }
   pausedUntil = Date.now() + 10 * 60000;
@@ -82,11 +92,27 @@ function play(b64, rate, onStart) {
   stopAudio();
   const src = ctx.createBufferSource();
   src.buffer = buf;
-  src.connect(ctx.destination);
+  src.connect(jarvisOn() ? jarvisChain() : ctx.destination);
   playing = src;
   return new Promise(resolve => {
     src.onended = () => { if (playing === src) playing = null; resolve(); };
     onStart?.();
     src.start();
   });
+}
+
+// A light "AI assistant" colour: trim the low rumble, add presence, and blend in a
+// very short metallic echo. Subtle on purpose: it should still sound like a person.
+let chain;
+function jarvisChain() {
+  if (chain) return chain;
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 140;
+  const pres = ctx.createBiquadFilter(); pres.type = 'peaking'; pres.frequency.value = 3200; pres.gain.value = 3; pres.Q.value = 0.9;
+  const dry = ctx.createGain(); dry.gain.value = 0.9;
+  const echo = ctx.createDelay(0.05); echo.delayTime.value = 0.012;
+  const fb = ctx.createGain(); fb.gain.value = 0.25;
+  const wet = ctx.createGain(); wet.gain.value = 0.22;
+  hp.connect(pres); pres.connect(dry); dry.connect(ctx.destination);
+  pres.connect(echo); echo.connect(fb); fb.connect(echo); echo.connect(wet); wet.connect(ctx.destination);
+  return (chain = hp);
 }

@@ -4,7 +4,7 @@ import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
 import { macConfigured, macOnline, runTurnMac } from './mac.js';
-import { naturalOn, speakNatural, unlockAudio, stopAudio, audioPlaying } from './voice.js';
+import { naturalOn, speakNatural, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 
@@ -173,7 +173,7 @@ async function send(textIn) {
   // Each AI keeps its own history format; switching AI starts that one's context fresh.
   const asked = text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.';
   // In voice chat the answer is heard, not read: ask for short, plain sentences.
-  const prompt = voice ? `${asked}\n\n(Voice chat: this reply is read aloud. Answer in a few short spoken sentences, no markdown, lists, tables or code unless I ask.)` : asked;
+  const prompt = voice ? `${asked}\n\n(Voice chat: this reply is read aloud. Answer in a few short spoken sentences, no markdown, lists, tables or code unless I ask.${jarvisOn() ? ' Speak like JARVIS: calm, precise and understated, British English, a touch of dry wit, now and then address me as "sir". No American filler like "Great question" or "Awesome".' : ''})` : asked;
   orb('thinking');
   const img = pendingImage && { media_type: pendingImage.media_type, data: pendingImage.data };
   chat.view.push({ role: 'user', text, image: pendingImage?.url });
@@ -299,6 +299,7 @@ function setupVoice(btn, input) {
   const start = () => {
     if (rec || busy) return;
     hush();
+    suspendAudio();
     rec = new SR();
     rec.lang = db.setting('voiceLang', navigator.language || 'en-US');
     rec.interimResults = true;
