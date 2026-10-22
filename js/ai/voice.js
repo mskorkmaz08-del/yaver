@@ -4,7 +4,7 @@
 import * as db from '../db.js';
 
 const API = 'https://generativelanguage.googleapis.com/v1beta';
-export const VOICES = [['Kore', 'Kore · firm, clear'], ['Sulafat', 'Sulafat · warm'], ['Charon', 'Charon · calm, deep'], ['Puck', 'Puck · upbeat'], ['Aoede', 'Aoede · light'], ['Zephyr', 'Zephyr · bright']];
+export const VOICES = [['Charon', 'Charon · male, calm'], ['Orus', 'Orus · male, firm'], ['Iapetus', 'Iapetus · male, clear'], ['Puck', 'Puck · male, upbeat'], ['Fenrir', 'Fenrir · male, lively'], ['Kore', 'Kore · female, firm'], ['Sulafat', 'Sulafat · female, warm'], ['Aoede', 'Aoede · female, light']];
 const key = () => db.setting('geminiKey', '').trim();
 let ctx, playing, models, pausedUntil = 0;
 
@@ -45,7 +45,7 @@ export async function speakNatural(text, { onStart, cancelled = () => false } = 
       headers: { 'x-goog-api-key': key(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text }] }], // just the words: any instruction here gets read out too
-        generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: db.setting('voiceName', 'Kore') } } } },
+        generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: db.setting('ttsVoice', 'Charon') } } } },
       }),
       signal: AbortSignal.timeout(30000),
     }).catch(e => ({ ok: false, status: 0, e }));
@@ -74,10 +74,10 @@ function play(b64, rate, onStart) {
   // Cut the clip after the last spoken sound (+150 ms): Gemini sometimes ends with
   // a burst of noise. Then fade the edges so playback starts and stops without a click.
   let end = pcm.length;
-  for (let i = pcm.length - 1; i >= 0; i--) if (Math.abs(pcm[i]) > 900) { end = Math.min(pcm.length, i + Math.round(rate * 0.15)); break; }
+  for (let i = pcm.length - 1; i >= 0; i--) if (Math.abs(pcm[i]) > 1500) { end = Math.min(pcm.length, i + Math.round(rate * 0.08)); break; }
   const buf = ctx.createBuffer(1, Math.max(end, 1), rate);
   const ch = buf.getChannelData(0);
-  const fadeIn = Math.round(rate * 0.01), fadeOut = Math.round(rate * 0.06);
+  const fadeIn = Math.round(rate * 0.01), fadeOut = Math.round(rate * 0.12);
   for (let i = 0; i < end; i++) ch[i] = (pcm[i] / 32768) * Math.min(1, i / fadeIn, (end - i) / fadeOut);
   stopAudio();
   const src = ctx.createBufferSource();

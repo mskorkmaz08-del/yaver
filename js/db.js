@@ -10,7 +10,7 @@ export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 't
   'courseProgress', 'cards', 'courseLessons', 'courseTests', 'tombstones'];
 
 // Settings that belong to this device only: never synced, never in backups' sync payload.
-export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'voiceName', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel']);
+export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'ttsVoice', 'voiceAuto', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel']);
 export const isLocalKey = id => LOCAL_KEYS.has(id) || id.startsWith('sync');
 // Stores that never leave the device (chat history can be large and holds photos).
 export const LOCAL_STORES = new Set(['chats']);

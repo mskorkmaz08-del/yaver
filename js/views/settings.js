@@ -58,8 +58,9 @@ export function render(root, go) {
       <label class="field"><span>Model on the Mac</span><select name="macModel">${raw([['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']].map(([v, l]) => `<option value="${v}" ${v === s('macModel', 'sonnet') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-test-mac>Test Mac connection</button></div>
       <label class="field"><span>Reply voice</span><select name="voiceStyle">${raw([['natural', 'Natural · Gemini voice (free, uses your Gemini key)'], ['device', 'iPhone voice · works offline']].map(([v, l]) => `<option value="${v}" ${v === s('voiceStyle', 'natural') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
-      <label class="field"><span>Natural voice</span><select name="voiceName">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('voiceName', 'Kore') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Natural voice</span><select name="ttsVoice">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('ttsVoice', 'Charon') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-try-voice>Hear this voice</button></div>
+      <label class="field check"><span>Voice chat listens again by itself</span><input type="checkbox" name="voiceAuto" ${raw(s('voiceAuto', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
 
@@ -94,7 +95,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v11 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v12 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
@@ -114,6 +115,7 @@ export function render(root, go) {
     if (String(fd.get('macCode') || '').trim()) await useCode(fd.get('macCode'));
     await db.setSetting('webSearch', fd.has('webSearch'));
     await db.setSetting('speak', fd.has('speak'));
+    await db.setSetting('voiceAuto', fd.has('voiceAuto'));
   };
   form.onsubmit = async e => { e.preventDefault(); try { await saveForm(); toast('Saved'); render(root, go); } catch (err) { toast(err.message, 5000); } };
   const connect = async code => {
