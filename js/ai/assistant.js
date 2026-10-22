@@ -4,6 +4,7 @@ import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
 import { macConfigured, macOnline, runTurnMac } from './mac.js';
+import { startLive, liveAvailable } from './live.js';
 import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
@@ -15,6 +16,7 @@ let abort;
 let pendingImage = null;
 let el;
 let voice = false; // voice chat: speak, hear the answer, then it listens again
+let live = null;   // live voice session (Gemini Live), when that engine is on
 let listen = () => {};
 
 const SUGGESTIONS = [
@@ -76,6 +78,7 @@ export function initAssistant() {
   listen = setupVoice(el.querySelector('[data-mic]'), input);
   el.querySelector('[data-voice]').onclick = () => setVoice(!voice);
   el.querySelector('[data-orb]').onclick = () => {
+    if (live) return live.interrupt();
     if (busy) return abort?.abort();
     if (speaking || speechSynthesis?.speaking || audioPlaying()) { hush(); return listen(); }
     listen();
@@ -103,15 +106,41 @@ function setVoice(on) {
   el.querySelector('[data-orb]').hidden = !on;
   el.querySelector('[data-voice]').setAttribute('aria-pressed', String(on));
   haptic();
-  if (on) { unlockSpeech(); listen(); }
-  else { hush(); listen.stop?.(); orb(''); }
+  if (on) {
+    unlockSpeech();
+    if (db.setting('voiceEngine', 'live') === 'live' && liveAvailable()) startLiveChat();
+    else listen();
+  } else { live?.stop(); live = null; hush(); listen.stop?.(); orb(''); }
+}
+
+// Live engine: the model hears and speaks directly; each finished turn is added to the chat.
+async function startLiveChat() {
+  let actions = [];
+  const add = m => { chat.view.push(m); save(); render(); };
+  try {
+    live = await startLive({
+      onState: s => orb(s === 'ended' ? '' : s === 'listening' ? 'live' : s),
+      onUser: text => add({ role: 'user', text }),
+      onModel: text => { add({ role: 'bot', text, actions, via: 'live' }); actions = []; },
+      onAction: a => { actions.push(a); haptic(); },
+      onError: (msg, fatal) => {
+        live = null;
+        if (fatal && voice) { toast(`${msg} Using standard voice chat.`, 5000); listen(); }
+        else toast(msg, 5000);
+      },
+    });
+  } catch (e) {
+    live = null;
+    toast(`${e.message} Using standard voice chat.`, 5000);
+    if (voice) listen();
+  }
 }
 
 function orb(state) {
   const o = el?.querySelector('[data-orb]');
   if (!o) return;
   o.dataset.state = state;
-  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
+  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', live: 'live · just talk', connecting: 'connecting…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
 }
 
 export function closeAssistant() {
@@ -149,7 +178,7 @@ function bubble(m) {
   }
   const actions = (m.actions || []).map(a => html`<div class="receipt">${raw(icon('check'))}${a}</div>`).join('');
   const body = m.error ? html`<p class="err">${m.text}</p>` : m.text ? md(m.text) : '<span class="typing"><i></i><i></i><i></i></span>';
-  const via = m.via && !m.error ? `<div class="via">${{ mac: 'claude · your mac', gemini: 'gemini', anthropic: 'claude' }[m.via]}${m.ms ? ` · ${(m.ms / 1000).toFixed(1)}s` : ''}</div>` : '';
+  const via = m.via && !m.error ? `<div class="via">${{ mac: 'claude · your mac', gemini: 'gemini', anthropic: 'claude', live: 'gemini live · voice' }[m.via]}${m.ms ? ` · ${(m.ms / 1000).toFixed(1)}s` : ''}</div>` : '';
   return `<div class="msg bot">${actions}<div class="bot-text">${body}</div>${via}</div>`;
 }
 

@@ -25,7 +25,7 @@ function cleanSchema(s) {
   return out;
 }
 
-const functionDeclarations = () => toolDefinitions.map(t => {
+export const functionDeclarations = () => toolDefinitions.map(t => {
   const hasParams = Object.keys(t.input_schema.properties || {}).length > 0;
   return { name: t.name, description: t.description, ...(hasParams ? { parameters: cleanSchema(t.input_schema) } : {}) };
 });

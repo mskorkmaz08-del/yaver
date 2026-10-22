@@ -46,7 +46,7 @@ await page.route('https://generativelanguage.googleapis.com/**', async route => 
 });
 await page.goto('http://localhost:8765/');
 await page.waitForSelector('.sheet');
-await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForVoice00000'); await db.setSetting('voiceLang', 'en-US'); await db.setSetting('voiceStyle', 'device'); await db.setSetting('voiceV16', true); });
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForVoice00000'); await db.setSetting('voiceLang', 'en-US'); await db.setSetting('voiceStyle', 'device'); await db.setSetting('voiceV16', true); await db.setSetting('voiceEngine', 'standard'); });
 await page.reload();
 await page.waitForTimeout(500);
 await page.click('#fab');

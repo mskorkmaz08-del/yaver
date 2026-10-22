@@ -57,10 +57,11 @@ export function render(root, go) {
       <label class="field"><span>Bridge token</span><input name="macToken" type="password" autocomplete="off" value="${s('macToken', '')}" placeholder="shown when the bridge starts"></label>
       <label class="field"><span>Model on the Mac</span><select name="macModel">${raw([['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']].map(([v, l]) => `<option value="${v}" ${v === s('macModel', 'sonnet') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-test-mac>Test Mac connection</button></div>
-      <label class="field"><span>Reply voice</span><select name="voiceStyle">${raw([['device', 'iPhone voice · instant, offline (recommended)'], ['natural', 'Gemini voice · slower, can crackle']].map(([v, l]) => `<option value="${v}" ${v === s('voiceStyle', 'device') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Voice chat engine</span><select name="voiceEngine">${raw([['live', 'Live · talks directly, fastest (Gemini, free)'], ['standard', 'Standard · listen, write, read aloud (works with the Mac)']].map(([v, l]) => `<option value="${v}" ${v === s('voiceEngine', 'live') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Reply voice (standard engine)</span><select name="voiceStyle">${raw([['device', 'iPhone voice · instant, offline (recommended)'], ['natural', 'Gemini voice · slower, can crackle']].map(([v, l]) => `<option value="${v}" ${v === s('voiceStyle', 'device') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <label class="field"><span>iPhone voice</span><select name="deviceVoice" data-device-voices><option value="">Auto · British male, best installed</option></select></label>
       <p class="muted small">For a Jarvis-like voice, download a better one once: iPhone Settings → Accessibility → Spoken Content → Voices → English → <b>English (UK)</b> → <b>Arthur (Premium)</b> or <b>Daniel (Enhanced)</b>. Then reopen Yaver.</p>
-      <label class="field"><span>Gemini voice</span><select name="ttsVoice">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('ttsVoice', 'Charon') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Gemini voice (live engine and Gemini reply voice)</span><select name="ttsVoice">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('ttsVoice', 'Charon') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-try-voice>Hear this voice</button></div>
       <label class="field check"><span>Jarvis style (calm, measured British delivery)</span><input type="checkbox" name="jarvis" ${raw(s('jarvis', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Use Claude on the Mac in voice chat (smarter, a few seconds slower)</span><input type="checkbox" name="voiceMac" ${raw(s('voiceMac', false) ? 'checked' : '')}></label>
@@ -99,7 +100,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v17 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v18 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
