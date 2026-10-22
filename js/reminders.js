@@ -4,6 +4,7 @@ import * as db from './db.js';
 import * as D from './data.js';
 import { today, addDays, weekStart, sum, mins, money, timeHM, parseDay } from './util.js';
 import * as C from './course.js';
+import * as CT from './cetele.js';
 
 export function reminders() {
   const out = [];
@@ -13,6 +14,17 @@ export function reminders() {
   const course = C.ready() && C.active();
   const plan = course ? null : D.planStatus();
   const missedYesterday = (s.streak.perDay[addDays(today(), -1)] || 0) < need;
+
+  // Çetele first: the spiritual minimums come before everything else.
+  const ct = CT.day();
+  const left = ct.rows.filter(r => r.per !== 'week' && !r.met);
+  if (left.length) {
+    const cs = CT.streak();
+    const list = left.slice(0, 4).map(r => CT.isCheck(r) ? r.name : `${r.name} ${r.target - r.progress}${r.unit ? ' ' + r.unit : ''}`).join(', ');
+    out.push({ kind: 'cetele', text: `Çetele: ${list}${left.length > 4 ? ` +${left.length - 4} more` : ''} left${cs.current ? ` (${cs.current}-day streak)` : ''}.`, open: 'cetele' });
+  }
+  const weekLeft = ct.rows.filter(r => r.per === 'week' && !r.met && now.getDay() >= 4); // Thu–Sun
+  for (const r of weekLeft) out.push({ kind: 'cetele', text: `${r.name}: ${r.progress} of ${r.target} this week.`, open: 'cetele' });
 
   // Study
   if (!s.streak.studiedToday && missedYesterday && db.all('sessions').length) {

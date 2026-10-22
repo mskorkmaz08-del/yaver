@@ -1,5 +1,6 @@
 import * as db from '../db.js';
 import * as D from '../data.js';
+import * as CT from '../cetele.js';
 import { html, raw, money, mins, timeHM, today, fmtDay, dayKey, addDays, weekStart, toast } from '../util.js';
 import { ring } from '../ui.js';
 import { icon } from '../icons.js';
@@ -32,6 +33,8 @@ export function render(root, go) {
   const upcoming = D.upcomingEvents(4);
   const tasks = D.openTasks().slice(0, 6);
   const notes = reminders();
+  const ct = CT.day();
+  const cs = CT.streak();
   const now = new Date();
 
   root.innerHTML = html`
@@ -42,6 +45,12 @@ export function render(root, go) {
       </div>
       <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
     </header>
+
+    <button class="card" data-go="cetele">
+      <div class="card-head"><p class="label">çetele</p><span class="small muted mono">${ct.done}/${ct.total} today · ${cs.current} day streak</span></div>
+      <div class="bar"><div style="width:${raw(ct.total ? (ct.done / ct.total) * 100 : 0)}%"></div></div>
+      <div class="ct-home">${raw(ct.rows.map(r => html`<span class="${r.met ? 'met' : ''}">${r.name}${CT.isCheck(r) ? '' : ` ${r.progress}/${r.target}`}</span>`).join(''))}</div>
+    </button>
 
     ${raw(hasKey ? '' : html`
       <section class="setup">
@@ -63,7 +72,7 @@ export function render(root, go) {
     ${raw(notes.length ? html`
       <section class="card">
         <p class="label">today</p>
-        ${raw(notes.map(n => html`<${raw(n.open ? 'button' : 'div')} class="agenda-row" ${raw(n.open ? `data-open="${n.open}"` : '')}><span class="dot" style="background:${n.kind === 'money' ? 'var(--amber)' : n.kind === 'task' ? 'var(--red)' : 'var(--accent)'}"></span><span class="what"><span>${n.text}</span></span></${raw(n.open ? 'button' : 'div')}>`).join(''))}
+        ${raw(notes.map(n => html`<${raw(n.open ? 'button' : 'div')} class="agenda-row" ${raw(n.open ? `data-open="${n.open}"` : '')}><span class="dot" style="background:${n.kind === 'money' ? 'var(--amber)' : n.kind === 'task' ? 'var(--red)' : n.kind === 'cetele' ? 'var(--violet)' : 'var(--accent)'}"></span><span class="what"><span>${n.text}</span></span></${raw(n.open ? 'button' : 'div')}>`).join(''))}
       </section>` : '')}
 
     <div class="quick">
@@ -121,7 +130,7 @@ export function render(root, go) {
   `;
 
   root.querySelector('[data-ask]').onclick = e => {
-    if (e.target.closest('[data-brief]')) openAssistant('Brief me: what needs my attention today (meetings, study and roadmap, tasks, money, diet). Facts and next steps only.');
+    if (e.target.closest('[data-brief]')) openAssistant('Brief me: what needs my attention today (çetele minimums, meetings, study and roadmap, tasks, money, diet). Facts and next steps only.');
     else openAssistant();
   };
   root.querySelectorAll('[data-go]').forEach(b => (b.onclick = () => go(b.dataset.go)));

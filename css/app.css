@@ -345,12 +345,12 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 /* ---------- Tab bar + Yaver button ---------- */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(3, 1fr) 72px repeat(3, 1fr); align-items: start;
+  display: grid; grid-template-columns: repeat(4, 1fr) 64px repeat(4, 1fr); align-items: start;
   padding: 0 4px calc(var(--safe-b) + 4px);
   background: rgba(9, 9, 11, .94); border-top: 1px solid var(--line);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
-.tabbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 0 3px; font: 500 10px var(--mono); color: var(--dim); position: relative; }
+.tabbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 0 3px; font: 500 9px var(--mono); min-width: 0; color: var(--dim); position: relative; }
 .tabbar button .i { width: 22px; height: 22px; stroke-width: 1.6; }
 .tabbar button.active { color: var(--accent); }
 .tabbar button.active::before { content: ""; position: absolute; top: -1px; left: 30%; right: 30%; height: 2px; background: var(--accent); }
@@ -640,3 +640,28 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 @keyframes orb-breathe { 50% { transform: scale(.88); opacity: .7; } }
 @keyframes orb-talk { to { transform: scale(1.08); } }
 @media (prefers-reduced-motion: reduce) { .voice-orb .orb { animation: none !important; } }
+
+/* ---------- Çetele ---------- */
+.cetele { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.ct-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.ct-row.met { border-color: rgba(184, 243, 74, .35); }
+.ct-row.met .ct-main b { color: var(--accent); }
+.ct-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ct-main b { font-weight: 600; }
+.ct-main small { color: var(--muted); font-size: 12px; }
+.ct-step { display: flex; align-items: center; border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; }
+.ct-step button { min-width: 40px; height: 38px; padding: 0 8px; font: 600 15px var(--mono); color: var(--text); background: var(--surface-2); }
+.ct-step button:disabled { color: var(--dim); }
+.ct-step .ct-num { background: transparent; min-width: 46px; border-left: 1px solid var(--line-2); border-right: 1px solid var(--line-2); }
+.ct-step button:active:not(:disabled) { background: var(--accent-soft); }
+.ct-check { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--line-2); display: grid; place-items: center; color: transparent; }
+.ct-check .i { width: 20px; height: 20px; stroke-width: 2.4; }
+.ct-check[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ct-edit { display: flex; flex-direction: column; margin-bottom: 12px; }
+.ct-edit-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.ct-edit-row .link { text-align: left; color: var(--text); }
+.ct-edit-row small { color: var(--muted); }
+.ct-edit-row span { display: flex; gap: 6px; }
+.ct-home { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ct-home span { font: 500 11px var(--mono); padding: 4px 8px; border-radius: 4px; background: var(--track); color: var(--muted); }
+.ct-home span.met { background: var(--accent-soft); color: var(--accent); }

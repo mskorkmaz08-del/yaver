@@ -5,9 +5,9 @@
 // tombstone, so two devices can merge their copies record by record (sync.js).
 
 const DB_NAME = 'yaver';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 'tasks', 'milestones', 'chats', 'kv',
-  'courseProgress', 'cards', 'courseLessons', 'courseTests', 'tombstones'];
+  'courseProgress', 'cards', 'courseLessons', 'courseTests', 'ceteleItems', 'ceteleLog', 'tombstones'];
 
 // Settings that belong to this device only: never synced, never in backups' sync payload.
 export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'ttsVoice', 'voiceAuto', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel']);

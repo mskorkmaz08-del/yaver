@@ -7,6 +7,7 @@ import { today, addDays } from '../util.js';
 import { reminders } from '../reminders.js';
 import * as Places from '../places.js';
 import * as C from '../course.js';
+import * as CT from '../cetele.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -35,6 +36,38 @@ const TOOLS = [
     description: 'Snapshot of the user\'s day: spending, budget, today\'s and upcoming meetings, study time and streak, diet totals, open tasks. Call this first whenever the user asks how they are doing, wants a briefing, or you need context.',
     input_schema: obj({}),
     run: () => ({ ...D.overview(), reminders: reminders().map(r => r.text) }),
+  },
+  // ----- Çetele (daily spiritual minimums) -----
+  {
+    name: 'get_cetele',
+    description: 'The user\'s çetele: daily spiritual minimums (namaz, Quran pages, book pages, salawat, Jawshan, tahajjud, fasting…), what is done on a day, and the streak. Weekly items (like fasting) count Monday to that day.',
+    input_schema: obj({ date }),
+    run: ({ date: d = today() }) => CT.summary(d),
+  },
+  {
+    name: 'log_cetele',
+    description: 'Record çetele progress. Use add for "I read 3 pages of Quran" or "100 salawat" (adds to the day), set to correct a total, done=true for yes/no items like tahajjud or a fast. Item is matched by name in Turkish or English.',
+    input_schema: obj({ item: { type: 'string', description: 'e.g. Kur\'an, Quran, Salavat, Cevşen, Teheccüd, Oruç, Namaz' }, add: { type: 'number' }, set: { type: 'number' }, done: { type: 'boolean' }, date }, ['item']),
+    run: async ({ item, add, set, done, date: d = today() }) => {
+      const it = CT.find(item);
+      if (!it) return { error: `No çetele item like "${item}". Items: ${CT.items().map(i => i.name).join(', ')}` };
+      if (done !== undefined) await CT.setValue(it.id, done ? Math.max(1, CT.isCheck(it) ? 1 : it.target) : 0, d);
+      else if (set !== undefined) await CT.setValue(it.id, set, d);
+      else await CT.add(it.id, add ?? it.step ?? 1, d);
+      const r = CT.day(d).rows.find(x => x.id === it.id);
+      return { ok: true, item: it.name, value: CT.valueOn(it.id, d), progress: r.progress, target: it.target, met: r.met };
+    },
+  },
+  {
+    name: 'set_cetele_item',
+    description: 'Add a çetele item or change its minimum (e.g. "make Quran 10 pages a day", "add Tesbihat"). per is day or week. Leave unit empty for a simple done / not done item.',
+    input_schema: obj({ name: { type: 'string' }, target: { type: 'number' }, unit: { type: 'string' }, per: { type: 'string', enum: ['day', 'week'] }, remove: { type: 'boolean' } }, ['name']),
+    run: async ({ name, target, unit, per, remove }) => {
+      const it = CT.find(name);
+      if (remove) return it ? (await CT.archiveItem(it.id), { ok: true, removed: it.name }) : { error: 'not found' };
+      const row = await CT.saveItem({ id: it?.id, name: it?.name || name, target: target ?? it?.target ?? 1, unit: unit ?? it?.unit ?? '', per: per || it?.per || 'day', step: it?.step || 1 });
+      return { ok: true, item: row.name, target: row.target, unit: row.unit, per: row.per };
+    },
   },
   // ----- Money -----
   {
@@ -279,7 +312,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -294,6 +327,8 @@ export async function runTool(name, input) {
 
 export function describeAction(name, input) {
   switch (name) {
+    case 'log_cetele': return `Çetele · ${input.item}${input.done !== undefined ? (input.done ? ' done' : ' cleared') : input.set !== undefined ? ` = ${input.set}` : ` +${input.add ?? 1}`}`;
+    case 'set_cetele_item': return input.remove ? `Removed ${input.name} from çetele` : `Çetele · ${input.name}: ${input.target ?? ''} ${input.unit ?? ''} per ${input.per || 'day'}`.replace(/\s+/g, ' ');
     case 'add_expense': return `Added ${input.amount} · ${input.category}${input.note ? ` · ${input.note}` : ''}`;
     case 'add_meeting': return `Scheduled “${input.title}” · ${String(input.start).replace('T', ' ')}`;
     case 'update_meeting': return 'Updated a meeting';

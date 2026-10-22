@@ -114,6 +114,10 @@ Yaver can use either brain. **Gemini** (Google) has a free tier: get a key at ai
 
 `bridge/yaver-bridge.mjs` is a tiny web server you run on your MacBook. It receives Yaver's conversation and tool list, runs Claude Code in print mode (`claude -p`, no built-in tools, structured JSON output) under your Claude subscription, and returns the reply and any tool calls. To reach it from the iPhone, the bridge starts a free Cloudflare quick tunnel (`cloudflared`), which gives it a public HTTPS link, and prints a **connection code** (the link plus the token) that you paste into Yaver once. The link changes on every restart, so the bridge also posts it to a private ntfy.sh topic named after a hash of the token; when the old link stops answering, Yaver looks there and switches to the new one by itself. (Tailscale was tried first, but iPhones block an https page from talking to a plain http address, and Tailscale's https setup kept failing.) `js/ai/mac.js` is the phone side: before each text message it checks `/health` (remembered for 30 seconds), uses the Mac when it answers, and otherwise falls back to the chosen AI, usually Gemini. A token protects the bridge. Setup steps: `bridge/README.md`.
 
+## 3d. Çetele (added in v13)
+
+Çetele is the daily list of spiritual minimums (namaz, Quran and book pages, salawat, Jawshan, tahajjud, weekly fasting), and it comes first in the app: it has its own tab, the top card on Home, and the first reminder of the day. `js/cetele.js` holds the logic. Items live in the `ceteleItems` store, and each day's count is one `ceteleLog` row named `<item>:<day>`. A day counts toward the streak when every daily minimum is met; weekly items (fasting) add up from Monday. The AI can read it (`get_cetele`), log to it (`log_cetele`, e.g. "read 4 pages of Quran") and change the list (`set_cetele_item`). It syncs between devices like every other record.
+
 ## 4. Offline and updates
 
 `sw.js` is a **service worker**: a small script Safari runs in the background for the app. On first launch it saves a copy of every app file. After that:
@@ -156,7 +160,7 @@ yaver/
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
     ├── icons.js            Line icons
-    ├── views/              One file per screen: home, study, calendar, money, diet, map, settings
+    ├── views/              One file per screen: home, çetele, study, calendar, money, diet, map, settings
     └── ai/
         ├── provider.js     Picks Gemini (free) or Claude; saves and tests keys
         ├── gemini.js       Talks to Google's Gemini API; same agent loop
@@ -227,7 +231,7 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 ```
 
 - **Encryption.** Before anything leaves the device it is gzipped and encrypted with AES-GCM 256. The key comes from your sync passphrase (PBKDF2-SHA-256, 310,000 rounds, random salt), with a fresh random IV on every upload. GitHub only ever stores ciphertext. A wrong passphrase stops with a clear message and changes nothing.
-- **What syncs:** all your records (money, meetings, study, diet, tasks, course progress, cards, tests, prepared weeks) and shared settings. **What never syncs:** API keys, the sync token and passphrase, which AI you use, voice settings, and the chat history. They also never go into backups or to the AI.
+- **What syncs:** all your records (çetele, money, meetings, study, diet, tasks, course progress, cards, tests, prepared weeks) and shared settings. **What never syncs:** API keys, the sync token and passphrase, which AI you use, voice settings, and the chat history. They also never go into backups or to the AI.
 - **Counters** (water glasses, problems solved, card reviews) are kept per device and added up, so two devices tapping "+1" at the same time both count.
 - **When it runs:** 10 seconds after a change, when you come back to the app, when you come back online, and from *Sync now*. A small dot shows the state (green synced, blue syncing, grey offline, red problem).
 - **Safety nets:** before the first sync on a device that already has data, Yaver keeps a local backup (the last 3). A device with no data never uploads over a synced copy that has data without asking. If the other device pushed in the same moment, Yaver pulls again and retries.

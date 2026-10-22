@@ -11,7 +11,8 @@ export const FILES = {
   'css/app.css': 'All app styling: tokens (near-black, one lime accent, mono numbers), cards, sheets, chat, course screens, laptop layout.',
   'js/app.js': 'Entry point: opens the database, sorts AI keys, starts the assistant, routes between screens, redraws on data change, first-run sheet.',
   'js/db.js': 'IndexedDB wrapper. Loads every store into memory at start; writes go to memory and disk together, stamped with updatedAt and deviceId; deletes leave tombstones for sync.',
-  'js/data.js': 'Business logic for money, meetings, study, roadmap, diet and tasks. Screens and AI tools both call these functions, so numbers always match.',
+  'js/cetele.js': 'Çetele logic: default items, daily and weekly progress, streak (a day counts when every daily minimum is met), item matching for the AI tools.',
+  'js/data.js': 'Business logic for money, meetings, study, roadmap, diet and tasks (plus the çetele summary in the overview). Screens and AI tools both call these functions, so numbers always match.',
   'js/util.js': 'Dates, money formatting, HTML escaping, bottom-sheet forms, toasts, haptics, photo shrinking, Markdown.',
   'js/ui.js': 'Small SVG drawing helpers: progress rings, bar lists, columns, empty states.',
   'js/forms.js': 'Add/edit sheets for expenses, meetings, study sessions, meals and tasks.',
@@ -36,6 +37,7 @@ export const FILES = {
   'js/views/lesson.js': 'Lesson runner: step-by-step lesson with timer, hints, solutions, tutor, review cards and grading.',
   'js/views/calendar.js': 'Meetings: week strip, day agenda, free slots, send to iPhone Calendar.',
   'js/views/money.js': 'Money: month total, budget pace, categories, recent expenses.',
+  'js/views/cetele.js': 'Çetele: daily spiritual minimums with +/− counters and done checks, day switcher, streak, and the edit-list sheet.',
   'js/views/diet.js': 'Diet: calories and macro rings, meals by type, water.',
   'js/views/map.js': 'Map: Leaflet map, search, category chips, results with distance, locate button.',
   'js/views/settings.js': 'Settings: AI (Gemini, Claude, Mac bridge), you, goals, sync, data export/import/erase, install help.',
@@ -52,6 +54,7 @@ export const FILES = {
   'tests/smoke.mjs': 'Playwright end-to-end test: onboarding, every screen, map, timer, Gemini and Claude agent loops (mocked), key sorting.',
   'tests/mac-bridge.mjs': 'Mac-first routing and Gemini fallback against the real bridge with a fake Claude Code.',
   'tests/voice-chat.mjs': 'Voice chat loop with fake speech recognition and synthesis: hears the request, reads the reply aloud without markdown, listens again; natural Gemini voice with mocked audio.',
+  'tests/cetele.mjs': 'Çetele screen, streak, weekly fasting, Home card, reminder and the log_cetele AI tool.',
   'tests/mac-connect.mjs': 'Connection code paste and auto-reconnect after the bridge link changes, with fake cloudflared and ntfy.',
   'tests/course-smoke.mjs': 'Course screens on phone and 1440×900 laptop with a faked clock.',
   'tests/sync-test.mjs': 'Sync between three simulated devices against a mocked GitHub.',
@@ -81,13 +84,13 @@ export const LAYERS = [
     mods: ['js/db.js', 'sw.js'] },
   { id: 'logic', name: 'Logic', tag: 'single source of truth', color: '#5aa9ff',
     text: 'Pure functions over the data: budgets, streaks, free slots, course pace, spaced repetition, reminders. Screens and AI tools both call these, so a number means the same thing everywhere.',
-    mods: ['js/data.js', 'js/course.js', 'js/reminders.js', 'js/places.js', 'js/sync.js', 'js/crypto.js'] },
+    mods: ['js/data.js', 'js/cetele.js', 'js/course.js', 'js/reminders.js', 'js/places.js', 'js/sync.js', 'js/crypto.js'] },
   { id: 'ai', name: 'AI agent', tag: 'tools · routing · providers', color: '#b8f34a',
     text: 'The chat runs an agent loop: send the conversation and tool list to a model, run the tool calls it asks for on the phone, send results back, repeat until it answers in text.',
     mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
   { id: 'ui', name: 'Screens', tag: 'views · router', color: '#ffb547',
     text: 'One file per screen, each with a render function that draws from memory. app.js routes between them and redraws the current one whenever data changes.',
-    mods: ['js/app.js', 'js/views/home.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
+    mods: ['js/app.js', 'js/views/home.js', 'js/views/cetele.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
 ];
 
 // Services outside the device, placed around the 3D map.
@@ -117,6 +120,8 @@ export const STORE_FIELDS = {
   cards: 'lessonId, track, front, back, box, due, lapses, history',
   courseLessons: 'AI-generated lessons for weeks without a bundled file',
   courseTests: 'week, date, scores',
+  ceteleItems: 'name, unit, target, per (day | week), step (what + adds), order, archived',
+  ceteleLog: 'id "<item>:<day>", item, day, value',
   tombstones: 'store, key, deletedAt: tells other devices a record was deleted',
 };
 
@@ -202,6 +207,7 @@ export const TESTS = [
   ['tests/sync-test.mjs', 'Three-device sync with mocked GitHub'],
   ['tests/mac-bridge.mjs', 'Mac-first routing and fallback'],
   ['tests/mac-connect.mjs', 'Connection code and auto-reconnect'],
+  ['tests/cetele.mjs', 'Çetele page, streak and AI tool'],
   ['tests/voice-chat.mjs', 'Voice chat loop'],
   ['tests/validate-course.mjs', 'Course data validation'],
   ['tests/run-lesson-code.mjs', 'Runs lesson code blocks'],

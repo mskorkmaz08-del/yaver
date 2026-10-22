@@ -10,6 +10,8 @@ import * as money from './views/money.js';
 import * as calendar from './views/calendar.js';
 import * as study from './views/study.js';
 import * as diet from './views/diet.js';
+import * as cetele from './views/cetele.js';
+import * as CT from './cetele.js';
 import * as settings from './views/settings.js';
 import * as mapView from './views/map.js';
 import * as courseView from './views/course.js';
@@ -20,9 +22,9 @@ import { initSync } from './sync.js';
 import { currencyOptions } from './data.js';
 import { icon } from './icons.js';
 
-const TABS = { home: ['home', 'home'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'], settings: ['settings', 'settings'] };
+const TABS = { home: ['home', 'home'], cetele: ['moon', 'çetele'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'], settings: ['settings', 'settings'] };
 
-const VIEWS = { home, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView };
+const VIEWS = { home, cetele, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView };
 // Screens that belong to a tab for highlighting.
 const PARENT = { course: 'study', lesson: 'study' };
 let current = 'home';
@@ -82,6 +84,7 @@ function takeConnectLink() {
 async function start() {
   await db.openDB();
   await sortKeys();
+  await CT.seed();
   initAssistant();
 
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => {

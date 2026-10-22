@@ -1,6 +1,7 @@
 // Domain logic shared by the screens and by Claude's tools, so both always
 // agree on what "today's spending" or "the study streak" means.
 import * as db from './db.js';
+import * as CT from './cetele.js';
 import { today, addDays, monthKey, sum, weekStart, dayKey, localInput } from './util.js';
 
 export const EXPENSE_CATEGORIES = ['Food', 'Groceries', 'Transport', 'Shopping', 'Bills', 'Health', 'Education', 'Entertainment', 'Coffee', 'Other'];
@@ -266,6 +267,7 @@ export function overview() {
     tasks: openTasks().slice(0, 10).map(t => ({ id: t.id, title: t.title, due: t.due })),
     plan: (p => p && { title: p.title, week: p.week, phase: p.phase.name, phaseProgress: `${p.phaseDone}/${p.phaseTotal}`, weeklyHoursTarget: p.weeklyHours, minimumDay: p.minimumDay, template: p.template })(planStatus()),
     practiceToday: { problems: practiceOn('problems'), anki: practiceOn('anki') },
+    cetele: CT.summary(),
     roadmap: roadmap().map(r => ({ subject: r.subject, done: r.done, total: r.total, next: r.items.find(x => !x.done)?.title })),
   };
 }
