@@ -2,6 +2,7 @@ import * as db from '../db.js';
 import { html, raw, esc, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
 import { testMac, useCode } from '../ai/mac.js';
+import { refreshWake } from '../ai/wake.js';
 import { VOICES, speakNatural, unlockAudio, deviceVoices, pickDeviceVoice } from '../ai/voice.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
@@ -65,6 +66,8 @@ export function render(root, go) {
       <div class="btn-row"><button type="button" class="btn ghost" data-try-voice>Hear this voice</button></div>
       <label class="field check"><span>Jarvis style (calm, measured British delivery)</span><input type="checkbox" name="jarvis" ${raw(s('jarvis', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Use Claude on the Mac in voice chat (smarter, a few seconds slower)</span><input type="checkbox" name="voiceMac" ${raw(s('voiceMac', false) ? 'checked' : '')}></label>
+      <label class="field check"><span>Wake word: say “Yaver” while the app is open</span><input type="checkbox" name="wakeWord" ${raw(s('wakeWord', true) ? 'checked' : '')}></label>
+      <p class="muted small">Works while Yaver is on screen (iPhones don't let web apps listen in the background). From anywhere: say <b>“Hey Siri, open Yaver”</b>, then “Yaver”.</p>
       <label class="field check"><span>Voice chat listens again by itself</span><input type="checkbox" name="voiceAuto" ${raw(s('voiceAuto', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
@@ -100,7 +103,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v18 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v19 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
@@ -123,6 +126,8 @@ export function render(root, go) {
     await db.setSetting('voiceAuto', fd.has('voiceAuto'));
     await db.setSetting('jarvis', fd.has('jarvis'));
     await db.setSetting('voiceMac', fd.has('voiceMac'));
+    await db.setSetting('wakeWord', fd.has('wakeWord'));
+    refreshWake();
   };
   form.onsubmit = async e => { e.preventDefault(); try { await saveForm(); toast('Saved'); render(root, go); } catch (err) { toast(err.message, 5000); } };
   const connect = async code => {

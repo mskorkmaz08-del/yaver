@@ -5,6 +5,8 @@ import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
 import { macConfigured, macOnline, runTurnMac } from './mac.js';
 import { startLive, liveAvailable } from './live.js';
+import { pauseWake, resumeWake } from './wake.js';
+import { audioCtx } from './voice.js';
 import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
@@ -100,6 +102,12 @@ export function openAssistant(prompt) {
 }
 
 // Voice chat: one big button; each reply is read out and then Yaver listens again.
+// Called by the wake word: open the chat straight into voice.
+export function startVoiceChat() {
+  if (!el.classList.contains('open')) openAssistant();
+  if (!voice) setVoice(true);
+}
+
 function setVoice(on) {
   voice = on;
   el.classList.toggle('voice', on);
@@ -107,10 +115,11 @@ function setVoice(on) {
   el.querySelector('[data-voice]').setAttribute('aria-pressed', String(on));
   haptic();
   if (on) {
+    pauseWake();
     unlockSpeech();
     if (db.setting('voiceEngine', 'live') === 'live' && liveAvailable()) startLiveChat();
     else listen();
-  } else { live?.stop(); live = null; hush(); listen.stop?.(); orb(''); }
+  } else { live?.stop(); live = null; hush(); listen.stop?.(); orb(''); resumeWake(); }
 }
 
 // Live engine: the model hears and speaks directly; each finished turn is added to the chat.
@@ -123,6 +132,7 @@ async function startLiveChat() {
       onUser: text => add({ role: 'user', text }),
       onModel: text => { add({ role: 'bot', text, actions, via: 'live' }); actions = []; },
       onAction: a => { actions.push(a); haptic(); },
+      onIdle: () => { live = null; if (voice) setVoice(false); },
       onError: (msg, fatal) => {
         live = null;
         if (fatal && voice) { toast(`${msg} Using standard voice chat.`, 5000); listen(); }
@@ -133,6 +143,12 @@ async function startLiveChat() {
     live = null;
     toast(`${e.message} Using standard voice chat.`, 5000);
     if (voice) listen();
+    return;
+  }
+  // Started by the wake word before any tap: iOS keeps sound off until one tap.
+  if (audioCtx().state !== 'running') {
+    orb('tap');
+    document.addEventListener('pointerdown', () => { audioCtx().resume(); orb('live'); }, { once: true });
   }
 }
 
@@ -140,7 +156,7 @@ function orb(state) {
   const o = el?.querySelector('[data-orb]');
   if (!o) return;
   o.dataset.state = state;
-  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', live: 'live · just talk', connecting: 'connecting…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
+  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', tap: 'tap once so I can speak', live: 'live · just talk', connecting: 'connecting…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
 }
 
 export function closeAssistant() {
@@ -350,6 +366,7 @@ function setupVoice(btn, input) {
   const start = () => {
     if (rec || busy) return;
     hush();
+    pauseWake();
     suspendAudio();
     rec = new SR();
     rec.lang = db.setting('voiceLang', navigator.language || 'en-US');
@@ -374,6 +391,7 @@ function setupVoice(btn, input) {
     };
     rec.onend = () => {
       clearTimeout(quiet);
+      if (!voice) resumeWake();
       if (!finalText.trim()) finalText = input.value; // stopped early: use what was heard so far
       btn.classList.remove('listening');
       rec = null;

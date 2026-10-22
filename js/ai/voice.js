@@ -36,8 +36,12 @@ export function pickDeviceVoice(lang = 'en-GB') {
 }
 
 // iOS lets audio start only inside a tap; call this from one, then later replies can play.
+// One shared audio output for the whole app: once a tap has unlocked it, later
+// replies and live sessions can play without another tap.
+export const audioCtx = () => (ctx ||= new (window.AudioContext || window.webkitAudioContext)());
+
 export function unlockAudio() {
-  ctx ||= new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx();
   if (ctx.state === 'suspended') ctx.resume();
   const b = ctx.createBuffer(1, 1, 24000), s = ctx.createBufferSource();
   s.buffer = b; s.connect(ctx.destination); s.start();

@@ -2,9 +2,11 @@
 // re-draws it whenever data changes (from a form or from Claude).
 import * as db from './db.js';
 import { $, sheet, toast } from './util.js';
-import { initAssistant, openAssistant } from './ai/assistant.js';
+import { initAssistant, openAssistant, startVoiceChat } from './ai/assistant.js';
 import { saveKey, sortKeys } from './ai/provider.js';
 import { useCode } from './ai/mac.js';
+import { initWake } from './ai/wake.js';
+import { unlockAudio } from './ai/voice.js';
 import * as home from './views/home.js';
 import * as money from './views/money.js';
 import * as calendar from './views/calendar.js';
@@ -106,6 +108,10 @@ async function start() {
   // Chrome/Edge on a computer: keep the install prompt for the button in Settings.
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.yaverInstall = e; });
   initSync();
+  // Say "Yaver" while the app is open to start voice chat. The first tap anywhere
+  // also unlocks sound, so a wake-word session can speak straight away.
+  initWake(startVoiceChat);
+  document.addEventListener('pointerdown', () => { try { unlockAudio(); } catch {} }, { once: true, capture: true });
   courseView.initSlotAlerts();
 
   // Redraw after any change, batched so a burst of writes draws once.

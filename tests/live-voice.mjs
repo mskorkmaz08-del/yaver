@@ -1,5 +1,5 @@
 // Live voice: fake microphone (Chromium flags) and a fake Gemini Live WebSocket.
-// Checks the setup message, 16 kHz audio streaming, a tool call (log_cetele),
+// Starts from the wake word (fake recognition hears "hey Yaver"). Checks the setup message, 16 kHz audio streaming, a tool call (log_cetele),
 // the model's audio playing, and both turns landing in the chat.
 import { chromium, devices } from 'playwright';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'] });
@@ -34,6 +34,11 @@ await page.addInitScript(() => {
     close() { this.readyState = 3; }
   }
   window.WebSocket = FakeWS;
+  window.__wake = 0;
+  window.SpeechRecognition = window.webkitSpeechRecognition = class {
+    start() { window.__wake++; if (window.__wake === 2) setTimeout(() => this.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: 'hey Yaver' }], { isFinal: false })] }), 100); else setTimeout(() => this.onend?.(), 300); }
+    stop() { this.onend?.(); } abort() { this.onend?.(); }
+  };
 });
 await page.route('https://generativelanguage.googleapis.com/**', route => route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' }, body: JSON.stringify({ models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }, { name: 'models/gemini-live-test', supportedGenerationMethods: ['bidiGenerateContent'] }] }) }));
 await page.goto('http://localhost:8765/');
@@ -41,8 +46,8 @@ await page.waitForSelector('.sheet');
 await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForLive000000'); });
 await page.reload();
 await page.waitForTimeout(500);
-await page.click('#fab');
-await page.click('[data-voice]');
+await page.mouse.click(5, 300); // any tap unlocks sound
+await page.waitForFunction(() => document.querySelector('.chat-wrap.open.voice'), null, { timeout: 10000 });
 await page.waitForFunction(() => document.querySelectorAll('.msg.bot').length >= 1, null, { timeout: 15000 });
 await page.waitForTimeout(400);
 const r = await page.evaluate(async () => ({
@@ -53,6 +58,7 @@ const r = await page.evaluate(async () => ({
 }));
 console.log(JSON.stringify(r));
 const checks = [
+  ['wake word opened voice chat', r.msgs.length >= 2],
   ['picked a live model from the list', r.live.model === 'models/gemini-live-test'],
   ['setup has audio output, voice and tools', r.live.modal?.[0] === 'AUDIO' && r.live.voice === 'Charon' && r.live.tools > 20],
   ['streams 16 kHz mic audio', r.live.mime === 'audio/pcm;rate=16000' && r.live.audio >= 5],
