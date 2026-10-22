@@ -2,6 +2,7 @@ import * as db from '../db.js';
 import { html, raw, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
 import { testMac, useCode } from '../ai/mac.js';
+import { VOICES, speakNatural, unlockAudio } from '../ai/voice.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
@@ -56,6 +57,9 @@ export function render(root, go) {
       <label class="field"><span>Bridge token</span><input name="macToken" type="password" autocomplete="off" value="${s('macToken', '')}" placeholder="shown when the bridge starts"></label>
       <label class="field"><span>Model on the Mac</span><select name="macModel">${raw([['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']].map(([v, l]) => `<option value="${v}" ${v === s('macModel', 'sonnet') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
       <div class="btn-row"><button type="button" class="btn ghost" data-test-mac>Test Mac connection</button></div>
+      <label class="field"><span>Reply voice</span><select name="voiceStyle">${raw([['natural', 'Natural · Gemini voice (free, uses your Gemini key)'], ['device', 'iPhone voice · works offline']].map(([v, l]) => `<option value="${v}" ${v === s('voiceStyle', 'natural') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <label class="field"><span>Natural voice</span><select name="voiceName">${raw(VOICES.map(([v, l]) => `<option value="${v}" ${v === s('voiceName', 'Kore') ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
+      <div class="btn-row"><button type="button" class="btn ghost" data-try-voice>Hear this voice</button></div>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
 
@@ -90,7 +94,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v9 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v10 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
@@ -125,6 +129,14 @@ export function render(root, go) {
   root.querySelector('[data-test]').onclick = async () => {
     await saveForm();
     try { toast(await testCurrent()); } catch (e) { toast(e.message, 4000); }
+  };
+  root.querySelector('[data-try-voice]').onclick = async e => {
+    unlockAudio();
+    try { await saveForm(); } catch {}
+    e.target.disabled = true;
+    try { await speakNatural(`Hi${db.setting('userName', '') ? ' ' + db.setting('userName') : ''}, I'm Yaver. This is how I'll sound when I answer you.`); }
+    catch { toast('Could not get the natural voice. Check your Gemini key, or the free voice limit may be used up for today.', 5000); }
+    e.target.disabled = false;
   };
   root.querySelector('[data-test-mac]').onclick = async () => {
     try { await saveForm(); } catch (e) { return toast(e.message, 5000); }

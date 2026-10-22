@@ -4,6 +4,7 @@ import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
 import { macConfigured, macOnline, runTurnMac } from './mac.js';
+import { naturalOn, speakNatural, unlockAudio, stopAudio, audioPlaying } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 
@@ -76,7 +77,7 @@ export function initAssistant() {
   el.querySelector('[data-voice]').onclick = () => setVoice(!voice);
   el.querySelector('[data-orb]').onclick = () => {
     if (busy) return abort?.abort();
-    if (speechSynthesis?.speaking) { speechSynthesis.cancel(); return listen(); }
+    if (speaking || speechSynthesis?.speaking || audioPlaying()) { hush(); return listen(); }
     listen();
   };
   el.addEventListener('click', e => {
@@ -103,21 +104,21 @@ function setVoice(on) {
   el.querySelector('[data-voice]').setAttribute('aria-pressed', String(on));
   haptic();
   if (on) { unlockSpeech(); listen(); }
-  else { speechSynthesis?.cancel?.(); listen.stop?.(); orb(''); }
+  else { hush(); listen.stop?.(); orb(''); }
 }
 
 function orb(state) {
   const o = el?.querySelector('[data-orb]');
   if (!o) return;
   o.dataset.state = state;
-  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', thinking: 'thinking…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
+  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
 }
 
 export function closeAssistant() {
   if (voice) setVoice(false);
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
-  speechSynthesis?.cancel?.();
+  hush();
 }
 
 function autosize(t) {
@@ -167,7 +168,7 @@ async function send(textIn) {
   const input = el.querySelector('[data-input]');
   input.value = '';
   autosize(input);
-  speechSynthesis?.cancel?.();
+  hush();
 
   // Each AI keeps its own history format; switching AI starts that one's context fresh.
   const asked = text || 'What do you see? If it is food, log it as a meal; if it is a receipt, log the expense.';
@@ -230,7 +231,7 @@ async function send(textIn) {
   el.classList.remove('busy');
   el.querySelector('[data-send]').innerHTML = icon('send');
   setStatus('');
-  if (voice && !speechSynthesis?.speaking && !speechSynthesis?.pending) orb('');
+  if (voice && !speaking) orb('');
   // Long conversations: start a fresh context (the screen keeps the old bubbles).
   // We never edit earlier turns in place, because the model's saved reasoning is tied to them.
   if (history.length > 80) { history.length = 0; chat.view.push({ role: 'bot', text: '`context reset` Your data is kept; earlier messages in this chat are not.', actions: [] }); }
@@ -238,29 +239,51 @@ async function send(textIn) {
   render();
 }
 
-// iOS only speaks after a tap; an empty utterance during the tap unlocks later replies.
+let speaking = false, gen = 0;
+const hush = () => { gen++; speechSynthesis?.cancel?.(); stopAudio(); speaking = false; };
+
+// iOS only plays sound after a tap; doing it once during the tap unlocks later replies.
 function unlockSpeech() {
+  try { unlockAudio(); } catch {}
   if (!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(' ');
   u.volume = 0;
   speechSynthesis.speak(u);
 }
 
-// Strip markdown and code so it reads naturally, then pick the best local voice.
-function speak(text, done) {
-  if (!('speechSynthesis' in window)) return done?.();
-  speechSynthesis.cancel();
+// Strip markdown and code so it reads naturally. Natural (Gemini) voice first,
+// the phone's own voice if that isn't available.
+async function speak(text, done) {
+  hush();
   const clean = text.replace(/```[\s\S]*?```/g, ' (code on screen) ').replace(/`([^`]*)`/g, '$1')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_#>|]/g, '').replace(/^\s*[-•]\s+/gm, '').slice(0, 2000);
+  speaking = true;
+  const my = gen, stale = () => my !== gen;
+  if (naturalOn()) {
+    orb('voicing');
+    try {
+      await speakNatural(clean, { onStart: () => orb('speaking'), cancelled: stale });
+      if (stale()) return; // interrupted
+      speaking = false; orb(''); return done?.();
+    } catch (e) {
+      if (stale()) return;
+      toast('Natural voice is unavailable right now (free limit or no connection); using the iPhone voice.', 3500);
+    }
+  }
+  speakDevice(clean, () => { if (stale()) return; speaking = false; orb(''); done?.(); });
+}
+
+function speakDevice(clean, done) {
+  if (!('speechSynthesis' in window)) return done();
   const pref = db.setting('voiceLang', navigator.language || 'en-US');
-  const lang = /[çğıöşüÇĞİÖŞÜ]/.test(text) ? 'tr-TR' : /[а-яё]/i.test(text) ? (pref.startsWith('kk') ? 'kk-KZ' : 'ru-RU') : pref.startsWith('en') ? pref : 'en-US';
+  const lang = /[çğıöşüÇĞİÖŞÜ]/.test(clean) ? 'tr-TR' : /[а-яё]/i.test(clean) ? (pref.startsWith('kk') ? 'kk-KZ' : 'ru-RU') : pref.startsWith('en') ? pref : 'en-US';
   const u = new SpeechSynthesisUtterance(clean);
   u.lang = lang;
   const voices = speechSynthesis.getVoices().filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()));
   u.voice = voices.find(v => /premium|enhanced|neural|natural/i.test(v.name)) || voices.find(v => v.lang.replace('_', '-') === lang) || voices[0] || null;
   u.rate = 1.05;
   u.onstart = () => orb('speaking');
-  u.onend = u.onerror = () => { orb(''); done?.(); };
+  u.onend = u.onerror = done;
   speechSynthesis.speak(u);
 }
 
@@ -275,7 +298,7 @@ function setupVoice(btn, input) {
   let rec = null;
   const start = () => {
     if (rec || busy) return;
-    speechSynthesis?.cancel?.();
+    hush();
     rec = new SR();
     rec.lang = db.setting('voiceLang', navigator.language || 'en-US');
     rec.interimResults = true;

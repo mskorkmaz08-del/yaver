@@ -27,6 +27,7 @@ export const FILES = {
   'js/ai/tools.js': 'Every tool the AI can call: name, description, JSON schema and the function that runs it on the phone.',
   'js/ai/claude.js': 'Anthropic API client (official SDK): system prompt, agent loop with streaming, web search, prompt caching, fallbacks, error messages.',
   'js/ai/gemini.js': 'Google Gemini client over REST: same agent loop, tools translated to function declarations, auto-picks a stable free Flash model.',
+  'js/ai/voice.js': 'Natural reply voice: Gemini text-to-speech (free tier, same key), picks a TTS model the key can use, plays the 24 kHz PCM through Web Audio, and falls back to the iPhone voice for 10 minutes when it fails.',
   'js/ai/mac.js': 'Client for the bridge on the Mac: connection code, health check (cached 30 s), finding the new link after a restart via ntfy, and an agent loop where the Mac thinks and the phone runs the tools.',
   'js/ai/provider.js': 'Chooses Gemini or Claude, sorts keys into the right slot by prefix, saves and tests keys.',
   'js/views/home.js': 'Home: AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
@@ -50,7 +51,7 @@ export const FILES = {
   'README.md': 'Repo front page: what Yaver is, install, test.',
   'tests/smoke.mjs': 'Playwright end-to-end test: onboarding, every screen, map, timer, Gemini and Claude agent loops (mocked), key sorting.',
   'tests/mac-bridge.mjs': 'Mac-first routing and Gemini fallback against the real bridge with a fake Claude Code.',
-  'tests/voice-chat.mjs': 'Voice chat loop with fake speech recognition and synthesis: hears the request, reads the reply aloud without markdown, listens again.',
+  'tests/voice-chat.mjs': 'Voice chat loop with fake speech recognition and synthesis: hears the request, reads the reply aloud without markdown, listens again; natural Gemini voice with mocked audio.',
   'tests/mac-connect.mjs': 'Connection code paste and auto-reconnect after the bridge link changes, with fake cloudflared and ntfy.',
   'tests/course-smoke.mjs': 'Course screens on phone and 1440×900 laptop with a faked clock.',
   'tests/sync-test.mjs': 'Sync between three simulated devices against a mocked GitHub.',
@@ -83,7 +84,7 @@ export const LAYERS = [
     mods: ['js/data.js', 'js/course.js', 'js/reminders.js', 'js/places.js', 'js/sync.js', 'js/crypto.js'] },
   { id: 'ai', name: 'AI agent', tag: 'tools · routing · providers', color: '#b8f34a',
     text: 'The chat runs an agent loop: send the conversation and tool list to a model, run the tool calls it asks for on the phone, send results back, repeat until it answers in text.',
-    mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
+    mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
   { id: 'ui', name: 'Screens', tag: 'views · router', color: '#ffb547',
     text: 'One file per screen, each with a render function that draws from memory. app.js routes between them and redraws the current one whenever data changes.',
     mods: ['js/app.js', 'js/views/home.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
@@ -92,7 +93,7 @@ export const LAYERS = [
 // Services outside the device, placed around the 3D map.
 export const SERVICES = [
   { id: 'pages', name: 'GitHub Pages', role: 'Serves the app files. Never sees your data.', proto: 'HTTPS GET, static files', layer: 'store' },
-  { id: 'gemini', name: 'Google Gemini', role: 'Free AI. Called with your key from the phone.', proto: 'REST streamGenerateContent (SSE)', layer: 'ai' },
+  { id: 'gemini', name: 'Google Gemini', role: 'Free AI and the natural reply voice (text-to-speech). Called with your key from the phone.', proto: 'REST streamGenerateContent (SSE)', layer: 'ai' },
   { id: 'anthropic', name: 'Anthropic API', role: 'Paid Claude with web search and caching.', proto: 'Messages API via official SDK (SSE)', layer: 'ai' },
   { id: 'mac', name: 'Mac bridge', role: 'Claude Code on your Mac, under your subscription.', proto: 'HTTPS JSON /health, /chat', layer: 'ai' },
   { id: 'cloudflare', name: 'Cloudflare Tunnel', role: 'Free quick tunnel the bridge opens, giving the Mac a public HTTPS link (changes on each restart).', proto: 'cloudflared, https://*.trycloudflare.com', layer: 'ai' },
@@ -173,7 +174,7 @@ export const STACK = [
 export const BROWSER_APIS = [
   ['IndexedDB', 'all data'], ['Service Worker + Cache Storage', 'offline'], ['Fetch + ReadableStream', 'streaming AI replies (SSE)'],
   ['Web Crypto (subtle)', 'sync encryption'], ['CompressionStream', 'gzip before encryption'], ['Geolocation', 'nearby places'],
-  ['Web Speech (recognition, synthesis)', 'voice in, read aloud, voice chat loop'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'],
+  ['Web Speech (recognition, synthesis)', 'voice in, read aloud, voice chat loop'], ['Web Audio', 'plays the natural Gemini voice'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'],
   ['StorageManager.persist()', 'ask iOS not to evict data'],
 ];
 

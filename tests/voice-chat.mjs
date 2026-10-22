@@ -1,5 +1,6 @@
 // Voice chat: fake speech recognition and speech synthesis, mocked Gemini.
-// Checks speak → reply read aloud → listens again, and the voice prompt hint.
+// Checks speak → reply read aloud → listens again, the voice prompt hint, and the
+// natural Gemini voice (mocked PCM audio) with fallback to the phone voice.
 import { chromium, devices } from 'playwright';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
 const ctx = await browser.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
@@ -8,7 +9,7 @@ const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 await page.addInitScript(() => {
   window.__said = []; window.__spoken = []; window.__listens = 0;
-  const queue = ['log 20 minutes of python', ''];
+  const queue = ['log 20 minutes of python', '', 'what is a list', ''];
   window.SpeechRecognition = window.webkitSpeechRecognition = class {
     start() {
       window.__listens++;
@@ -26,17 +27,22 @@ await page.addInitScript(() => {
   Object.defineProperty(window, 'speechSynthesis', { value: synth });
   window.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
 });
-let lastBody = '';
+let lastBody = '', ttsCalls = 0;
 await page.route('https://generativelanguage.googleapis.com/**', async route => {
   const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
   if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
-  if (route.request().url().includes('/models?')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }] }) });
+  if (route.request().url().includes('/models?')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ models: [{ name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] }, { name: 'models/gemini-2.5-flash-preview-tts', supportedGenerationMethods: ['generateContent'] }] }) });
+  if (route.request().url().includes('-tts:generateContent')) {
+    ttsCalls++;
+    const pcm = Buffer.alloc(2400 * 2); // 0.1 s of silence at 24 kHz
+    return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/L16;codec=pcm;rate=24000', data: pcm.toString('base64') } }] } }] }) });
+  }
   lastBody = route.request().postData() || '';
   await route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/event-stream' }, body: `data: ${JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: 'Done, **twenty minutes** of Python logged.' }] }, finishReason: 'STOP' }] })}\r\n\r\n` });
 });
 await page.goto('http://localhost:8765/');
 await page.waitForSelector('.sheet');
-await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForVoice00000'); await db.setSetting('voiceLang', 'en-US'); });
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('onboarded', true); await db.setSetting('geminiKey', 'AIzaSyTestKeyForVoice00000'); await db.setSetting('voiceLang', 'en-US'); await db.setSetting('voiceStyle', 'device'); });
 await page.reload();
 await page.waitForTimeout(500);
 await page.click('#fab');
@@ -56,6 +62,15 @@ await page.evaluate(() => { const o = document.querySelector('[data-orb]'); o.da
 await page.screenshot({ path: 'shots/voice.png' }).catch(() => {});
 await page.click('[data-voice]');
 checks.push(['voice off hides the orb', await page.evaluate(() => document.querySelector('[data-orb]').hidden)]);
+// Natural voice: Gemini TTS audio plays instead of the phone voice, then it listens again.
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('voiceStyle', 'natural'); });
+await page.click('[data-voice]');
+await page.waitForFunction(() => window.__listens >= 4, null, { timeout: 15000 });
+const n = await page.evaluate(() => ({ spoken: window.__spoken.length, listens: window.__listens }));
+checks.push(['natural voice used (Gemini TTS called)', ttsCalls === 1]);
+checks.push(['phone voice not used when natural works', n.spoken === 1]);
+checks.push(['listened again after natural voice', n.listens === 4]);
+checks.push(['still no page errors', !errors.length]);
 for (const [n, ok] of checks) console.log(ok ? 'ok  ' : 'FAIL', n);
 if (errors.length) console.log(errors.join('\n'));
 await browser.close();
