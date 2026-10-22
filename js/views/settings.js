@@ -99,7 +99,7 @@ export function render(root, go) {
         <button class="btn danger" data-wipe>Erase everything</button>
       </div>
     </section>
-    <p class="small dim center mono">yaver v16 · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono">yaver v17 · press ? for keyboard shortcuts</p>`;
 
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);

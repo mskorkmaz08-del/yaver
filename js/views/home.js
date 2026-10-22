@@ -80,6 +80,7 @@ export function render(root, go) {
       <button data-q="expense">${raw(icon('wallet'))}expense</button>
       <button data-q="meeting">${raw(icon('calendar'))}meeting</button>
       <button data-q="meal">${raw(icon('leaf'))}meal</button>
+      <button data-go="map">${raw(icon('map'))}map</button>
     </div>
 
     <button class="card" data-go="study">

@@ -149,7 +149,7 @@ function bubble(m) {
   }
   const actions = (m.actions || []).map(a => html`<div class="receipt">${raw(icon('check'))}${a}</div>`).join('');
   const body = m.error ? html`<p class="err">${m.text}</p>` : m.text ? md(m.text) : '<span class="typing"><i></i><i></i><i></i></span>';
-  const via = m.via && !m.error ? `<div class="via">${{ mac: 'claude · your mac', gemini: 'gemini', anthropic: 'claude' }[m.via]}</div>` : '';
+  const via = m.via && !m.error ? `<div class="via">${{ mac: 'claude · your mac', gemini: 'gemini', anthropic: 'claude' }[m.via]}${m.ms ? ` · ${(m.ms / 1000).toFixed(1)}s` : ''}</div>` : '';
   return `<div class="msg bot">${actions}<div class="bot-text">${body}</div>${via}</div>`;
 }
 
@@ -206,9 +206,10 @@ async function send(textIn) {
     for (const c of chunks(cleanForSpeech(piece), said === piece.length)) say(c);
   };
   abort = new AbortController();
+  const t0 = performance.now();
   const callbacks = {
     signal: abort.signal,
-    onText: t => { reply.text = t; live().outerHTML = bubble(reply); scrollDown(); feed(t); },
+    onText: t => { reply.ms ??= Math.round(performance.now() - t0); reply.text = t; live().outerHTML = bubble(reply); scrollDown(); feed(t); },
     onAction: a => { reply.actions.push(a); haptic(); live().outerHTML = bubble(reply); },
     onStatus: setStatus,
   };
@@ -328,8 +329,11 @@ function setupVoice(btn, input) {
     btn.classList.add('listening');
     orb('listening');
     haptic();
-    let finalText = '';
+    let finalText = '', quiet;
     rec.onresult = e => {
+      // iOS waits a long pause before it decides you're done; stop after 0.7 s without new words.
+      clearTimeout(quiet);
+      quiet = setTimeout(() => rec?.stop(), 700);
       let interim = '';
       for (const r of e.results) (r.isFinal ? (finalText = r[0].transcript) : (interim += r[0].transcript));
       input.value = finalText || interim;
@@ -340,6 +344,8 @@ function setupVoice(btn, input) {
       else if (e.error !== 'aborted' && e.error !== 'no-speech') toast('Voice input is unavailable here. Use the keyboard mic instead.');
     };
     rec.onend = () => {
+      clearTimeout(quiet);
+      if (!finalText.trim()) finalText = input.value; // stopped early: use what was heard so far
       btn.classList.remove('listening');
       rec = null;
       if (finalText.trim()) send(finalText);

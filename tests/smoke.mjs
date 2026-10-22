@@ -109,7 +109,10 @@ for (const tab of ['money', 'calendar', 'study', 'diet']) {
   await page.screenshot({ path: `shots/2-${tab}.png`, fullPage: true });
 }
 // Map with nearby search
-await page.click('.tabbar [data-tab=map]');
+// Map lives on Home's quick row on the phone (sidebar on a laptop).
+await page.click('.tabbar [data-tab=home]');
+await page.waitForTimeout(300);
+await page.click('.quick [data-go=map]');
 await page.waitForTimeout(1200);
 await page.click('[data-cat=pharmacy]');
 await page.waitForSelector('.place-row', { timeout: 8000 });

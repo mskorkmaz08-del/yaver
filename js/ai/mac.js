@@ -34,16 +34,17 @@ export async function useCode(raw) {
 // Quick check before each message; remembered for 30 seconds so a chat stays snappy.
 export async function macOnline(force = false) {
   if (!macConfigured()) return false;
-  if (!force && Date.now() - last.at < 30000) return last.ok;
-  let ok = await healthy();
-  // The bridge's link changes when it restarts; look up the new one it posted.
-  if (!ok && await rediscover()) ok = await healthy();
+  if (!force && Date.now() - last.at < (last.ok ? 30000 : 60000)) return last.ok;
+  const ok = await healthy();
   last = { at: Date.now(), ok };
+  // The bridge's link changes when it restarts; look up the new one in the background
+  // so this message isn't held up, and check again right away if it moved.
+  if (!ok) rediscover().then(moved => { if (moved) last = { at: 0, ok: false }; });
   return ok;
 }
 
 async function healthy() {
-  try { return (await fetch(`${base()}/health`, { headers: headers(), signal: AbortSignal.timeout(2500) })).ok; }
+  try { return (await fetch(`${base()}/health`, { headers: headers(), signal: AbortSignal.timeout(1500) })).ok; }
   catch { return false; }
 }
 
