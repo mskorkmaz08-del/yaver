@@ -17,7 +17,7 @@ export function render(root) {
 
   root.innerHTML = html`
     <header class="page-head">
-      <div><p class="path">~/yaver <b>›</b> meetings</p><h1>${parseDay(selected).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</h1></div>
+      <div><p class="path">Yaver <b>·</b> meetings</p><h1>${parseDay(selected).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</h1></div>
       <button class="icon-btn primary" data-add aria-label="Add meeting">${raw(icon('plus'))}</button>
     </header>
 

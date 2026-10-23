@@ -30,7 +30,7 @@ const pinIcon = (cls = '') => L.divIcon({ className: '', html: `<div class="pin 
 export function render(root) {
   root.innerHTML = html`
     <header class="page-head">
-      <div><p class="path">~/yaver <b>›</b> map</p><h1>Nearby</h1></div>
+      <div><p class="path">Yaver <b>·</b> map</p><h1>Nearby</h1></div>
       <button class="icon-btn" data-ask aria-label="Ask Yaver">${raw(icon('sparkle'))}</button>
     </header>
     <form class="map-search" data-search>

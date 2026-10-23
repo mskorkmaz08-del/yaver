@@ -24,6 +24,13 @@ export function weekSegments(perDay, goal) {
   }).join('')}</div>`;
 }
 
+// Çetele as engraved tally marks: one stroke per minimum, faint dashes for the ones still open.
+function tally(done, total) {
+  const n = Math.min(total, 10);
+  return `<svg class="tally" viewBox="0 0 ${n * 9 + 4} 32" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
+    `<path class="${i < done ? '' : 'off'}" d="M${6 + i * 9} 4 L${i < done ? 5.4 + i * 9 : 6 + i * 9} 28"/>`).join('')}</svg>`;
+}
+
 export function render(root, go) {
   const name = db.setting('userName', '');
   const hasKey = aiReady();
@@ -40,11 +47,28 @@ export function render(root, go) {
   root.innerHTML = html`
     <header class="page-head">
       <div>
-        <p class="path">~/yaver <b>›</b> ${now.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).toLowerCase()}</p>
+        <p class="path">Yaver <b>·</b> ${now.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).toLowerCase()}</p>
         <h1>${greeting()}${name ? `, ${name}` : ''}</h1>
       </div>
       <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
     </header>
+
+    <section class="mv-hero">
+      <img class="movement" src="icons/movement.svg" alt="" width="228" height="228">
+      <div class="mv-stats">
+        <button class="mv-stat" data-go="cetele">
+          <p class="label">çetele</p>
+          <p class="mv-v">${ct.done}<small> / ${ct.total}</small>${raw(tally(ct.done, ct.total))}</p>
+          <p class="mv-s">${ct.rows.filter(r => !r.met).map(r => r.name).join(', ') || 'All minimums met'}</p>
+        </button>
+        <button class="mv-stat" data-go="study">
+          <p class="label">study</p>
+          <p class="mv-v">${(s.weekMin / 60).toFixed(1)}<small> / ${Math.round(s.dailyGoalMin * 7 / 60)} h</small></p>
+          <div class="bar"><div style="width:${raw(Math.min(100, s.dailyGoalMin ? (s.weekMin / (s.dailyGoalMin * 7)) * 100 : 0))}%"></div></div>
+          <p class="mv-s">this week · ${cs.current} day çetele streak</p>
+        </button>
+      </div>
+    </section>
 
     <button class="card" data-go="cetele">
       <div class="card-head"><p class="label">çetele</p><span class="small muted mono">${ct.done}/${ct.total} today · ${cs.current} day streak</span></div>

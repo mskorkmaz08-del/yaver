@@ -29,7 +29,7 @@ export function render(root, go) {
 
   root.innerHTML = html`
     <header class="page-head">
-      <div><p class="path">~/yaver <b>›</b> study</p><h1><span class="num ${raw(s.streak.studiedToday ? 'accent' : '')}">${s.streak.current}</span> day streak</h1></div>
+      <div><p class="path">Yaver <b>·</b> study</p><h1><span class="num ${raw(s.streak.studiedToday ? 'accent' : '')}">${s.streak.current}</span> day streak</h1></div>
       <button class="icon-btn primary" data-add aria-label="Log session">${raw(icon('plus'))}</button>
     </header>
 

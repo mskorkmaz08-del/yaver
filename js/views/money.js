@@ -26,7 +26,7 @@ export function render(root) {
 
   root.innerHTML = html`
     <header class="page-head">
-      <div><p class="path">~/yaver <b>›</b> money</p><h1 class="num">${money(total)}</h1></div>
+      <div><p class="path">Yaver <b>·</b> money</p><h1 class="num">${money(total)}</h1></div>
       <button class="icon-btn primary" data-add aria-label="Add expense">${raw(icon('plus'))}</button>
     </header>
 

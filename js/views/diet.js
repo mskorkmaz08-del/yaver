@@ -19,7 +19,7 @@ export function render(root) {
 
   root.innerHTML = html`
     <header class="page-head">
-      <div><p class="path">~/yaver <b>›</b> diet</p><h1><span class="num">${Math.max(0, g.dailyCalories - Math.round(d.calories))}</span> kcal left</h1></div>
+      <div><p class="path">Yaver <b>·</b> diet</p><h1><span class="num">${Math.max(0, g.dailyCalories - Math.round(d.calories))}</span> kcal left</h1></div>
       <button class="icon-btn primary" data-add aria-label="Log meal">${raw(icon('plus'))}</button>
     </header>
     <div class="switch"><button data-d="-1" aria-label="Previous day">${raw(icon('chevronLeft'))}</button><span>${fmtDay(day).toLowerCase()}</span><button data-d="1" ${raw(day === today() ? 'disabled' : '')} aria-label="Next day">${raw(icon('chevronRight'))}</button></div>

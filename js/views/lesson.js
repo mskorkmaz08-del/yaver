@@ -40,7 +40,7 @@ export function render(root, go, arg) {
 
 const head = (path, title, sub = '') => html`
   <header class="page-head">
-    <div><p class="path">~/yaver <b>›</b> course <b>›</b> ${path}</p><h1 class="lesson-h1">${title}</h1>${raw(sub)}</div>
+    <div><p class="path">Yaver <b>·</b> course <b>·</b> ${path}</p><h1 class="lesson-h1">${title}</h1>${raw(sub)}</div>
     <button class="icon-btn" data-back aria-label="Back">${raw(icon('close'))}</button>
   </header>`;
 

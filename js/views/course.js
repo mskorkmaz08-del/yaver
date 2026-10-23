@@ -103,7 +103,7 @@ export function render(root, go) {
 
   root.innerHTML = html`
     <header class="page-head">
-      <div><p class="path">~/yaver <b>›</b> study <b>›</b> course</p><h1>Course</h1></div>
+      <div><p class="path">Yaver <b>·</b> study <b>·</b> course</p><h1>Course</h1></div>
       <button class="icon-btn" data-back aria-label="Back">${raw(icon('close'))}</button>
     </header>
 

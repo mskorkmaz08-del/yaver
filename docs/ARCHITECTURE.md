@@ -142,12 +142,12 @@ The study focus timer stores *when it started*, not a running counter, so it sta
 
 ```
 yaver/
-├── index.html              The shell: tab bar, the brass gear Yaver button, loads js/app.js
+├── index.html              The shell: tab bar, the watch-crown Yaver button, loads js/app.js
 ├── manifest.webmanifest    Name, icons, colours: what makes it installable
 ├── sw.js                   Service worker: offline copy + updates
-├── css/app.css             All styling: the Academy journal look (parchment, navy ink, brass, teal accent), cards, sheets, chat
-├── fonts/                  Cinzel, IM Fell English, EB Garamond and Caveat, stored in the app so they work offline
-├── icons/                  Home Screen icons (brass gear on navy)
+├── css/app.css             All styling: the Clockwork look (graphite, hairline brass, ivory paper lessons, teal accent), cards, sheets, chat
+├── fonts/                  Cormorant Garamond and Cinzel, stored in the app so they work offline
+├── icons/                  Home Screen icons and movement.svg, the animated watch movement on Home
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
 ├── vendor/                 Anthropic SDK (one file) and Leaflet (map)
 └── js/

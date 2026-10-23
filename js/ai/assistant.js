@@ -177,7 +177,7 @@ function render() {
     const name = db.setting('userName', '');
     log.innerHTML = html`
       <div class="chat-empty">
-        <span class="mark lg">Y</span>
+        <img class="movement" src="icons/movement.svg" alt="" width="200" height="200">
         <h2>${name ? `What's next, ${name}?` : "What's next?"}</h2>
         <p class="muted small">Ask anything, or tell me what you did: I log study, practice, expenses, meetings and meals, explain concepts, quiz you, and find places nearby.</p>
         <div class="chips">${raw(SUGGESTIONS.map(s => html`<button class="chip" data-suggest="${s}">${s}</button>`).join(''))}</div>
