@@ -8,7 +8,7 @@ export const FILES = {
   'index.html': 'App shell: the empty screen area, the tab bar and the Y button. Loads js/app.js.',
   'manifest.webmanifest': 'Makes the site installable: name, icons, colours, full-screen portrait.',
   'sw.js': 'Service worker: caches every app file on first launch, then network-first with a 3 s timeout and cache fallback. VERSION names the cache.',
-  'css/app.css': 'All app styling: tokens (near-black, one lime accent, mono numbers), cards, sheets, chat, course screens, laptop layout.',
+  'css/app.css': 'All app styling. Academy journal look (v22): parchment with a blueprint grid, navy ink, brass rules and corner marks, Cinzel labels, IM Fell headings, EB Garamond text, one teal ink accent, wax-seal brand mark and a brass gear Yaver button. Also cards, sheets, chat, course screens, laptop layout.',
   'js/app.js': 'Entry point: opens the database, sorts AI keys, starts the assistant, routes between screens, redraws on data change, first-run sheet.',
   'js/db.js': 'IndexedDB wrapper. Loads every store into memory at start; writes go to memory and disk together, stamped with updatedAt and deviceId; deletes leave tombstones for sync.',
   'js/cetele.js': 'Çetele logic: default items, daily and weekly progress, streak (a day counts when every daily minimum is met), item matching for the AI tools.',
@@ -67,7 +67,7 @@ export const FILES = {
   'tests/run-lesson-code.mjs': 'Runs the code blocks inside lessons to prove they work.',
   'tests/docs-coverage.mjs': 'Fails if any repo file lacks a handbook description, or the handbook is missing a required section.',
   'handbook/index.html': 'This handbook page.',
-  'handbook/handbook.css': 'Handbook styling, same design language as the app.',
+  'handbook/handbook.css': 'Handbook styling (keeps the earlier dark developer look).',
   'handbook/handbook.js': 'Handbook logic: live reads from the code and GitHub, the 3D system map, animated diagrams.',
   'handbook/content.js': 'Hand-written handbook text and the file descriptions (this file).',
   'CLAUDE.md': 'Working rules for anyone (human or AI) changing the repo, including keeping this handbook current.',
@@ -79,7 +79,8 @@ export const FILES = {
 export const FOLDERS = {
   'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps (recall questions name the earlier lesson that taught them), questions, review cards and optional LeetCode problems.',
   'vendor/': 'Third-party code shipped with the app: the Anthropic SDK bundled with esbuild, and Leaflet for the map.',
-  'icons/': 'Home Screen and app icons.',
+  'icons/': 'Home Screen and app icons (brass gear with a hextech core on navy, v22).',
+  'fonts/': 'Self-hosted fonts for the Academy journal look (Cinzel, IM Fell English, EB Garamond, Caveat; SIL Open Font License), cached by the service worker so they work offline.',
 };
 
 // Layers of the 3D system map, bottom to top. `mods` are file paths.
@@ -175,6 +176,7 @@ export const STACK = [
   ['Storage', 'IndexedDB, fully mirrored in memory'],
   ['Offline', 'Service worker, network-first with cache fallback'],
   ['AI', 'Gemini REST, Anthropic SDK (bundled with esbuild), Claude Code via the Mac bridge'],
+  ['Look', 'Academy journal (v22): CSS tokens in css/app.css, self-hosted fonts in fonts/ (Cinzel, IM Fell English, EB Garamond, Caveat)'],
   ['Map', 'Leaflet 1.9.4 + OpenStreetMap, Nominatim, Overpass'],
   ['Sync', 'GitHub Gist, AES-GCM 256 + PBKDF2-SHA-256 (WebCrypto)'],
   ['Remote access to Mac', 'Cloudflare quick tunnel (cloudflared), link rediscovered via ntfy.sh'],

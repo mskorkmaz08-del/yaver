@@ -1,6 +1,6 @@
 // Service worker: keeps a copy of the app on the phone so Yaver opens
 // instantly and works offline. Bump VERSION whenever app files change.
-const VERSION = 'yaver-v21';
+const VERSION = 'yaver-v22';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js',
@@ -10,6 +10,7 @@ const FILES = [
   ...[0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15].map(i => `data/course/weeks/week-${String(i).padStart(2, '0')}.json`),
   'js/icons.js', 'js/reminders.js', 'js/places.js', 'js/views/map.js', 'js/views/home.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/study.js', 'js/views/diet.js', 'js/views/settings.js',
   'vendor/anthropic-sdk.js', 'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css', 'data/ml-roadmap.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
+  ...['caveat-latin.woff', 'caveat-latin-ext.woff', 'cinzel-latin.woff2', 'cinzel-latin-ext.woff2', 'eb-garamond-latin.woff2', 'eb-garamond-latin-ext.woff2', 'im-fell-english-latin.woff2', 'im-fell-english-italic-latin.woff2'].map(f => `fonts/${f}`),
 ];
 
 self.addEventListener('install', e => {
