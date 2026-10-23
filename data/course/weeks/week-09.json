@@ -43,33 +43,37 @@
      "questions": [
       {
        "q": "Which command compiles `main.cpp` with C++20 and warnings on, producing `app`?",
-       "a": "`g++ -std=c++20 -Wall -Wextra -o app main.cpp` (add `-g` when you want to debug it in lldb). On your Mac `g++` is Apple clang under another name; the flags are the same."
+       "a": "`g++ -std=c++20 -Wall -Wextra -o app main.cpp` (add `-g` when you want to debug it in lldb). On your Mac `g++` is Apple clang under another name; the flags are the same.",
+       "from": "cpp-w08-1"
       },
       {
        "q": "What goes in a header file and what goes in the `.cpp` file?",
-       "a": "Declarations (function prototypes, later class definitions) go in the `.h` with an include guard or `#pragma once`; definitions (the function bodies) go in exactly one `.cpp`, so the linker finds one copy."
+       "a": "Declarations (function prototypes, later class definitions) go in the `.h` with an include guard or `#pragma once`; definitions (the function bodies) go in exactly one `.cpp`, so the linker finds one copy.",
+       "from": "cpp-w08-2"
       },
       {
        "q": "In Python, what does `range(2, 10, 3)` produce?",
-       "a": "2, 5, 8. Start inclusive, stop exclusive, step 3."
+       "a": "2, 5, 8. Start inclusive, stop exclusive, step 3.",
+       "from": "python-w05-2"
       },
       {
        "q": "You hit a breakpoint in the debugger. What is the difference between step over and step into?",
-       "a": "Step over runs the current line, including any function calls on it, and stops at the next line; step into enters the function being called on that line."
+       "a": "Step over runs the current line, including any function calls on it, and stops at the next line; step into enters the function being called on that line.",
+       "from": "python-w01-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before reading anything, write down what this program prints. Do it in your head, then compile and check.\n\n```cpp\n#include <iostream>\n\nint main() {\n    int total = 0;\n    for (int i = 0; i < 10; ++i) {\n        if (i % 3 == 0) continue;\n        if (i == 8) break;\n        total += i / 2;\n    }\n    std::cout << total << '\\n';\n\n    int mode = 2;\n    switch (mode) {\n        case 1: std::cout << \"one \";\n        case 2: std::cout << \"two \";\n        case 3: std::cout << \"three \";\n            break;\n        default: std::cout << \"other \";\n    }\n    std::cout << '\\n';\n}\n```\n\nTwo traps are planted here. Find them before you look at the answer in the Learn step."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp\n#include <iostream>\n\nint main() {\n    int total = 0;\n    for (int i = 0; i < 10; ++i) {\n        if (i % 3 == 0) continue;\n        if (i == 8) break;\n        total += i / 2;\n    }\n    std::cout << total << '\\n';\n\n    int mode = 2;\n    switch (mode) {\n        case 1: std::cout << \"one \";\n        case 2: std::cout << \"two \";\n        case 3: std::cout << \"three \";\n            break;\n        default: std::cout << \"other \";\n    }\n    std::cout << '\\n';\n}\n```\n\n**It prints `8`, then `two three`.** Two traps: `i / 2` is integer division, and `switch` *falls through* from `case 2` into `case 3` until it reaches a `break`. Learn walks through the program line by line."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "C++ control flow looks like Python with braces, and 90% of it is. The other 10% is where the bugs live, so this lesson is about that 10%.\n\n### if / else and the condition\n\n```cpp-snippet\nif (distance_cm < 10) {\n    stop();\n} else if (distance_cm < 30) {\n    slow_down();\n} else {\n    cruise();\n}\n```\n\nThe condition must be convertible to `bool`. Any non-zero integer counts as true, which is why `if (x = 5)` compiles (assignment, value 5, true) and is a classic bug. With `-Wall` the compiler (Apple clang behind `g++` on your Mac) warns about it; keep warnings on and treat them as errors in your head.\n\nC++17 added an **if with initializer**: `if (int r = read_sensor(); r > 512) { ... }`. The variable `r` exists only inside the if/else. Use it to keep a temporary from leaking into the rest of the function.\n\n### switch\n\n`switch` works on integers, chars and enums (not strings). Each `case` is a jump target, not a block: once execution lands on a case, it keeps running **into the next case** until it hits `break`. That is fall-through. In the pretest, `mode == 2` jumps to `case 2`, prints `two `, falls into `case 3`, prints `three `, then breaks. Output: `two three `.\n\nSometimes fall-through is what you want (several cases sharing code). Stack the labels with nothing between them, or mark a deliberate fall-through with `[[fallthrough]];` so the compiler (and the reader) knows it's intended. Always add a `default`.\n\n```cpp-snippet\nswitch (cmd) {\n    case 'f': case 'F': forward(); break;\n    case 's': stop(); break;\n    default: std::cerr << \"unknown command\\n\";\n}\n```\n\n### Loops\n\n- `while (cond) { }` checks first; `do { } while (cond);` runs the body at least once (useful for \"read until valid\").\n- `for (init; cond; step)` is the C-style loop. `++i` and `i++` are the same here; prefer `++i` by habit.\n- **Range-based for**, the closest thing to Python's `for x in xs`: `for (int x : values)`. Next lesson covers `for (const auto& x : values)`, which avoids copying.\n- `break` leaves the innermost loop (or switch). `continue` jumps to the next iteration. There is no `for ... else`.\n\n### Integer division\n\n`i / 2` with two ints truncates toward zero: `7 / 2 == 3`, `-7 / 2 == -3`. Python's `//` floors instead (`-7 // 2 == -4`). `%` follows the same rule: `-7 % 3 == -1` in C++ but `2` in Python. This matters when you port code that wraps angles or indexes.\n\n### Worked example: the pretest, line by line\n\nThe loop: `i` = 0 is skipped (`0 % 3 == 0`), 1 adds `1/2 = 0`, 2 adds 1, 3 skipped, 4 adds 2, 5 adds 2, 6 skipped, 7 adds 3, 8 breaks. Total = 0 + 1 + 2 + 2 + 3 = 8. Then `two three `.\n\n### Worked example: porting a Python loop\n\nPython:\n\n```python\ndef collatz_steps(n):\n    steps = 0\n    while n != 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps\n\nprint(collatz_steps(6), collatz_steps(27))\n```\n\nC++:\n\n```cpp\n#include <iostream>\n\nlong long collatz_steps(long long n) {\n    long long steps = 0;\n    while (n != 1) {\n        n = (n % 2 == 0) ? n / 2 : 3 * n + 1;\n        ++steps;\n    }\n    return steps;\n}\n\nint main() {\n    std::cout << collatz_steps(6) << ' ' << collatz_steps(27) << '\\n';  // 8 111\n    for (long long n = 1; n <= 5; ++n) {\n        std::cout << n << ':' << collatz_steps(n) << ' ';\n    }\n    std::cout << '\\n';\n}\n```\n\nNote the ternary `cond ? a : b`, which is Python's `a if cond else b` with the order changed. Note also `long long`: for 27 the sequence climbs to 9232, fine for `int`, but larger starting values overflow a 32-bit `int` silently. Python never overflows; C++ does, and signed overflow is undefined behaviour, not a wrap-around you can rely on.\n\n### Habits worth keeping\n\n1. Always braces, even for one-line bodies.\n2. Compile with `-Wall -Wextra`; read every warning.\n3. Comparing a signed `int` with `v.size()` (unsigned) triggers a warning. Use `std::size_t` for indexes or a range-for.\n4. Loop bounds: write `i < n`, not `i <= n - 1`; the second goes wrong when `n` is an unsigned zero."
+     "body": "C++ control flow looks like Python with braces, and 90% of it is. The other 10% is where the bugs live, so this lesson is about that 10%.\n\n### if / else and the condition\n\n```cpp-snippet\nif (distance_cm < 10) {\n    stop();\n} else if (distance_cm < 30) {\n    slow_down();\n} else {\n    cruise();\n}\n```\n\nThe condition must be convertible to `bool`. Any non-zero integer counts as true, which is why `if (x = 5)` compiles (assignment, value 5, true) and is a classic bug. With `-Wall` the compiler (Apple clang behind `g++` on your Mac) warns about it; keep warnings on and treat them as errors in your head.\n\nC++17 added an **if with initializer**: `if (int r = read_sensor(); r > 512) { ... }`. The variable `r` exists only inside the if/else. Use it to keep a temporary from leaking into the rest of the function.\n\n### switch\n\n`switch` works on integers, chars and enums (not strings). Each `case` is a jump target, not a block: once execution lands on a case, it keeps running **into the next case** until it hits `break`. That is fall-through. In the first example, `mode == 2` jumps to `case 2`, prints `two `, falls into `case 3`, prints `three `, then breaks. Output: `two three `.\n\nSometimes fall-through is what you want (several cases sharing code). Stack the labels with nothing between them, or mark a deliberate fall-through with `[[fallthrough]];` so the compiler (and the reader) knows it's intended. Always add a `default`.\n\n```cpp-snippet\nswitch (cmd) {\n    case 'f': case 'F': forward(); break;\n    case 's': stop(); break;\n    default: std::cerr << \"unknown command\\n\";\n}\n```\n\n### Loops\n\n- `while (cond) { }` checks first; `do { } while (cond);` runs the body at least once (useful for \"read until valid\").\n- `for (init; cond; step)` is the C-style loop. `++i` and `i++` are the same here; prefer `++i` by habit.\n- **Range-based for**, the closest thing to Python's `for x in xs`: `for (int x : values)`. Next lesson covers `for (const auto& x : values)`, which avoids copying.\n- `break` leaves the innermost loop (or switch). `continue` jumps to the next iteration. There is no `for ... else`.\n\n### Integer division\n\n`i / 2` with two ints truncates toward zero: `7 / 2 == 3`, `-7 / 2 == -3`. Python's `//` floors instead (`-7 // 2 == -4`). `%` follows the same rule: `-7 % 3 == -1` in C++ but `2` in Python. This matters when you port code that wraps angles or indexes.\n\n### Worked example: the first example, line by line\n\nThe loop: `i` = 0 is skipped (`0 % 3 == 0`), 1 adds `1/2 = 0`, 2 adds 1, 3 skipped, 4 adds 2, 5 adds 2, 6 skipped, 7 adds 3, 8 breaks. Total = 0 + 1 + 2 + 2 + 3 = 8. Then `two three `.\n\n### Worked example: porting a Python loop\n\nPython:\n\n```python\ndef collatz_steps(n):\n    steps = 0\n    while n != 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps\n\nprint(collatz_steps(6), collatz_steps(27))\n```\n\nC++:\n\n```cpp\n#include <iostream>\n\nlong long collatz_steps(long long n) {\n    long long steps = 0;\n    while (n != 1) {\n        n = (n % 2 == 0) ? n / 2 : 3 * n + 1;\n        ++steps;\n    }\n    return steps;\n}\n\nint main() {\n    std::cout << collatz_steps(6) << ' ' << collatz_steps(27) << '\\n';  // 8 111\n    for (long long n = 1; n <= 5; ++n) {\n        std::cout << n << ':' << collatz_steps(n) << ' ';\n    }\n    std::cout << '\\n';\n}\n```\n\nNote the ternary `cond ? a : b`, which is Python's `a if cond else b` with the order changed. Note also `long long`: for 27 the sequence climbs to 9232, fine for `int`, but larger starting values overflow a 32-bit `int` silently. Python never overflows; C++ does, and signed overflow is undefined behaviour, not a wrap-around you can rely on.\n\n### Habits worth keeping\n\n1. Always braces, even for one-line bodies.\n2. Compile with `-Wall -Wextra`; read every warning.\n3. Comparing a signed `int` with `v.size()` (unsigned) triggers a warning. Use `std::size_t` for indexes or a range-for.\n4. Loop bounds: write `i < n`, not `i <= n - 1`; the second goes wrong when `n` is an unsigned zero."
     },
     {
      "kind": "practice",
@@ -220,11 +224,13 @@
      "questions": [
       {
        "q": "Two Sum on an unsorted list: what's the O(n) idea from last week?",
-       "a": "One pass with a dict from value to index; for each x check whether target - x is already in it."
+       "a": "One pass with a dict from value to index; for each x check whether target - x is already in it.",
+       "from": "algo-w08-1"
       },
       {
        "q": "What is the extra space of that hashing solution, and why might you want to avoid it?",
-       "a": "O(n) for the dict. On a microcontroller or a huge stream you may not have that memory, which is where O(1)-space patterns help."
+       "a": "O(n) for the dict. On a microcontroller or a huge stream you may not have that memory, which is where O(1)-space patterns help.",
+       "from": "algo-w08-1"
       }
      ]
     },
@@ -626,33 +632,37 @@
      "questions": [
       {
        "q": "Derivative of x³ and why, in the nudge picture?",
-       "a": "3x². Nudging the side of a cube by dx adds three thin slabs of area x², so d(x³) ≈ 3x² dx."
+       "a": "3x². Nudging the side of a cube by dx adds three thin slabs of area x², so d(x³) ≈ 3x² dx.",
+       "from": "math-w08-3"
       },
       {
        "q": "Derivative of sin(x), and of cos(x)?",
-       "a": "cos(x) and -sin(x)."
+       "a": "cos(x) and -sin(x).",
+       "from": "math-w08-4"
       },
       {
        "q": "Write the central difference formula for f'(x). Why is it better than the forward one?",
-       "a": "(f(x+h) - f(x-h)) / (2h). Its error shrinks like h² rather than h."
+       "a": "(f(x+h) - f(x-h)) / (2h). Its error shrinks like h² rather than h.",
+       "from": "math-w08-2"
       },
       {
        "q": "What is f'(2) for f(x) = x² + 3x?",
-       "a": "2·2 + 3 = 7."
+       "a": "2·2 + 3 = 7.",
+       "from": "math-w08-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Without looking anything up, guess these. Being wrong is fine; you'll check them in 20 minutes.\n\n1. f(x) = x² · sin(x). Is f'(x) equal to 2x · cos(x)? Compute both at x = 1 with a calculator (f'(1) ≈ ?) or just say yes/no and why.\n2. g(x) = sin(x²). Is g'(x) = cos(x²)? Or cos(2x)? Or something else?\n3. h(x) = (3x + 1)⁵. Your guess for h'(0)?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n1. For f(x) = x² · sin(x), the derivative is **not** 2x · cos(x). The product rule gives f'(x) = 2x · sin(x) + x² · cos(x), so f'(1) ≈ 2.22, while 2x · cos(x) at 1 is only about 1.08.\n2. For g(x) = sin(x²), the chain rule gives g'(x) = **2x · cos(x²)**: neither cos(x²) nor cos(2x).\n3. For h(x) = (3x + 1)⁵, h'(x) = 5(3x + 1)⁴ · 3, so **h'(0) = 15**.\n\nLearn explains both rules with pictures."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "Last week gave you derivatives of single building blocks: xⁿ, sin, cos. Real functions are built by **multiplying** and **composing** those blocks. Two rules cover nearly everything, and the second one, the chain rule, is the mathematical core of backpropagation in every neural network you'll train later.\n\n### Product rule: the growing rectangle\n\nPicture f(x) = g(x)·h(x) as the area of a rectangle with sides g and h. Nudge x by dx. Side g grows by dg ≈ g'(x)dx, side h grows by dh ≈ h'(x)dx. The new area is (g + dg)(h + dh) = gh + g·dh + h·dg + dg·dh. The change is the two thin strips g·dh and h·dg, plus a tiny corner dg·dh that is second-order small and vanishes as dx → 0. So\n\n**(gh)' = g'h + gh'**  (\"left d-right plus right d-left\").\n\nThe guess \"2x · cos(x)\" in the pretest multiplies the derivatives; that's the corner piece, the one term that *doesn't* count.\n\nExample: f(x) = x² sin(x).\nf'(x) = 2x·sin(x) + x²·cos(x). At x = 1: 2·0.8415 + 1·0.5403 = **2.2233**. The wrong guess 2·cos(1) = 1.0806 is off by a factor of two.\n\n### Chain rule: nudges passing through\n\nFor g(x) = sin(x²), think of a pipeline: x → u = x² → sin(u). Nudge x by dx. The inner stage turns it into du = 2x·dx. The outer stage turns du into d(sin u) = cos(u)·du. Chain them:\n\nd(sin(x²)) = cos(x²) · 2x · dx, so **g'(x) = cos(x²)·2x**.\n\nGeneral form: if y = f(u) and u = g(x), then **dy/dx = f'(g(x)) · g'(x)** = (dy/du)(du/dx). Each stage contributes its own local sensitivity, evaluated at the point where that stage actually is, and the sensitivities multiply. The \"evaluated at g(x)\" part is the classic slip: it's cos(x²), not cos(x).\n\nExample: h(x) = (3x + 1)⁵. Outer u⁵ has derivative 5u⁴; inner 3x + 1 has derivative 3. h'(x) = 5(3x + 1)⁴ · 3 = 15(3x + 1)⁴. At x = 0: **15**.\n\n### Longer chains and the backprop link\n\ny = sin((2x + 1)³). Stages: a = 2x + 1, b = a³, y = sin(b). Local derivatives: da/dx = 2, db/da = 3a², dy/db = cos(b). Multiply: dy/dx = cos(b)·3a²·2. At x = 0: a = 1, b = 1, so dy/dx = cos(1)·3·2 = **3.2418**.\n\nNotice what you did: a **forward pass** to compute a and b, then multiplying local derivatives from the output back to the input. That is exactly backpropagation; a neural network is a long chain like this with many inputs at each stage.\n\n### Combining the rules: the quotient rule for free\n\nf(x) = g(x)/h(x) = g(x)·h(x)⁻¹. Product rule plus chain rule on h⁻¹ (outer u⁻¹, derivative -u⁻²) gives f' = g'/h − g·h'/h² = (g'h − gh')/h². You don't need to memorise it separately.\n\n### Checking with code\n\nNever trust a hand derivative you haven't checked. The central difference from last week does it in two lines:\n\n```python\nimport math\n\ndef central(f, x, h=1e-5):\n    return (f(x + h) - f(x - h)) / (2 * h)\n\ncases = [\n    (\"x^2 sin x\",     lambda x: x**2 * math.sin(x),        lambda x: 2*x*math.sin(x) + x**2*math.cos(x), 1.0),\n    (\"sin(x^2)\",      lambda x: math.sin(x**2),            lambda x: math.cos(x**2) * 2*x,               1.0),\n    (\"(3x+1)^5\",      lambda x: (3*x + 1)**5,              lambda x: 15 * (3*x + 1)**4,                  0.0),\n    (\"sin((2x+1)^3)\", lambda x: math.sin((2*x + 1)**3),    lambda x: math.cos((2*x+1)**3) * 3*(2*x+1)**2 * 2, 0.0),\n]\nfor name, f, df, x in cases:\n    num, exact = central(f, x), df(x)\n    print(f\"{name:14s} exact {exact:9.4f}  numeric {num:9.4f}\")\n    assert abs(num - exact) < 1e-4 * max(1, abs(exact))\n```\n\nIf your formula and the numeric value disagree beyond the fourth digit, the formula is wrong (or you evaluated the outer derivative at x instead of at the inner value)."
+     "body": "Last week gave you derivatives of single building blocks: xⁿ, sin, cos. Real functions are built by **multiplying** and **composing** those blocks. Two rules cover nearly everything, and the second one, the chain rule, is the mathematical core of backpropagation in every neural network you'll train later.\n\n### Product rule: the growing rectangle\n\nPicture f(x) = g(x)·h(x) as the area of a rectangle with sides g and h. Nudge x by dx. Side g grows by dg ≈ g'(x)dx, side h grows by dh ≈ h'(x)dx. The new area is (g + dg)(h + dh) = gh + g·dh + h·dg + dg·dh. The change is the two thin strips g·dh and h·dg, plus a tiny corner dg·dh that is second-order small and vanishes as dx → 0. So\n\n**(gh)' = g'h + gh'**  (\"left d-right plus right d-left\").\n\nThe tempting answer \"2x · cos(x)\" multiplies the derivatives; that's the corner piece, the one term that *doesn't* count.\n\nExample: f(x) = x² sin(x).\nf'(x) = 2x·sin(x) + x²·cos(x). At x = 1: 2·0.8415 + 1·0.5403 = **2.2233**. The wrong guess 2·cos(1) = 1.0806 is off by a factor of two.\n\n### Chain rule: nudges passing through\n\nFor g(x) = sin(x²), think of a pipeline: x → u = x² → sin(u). Nudge x by dx. The inner stage turns it into du = 2x·dx. The outer stage turns du into d(sin u) = cos(u)·du. Chain them:\n\nd(sin(x²)) = cos(x²) · 2x · dx, so **g'(x) = cos(x²)·2x**.\n\nGeneral form: if y = f(u) and u = g(x), then **dy/dx = f'(g(x)) · g'(x)** = (dy/du)(du/dx). Each stage contributes its own local sensitivity, evaluated at the point where that stage actually is, and the sensitivities multiply. The \"evaluated at g(x)\" part is the classic slip: it's cos(x²), not cos(x).\n\nExample: h(x) = (3x + 1)⁵. Outer u⁵ has derivative 5u⁴; inner 3x + 1 has derivative 3. h'(x) = 5(3x + 1)⁴ · 3 = 15(3x + 1)⁴. At x = 0: **15**.\n\n### Longer chains and the backprop link\n\ny = sin((2x + 1)³). Stages: a = 2x + 1, b = a³, y = sin(b). Local derivatives: da/dx = 2, db/da = 3a², dy/db = cos(b). Multiply: dy/dx = cos(b)·3a²·2. At x = 0: a = 1, b = 1, so dy/dx = cos(1)·3·2 = **3.2418**.\n\nNotice what you did: a **forward pass** to compute a and b, then multiplying local derivatives from the output back to the input. That is exactly backpropagation; a neural network is a long chain like this with many inputs at each stage.\n\n### Combining the rules: the quotient rule for free\n\nf(x) = g(x)/h(x) = g(x)·h(x)⁻¹. Product rule plus chain rule on h⁻¹ (outer u⁻¹, derivative -u⁻²) gives f' = g'/h − g·h'/h² = (g'h − gh')/h². You don't need to memorise it separately.\n\n### Checking with code\n\nNever trust a hand derivative you haven't checked. The central difference from last week does it in two lines:\n\n```python\nimport math\n\ndef central(f, x, h=1e-5):\n    return (f(x + h) - f(x - h)) / (2 * h)\n\ncases = [\n    (\"x^2 sin x\",     lambda x: x**2 * math.sin(x),        lambda x: 2*x*math.sin(x) + x**2*math.cos(x), 1.0),\n    (\"sin(x^2)\",      lambda x: math.sin(x**2),            lambda x: math.cos(x**2) * 2*x,               1.0),\n    (\"(3x+1)^5\",      lambda x: (3*x + 1)**5,              lambda x: 15 * (3*x + 1)**4,                  0.0),\n    (\"sin((2x+1)^3)\", lambda x: math.sin((2*x + 1)**3),    lambda x: math.cos((2*x+1)**3) * 3*(2*x+1)**2 * 2, 0.0),\n]\nfor name, f, df, x in cases:\n    num, exact = central(f, x), df(x)\n    print(f\"{name:14s} exact {exact:9.4f}  numeric {num:9.4f}\")\n    assert abs(num - exact) < 1e-4 * max(1, abs(exact))\n```\n\nIf your formula and the numeric value disagree beyond the fourth digit, the formula is wrong (or you evaluated the outer derivative at x instead of at the inner value)."
     },
     {
      "kind": "practice",
@@ -791,11 +801,13 @@
      "questions": [
       {
        "q": "Derivative of sin(3x²)?",
-       "a": "cos(3x²)·6x."
+       "a": "cos(3x²)·6x.",
+       "from": "math-w09-1"
       },
       {
        "q": "Derivative of x·eˣ? (Use eˣ' = eˣ, which Thursday explains.)",
-       "a": "eˣ + x·eˣ = (1 + x)eˣ by the product rule."
+       "a": "eˣ + x·eˣ = (1 + x)eˣ by the product rule.",
+       "from": "math-w09-1"
       }
      ]
     },
@@ -1181,29 +1193,27 @@
      "questions": [
       {
        "q": "What does `switch` do after a matching case that has no `break`?",
-       "a": "Falls through into the next case's code until a break, return or the end of the switch."
-      },
-      {
-       "q": "In Python, after `def f(xs): xs.append(1)` and `a = []; f(a)`, what is `a`? And after `def g(xs): xs = [1]`?",
-       "a": "`[1]` after f (the list object is shared and mutated); still `[]` after g (rebinding the local name doesn't touch the caller)."
+       "a": "Falls through into the next case's code until a break, return or the end of the switch.",
+       "from": "cpp-w09-1"
       },
       {
        "q": "What does `-Wall -Wextra` give you?",
-       "a": "Most of the compiler's useful warnings, e.g. unused variables, signed/unsigned comparisons, assignment in conditions, missing returns."
+       "a": "Most of the compiler's useful warnings, e.g. unused variables, signed/unsigned comparisons, assignment in conditions, missing returns.",
+       "from": "cpp-w08-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict the three numbers this program prints. One function changes the caller's variable and one doesn't.\n\n```cpp\n#include <iostream>\n\nvoid add_one_copy(int x) { x += 1; }\nvoid add_one_ref(int& x) { x += 1; }\n\nint main() {\n    int a = 10;\n    add_one_copy(a);\n    std::cout << a << '\\n';\n    add_one_ref(a);\n    std::cout << a << '\\n';\n    int& alias = a;\n    alias = 99;\n    std::cout << a << '\\n';\n}\n```"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp\n#include <iostream>\n\nvoid add_one_copy(int x) { x += 1; }\nvoid add_one_ref(int& x) { x += 1; }\n\nint main() {\n    int a = 10;\n    add_one_copy(a);\n    std::cout << a << '\\n';\n    add_one_ref(a);\n    std::cout << a << '\\n';\n    int& alias = a;\n    alias = 99;\n    std::cout << a << '\\n';\n}\n```\n\n**It prints `10`, `11`, `99`.** `add_one_copy` changes its own copy, so `a` stays 10. `add_one_ref` changes `a` itself through the reference. `alias` is another name for `a`, so assigning 99 to it changes `a`. Learn explains references."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "Python has one passing rule: names are bound to objects, and a function gets another name for the same object. Whether the caller \"sees a change\" depends on whether the object is mutable. C++ makes you choose explicitly, per parameter, and the choice is about **copies**.\n\n### Pass by value\n\n`void f(int x)` gets its own copy. Changes to `x` stay inside `f`. Copying an `int` is free; copying a `std::vector<double>` with a million readings means allocating and copying 8 MB every call.\n\n### References\n\nA reference is another name for an existing object. `int& r = a;` makes `r` an alias: writing `r = 99` writes `a`. Rules:\n\n- A reference must be initialised when declared and can never be re-pointed at something else.\n- There is no \"null reference\".\n- `void f(int& x)` binds `x` to the caller's variable. That is how a function changes its argument. In the pretest: `10`, `11`, `99`.\n\n### const references: the default for big inputs\n\n`void print_stats(const std::vector<double>& v)` passes no copy *and* promises not to modify `v`. The compiler enforces the promise: `v.push_back(1.0)` inside would not compile. It also binds to temporaries, so `print_stats({1.0, 2.0})` works, which a plain `std::vector<double>&` would reject.\n\nRule of thumb:\n\n| Parameter type | Use |\n| --- | --- |\n| `int`, `double`, `char`, `bool` | by value |\n| something big you only read (`std::string`, `std::vector`) | `const T&` |\n| something the function must change | `T&` |\n\n### Range-for with references\n\n```cpp-snippet\nfor (auto x : readings) x *= 2;          // doubles copies; readings unchanged\nfor (auto& x : readings) x *= 2;         // doubles the real elements\nfor (const auto& x : readings) sum += x; // reads without copying\n```\n\nThe first form is a silent bug that looks right.\n\n### Dangling references\n\nA reference doesn't keep its object alive. Return a reference to a local and you hand back an alias to memory that no longer exists:\n\n```cpp-snippet\nconst std::string& bad() {\n    std::string s = \"hello\";\n    return s;   // s dies at the closing brace; the caller holds a dangling reference\n}\n```\n\nThe compiler warns (Apple clang: `-Wreturn-stack-address`; GCC: `-Wreturn-local-addr`). Return by value instead; the compiler moves or elides the copy, so it's cheap.\n\n### const and constexpr\n\n- `const int max_speed = 255;` can't be changed after initialisation. The value may be known only at run time (`const int n = read_config();`).\n- `constexpr int pwm_max = 255;` must be known at **compile time**, so it can size arrays and be used in other `constexpr` expressions. Prefer `constexpr` over `#define` for constants: it has a type and a scope.\n- `const` on a reference parameter is the most common const you'll write.\n\n### Worked example\n\n```cpp\n#include <iostream>\n#include <vector>\n\nconstexpr int kMaxPwm = 255;\n\nvoid clamp_pwm(std::vector<int>& duties) {\n    for (auto& d : duties) {\n        if (d < 0) d = 0;\n        else if (d > kMaxPwm) d = kMaxPwm;\n    }\n}\n\ndouble mean(const std::vector<int>& v) {\n    if (v.empty()) return 0.0;\n    long long sum = 0;\n    for (const auto& x : v) sum += x;\n    return static_cast<double>(sum) / v.size();\n}\n\nvoid min_max(const std::vector<int>& v, int& lo, int& hi) {\n    lo = hi = v.at(0);\n    for (int x : v) {\n        if (x < lo) lo = x;\n        if (x > hi) hi = x;\n    }\n}\n\nint main() {\n    std::vector<int> duties{-20, 100, 300, 255, 0};\n    clamp_pwm(duties);                     // changes duties in place\n    for (int d : duties) std::cout << d << ' ';\n    std::cout << \"\\nmean \" << mean(duties) << '\\n';   // 122\n    int lo = 0, hi = 0;\n    min_max(duties, lo, hi);               // two results through out-parameters\n    std::cout << lo << \"..\" << hi << '\\n'; // 0..255\n}\n```\n\nRead each signature and you know, without reading the body, which arguments can change. That is the real benefit: the type tells the reader the contract. `min_max` uses out-parameters; next weeks you'll see returning a `std::pair` or a small struct, which is usually clearer.\n\n### Pointers, briefly\n\n`int* p = &a;` stores an address; `*p = 5` writes through it. Pointers can be null and can be re-pointed, which is why references are preferred whenever neither is needed. Pointers get a full lesson in week 13."
+     "body": "Python has one passing rule: names are bound to objects, and a function gets another name for the same object. Whether the caller \"sees a change\" depends on whether the object is mutable. C++ makes you choose explicitly, per parameter, and the choice is about **copies**.\n\n### Pass by value\n\n`void f(int x)` gets its own copy. Changes to `x` stay inside `f`. Copying an `int` is free; copying a `std::vector<double>` with a million readings means allocating and copying 8 MB every call.\n\n### References\n\nA reference is another name for an existing object. `int& r = a;` makes `r` an alias: writing `r = 99` writes `a`. Rules:\n\n- A reference must be initialised when declared and can never be re-pointed at something else.\n- There is no \"null reference\".\n- `void f(int& x)` binds `x` to the caller's variable. That is how a function changes its argument. In the first example: `10`, `11`, `99`.\n\n### const references: the default for big inputs\n\n`void print_stats(const std::vector<double>& v)` passes no copy *and* promises not to modify `v`. The compiler enforces the promise: `v.push_back(1.0)` inside would not compile. It also binds to temporaries, so `print_stats({1.0, 2.0})` works, which a plain `std::vector<double>&` would reject.\n\nRule of thumb:\n\n| Parameter type | Use |\n| --- | --- |\n| `int`, `double`, `char`, `bool` | by value |\n| something big you only read (`std::string`, `std::vector`) | `const T&` |\n| something the function must change | `T&` |\n\n### Range-for with references\n\n```cpp-snippet\nfor (auto x : readings) x *= 2;          // doubles copies; readings unchanged\nfor (auto& x : readings) x *= 2;         // doubles the real elements\nfor (const auto& x : readings) sum += x; // reads without copying\n```\n\nThe first form is a silent bug that looks right.\n\n### Dangling references\n\nA reference doesn't keep its object alive. Return a reference to a local and you hand back an alias to memory that no longer exists:\n\n```cpp-snippet\nconst std::string& bad() {\n    std::string s = \"hello\";\n    return s;   // s dies at the closing brace; the caller holds a dangling reference\n}\n```\n\nThe compiler warns (Apple clang: `-Wreturn-stack-address`; GCC: `-Wreturn-local-addr`). Return by value instead; the compiler moves or elides the copy, so it's cheap.\n\n### const and constexpr\n\n- `const int max_speed = 255;` can't be changed after initialisation. The value may be known only at run time (`const int n = read_config();`).\n- `constexpr int pwm_max = 255;` must be known at **compile time**, so it can size arrays and be used in other `constexpr` expressions. Prefer `constexpr` over `#define` for constants: it has a type and a scope.\n- `const` on a reference parameter is the most common const you'll write.\n\n### Worked example\n\n```cpp\n#include <iostream>\n#include <vector>\n\nconstexpr int kMaxPwm = 255;\n\nvoid clamp_pwm(std::vector<int>& duties) {\n    for (auto& d : duties) {\n        if (d < 0) d = 0;\n        else if (d > kMaxPwm) d = kMaxPwm;\n    }\n}\n\ndouble mean(const std::vector<int>& v) {\n    if (v.empty()) return 0.0;\n    long long sum = 0;\n    for (const auto& x : v) sum += x;\n    return static_cast<double>(sum) / v.size();\n}\n\nvoid min_max(const std::vector<int>& v, int& lo, int& hi) {\n    lo = hi = v.at(0);\n    for (int x : v) {\n        if (x < lo) lo = x;\n        if (x > hi) hi = x;\n    }\n}\n\nint main() {\n    std::vector<int> duties{-20, 100, 300, 255, 0};\n    clamp_pwm(duties);                     // changes duties in place\n    for (int d : duties) std::cout << d << ' ';\n    std::cout << \"\\nmean \" << mean(duties) << '\\n';   // 122\n    int lo = 0, hi = 0;\n    min_max(duties, lo, hi);               // two results through out-parameters\n    std::cout << lo << \"..\" << hi << '\\n'; // 0..255\n}\n```\n\nRead each signature and you know, without reading the body, which arguments can change. That is the real benefit: the type tells the reader the contract. `min_max` uses out-parameters; next weeks you'll see returning a `std::pair` or a small struct, which is usually clearer.\n\n### Pointers, briefly\n\n`int* p = &a;` stores an address; `*p = 5` writes through it. Pointers can be null and can be re-pointed, which is why references are preferred whenever neither is needed. Pointers get a full lesson in week 13."
     },
     {
      "kind": "practice",
@@ -1352,15 +1362,18 @@
      "questions": [
       {
        "q": "In Two Sum II, why is `while lo < hi` and not `lo <= hi`?",
-       "a": "With lo == hi you'd pair an element with itself."
+       "a": "With lo == hi you'd pair an element with itself.",
+       "from": "algo-w04-2"
       },
       {
        "q": "Sorting a list of n numbers costs what in Big-O?",
-       "a": "O(n log n) with a comparison sort such as Python's Timsort."
+       "a": "O(n log n) with a comparison sort such as Python's Timsort.",
+       "from": "algo-w03-3"
       },
       {
        "q": "What's the 'why is this move safe' argument for Two Sum II when the sum is too small?",
-       "a": "nums[lo] with the largest remaining partner is still too small, so it can't be in any answer; drop it."
+       "a": "nums[lo] with the largest remaining partner is still too small, so it can't be in any answer; drop it.",
+       "from": "algo-w09-1"
       }
      ]
     },
@@ -1740,33 +1753,37 @@
      "questions": [
       {
        "q": "Derivative of sin(x²)·x?",
-       "a": "sin(x²) + 2x²cos(x²)."
+       "a": "sin(x²) + 2x²cos(x²).",
+       "from": "math-w09-2"
       },
       {
        "q": "σ'(x) in terms of σ(x)?",
-       "a": "σ(x)(1 − σ(x))."
+       "a": "σ(x)(1 − σ(x)).",
+       "from": "math-w09-2"
       },
       {
        "q": "Chain rule in one line?",
-       "a": "d/dx f(g(x)) = f'(g(x))·g'(x)."
+       "a": "d/dx f(g(x)) = f'(g(x))·g'(x).",
+       "from": "math-w09-2"
       },
       {
        "q": "From week 8: if f(t) is position, what is f'(t)?",
-       "a": "Velocity: the instantaneous rate of change of position."
+       "a": "Velocity: the instantaneous rate of change of position.",
+       "from": "math-w08-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Compute these with a calculator or Python before reading, and guess the pattern.\n\nFor f(x) = 2ˣ, compute (f(x + 0.0001) − f(x))/0.0001 divided by f(x), at x = 0, 1 and 3. Do the same for 3ˣ. What do you notice? Is there a base where the ratio is exactly 1?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nFor f(x) = 2ˣ, compute (f(x + 0.0001) − f(x)) / 0.0001 and divide it by f(x). At x = 0, 1 and 3 you get the same number every time: about **0.693**. For 3ˣ the ratio is always about **1.099**.\n\nSo the slope of an exponential is a fixed multiple of its own value, and there is one base, **e ≈ 2.718**, where that multiple is exactly 1. Learn explains why."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "### Exponentials grow in proportion to themselves\n\nFor f(x) = 2ˣ, the difference quotient is (2^(x+h) − 2ˣ)/h = 2ˣ · (2ʰ − 1)/h. The second factor doesn't depend on x at all. As h → 0 it tends to a constant ≈ 0.6931. So **d/dx 2ˣ = 0.6931·2ˣ**: the derivative is proportional to the function itself. Same for 3ˣ with constant ≈ 1.0986. That's what you saw in the pretest: the ratio was the same at every x.\n\nBetween 2 and 3 there must be a base where that constant is exactly 1. That base is **e ≈ 2.71828**, and it's the definition 3Blue1Brown uses: e is the number whose exponential is its own derivative,\n\n**d/dx eˣ = eˣ.**\n\nAnd the mystery constants are natural logs: ln 2 = 0.6931, ln 3 = 1.0986. Why? Write 2ˣ = (e^(ln 2))ˣ = e^((ln 2)x). Chain rule: d/dx e^(cx) = c·e^(cx). So\n\n**d/dx aˣ = ln(a)·aˣ.**\n\nThat's why ML and physics write everything with e: any other base only adds a constant factor.\n\n### Why it matters: proportional growth\n\n\"Rate of change proportional to amount\" is everywhere: an RC capacitor charging (week 4 in robotics: V(t) = V₀(1 − e^(−t/RC))), population, interest, radioactive decay, the softmax in classifiers. The equation dy/dt = k·y is solved by y = y₀·e^(kt). Check: dy/dt = k·y₀e^(kt) = k·y. ✓\n\nNumeric example from the RC lesson: R = 10 kΩ, C = 100 µF, so RC = 1 s. Charging from 5 V: V(t) = 5(1 − e^(−t)). Rate dV/dt = 5e^(−t). At t = 0 it's 5 V/s; at t = 1 s, 5·0.368 = 1.84 V/s, and the voltage is 5·0.632 = 3.16 V. The rate is proportional to the remaining gap (5 − V): 1.84 = 5 − 3.16. That's the same law.\n\n### The derivative of ln x, by implicit differentiation\n\ny = ln x means eʸ = x. Differentiate both sides with respect to x, treating y as a function of x: eʸ·(dy/dx) = 1, so dy/dx = 1/eʸ = **1/x**.\n\nThat trick, differentiating an equation in which y is tangled up rather than isolated, is **implicit differentiation**.\n\n### Implicit differentiation\n\nCircle: x² + y² = 25. Near most points the curve is locally a function y(x), even if we can't write one formula for the whole circle. Differentiate both sides with respect to x, applying the chain rule to anything with y:\n\n2x + 2y·(dy/dx) = 0 → **dy/dx = −x/y**.\n\nAt (3, 4): slope −3/4. Check with the explicit upper half y = √(25 − x²): y' = −x/√(25 − x²) = −3/4 at x = 3. ✓\n\n3Blue1Brown's view: think of x and y both getting nudged (dx, dy) so you stay on the curve; the left side's change 2x·dx + 2y·dy must be 0. Same equation.\n\n### Related rates\n\nThe same idea with time as the variable. A 5 m ladder leans on a wall; the foot slides away at 0.5 m/s. How fast does the top slide down when the foot is 3 m out?\n\nx² + y² = 25 → 2x·dx/dt + 2y·dy/dt = 0 → dy/dt = −(x/y)·dx/dt = −(3/4)·0.5 = **−0.375 m/s**.\n\n```python\nimport math\n\n# Check the ladder numerically: simulate a tiny step in time.\nL, x, v = 5.0, 3.0, 0.5\ndt = 1e-6\ny0 = math.sqrt(L**2 - x**2)\ny1 = math.sqrt(L**2 - (x + v * dt)**2)\nprint(round((y1 - y0) / dt, 4))          # -0.375\nassert abs((y1 - y0) / dt + 0.375) < 1e-4\n\n# And the base-change constant: (a^h - 1)/h -> ln a\nfor a in (2, 3, math.e):\n    h = 1e-8\n    print(a, round((a**h - 1) / h, 5), round(math.log(a), 5))\n```\n\nThis is the kind of geometry you'll meet in robot kinematics: joint angles and positions linked by an equation, and you want how fast one changes when another does."
+     "body": "### Exponentials grow in proportion to themselves\n\nFor f(x) = 2ˣ, the difference quotient is (2^(x+h) − 2ˣ)/h = 2ˣ · (2ʰ − 1)/h. The second factor doesn't depend on x at all. As h → 0 it tends to a constant ≈ 0.6931. So **d/dx 2ˣ = 0.6931·2ˣ**: the derivative is proportional to the function itself. Same for 3ˣ with constant ≈ 1.0986. That's what you saw in the first example: the ratio was the same at every x.\n\nBetween 2 and 3 there must be a base where that constant is exactly 1. That base is **e ≈ 2.71828**, and it's the definition 3Blue1Brown uses: e is the number whose exponential is its own derivative,\n\n**d/dx eˣ = eˣ.**\n\nAnd the mystery constants are natural logs: ln 2 = 0.6931, ln 3 = 1.0986. Why? Write 2ˣ = (e^(ln 2))ˣ = e^((ln 2)x). Chain rule: d/dx e^(cx) = c·e^(cx). So\n\n**d/dx aˣ = ln(a)·aˣ.**\n\nThat's why ML and physics write everything with e: any other base only adds a constant factor.\n\n### Why it matters: proportional growth\n\n\"Rate of change proportional to amount\" is everywhere: an RC capacitor charging (week 4 in robotics: V(t) = V₀(1 − e^(−t/RC))), population, interest, radioactive decay, the softmax in classifiers. The equation dy/dt = k·y is solved by y = y₀·e^(kt). Check: dy/dt = k·y₀e^(kt) = k·y. ✓\n\nNumeric example from the RC lesson: R = 10 kΩ, C = 100 µF, so RC = 1 s. Charging from 5 V: V(t) = 5(1 − e^(−t)). Rate dV/dt = 5e^(−t). At t = 0 it's 5 V/s; at t = 1 s, 5·0.368 = 1.84 V/s, and the voltage is 5·0.632 = 3.16 V. The rate is proportional to the remaining gap (5 − V): 1.84 = 5 − 3.16. That's the same law.\n\n### The derivative of ln x, by implicit differentiation\n\ny = ln x means eʸ = x. Differentiate both sides with respect to x, treating y as a function of x: eʸ·(dy/dx) = 1, so dy/dx = 1/eʸ = **1/x**.\n\nThat trick, differentiating an equation in which y is tangled up rather than isolated, is **implicit differentiation**.\n\n### Implicit differentiation\n\nCircle: x² + y² = 25. Near most points the curve is locally a function y(x), even if we can't write one formula for the whole circle. Differentiate both sides with respect to x, applying the chain rule to anything with y:\n\n2x + 2y·(dy/dx) = 0 → **dy/dx = −x/y**.\n\nAt (3, 4): slope −3/4. Check with the explicit upper half y = √(25 − x²): y' = −x/√(25 − x²) = −3/4 at x = 3. ✓\n\n3Blue1Brown's view: think of x and y both getting nudged (dx, dy) so you stay on the curve; the left side's change 2x·dx + 2y·dy must be 0. Same equation.\n\n### Related rates\n\nThe same idea with time as the variable. A 5 m ladder leans on a wall; the foot slides away at 0.5 m/s. How fast does the top slide down when the foot is 3 m out?\n\nx² + y² = 25 → 2x·dx/dt + 2y·dy/dt = 0 → dy/dt = −(x/y)·dx/dt = −(3/4)·0.5 = **−0.375 m/s**.\n\n```python\nimport math\n\n# Check the ladder numerically: simulate a tiny step in time.\nL, x, v = 5.0, 3.0, 0.5\ndt = 1e-6\ny0 = math.sqrt(L**2 - x**2)\ny1 = math.sqrt(L**2 - (x + v * dt)**2)\nprint(round((y1 - y0) / dt, 4))          # -0.375\nassert abs((y1 - y0) / dt + 0.375) < 1e-4\n\n# And the base-change constant: (a^h - 1)/h -> ln a\nfor a in (2, 3, math.e):\n    h = 1e-8\n    print(a, round((a**h - 1) / h, 5), round(math.log(a), 5))\n```\n\nThis is the kind of geometry you'll meet in robot kinematics: joint angles and positions linked by an equation, and you want how fast one changes when another does."
     },
     {
      "kind": "practice",
@@ -1912,11 +1929,13 @@
      "questions": [
       {
        "q": "Central difference formula?",
-       "a": "(f(x + h) − f(x − h)) / (2h)."
+       "a": "(f(x + h) − f(x − h)) / (2h).",
+       "from": "math-w09-1"
       },
       {
        "q": "Derivative of e^(−x²/2)?",
-       "a": "−x·e^(−x²/2)."
+       "a": "−x·e^(−x²/2).",
+       "from": "math-w09-3"
       }
      ]
     },
@@ -2312,33 +2331,37 @@
      "questions": [
       {
        "q": "Which parameter type would you use for a function that only reads a `std::vector<int>`?",
-       "a": "`const std::vector<int>&`: no copy, no modification."
+       "a": "`const std::vector<int>&`: no copy, no modification.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "What does `for (auto& c : s) c = 'x';` do to a `std::string s`?",
-       "a": "Overwrites every character with 'x': the reference binds to the real characters."
+       "a": "Overwrites every character with 'x': the reference binds to the real characters.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "What does Python's `'a,b,,c'.split(',')` return?",
-       "a": "`['a', 'b', '', 'c']`: empty fields between consecutive separators are kept."
+       "a": "`['a', 'b', '', 'c']`: empty fields between consecutive separators are kept.",
+       "from": "python-w03-3"
       },
       {
        "q": "Why does `int x = 3000000000;` misbehave?",
-       "a": "3e9 doesn't fit in a 32-bit int; use `long long` (or `unsigned`), signed overflow/narrowing is a bug."
+       "a": "3e9 doesn't fit in a 32-bit int; use `long long` (or `unsigned`), signed overflow/narrowing is a bug.",
+       "from": "cpp-w08-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict what each line prints before running it. One of them prints a very large number; work out why.\n\n```cpp\n#include <iostream>\n#include <string>\n\nint main() {\n    std::string s = \"L:120,R:-80\";\n    std::cout << s.size() << '\\n';\n    std::cout << s.find(',') << '\\n';\n    std::cout << s.substr(2, 3) << '\\n';\n    std::cout << s.find('X') << '\\n';\n    std::cout << (s.find('X') == std::string::npos) << '\\n';\n}\n```"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp\n#include <iostream>\n#include <string>\n\nint main() {\n    std::string s = \"L:120,R:-80\";\n    std::cout << s.size() << '\\n';\n    std::cout << s.find(',') << '\\n';\n    std::cout << s.substr(2, 3) << '\\n';\n    std::cout << s.find('X') << '\\n';\n    std::cout << (s.find('X') == std::string::npos) << '\\n';\n}\n```\n\n**It prints** `11`, `5`, `120`, then `18446744073709551615`, then `1`. `find` returns `std::string::npos` (the largest possible size) when it finds nothing, not -1: that's the huge number. Always compare with `npos`, as the last line does. Learn covers `std::string`."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "Text processing is everywhere in robotics code: serial commands from Python, config lines, sensor log rows. C++ gives you two types and the art is knowing which to use where.\n\n### std::string: owns its characters\n\n`std::string` is a growable array of `char` that manages its own memory, like Python's `str` but **mutable**.\n\n```cpp-snippet\nstd::string s = \"motor\";\ns += \"_left\";               // append: \"motor_left\"\ns.size();                   // 10\ns[0] = 'M';                 // mutable: \"Motor_left\"\ns.substr(6, 4);             // \"left\": (start, count), NOT (start, end)\ns.find('_');                // 5; returns std::string::npos if absent\ns.find(\"left\");             // 6\ns == \"Motor_left\";          // true: == compares contents\nstd::to_string(42);         // \"42\"\nstd::stoi(\"-80\");           // -80 (throws std::invalid_argument on \"abc\")\nstd::stod(\"3.5\");           // 3.5\n```\n\nTwo habits from Python to drop: `substr` takes a **length**, not an end index; and `find` returns `npos` (the largest `size_t`, 18446744073709551615 on 64-bit) rather than -1. That's the big number in the pretest. Always compare with `std::string::npos`.\n\nThe pretest prints: `11`, `5`, `120`, the huge npos value, then `1`.\n\n### std::string_view: a window onto characters it doesn't own\n\n`std::string_view` (header `<string_view>`) is just a pointer plus a length. Copying it is as cheap as copying two integers, and `substr` on a view makes another view without allocating. It can look at a `std::string`, a string literal or part of either.\n\nUse it for **read-only parameters**:\n\n```cpp-snippet\nbool is_comment(std::string_view line) { return !line.empty() && line[0] == '#'; }\nis_comment(\"# config\");          // literal: no std::string is built\nis_comment(some_std_string);     // implicit conversion: no copy\n```\n\nCompare with `const std::string&`: passing a literal there constructs a temporary `std::string` (an allocation for longer text). For read-only text parameters, `std::string_view` by value is the modern default.\n\n### The one danger: dangling views\n\nA view doesn't keep the characters alive. These are bugs:\n\n```cpp-snippet\nstd::string_view v = std::string(\"temp\");   // the temporary string dies at the semicolon\nstd::string_view name() { std::string s = \"x\"; return s; }  // s dies on return\n```\n\nRules: never **store** a view or **return** one unless you're sure the owner outlives it. Parameters are safe because the caller's string lives for the whole call. If you need to keep text, convert to `std::string(view)`.\n\n### Worked example: parse a motor command\n\nPython will send lines like `L:120,R:-80`. Parse them into two ints.\n\n```cpp\n#include <iostream>\n#include <string>\n#include <string_view>\n\n// Parses the integer after \"<key>:\" in a \"K:v,K:v\" line. Returns false if absent.\nbool get_field(std::string_view line, char key, int& out) {\n    std::size_t pos = 0;\n    while (pos < line.size()) {\n        std::size_t comma = line.find(',', pos);\n        if (comma == std::string_view::npos) comma = line.size();\n        std::string_view field = line.substr(pos, comma - pos);   // e.g. \"R:-80\"\n        if (field.size() >= 3 && field[0] == key && field[1] == ':') {\n            out = std::stoi(std::string(field.substr(2)));       // stoi needs a std::string\n            return true;\n        }\n        pos = comma + 1;\n    }\n    return false;\n}\n\nint main() {\n    std::string msg = \"L:120,R:-80\";\n    int left = 0, right = 0;\n    bool ok = get_field(msg, 'L', left) && get_field(msg, 'R', right);\n    std::cout << ok << ' ' << left << ' ' << right << '\\n';   // 1 120 -80\n    int speed = 0;\n    std::cout << get_field(\"S:5\", 'X', speed) << '\\n';         // 0\n}\n```\n\nPoints to notice: the loop walks the line field by field with `find` and `substr` on a view, so no allocation happens until the final conversion; `npos` is checked explicitly; the output parameter pattern from last lesson returns the number while the `bool` says whether it was found.\n\n### C++20 conveniences\n\n`s.starts_with(\"L:\")` and `s.ends_with(\".csv\")` exist on both `std::string` and `std::string_view` from C++20. `std::string::contains` is C++23, so don't rely on it yet.\n\n### Characters\n\n`<cctype>` has `std::isdigit`, `std::isspace`, `std::toupper`. Pass them an `unsigned char` (`std::toupper(static_cast<unsigned char>(c))`), because a negative `char` value is undefined behaviour for these functions."
+     "body": "Text processing is everywhere in robotics code: serial commands from Python, config lines, sensor log rows. C++ gives you two types and the art is knowing which to use where.\n\n### std::string: owns its characters\n\n`std::string` is a growable array of `char` that manages its own memory, like Python's `str` but **mutable**.\n\n```cpp-snippet\nstd::string s = \"motor\";\ns += \"_left\";               // append: \"motor_left\"\ns.size();                   // 10\ns[0] = 'M';                 // mutable: \"Motor_left\"\ns.substr(6, 4);             // \"left\": (start, count), NOT (start, end)\ns.find('_');                // 5; returns std::string::npos if absent\ns.find(\"left\");             // 6\ns == \"Motor_left\";          // true: == compares contents\nstd::to_string(42);         // \"42\"\nstd::stoi(\"-80\");           // -80 (throws std::invalid_argument on \"abc\")\nstd::stod(\"3.5\");           // 3.5\n```\n\nTwo habits from Python to drop: `substr` takes a **length**, not an end index; and `find` returns `npos` (the largest `size_t`, 18446744073709551615 on 64-bit) rather than -1. That's the big number in the first example. Always compare with `std::string::npos`.\n\nThe first example prints: `11`, `5`, `120`, the huge npos value, then `1`.\n\n### std::string_view: a window onto characters it doesn't own\n\n`std::string_view` (header `<string_view>`) is just a pointer plus a length. Copying it is as cheap as copying two integers, and `substr` on a view makes another view without allocating. It can look at a `std::string`, a string literal or part of either.\n\nUse it for **read-only parameters**:\n\n```cpp-snippet\nbool is_comment(std::string_view line) { return !line.empty() && line[0] == '#'; }\nis_comment(\"# config\");          // literal: no std::string is built\nis_comment(some_std_string);     // implicit conversion: no copy\n```\n\nCompare with `const std::string&`: passing a literal there constructs a temporary `std::string` (an allocation for longer text). For read-only text parameters, `std::string_view` by value is the modern default.\n\n### The one danger: dangling views\n\nA view doesn't keep the characters alive. These are bugs:\n\n```cpp-snippet\nstd::string_view v = std::string(\"temp\");   // the temporary string dies at the semicolon\nstd::string_view name() { std::string s = \"x\"; return s; }  // s dies on return\n```\n\nRules: never **store** a view or **return** one unless you're sure the owner outlives it. Parameters are safe because the caller's string lives for the whole call. If you need to keep text, convert to `std::string(view)`.\n\n### Worked example: parse a motor command\n\nPython will send lines like `L:120,R:-80`. Parse them into two ints.\n\n```cpp\n#include <iostream>\n#include <string>\n#include <string_view>\n\n// Parses the integer after \"<key>:\" in a \"K:v,K:v\" line. Returns false if absent.\nbool get_field(std::string_view line, char key, int& out) {\n    std::size_t pos = 0;\n    while (pos < line.size()) {\n        std::size_t comma = line.find(',', pos);\n        if (comma == std::string_view::npos) comma = line.size();\n        std::string_view field = line.substr(pos, comma - pos);   // e.g. \"R:-80\"\n        if (field.size() >= 3 && field[0] == key && field[1] == ':') {\n            out = std::stoi(std::string(field.substr(2)));       // stoi needs a std::string\n            return true;\n        }\n        pos = comma + 1;\n    }\n    return false;\n}\n\nint main() {\n    std::string msg = \"L:120,R:-80\";\n    int left = 0, right = 0;\n    bool ok = get_field(msg, 'L', left) && get_field(msg, 'R', right);\n    std::cout << ok << ' ' << left << ' ' << right << '\\n';   // 1 120 -80\n    int speed = 0;\n    std::cout << get_field(\"S:5\", 'X', speed) << '\\n';         // 0\n}\n```\n\nPoints to notice: the loop walks the line field by field with `find` and `substr` on a view, so no allocation happens until the final conversion; `npos` is checked explicitly; the output parameter pattern from last lesson returns the number while the `bool` says whether it was found.\n\n### C++20 conveniences\n\n`s.starts_with(\"L:\")` and `s.ends_with(\".csv\")` exist on both `std::string` and `std::string_view` from C++20. `std::string::contains` is C++23, so don't rely on it yet.\n\n### Characters\n\n`<cctype>` has `std::isdigit`, `std::isspace`, `std::toupper`. Pass them an `unsigned char` (`std::toupper(static_cast<unsigned char>(c))`), because a negative `char` value is undefined behaviour for these functions."
     },
     {
      "kind": "practice",
@@ -2489,15 +2512,18 @@
      "questions": [
       {
        "q": "Container With Most Water moves the shorter wall. State the reason in one sentence.",
-       "a": "Any narrower container that keeps the shorter wall is no taller and narrower, so it can't win."
+       "a": "Any narrower container that keeps the shorter wall is no taller and narrower, so it can't win.",
+       "from": "algo-w09-2"
       },
       {
        "q": "What is a prefix sum array and what does it let you answer in O(1)?",
-       "a": "pre[i] = sum of the first i elements; any range sum is pre[j] - pre[i]."
+       "a": "pre[i] = sum of the first i elements; any range sum is pre[j] - pre[i].",
+       "from": "algo-w08-2"
       },
       {
        "q": "What does this week's C++ `for (auto& x : v)` have in common with an in-place Python loop over indices?",
-       "a": "Both modify the original elements rather than copies."
+       "a": "Both modify the original elements rather than copies.",
+       "from": "cpp-w09-2"
       }
      ]
     },
@@ -2829,27 +2855,31 @@
      "questions": [
       {
        "q": "Standard error of a mean with s = 15 and n = 25?",
-       "a": "15/5 = 3."
+       "a": "15/5 = 3.",
+       "from": "tools-w02-2"
       },
       {
        "q": "What does the CLT say about the distribution of sample means?",
-       "a": "It's approximately normal for large enough n, whatever the data's shape."
+       "a": "It's approximately normal for large enough n, whatever the data's shape.",
+       "from": "ai-w09-4"
       },
       {
        "q": "Median vs mean for skewed data (week 8's descriptive stats)?",
-       "a": "Median is robust to the long tail; the mean is pulled toward it."
+       "a": "Median is robust to the long tail; the mean is pulled toward it.",
+       "from": "ai-w08-5"
       },
       {
        "q": "What does `np.percentile(x, 75)` return?",
-       "a": "The value below which 75% of the data lies (the third quartile)."
+       "a": "The value below which 75% of the data lies (the third quartile).",
+       "from": "ai-w08-5"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Guess first. Your Arduino logs how many button presses arrive in each 1-minute window; on average 3. What fraction of minutes do you think will have **zero** presses? 1%? 5%? 20%? Write a number down.\n\nAnd: a sensor's readings are normal with mean 500 and sd 20. Roughly what fraction of readings lie above 540?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n- Your Arduino gets on average 3 button presses per minute. The fraction of minutes with **zero** presses is about **5%** (e⁻³ ≈ 0.05, from the Poisson distribution).\n- A sensor's readings are normal with mean 500 and sd 20. Readings above 540 are more than 2 sd above the mean: about **2.5%** of them.\n\nLearn shows where both numbers come from."
     },
     {
      "kind": "learn",

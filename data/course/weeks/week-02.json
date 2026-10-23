@@ -42,27 +42,26 @@
      "questions": [
       {
        "q": "What does a function return if it reaches the end without a `return` statement?",
-       "a": "`None`."
+       "a": "`None`.",
+       "from": "python-w01-1"
       },
       {
        "q": "You need to keep asking until the user gives a valid answer, and you don't know how many tries it will take. `for` or `while`?",
-       "a": "`while` (typically `while True:` with a `break` once the answer is valid). `for` is for a known sequence or count."
+       "a": "`while` (typically `while True:` with a `break` once the answer is valid). `for` is for a known sequence or count.",
+       "from": "python-w01-3"
       },
       {
        "q": "In the VS Code debugger, what is the difference between Step Over and Step Into?",
-       "a": "Step Over runs the current line, including any function it calls, and stops at the next line. Step Into goes inside the called function and stops at its first line."
-      },
-      {
-       "q": "Why does `if x = 5:` fail before the program even starts?",
-       "a": "`=` is assignment, which is not allowed as an `if` condition; Python reports a SyntaxError while parsing. Comparison is `==`."
+       "a": "Step Over runs the current line, including any function it calls, and stops at the next line. Step Into goes inside the called function and stops at its first line.",
+       "from": "python-w01-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before the lecture, predict what each snippet prints or which error it raises. Write your guesses down, then run them.\n\n```python-snippet\nint(\"42\")        # A\nint(\" 42 \")      # B\nint(\"4.2\")       # C\nint(\"forty\")     # D\nfloat(\"4.2\")     # E\n```\n\nAnd this one: in what order do the lines print?\n\n```python-snippet\ntry:\n    print(\"1\")\n    n = int(\"x\")\n    print(\"2\")\nexcept ValueError:\n    print(\"3\")\nelse:\n    print(\"4\")\nfinally:\n    print(\"5\")\n```\n\n(Answers: A 42, B 42 because `int` strips surrounding whitespace, C and D raise ValueError, E 4.2. The block prints 1, 3, 5: the line after the failing one never runs, `else` runs only when nothing was raised, `finally` always runs.)"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python-snippet\nint(\"42\")        # A\nint(\" 42 \")      # B\nint(\"4.2\")       # C\nint(\"forty\")     # D\nfloat(\"4.2\")     # E\n```\n\n**Results:** A gives 42. B gives 42, because `int` strips surrounding spaces. C and D raise `ValueError`. E gives 4.2.\n\n```python-snippet\ntry:\n    print(\"1\")\n    n = int(\"x\")\n    print(\"2\")\nexcept ValueError:\n    print(\"3\")\nelse:\n    print(\"4\")\nfinally:\n    print(\"5\")\n```\n\n**This prints** 1, 3, 5. The line after the failing one never runs, `else` runs only when nothing was raised, and `finally` always runs. Learn goes through each part."
     },
     {
      "kind": "learn",
@@ -214,15 +213,18 @@
      "questions": [
       {
        "q": "Reading element i of an array vs a linked list: Big-O of each?",
-       "a": "Array O(1) (direct address); linked list O(i), since you walk from the head."
+       "a": "Array O(1) (direct address); linked list O(i), since you walk from the head.",
+       "from": "algo-w01-2"
       },
       {
        "q": "Inserting at the front of a Python list of n items costs?",
-       "a": "O(n): every element shifts one place."
+       "a": "O(n): every element shifts one place.",
+       "from": "algo-w01-2"
       },
       {
        "q": "What exception should a function raise when it's given an argument value it can't accept?",
-       "a": "ValueError (with a message)."
+       "a": "ValueError (with a message).",
+       "from": "python-w02-1"
       }
      ]
     },
@@ -331,7 +333,15 @@
      "back": "A reference to the node before it (or special handling if it's the head)."
     }
    ],
-   "deliverable": "linked_list.py with a LinkedList class and test functions for every method, all passing; committed."
+   "deliverable": "linked_list.py with a LinkedList class and test functions for every method, all passing; committed.",
+   "leetcode": [
+    {
+     "title": "Middle of the Linked List",
+     "url": "https://leetcode.com/problems/middle-of-the-linked-list/",
+     "level": "easy",
+     "uses": "walking a linked list node by node (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w02-1",
@@ -632,33 +642,37 @@
      "questions": [
       {
        "q": "What do the columns of a 2×2 matrix tell you about the transformation?",
-       "a": "Where the basis vectors land: column 1 is where i-hat = (1, 0) goes, column 2 where j-hat = (0, 1) goes."
+       "a": "Where the basis vectors land: column 1 is where i-hat = (1, 0) goes, column 2 where j-hat = (0, 1) goes.",
+       "from": "math-w01-3"
       },
       {
        "q": "Compute [[2, 1], [0, 3]] times the vector (1, 2).",
-       "a": "1·(2, 0) + 2·(1, 3) = (4, 6)."
+       "a": "1·(2, 0) + 2·(1, 3) = (4, 6).",
+       "from": "math-w01-4"
       },
       {
        "q": "What is the span of the vectors (1, 2) and (2, 4)?",
-       "a": "A line through the origin (they're parallel), not the whole plane."
+       "a": "A line through the origin (they're parallel), not the whole plane.",
+       "from": "math-w01-1"
       },
       {
        "q": "What does 'linear' mean for a transformation, geometrically?",
-       "a": "Grid lines stay straight, parallel and evenly spaced, and the origin stays fixed."
+       "a": "Grid lines stay straight, parallel and evenly spaced, and the origin stays fixed.",
+       "from": "math-w01-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Two transformations of the plane:\n\n- R rotates 90° counterclockwise: R = [[0, −1], [1, 0]].\n- S is a horizontal shear: S = [[1, 1], [0, 1]].\n\nWithout computing any product: if you rotate first and then shear, where does i-hat = (1, 0) end up? Now shear first and then rotate: where does i-hat end up? Same place or different?\n\nWrite both answers down, then watch the chapter."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTwo transformations of the plane:\n\n- R rotates 90° counterclockwise: R = [[0, −1], [1, 0]].\n- S is a horizontal shear: S = [[1, 1], [0, 1]].\n\nFollow i-hat = (1, 0):\n\n- **Rotate, then shear:** R sends (1, 0) to (0, 1); S sends (0, 1) to (1, 1). i-hat ends at **(1, 1)**.\n- **Shear, then rotate:** S leaves (1, 0) at (1, 0); R sends it to (0, 1). i-hat ends at **(0, 1)**.\n\nDifferent places: the order of transformations matters. The chapter shows how matrix multiplication captures this."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "**One matrix, one transformation.** Last week a 2×2 matrix was a record of where the two basis vectors land: column 1 is where i-hat goes, column 2 where j-hat goes. Because the transformation is linear, that's enough to move any vector: (x, y) = x·i-hat + y·j-hat lands on x·(column 1) + y·(column 2).\n\n**Doing two in a row.** Apply R, then apply S. The combined effect is itself a linear transformation (straight lines stay straight twice over), so it has its own matrix. Call it the *composition*. To find it, ask the only question that ever matters: where do i-hat and j-hat end up after both steps?\n\nWorked example with the pretest matrices, R (rotate 90°) first, then S (shear):\n\n- i-hat after R: R's first column, (0, 1). Then S moves (0, 1) to 0·(1, 0) + 1·(1, 1) = (1, 1).\n- j-hat after R: R's second column, (−1, 0). Then S moves it to −1·(1, 0) + 0·(1, 1) = (−1, 0).\n\nSo the composition is the matrix with columns (1, 1) and (−1, 0): **[[1, −1], [1, 0]]**. We write it **S R**, with R on the *right*, because it acts on a vector first: S(R v). Read matrix products right to left, like function composition f(g(x)).\n\nNow the other order, S first, then R:\n\n- i-hat after S: (1, 0). Then R: (0, 1).\n- j-hat after S: (1, 1). Then R: 1·(0, 1) + 1·(−1, 0) = (−1, 1).\n\nSo **R S = [[0, −1], [1, 1]]**, a different matrix. Matrix multiplication is **not commutative**: shearing a rotated grid isn't the same as rotating a sheared one. Your pretest answers should show it: i-hat ends at (1, 1) one way and (0, 1) the other.\n\n**The row-times-column rule is a shortcut, not the definition.** The entry in row i, column j of AB is row i of A dotted with column j of B. That's just the computation \"apply A to column j of B\", done one entry at a time. Check S R: row 1 of S is (1, 1), column 1 of R is (0, 1), dot product 1. Row 1 of S with column 2 of R (−1, 0): −1. Row 2 of S (0, 1) with columns (0, 1) and (−1, 0): 1 and 0. Result [[1, −1], [1, 0]]: same as the geometric answer.\n\n```python\nimport numpy as np\n\nR = np.array([[0, -1], [1, 0]])\nS = np.array([[1, 1], [0, 1]])\nprint(S @ R)        # rotate, then shear\nprint(R @ S)        # shear, then rotate\nv = np.array([2, 1])\nprint(S @ (R @ v), (S @ R) @ v)   # same vector both ways: [1 2]\nassert np.array_equal(S @ (R @ v), (S @ R) @ v)\nassert not np.array_equal(S @ R, R @ S)\n```\n\n**Associativity comes free.** (AB)C and A(BC) both mean \"apply C, then B, then A\". Nothing about the order of *application* changed, only the order in which you did the arithmetic, so they must be equal. Seeing this geometrically is a much better proof than pushing indices around. Associativity matters in practice: a robot arm's pose is a long product of joint transforms, and you can group them however is cheapest.\n\n**Shapes.** An m×n matrix takes n-dimensional vectors to m-dimensional ones. To apply B (n×p) and then A (m×n), B's outputs must be A's inputs: the inner sizes must match. AB is m×p. In NumPy, a mismatch gives a `ValueError` about matmul dimensions; read it as \"the second step can't accept what the first produced\".\n\n**A small numeric check to do by hand.** A = [[2, 0], [0, 1]] (stretch x by 2) and B = [[1, 0], [0, −1]] (flip over the x-axis). AB: B first; i-hat → (1, 0) → (2, 0); j-hat → (0, −1) → (0, −1). AB = [[2, 0], [0, −1]]. BA gives the same matrix: these two happen to commute because both act on the axes independently. Commuting is the exception, not the rule."
+     "body": "**One matrix, one transformation.** Last week a 2×2 matrix was a record of where the two basis vectors land: column 1 is where i-hat goes, column 2 where j-hat goes. Because the transformation is linear, that's enough to move any vector: (x, y) = x·i-hat + y·j-hat lands on x·(column 1) + y·(column 2).\n\n**Doing two in a row.** Apply R, then apply S. The combined effect is itself a linear transformation (straight lines stay straight twice over), so it has its own matrix. Call it the *composition*. To find it, ask the only question that ever matters: where do i-hat and j-hat end up after both steps?\n\nWorked example with the first example matrices, R (rotate 90°) first, then S (shear):\n\n- i-hat after R: R's first column, (0, 1). Then S moves (0, 1) to 0·(1, 0) + 1·(1, 1) = (1, 1).\n- j-hat after R: R's second column, (−1, 0). Then S moves it to −1·(1, 0) + 0·(1, 1) = (−1, 0).\n\nSo the composition is the matrix with columns (1, 1) and (−1, 0): **[[1, −1], [1, 0]]**. We write it **S R**, with R on the *right*, because it acts on a vector first: S(R v). Read matrix products right to left, like function composition f(g(x)).\n\nNow the other order, S first, then R:\n\n- i-hat after S: (1, 0). Then R: (0, 1).\n- j-hat after S: (1, 1). Then R: 1·(0, 1) + 1·(−1, 0) = (−1, 1).\n\nSo **R S = [[0, −1], [1, 1]]**, a different matrix. Matrix multiplication is **not commutative**: shearing a rotated grid isn't the same as rotating a sheared one. The first example shows it: i-hat ends at (1, 1) one way and (0, 1) the other.\n\n**The row-times-column rule is a shortcut, not the definition.** The entry in row i, column j of AB is row i of A dotted with column j of B. That's just the computation \"apply A to column j of B\", done one entry at a time. Check S R: row 1 of S is (1, 1), column 1 of R is (0, 1), dot product 1. Row 1 of S with column 2 of R (−1, 0): −1. Row 2 of S (0, 1) with columns (0, 1) and (−1, 0): 1 and 0. Result [[1, −1], [1, 0]]: same as the geometric answer.\n\n```python\nimport numpy as np\n\nR = np.array([[0, -1], [1, 0]])\nS = np.array([[1, 1], [0, 1]])\nprint(S @ R)        # rotate, then shear\nprint(R @ S)        # shear, then rotate\nv = np.array([2, 1])\nprint(S @ (R @ v), (S @ R) @ v)   # same vector both ways: [1 2]\nassert np.array_equal(S @ (R @ v), (S @ R) @ v)\nassert not np.array_equal(S @ R, R @ S)\n```\n\n**Associativity comes free.** (AB)C and A(BC) both mean \"apply C, then B, then A\". Nothing about the order of *application* changed, only the order in which you did the arithmetic, so they must be equal. Seeing this geometrically is a much better proof than pushing indices around. Associativity matters in practice: a robot arm's pose is a long product of joint transforms, and you can group them however is cheapest.\n\n**Shapes.** An m×n matrix takes n-dimensional vectors to m-dimensional ones. To apply B (n×p) and then A (m×n), B's outputs must be A's inputs: the inner sizes must match. AB is m×p. In NumPy, a mismatch gives a `ValueError` about matmul dimensions; read it as \"the second step can't accept what the first produced\".\n\n**A small numeric check to do by hand.** A = [[2, 0], [0, 1]] (stretch x by 2) and B = [[1, 0], [0, −1]] (flip over the x-axis). AB: B first; i-hat → (1, 0) → (2, 0); j-hat → (0, −1) → (0, −1). AB = [[2, 0], [0, −1]]. BA gives the same matrix: these two happen to commute because both act on the axes independently. Commuting is the exception, not the rule."
     },
     {
      "kind": "practice",
@@ -798,11 +812,13 @@
      "questions": [
       {
        "q": "In S @ R applied to v, which transformation acts first?",
-       "a": "R."
+       "a": "R.",
+       "from": "math-w02-1"
       },
       {
        "q": "Columns of the 90° counterclockwise rotation matrix?",
-       "a": "(0, 1) and (−1, 0): R = [[0, −1], [1, 0]]."
+       "a": "(0, 1) and (−1, 0): R = [[0, −1], [1, 0]].",
+       "from": "math-w02-1"
       }
      ]
     },
@@ -1222,27 +1238,31 @@
      "questions": [
       {
        "q": "What does `except ValueError as e:` give you, and how do you get the message?",
-       "a": "`e` is the exception object; `str(e)` (or printing it) gives the message."
+       "a": "`e` is the exception object; `str(e)` (or printing it) gives the message.",
+       "from": "python-w02-1"
       },
       {
        "q": "Which exception does `int('4.5')` raise?",
-       "a": "ValueError."
+       "a": "ValueError.",
+       "from": "python-w02-1"
       },
       {
        "q": "In `for i in range(2, 10, 3)`, which values does `i` take?",
-       "a": "2, 5, 8."
+       "a": "2, 5, 8.",
+       "from": "robo-w01-3"
       },
       {
        "q": "A function prints a result instead of returning it. Why is that a problem for reuse?",
-       "a": "The caller gets None and can't use the value in further calculations or tests; printing is a side effect, returning gives data."
+       "a": "The caller gets None and can't use the value in further calculations or tests; printing is a side effect, returning gives data.",
+       "from": "python-w01-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict, then check:\n\n1. After `import random`, how do you call `choice`? After `from random import choice`? What happens if you write `choice([1, 2])` after only `import random`?\n2. You run `python report.py data.csv 5`. What is `sys.argv`? What is `len(sys.argv)`?\n3. On your Mac you run `pip3 install requests` with Homebrew's Python, outside any virtual environment. What do you expect to happen?\n\n(1: `random.choice(...)`; plain `choice(...)`; NameError. 2: `['report.py', 'data.csv', '5']`, length 3, all strings. 3: Homebrew's Python refuses with an \"externally managed environment\" error and tells you to use a venv: exactly the habit this lesson builds.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n1. After `import random` you call `random.choice(...)`. After `from random import choice` you call plain `choice(...)`. Writing `choice([1, 2])` after only `import random` raises `NameError`.\n2. Running `python report.py data.csv 5` makes `sys.argv` equal to `['report.py', 'data.csv', '5']`: length 3, and every item is a string.\n3. `pip3 install requests` with Homebrew's Python, outside a virtual environment, is refused with an \"externally managed environment\" error that tells you to use a venv. Learn shows how to make one; that's the habit this lesson builds."
     },
     {
      "kind": "learn",
@@ -1392,15 +1412,18 @@
      "questions": [
       {
        "q": "What does the debugger's Call Stack panel show?",
-       "a": "The chain of function calls currently active, innermost on top, each with its own local variables."
+       "a": "The chain of function calls currently active, innermost on top, each with its own local variables.",
+       "from": "python-w02-1"
       },
       {
        "q": "Big-O of walking a linked list of n nodes to its end?",
-       "a": "O(n)."
+       "a": "O(n).",
+       "from": "algo-w01-2"
       },
       {
        "q": "Binary search halves the range each step. How many steps for 1,000,000 items, roughly?",
-       "a": "About 20 (log2 of a million)."
+       "a": "About 20 (log2 of a million).",
+       "from": "algo-w01-1"
       }
      ]
     },
@@ -1511,7 +1534,15 @@
      "back": "Proportional to the maximum depth of the call stack."
     }
    ],
-   "deliverable": "recursion.py with power, fast_power, reverse, is_palindrome, flatten and depth plus their tests; your stack drawings photographed into learning-log."
+   "deliverable": "recursion.py with power, fast_power, reverse, is_palindrome, flatten and depth plus their tests; your stack drawings photographed into learning-log.",
+   "leetcode": [
+    {
+     "title": "Fibonacci Number",
+     "url": "https://leetcode.com/problems/fibonacci-number/",
+     "level": "easy",
+     "uses": "a base case and a recursive case (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w02-3",
@@ -1811,23 +1842,26 @@
      "questions": [
       {
        "q": "rot(a) @ rot(b) in 2D equals what?",
-       "a": "rot(a + b): angles add, so 2D rotations commute."
+       "a": "rot(a + b): angles add, so 2D rotations commute.",
+       "from": "math-w02-2"
       },
       {
        "q": "Compute the product [[1, 1], [0, 1]] · [[0, −1], [1, 0]].",
-       "a": "[[1, −1], [1, 0]] (rotate 90°, then shear)."
+       "a": "[[1, −1], [1, 0]] (rotate 90°, then shear).",
+       "from": "math-w02-1"
       },
       {
        "q": "Why is rotation about a point other than the origin not a linear map?",
-       "a": "It moves the origin, and linear maps must keep the origin fixed."
+       "a": "It moves the origin, and linear maps must keep the origin fixed.",
+       "from": "math-w01-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Think of the room you're in: x points east, y north, z up. Turn a robot 90° about the vertical (z) axis, then tip it 90° forward about x. Now do it in the other order: tip first, then turn. Hold your phone and actually do both. Does the phone end up facing the same way?\n\nPredict: will the two 3×3 matrices for those orders be equal?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nThink of the room you're in: x points east, y north, z up. Turn a robot 90° about the vertical (z) axis, then tip it 90° forward about x. Now do it in the other order: tip first, then turn. Hold your phone and actually do both.\n\n**Result:** the phone ends up facing a different way each time. So the two 3×3 rotation matrices, multiplied in the two orders, are **not equal**: 3D rotations don't commute. Learn shows the matrices."
     },
     {
      "kind": "learn",
@@ -1969,11 +2003,13 @@
      "questions": [
       {
        "q": "Entry (i, j) of AB is what?",
-       "a": "Row i of A dotted with column j of B."
+       "a": "Row i of A dotted with column j of B.",
+       "from": "math-w02-1"
       },
       {
        "q": "Shape of (2×3)(3×4)?",
-       "a": "2×4."
+       "a": "2×4.",
+       "from": "robo-w01-5"
       }
      ]
     },
@@ -2379,27 +2415,31 @@
      "questions": [
       {
        "q": "Name two ways to import `median` from the statistics module and how you then call it.",
-       "a": "`import statistics` → `statistics.median(xs)`; `from statistics import median` → `median(xs)`."
+       "a": "`import statistics` → `statistics.median(xs)`; `from statistics import median` → `median(xs)`.",
+       "from": "python-w02-2"
       },
       {
        "q": "What goes in `requirements.txt`, and which command writes it?",
-       "a": "The installed packages with versions; `python -m pip freeze > requirements.txt`."
+       "a": "The installed packages with versions; `python -m pip freeze > requirements.txt`.",
+       "from": "python-w02-2"
       },
       {
        "q": "Linear search on a list of n items costs what, in Big-O?",
-       "a": "O(n)."
+       "a": "O(n).",
+       "from": "algo-w01-3"
       },
       {
        "q": "Why do you raise ValueError rather than return -1 from parse_score?",
-       "a": "So bad input can't silently flow into later calculations; the caller must handle it and the message says what was wrong."
+       "a": "So bad input can't silently flow into later calculations; the caller must handle it and the message says what was wrong.",
+       "from": "python-w02-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict each output before running it:\n\n```python\na = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)\n\ngrid = [[0] * 2] * 3\ngrid[0][0] = 9\nprint(grid)\n\nprint({1, 2, 2, 3} | {3, 4})\nprint({\"a\": 1, \"b\": 2}.get(\"c\", 0))\nprint([x * x for x in range(6) if x % 2])\n```\n\nIf the first two surprised you, that's the heart of today: names point at objects, and some objects can change."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\na = [1, 2, 3]\nb = a\nb.append(4)\nprint(a)\n\ngrid = [[0] * 2] * 3\ngrid[0][0] = 9\nprint(grid)\n\nprint({1, 2, 2, 3} | {3, 4})\nprint({\"a\": 1, \"b\": 2}.get(\"c\", 0))\nprint([x * x for x in range(6) if x % 2])\n```\n\n**It prints:**\n\n- `[1, 2, 3, 4]`: `b = a` doesn't copy; both names point at the same list.\n- `[[9, 0], [9, 0], [9, 0]]`: `* 3` repeated the *same* inner list three times.\n- `{1, 2, 3, 4}`: a set union, duplicates gone.\n- `0`: `.get` returns the default when the key is missing.\n- `[1, 9, 25]`: squares of the odd numbers below 6.\n\nThe first two are the heart of today: names point at objects, and some objects can change."
     },
     {
      "kind": "learn",
@@ -2509,7 +2549,15 @@
      "back": "Any hashable (immutable) value: numbers, strings, tuples of hashables. Not lists or dicts."
     }
    ],
-   "deliverable": "collections.py with unique_in_order, invert, word_counts, group_by and topic_means passing their tests; committed."
+   "deliverable": "collections.py with unique_in_order, invert, word_counts, group_by and topic_means passing their tests; committed.",
+   "leetcode": [
+    {
+     "title": "Majority Element",
+     "url": "https://leetcode.com/problems/majority-element/",
+     "level": "easy",
+     "uses": "counting with a dict (this lesson)"
+    }
+   ]
   },
   {
    "id": "algo-w02-3",
@@ -2551,15 +2599,18 @@
      "questions": [
       {
        "q": "What makes `reverse(s[1:]) + s[0]` O(n²) overall?",
-       "a": "Each slice copies the rest of the string, so the copies total about n + (n−1) + ... = O(n²)."
+       "a": "Each slice copies the rest of the string, so the copies total about n + (n−1) + ... = O(n²).",
+       "from": "algo-w02-2"
       },
       {
        "q": "Base case and recursive case of factorial?",
-       "a": "Base: n ≤ 1 → 1. Recursive: n · fact(n − 1)."
+       "a": "Base: n ≤ 1 → 1. Recursive: n · fact(n − 1).",
+       "from": "algo-w02-2"
       },
       {
        "q": "Iterative binary search: what are lo and hi, and when does it stop?",
-       "a": "The current search range; it stops when found or when lo > hi (empty range)."
+       "a": "The current search range; it stops when found or when lo > hi (empty range).",
+       "from": "algo-w01-1"
       }
      ]
     },
@@ -2668,7 +2719,15 @@
      "back": "On the way back up the stack, in reverse order (that's how ll_to_list_reversed reverses)."
     }
    ],
-   "deliverable": "recursion_drills.py with rcount, rmax, rbinary_search, count_if and the linked-list functions, all tests passing; committed."
+   "deliverable": "recursion_drills.py with rcount, rmax, rbinary_search, count_if and the linked-list functions, all tests passing; committed.",
+   "leetcode": [
+    {
+     "title": "Remove Linked List Elements",
+     "url": "https://leetcode.com/problems/remove-linked-list-elements/",
+     "level": "easy",
+     "uses": "recursion on a linked list (this lesson and Monday)"
+    }
+   ]
   },
   {
    "id": "build-w02-5",
@@ -2892,27 +2951,31 @@
      "questions": [
       {
        "q": "Shapes (6, 2) and (2,): do they broadcast? Result shape?",
-       "a": "Yes: (6, 2)."
+       "a": "Yes: (6, 2).",
+       "from": "ai-w02-2"
       },
       {
        "q": "What does `scores.mean(axis=1)` return for a students × topics array?",
-       "a": "One mean per student (per row)."
+       "a": "One mean per student (per row).",
+       "from": "ai-w02-1"
       },
       {
        "q": "How much slower did your triple-loop matmul run than `@` at n = 100?",
-       "a": "Hundreds to thousands of times slower (your measured number)."
+       "a": "Hundreds to thousands of times slower (your measured number).",
+       "from": "math-w02-4"
       },
       {
        "q": "Rewrite `[x if x > 0 else 0 for x in xs]` in NumPy.",
-       "a": "np.where(xs > 0, xs, 0) (or np.maximum(xs, 0))."
+       "a": "np.where(xs > 0, xs, 0) (or np.maximum(xs, 0)).",
+       "from": "ai-w01-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "You have a million random scores. Predict, roughly, how long each takes on your Mac:\n\n1. A Python `for` loop computing the sum of squares.\n2. `np.sum(a ** 2)`.\n\nA factor of 2? 10? 100? Write your guess, and keep it for the end of the lesson."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nYou have a million random scores and compute the sum of squares two ways:\n\n1. A Python `for` loop.\n2. `np.sum(a ** 2)`.\n\n**Typical result on a laptop:** the loop takes a few hundred milliseconds; NumPy takes about a millisecond. That's roughly 100 times faster, sometimes more. You'll measure your own Mac's numbers in this lesson, and Learn explains where the difference comes from."
     },
     {
      "kind": "learn",
@@ -2962,7 +3025,7 @@
        "tests": "import numpy as np\n\ndef test_moving_average():\n    assert np.allclose(moving_average(np.array([1, 2, 3, 4, 5]), 2), [1.5, 2.5, 3.5, 4.5])\n    assert np.allclose(moving_average(np.array([2.0, 4.0, 6.0]), 3), [4.0])\n\ndef test_matches_naive():\n    a = np.random.default_rng(1).random(100)\n    naive = [a[i:i + 7].mean() for i in range(len(a) - 6)]\n    assert np.allclose(moving_average(a, 7), naive)"
       },
       {
-       "prompt": "Unguided. Write `nearest_other(P)`: for each point in an (n, 2) array, return the index of its nearest *other* point, using broadcasting (no Python loops). Then check your pretest guess: report the speedup of `sumsq_vec` over `sumsq_loop` on your machine in a comment.",
+       "prompt": "Unguided. Write `nearest_other(P)`: for each point in an (n, 2) array, return the index of its nearest *other* point, using broadcasting (no Python loops). Then compare with the first example: report the speedup of `sumsq_vec` over `sumsq_loop` on your machine in a comment.",
        "hints": [
         "Build the full distance matrix as in the lesson.",
         "A point's distance to itself is 0; set the diagonal to infinity with `np.fill_diagonal`.",

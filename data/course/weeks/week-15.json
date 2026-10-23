@@ -25,7 +25,7 @@
     {
      "title": "Learn C++",
      "url": "https://www.learncpp.com/",
-     "part": "skim the chapters on references, const, std::vector, smart pointers and templates as a checklist; reread only what you miss in the pretest",
+     "part": "skim the chapters on references, const, std::vector, smart pointers and templates as a checklist; reread only what the first example showed you missed",
      "type": "docs"
     },
     {
@@ -43,27 +43,31 @@
      "questions": [
       {
        "q": "Why write `void f(const std::string& s)` instead of `void f(std::string s)` for a function that only reads `s`?",
-       "a": "Passing by value copies the whole string (heap allocation for anything but short strings). A const reference passes an alias with no copy, and `const` promises, and enforces, that `f` will not modify the caller's string."
+       "a": "Passing by value copies the whole string (heap allocation for anything but short strings). A const reference passes an alias with no copy, and `const` promises, and enforces, that `f` will not modify the caller's string.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "`std::unique_ptr` vs `std::shared_ptr`: when do you reach for each?",
-       "a": "`unique_ptr` by default: one owner, zero overhead, freed when the owner goes out of scope; it can be moved but not copied. `shared_ptr` only when ownership is genuinely shared and the last owner is not known in advance; it pays for an atomic reference count."
+       "a": "`unique_ptr` by default: one owner, zero overhead, freed when the owner goes out of scope; it can be moved but not copied. `shared_ptr` only when ownership is genuinely shared and the last owner is not known in advance; it pays for an atomic reference count.",
+       "from": "cpp-w13-3"
       },
       {
        "q": "In CMake, what is the difference between `add_library` and `add_executable`, and what does `target_link_libraries(app PRIVATE mylib)` do?",
-       "a": "`add_library` builds a library target (static or shared), `add_executable` builds a program with a `main`. `target_link_libraries` links `mylib` into `app` and passes on `mylib`'s public include directories and flags."
+       "a": "`add_library` builds a library target (static or shared), `add_executable` builds a program with a `main`. `target_link_libraries` links `mylib` into `app` and passes on `mylib`'s public include directories and flags.",
+       "from": "cpp-w14-3"
       },
       {
        "q": "Why can a `std::string_view` be dangerous as a return value or a class member?",
-       "a": "It does not own characters; it points into someone else's buffer. If that string is destroyed or reallocates, the view dangles and reading it is undefined behaviour."
+       "a": "It does not own characters; it points into someone else's buffer. If that string is destroyed or reallocates, the view dangles and reading it is undefined behaviour.",
+       "from": "cpp-w09-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before running anything, write down what this prints. Then compile it (`g++ -std=c++20 -Wall pre.cpp && ./a.out`) and compare. Every line tests one Phase B idea.\n\n```cpp\n#include <iostream>\n#include <memory>\n#include <string>\n#include <vector>\n\nvoid bump(int x) { x += 1; }\nvoid bump_ref(int& x) { x += 1; }\n\nint main() {\n    int a = 1;\n    bump(a);\n    bump_ref(a);\n    std::cout << a << '\\n';                 // line 1\n\n    std::vector<int> v{1, 2, 3};\n    std::vector<int> w = v;                 // copy\n    w.push_back(4);\n    std::cout << v.size() << ' ' << w.size() << '\\n';   // line 2\n\n    auto p = std::make_unique<std::string>(\"hi\");\n    auto q = std::move(p);\n    std::cout << (p ? \"p owns\" : \"p empty\") << ' ' << *q << '\\n';  // line 3\n\n    auto s1 = std::make_shared<int>(7);\n    auto s2 = s1;\n    std::cout << s1.use_count() << '\\n';    // line 4\n}\n```\n\nExpected: `2`, `3 4`, `p empty hi`, `2`. If you missed one, that is the topic to reread first."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way. Every line uses one idea from Weeks 8 to 14.\n\n```cpp\n#include <iostream>\n#include <memory>\n#include <string>\n#include <vector>\n\nvoid bump(int x) { x += 1; }\nvoid bump_ref(int& x) { x += 1; }\n\nint main() {\n    int a = 1;\n    bump(a);\n    bump_ref(a);\n    std::cout << a << '\\n';                 // line 1\n\n    std::vector<int> v{1, 2, 3};\n    std::vector<int> w = v;                 // copy\n    w.push_back(4);\n    std::cout << v.size() << ' ' << w.size() << '\\n';   // line 2\n\n    auto p = std::make_unique<std::string>(\"hi\");\n    auto q = std::move(p);\n    std::cout << (p ? \"p owns\" : \"p empty\") << ' ' << *q << '\\n';  // line 3\n\n    auto s1 = std::make_shared<int>(7);\n    auto s2 = s1;\n    std::cout << s1.use_count() << '\\n';    // line 4\n}\n```\n\n**It prints** `2`, `3 4`, `p empty hi`, `2`. If a line isn't clear yet, the Learn step reviews that topic."
     },
     {
      "kind": "learn",
@@ -221,15 +225,18 @@
      "questions": [
       {
        "q": "Last week: the height of a balanced binary tree with n nodes is about what?",
-       "a": "About log2(n): 1,000 nodes fit in about 10 levels, a million in about 20."
+       "a": "About log2(n): 1,000 nodes fit in about 10 levels, a million in about 20.",
+       "from": "algo-w07-1"
       },
       {
        "q": "Which data structure drives BFS, and which drives DFS?",
-       "a": "BFS uses a queue (first in, first out); DFS uses a stack (explicitly, or the call stack through recursion)."
+       "a": "BFS uses a queue (first in, first out); DFS uses a stack (explicitly, or the call stack through recursion).",
+       "from": "algo-w05-2"
       },
       {
        "q": "Why is \"keep a sorted list and insert into it\" a poor way to support repeated insert + take-smallest?",
-       "a": "Taking the smallest is O(1) or O(n) depending on the end, but each insert into a sorted array shifts elements: O(n). A heap makes both O(log n)."
+       "a": "Taking the smallest is O(1) or O(n) depending on the end, but each insert into a sorted array shifts elements: O(n). A heap makes both O(log n).",
+       "from": "algo-w01-2"
       }
      ]
     },
@@ -652,33 +659,37 @@
      "questions": [
       {
        "q": "Week 13: state Bayes' rule and name its four parts.",
-       "a": "P(A|B) = P(B|A)·P(A) / P(B): posterior = likelihood × prior / evidence."
+       "a": "P(A|B) = P(B|A)·P(A) / P(B): posterior = likelihood × prior / evidence.",
+       "from": "math-w13-1"
       },
       {
        "q": "Week 14: for X ~ N(μ, σ²), roughly what fraction of values lie within μ ± 2σ?",
-       "a": "About 95%."
+       "a": "About 95%.",
+       "from": "math-w14-4"
       },
       {
        "q": "Week 14: Var(X) in terms of expectations?",
-       "a": "Var(X) = E[(X − μ)²] = E[X²] − (E[X])²."
+       "a": "Var(X) = E[(X − μ)²] = E[X²] − (E[X])².",
+       "from": "robo-w03-4"
       },
       {
        "q": "Week 13: what is the difference between a pmf and a cdf?",
-       "a": "The pmf gives P(X = x) for each value; the cdf gives P(X ≤ x), a running sum (or integral) that rises from 0 to 1."
+       "a": "The pmf gives P(X = x) for each value; the cdf gives P(X ≤ x), a running sum (or integral) that rises from 0 to 1.",
+       "from": "cpp-w14-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "A random variable X is uniform on the interval [0, 0.5].\n\n1. What is the value of its density p(x) on that interval?\n2. Is it a problem that this number is bigger than 1?\n3. What is P(X = 0.25) exactly?\n\nWrite your answers before reading on. (They are: 2, because the area 2 × 0.5 must equal 1; no, a density is not a probability, only its integral over an interval is; and 0, because a single point has zero width.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nA random variable X is uniform on the interval [0, 0.5].\n\n1. Its density p(x) is **2** on that interval, because the total area 2 × 0.5 must equal 1.\n2. A density bigger than 1 is **fine**: a density is not a probability. Only its area over an interval is.\n3. P(X = 0.25) is exactly **0**: a single point has zero width.\n\nLearn explains densities."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "The language of chapter 6",
-     "body": "Chapter 6 of *Mathematics for Machine Learning* restates the probability you met on Khan Academy in weeks 12–14 in the vocabulary that ML papers use. The ideas are the same; the payoff is that after this week you can read `p(x | θ)`, `p(x, y)` and `∫ p(x, y) dy` without stopping.\n\n**Probability space.** Three ingredients: the **sample space** Ω (all possible outcomes), the **event space** (the subsets of Ω you are allowed to ask about) and a **probability** P that assigns each event a number in [0, 1], with P(Ω) = 1 and additivity for disjoint events. In ML you rarely touch Ω directly. Instead you work with a **random variable** X, a function from outcomes to numbers, and talk about its distribution. MML calls the set of values X can take the **target space** 𝒯.\n\n**Discrete vs continuous.** If X takes countably many values, its distribution is a **probability mass function**: p(x) = P(X = x), and the values sum to 1. If X is continuous, its distribution is a **probability density function**: p(x) ≥ 0 with ∫ p(x) dx = 1, and probabilities are areas: P(a ≤ X ≤ b) = ∫ₐᵇ p(x) dx. A density can exceed 1 (the pretest). The **cumulative distribution function** F(x) = P(X ≤ x) works for both. MML uses the same letter p for both mass and density; context tells you which.\n\n**Joint, marginal, conditional.** For two variables, p(x, y) is the **joint** distribution. Two rules generate everything else:\n\n- **Sum rule** (marginalisation): p(x) = Σ_y p(x, y), or ∫ p(x, y) dy for continuous y. You \"sum out\" the variable you do not care about.\n- **Product rule**: p(x, y) = p(y | x) p(x). Read it as a definition of the conditional: p(y | x) = p(x, y) / p(x).\n\nWrite the product rule both ways, p(y | x) p(x) = p(x | y) p(y), divide, and **Bayes' theorem** falls out:\n\np(x | y) = p(y | x) p(x) / p(y),\n\nwhere in ML x is usually the unknown (a parameter, the true state) and y the observed data. p(x) is the **prior**, p(y | x) the **likelihood**, p(x | y) the **posterior**, and p(y) = Σ_x p(y | x) p(x) the **evidence**, which by the sum rule is just a normaliser.\n\n**Worked example: a line sensor.** Your robot's IR line sensor reads *dark* or *light*; the robot is *on* or *off* the line. From a logged run you estimate the joint table:\n\n| | on line | off line |\n|---|---|---|\n| dark | 0.36 | 0.06 |\n| light | 0.04 | 0.54 |\n\nThe four cells sum to 1. Sum rule: p(dark) = 0.36 + 0.06 = 0.42 and p(on) = 0.36 + 0.04 = 0.40. Product rule: p(dark | on) = 0.36 / 0.40 = 0.90 (the sensor's hit rate) and p(on | dark) = 0.36 / 0.42 ≈ 0.857. Bayes checks it: p(on | dark) = p(dark | on) p(on) / p(dark) = 0.90 × 0.40 / 0.42 ≈ 0.857. Note the asymmetry: 90% of on-line moments read dark, but a dark reading means on-line only 86% of the time, because off-line moments are more common and some of them read dark too.\n\n```python\nimport numpy as np\n\n# rows: reading (dark, light); columns: state (on, off)\njoint = np.array([[0.36, 0.06],\n                  [0.04, 0.54]])\nassert np.isclose(joint.sum(), 1.0)\n\np_reading = joint.sum(axis=1)          # sum rule over state\np_state = joint.sum(axis=0)            # sum rule over reading\np_state_given_reading = joint / p_reading[:, None]   # product rule, row-wise\np_reading_given_state = joint / p_state[None, :]\n\nprint(\"p(dark), p(light):\", p_reading)              # [0.42 0.58]\nprint(\"p(on | dark):\", round(p_state_given_reading[0, 0], 3))   # 0.857\nbayes = p_reading_given_state[0, 0] * p_state[0] / p_reading[0]\nassert np.isclose(bayes, p_state_given_reading[0, 0])\n```\n\n**A continuous example.** Let p(x) = c·x² on [0, 2] and 0 elsewhere. Normalise: ∫₀² c x² dx = c · 8/3 = 1, so c = 3/8. Then P(X ≤ 1) = (3/8) · 1/3 = 1/8, and the cdf on [0, 2] is F(x) = x³/8. Same rules, integrals instead of sums.\n\n**Independence.** X and Y are independent exactly when p(x, y) = p(x) p(y) for all x, y, equivalently p(y | x) = p(y). In the sensor table, p(dark) p(on) = 0.42 × 0.40 = 0.168 ≠ 0.36, so reading and state are strongly dependent, which is the whole point of a sensor."
+     "body": "Chapter 6 of *Mathematics for Machine Learning* restates the probability you met on Khan Academy in weeks 12–14 in the vocabulary that ML papers use. The ideas are the same; the payoff is that after this week you can read `p(x | θ)`, `p(x, y)` and `∫ p(x, y) dy` without stopping.\n\n**Probability space.** Three ingredients: the **sample space** Ω (all possible outcomes), the **event space** (the subsets of Ω you are allowed to ask about) and a **probability** P that assigns each event a number in [0, 1], with P(Ω) = 1 and additivity for disjoint events. In ML you rarely touch Ω directly. Instead you work with a **random variable** X, a function from outcomes to numbers, and talk about its distribution. MML calls the set of values X can take the **target space** 𝒯.\n\n**Discrete vs continuous.** If X takes countably many values, its distribution is a **probability mass function**: p(x) = P(X = x), and the values sum to 1. If X is continuous, its distribution is a **probability density function**: p(x) ≥ 0 with ∫ p(x) dx = 1, and probabilities are areas: P(a ≤ X ≤ b) = ∫ₐᵇ p(x) dx. A density can exceed 1 (the first example). The **cumulative distribution function** F(x) = P(X ≤ x) works for both. MML uses the same letter p for both mass and density; context tells you which.\n\n**Joint, marginal, conditional.** For two variables, p(x, y) is the **joint** distribution. Two rules generate everything else:\n\n- **Sum rule** (marginalisation): p(x) = Σ_y p(x, y), or ∫ p(x, y) dy for continuous y. You \"sum out\" the variable you do not care about.\n- **Product rule**: p(x, y) = p(y | x) p(x). Read it as a definition of the conditional: p(y | x) = p(x, y) / p(x).\n\nWrite the product rule both ways, p(y | x) p(x) = p(x | y) p(y), divide, and **Bayes' theorem** falls out:\n\np(x | y) = p(y | x) p(x) / p(y),\n\nwhere in ML x is usually the unknown (a parameter, the true state) and y the observed data. p(x) is the **prior**, p(y | x) the **likelihood**, p(x | y) the **posterior**, and p(y) = Σ_x p(y | x) p(x) the **evidence**, which by the sum rule is just a normaliser.\n\n**Worked example: a line sensor.** Your robot's IR line sensor reads *dark* or *light*; the robot is *on* or *off* the line. From a logged run you estimate the joint table:\n\n| | on line | off line |\n|---|---|---|\n| dark | 0.36 | 0.06 |\n| light | 0.04 | 0.54 |\n\nThe four cells sum to 1. Sum rule: p(dark) = 0.36 + 0.06 = 0.42 and p(on) = 0.36 + 0.04 = 0.40. Product rule: p(dark | on) = 0.36 / 0.40 = 0.90 (the sensor's hit rate) and p(on | dark) = 0.36 / 0.42 ≈ 0.857. Bayes checks it: p(on | dark) = p(dark | on) p(on) / p(dark) = 0.90 × 0.40 / 0.42 ≈ 0.857. Note the asymmetry: 90% of on-line moments read dark, but a dark reading means on-line only 86% of the time, because off-line moments are more common and some of them read dark too.\n\n```python\nimport numpy as np\n\n# rows: reading (dark, light); columns: state (on, off)\njoint = np.array([[0.36, 0.06],\n                  [0.04, 0.54]])\nassert np.isclose(joint.sum(), 1.0)\n\np_reading = joint.sum(axis=1)          # sum rule over state\np_state = joint.sum(axis=0)            # sum rule over reading\np_state_given_reading = joint / p_reading[:, None]   # product rule, row-wise\np_reading_given_state = joint / p_state[None, :]\n\nprint(\"p(dark), p(light):\", p_reading)              # [0.42 0.58]\nprint(\"p(on | dark):\", round(p_state_given_reading[0, 0], 3))   # 0.857\nbayes = p_reading_given_state[0, 0] * p_state[0] / p_reading[0]\nassert np.isclose(bayes, p_state_given_reading[0, 0])\n```\n\n**A continuous example.** Let p(x) = c·x² on [0, 2] and 0 elsewhere. Normalise: ∫₀² c x² dx = c · 8/3 = 1, so c = 3/8. Then P(X ≤ 1) = (3/8) · 1/3 = 1/8, and the cdf on [0, 2] is F(x) = x³/8. Same rules, integrals instead of sums.\n\n**Independence.** X and Y are independent exactly when p(x, y) = p(x) p(y) for all x, y, equivalently p(y | x) = p(y). In the sensor table, p(dark) p(on) = 0.42 × 0.40 = 0.168 ≠ 0.36, so reading and state are strongly dependent, which is the whole point of a sensor."
     },
     {
      "kind": "practice",
@@ -818,11 +829,13 @@
      "questions": [
       {
        "q": "Sum rule and product rule, one line each.",
-       "a": "p(x) = Σ_y p(x, y); p(x, y) = p(y | x) p(x)."
+       "a": "p(x) = Σ_y p(x, y); p(x, y) = p(y | x) p(x).",
+       "from": "math-w15-1"
       },
       {
        "q": "Week 14: how many Monte Carlo samples do you need to halve the standard error of an estimated probability?",
-       "a": "Four times as many: the standard error shrinks like 1/√n."
+       "a": "Four times as many: the standard error shrinks like 1/√n.",
+       "from": "math-w12-4"
       }
      ]
     },
@@ -1230,23 +1243,16 @@
      "questions": [
       {
        "q": "In Python you built CLIs with `argparse` (week 8). What three things did argparse do for you that you will now do by hand in C++?",
-       "a": "Split the arguments into flags and positionals, convert strings to numbers with error messages, and print usage/help and exit non-zero on bad input."
-      },
-      {
-       "q": "What does `std::optional<int>` express, and how do you read it safely?",
-       "a": "A value that may be absent. Check `if (opt)` or `opt.has_value()` before `*opt`, or use `opt.value_or(default)`."
-      },
-      {
-       "q": "Why can one function accept both an `std::ifstream` and an `std::istringstream`?",
-       "a": "Both derive from `std::istream`, so a parameter of type `std::istream&` binds to either."
+       "a": "Split the arguments into flags and positionals, convert strings to numbers with error messages, and print usage/help and exit non-zero on bad input.",
+       "from": "python-w08-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Your program will be called as `logstat --column 2 --skip-header sensor.csv`.\n\n1. What is `argc`, and what is in `argv[0]` and `argv[3]`?\n2. `std::stoi(\"12abc\")` returns what? And `std::stoi(\"abc\")`?\n3. A shell script runs `logstat bad.csv && echo ok`. What must your program return from `main` so that `ok` is *not* printed?\n\nWrite your answers, then check them in the learn step. (Answers: 5; the program name and `\"--skip-header\"`; `12` (it stops at the first non-digit), and it throws `std::invalid_argument`; anything non-zero, conventionally 1 for runtime errors and 2 for usage errors.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nYour program will be called as `logstat --column 2 --skip-header sensor.csv`.\n\n1. `argc` is **5**. `argv[0]` is the program name and `argv[3]` is `\"--skip-header\"`.\n2. `std::stoi(\"12abc\")` returns **12** (it stops at the first non-digit), and `std::stoi(\"abc\")` throws `std::invalid_argument`.\n3. So that `logstat bad.csv && echo ok` does *not* print `ok`, `main` must return **anything non-zero**, conventionally 1 for runtime errors and 2 for usage errors.\n\nLearn builds the argument handling."
     },
     {
      "kind": "learn",
@@ -1391,11 +1397,13 @@
      "questions": [
       {
        "q": "After `heapq.heapify(a)` on `[5, 3, 8, 1]`, what is `a[0]`, and is `a` sorted?",
-       "a": "`a[0]` is 1; the rest is only heap-ordered, not sorted."
+       "a": "`a[0]` is 1; the rest is only heap-ordered, not sorted.",
+       "from": "cpp-w12-2"
       },
       {
        "q": "Week 8 (arrays and hashing): how did you find the k most frequent elements, and what did it cost?",
-       "a": "Count with a dict, then bucket by frequency (O(n)) or sort the counts (O(n log n)). Today adds a third option: a size-k heap, O(n log k)."
+       "a": "Count with a dict, then bucket by frequency (O(n)) or sort the counts (O(n log n)). Today adds a third option: a size-k heap, O(n log k).",
+       "from": "algo-w04-2"
       }
      ]
     },
@@ -1789,33 +1797,37 @@
      "questions": [
       {
        "q": "From a joint table, how do you get p(y | x)?",
-       "a": "Divide the row (or column) for that x by the marginal p(x): p(y | x) = p(x, y) / p(x)."
+       "a": "Divide the row (or column) for that x by the marginal p(x): p(y | x) = p(x, y) / p(x).",
+       "from": "math-w15-1"
       },
       {
        "q": "Week 14: if X has variance 4, what is the variance of 3X + 5?",
-       "a": "9 × 4 = 36: scaling by a multiplies variance by a², and shifting changes nothing."
+       "a": "9 × 4 = 36: scaling by a multiplies variance by a², and shifting changes nothing.",
+       "from": "ai-w13-5"
       },
       {
        "q": "Week 7: for a symmetric matrix, what can you say about its eigenvectors?",
-       "a": "They can be chosen orthogonal, and the eigenvalues are real (the spectral theorem). Covariance matrices are symmetric, which is why this matters today."
+       "a": "They can be chosen orthogonal, and the eigenvalues are real (the spectral theorem). Covariance matrices are symmetric, which is why this matters today.",
+       "from": "math-w07-1"
       },
       {
        "q": "Week 10: what does the gradient of f(x, y) point toward?",
-       "a": "The direction of steepest increase of f."
+       "a": "The direction of steepest increase of f.",
+       "from": "math-w10-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "X and Y each have variance 1.\n\n1. If they are independent, what is Var(X + Y)?\n2. If Y = X exactly, what is Var(X + Y)?\n3. If Y = −X, what is Var(X + Y)?\n\nGuess, then read on. (2, 4, 0. The difference is entirely the covariance term.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nX and Y each have variance 1.\n\n1. If they are independent, Var(X + Y) = **2**.\n2. If Y = X exactly, Var(X + Y) = Var(2X) = **4**.\n3. If Y = −X, X + Y is always 0, so Var(X + Y) = **0**.\n\nThe difference is entirely the covariance term, which Learn explains."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Second moments and the Gaussian",
-     "body": "Part 1 gave you the rules that turn one distribution into another. Part 2 gives the summaries you actually compute (means and covariances) and the one distribution that keeps its shape under every operation you will use in robotics and ML: the Gaussian.\n\n**Mean and covariance.** For a random vector x ∈ ℝᴰ, the mean is μ = E[x] (one expectation per coordinate). The **covariance matrix** Σ = Cov[x] = E[(x − μ)(x − μ)ᵀ] has the variances on its diagonal and Cov[xᵢ, xⱼ] off the diagonal. It is symmetric and positive semi-definite. **Correlation** rescales covariance to [−1, 1]: corr = Cov[xᵢ, xⱼ] / (σᵢ σⱼ). The empirical versions divide by N (MML's convention) or by N − 1 (NumPy's `np.cov` default, the unbiased estimate).\n\n**Sums and linear maps.** Expectation is linear, always: E[X + Y] = E[X] + E[Y]. Variance is not:\n\nVar(X + Y) = Var(X) + Var(Y) + 2 Cov(X, Y).\n\nThat is the pretest: with Cov = 0, 1, −1 you get 2, 4, 0. In vector form, for an affine map y = Ax + b,\n\nE[y] = Aμ + b,   Cov[y] = A Σ Aᵀ.\n\nEvery scalar rule is a special case. With A = [1, 1] you get the sum formula; with A = [a] you get Var(aX) = a² Var(X).\n\n**Numeric example.** Let x = (x₁, x₂) with μ = (1, 2) and Σ = [[4, 2], [2, 3]]. Take y = 2x₁ − x₂, so A = [2, −1]. Then E[y] = 2·1 − 2 = 0 and Var(y) = A Σ Aᵀ = 4·4 + 1·3 + 2·(2)(−1)·2 = 16 + 3 − 8 = 11.\n\n**Independence vs uncorrelated.** Independence implies zero covariance, but not the other way around. Let X be −1, 0 or 1 with equal probability and Y = X². Then Cov(X, Y) = E[X³] − E[X]E[X²] = 0 − 0 = 0, yet Y is a function of X. Covariance only measures *linear* dependence.\n\n**The multivariate Gaussian.** x ~ 𝒩(μ, Σ) has density\n\np(x) = (2π)^(−D/2) |Σ|^(−1/2) exp(−½ (x − μ)ᵀ Σ⁻¹ (x − μ)).\n\nContours of equal density are ellipses whose axes are Σ's eigenvectors, with half-lengths proportional to √eigenvalue. Three facts make it the workhorse:\n\n1. **Affine maps keep it Gaussian**: Ax + b ~ 𝒩(Aμ + b, AΣAᵀ).\n2. **Marginals are Gaussian**: to marginalise, just delete the rows and columns of the variables you drop. The marginal of x₁ above is 𝒩(1, 4).\n3. **Conditionals are Gaussian**: splitting x into blocks (a, b),\n   μ_{a|b} = μ_a + Σ_ab Σ_bb⁻¹ (b − μ_b),   Σ_{a|b} = Σ_aa − Σ_ab Σ_bb⁻¹ Σ_ba.\n   With the example and an observation x₂ = 3: μ = 1 + (2/3)(3 − 2) ≈ 1.667 and variance 4 − 2·2/3 = 8/3 ≈ 2.667. Observing a correlated variable moves the mean and *always* shrinks the variance.\n\n**Fusing two measurements.** Two sensors measure the same distance d: an ultrasonic sensor reads 100 cm with σ = 4 cm (variance 16), an IR sensor reads 108 cm with σ = 2 cm (variance 4). Multiplying the two Gaussian likelihoods gives another Gaussian with\n\nvariance = (16 · 4) / (16 + 4) = 3.2,  mean = (4 · 100 + 16 · 108) / (16 + 4) = 106.4.\n\nThe fused estimate leans toward the more precise sensor and has a smaller variance (σ ≈ 1.79 cm) than either. In precision terms (precision = 1/variance) it is simpler still: precisions add (1/16 + 1/4 = 5/16), and the mean is the precision-weighted average. This is the measurement step of a Kalman filter, which you will build in Phase E.\n\n```python\nimport numpy as np\n\nmu = np.array([1.0, 2.0])\nSigma = np.array([[4.0, 2.0], [2.0, 3.0]])\nA = np.array([[2.0, -1.0]])\nprint(\"E[y] =\", (A @ mu).item(), \" Var(y) =\", (A @ Sigma @ A.T).item())   # 0.0, 11.0\n\n# check by simulation\nrng = np.random.default_rng(0)\nX = rng.multivariate_normal(mu, Sigma, size=200_000)\ny = 2 * X[:, 0] - X[:, 1]\nprint(round(y.mean(), 2), round(y.var(), 2))                             # ~0.0, ~11.0\n\n# sensor fusion\nv1, v2 = 16.0, 4.0\nfused_var = v1 * v2 / (v1 + v2)\nfused_mean = (v2 * 100 + v1 * 108) / (v1 + v2)\nprint(fused_mean, fused_var)                                             # 106.4 3.2\nassert np.isclose(fused_var, 3.2) and np.isclose(fused_mean, 106.4)\n```"
+     "body": "Part 1 gave you the rules that turn one distribution into another. Part 2 gives the summaries you actually compute (means and covariances) and the one distribution that keeps its shape under every operation you will use in robotics and ML: the Gaussian.\n\n**Mean and covariance.** For a random vector x ∈ ℝᴰ, the mean is μ = E[x] (one expectation per coordinate). The **covariance matrix** Σ = Cov[x] = E[(x − μ)(x − μ)ᵀ] has the variances on its diagonal and Cov[xᵢ, xⱼ] off the diagonal. It is symmetric and positive semi-definite. **Correlation** rescales covariance to [−1, 1]: corr = Cov[xᵢ, xⱼ] / (σᵢ σⱼ). The empirical versions divide by N (MML's convention) or by N − 1 (NumPy's `np.cov` default, the unbiased estimate).\n\n**Sums and linear maps.** Expectation is linear, always: E[X + Y] = E[X] + E[Y]. Variance is not:\n\nVar(X + Y) = Var(X) + Var(Y) + 2 Cov(X, Y).\n\nThat is the first example: with Cov = 0, 1, −1 you get 2, 4, 0. In vector form, for an affine map y = Ax + b,\n\nE[y] = Aμ + b,   Cov[y] = A Σ Aᵀ.\n\nEvery scalar rule is a special case. With A = [1, 1] you get the sum formula; with A = [a] you get Var(aX) = a² Var(X).\n\n**Numeric example.** Let x = (x₁, x₂) with μ = (1, 2) and Σ = [[4, 2], [2, 3]]. Take y = 2x₁ − x₂, so A = [2, −1]. Then E[y] = 2·1 − 2 = 0 and Var(y) = A Σ Aᵀ = 4·4 + 1·3 + 2·(2)(−1)·2 = 16 + 3 − 8 = 11.\n\n**Independence vs uncorrelated.** Independence implies zero covariance, but not the other way around. Let X be −1, 0 or 1 with equal probability and Y = X². Then Cov(X, Y) = E[X³] − E[X]E[X²] = 0 − 0 = 0, yet Y is a function of X. Covariance only measures *linear* dependence.\n\n**The multivariate Gaussian.** x ~ 𝒩(μ, Σ) has density\n\np(x) = (2π)^(−D/2) |Σ|^(−1/2) exp(−½ (x − μ)ᵀ Σ⁻¹ (x − μ)).\n\nContours of equal density are ellipses whose axes are Σ's eigenvectors, with half-lengths proportional to √eigenvalue. Three facts make it the workhorse:\n\n1. **Affine maps keep it Gaussian**: Ax + b ~ 𝒩(Aμ + b, AΣAᵀ).\n2. **Marginals are Gaussian**: to marginalise, just delete the rows and columns of the variables you drop. The marginal of x₁ above is 𝒩(1, 4).\n3. **Conditionals are Gaussian**: splitting x into blocks (a, b),\n   μ_{a|b} = μ_a + Σ_ab Σ_bb⁻¹ (b − μ_b),   Σ_{a|b} = Σ_aa − Σ_ab Σ_bb⁻¹ Σ_ba.\n   With the example and an observation x₂ = 3: μ = 1 + (2/3)(3 − 2) ≈ 1.667 and variance 4 − 2·2/3 = 8/3 ≈ 2.667. Observing a correlated variable moves the mean and *always* shrinks the variance.\n\n**Fusing two measurements.** Two sensors measure the same distance d: an ultrasonic sensor reads 100 cm with σ = 4 cm (variance 16), an IR sensor reads 108 cm with σ = 2 cm (variance 4). Multiplying the two Gaussian likelihoods gives another Gaussian with\n\nvariance = (16 · 4) / (16 + 4) = 3.2,  mean = (4 · 100 + 16 · 108) / (16 + 4) = 106.4.\n\nThe fused estimate leans toward the more precise sensor and has a smaller variance (σ ≈ 1.79 cm) than either. In precision terms (precision = 1/variance) it is simpler still: precisions add (1/16 + 1/4 = 5/16), and the mean is the precision-weighted average. This is the measurement step of a Kalman filter, which you will build in Phase E.\n\n```python\nimport numpy as np\n\nmu = np.array([1.0, 2.0])\nSigma = np.array([[4.0, 2.0], [2.0, 3.0]])\nA = np.array([[2.0, -1.0]])\nprint(\"E[y] =\", (A @ mu).item(), \" Var(y) =\", (A @ Sigma @ A.T).item())   # 0.0, 11.0\n\n# check by simulation\nrng = np.random.default_rng(0)\nX = rng.multivariate_normal(mu, Sigma, size=200_000)\ny = 2 * X[:, 0] - X[:, 1]\nprint(round(y.mean(), 2), round(y.var(), 2))                             # ~0.0, ~11.0\n\n# sensor fusion\nv1, v2 = 16.0, 4.0\nfused_var = v1 * v2 / (v1 + v2)\nfused_mean = (v2 * 100 + v1 * 108) / (v1 + v2)\nprint(fused_mean, fused_var)                                             # 106.4 3.2\nassert np.isclose(fused_var, 3.2) and np.isclose(fused_mean, 106.4)\n```"
     },
     {
      "kind": "practice",
@@ -1959,11 +1971,13 @@
      "questions": [
       {
        "q": "Cov[Ax + b] for x with covariance Σ?",
-       "a": "AΣAᵀ."
+       "a": "AΣAᵀ.",
+       "from": "math-w15-3"
       },
       {
        "q": "Week 7/8: what makes a matrix positive definite, and why is every valid full-rank covariance matrix one?",
-       "a": "vᵀΣv > 0 for every non-zero v. vᵀΣv is the variance of vᵀx, which is positive unless some combination of the variables is constant."
+       "a": "vᵀΣv > 0 for every non-zero v. vᵀΣv is the variance of vᵀx, which is positive unless some combination of the variables is constant.",
+       "from": "math-w15-3"
       }
      ]
     },
@@ -2374,23 +2388,21 @@
      "questions": [
       {
        "q": "In week 14 you used CMake for the first time. What do `cmake -S . -B build` and `cmake --build build` each do?",
-       "a": "The first configures: reads CMakeLists.txt from the source dir `.` and generates build files into `build/`. The second runs the actual compile and link in that build directory."
-      },
-      {
-       "q": "In Python you used pytest (week 3) with plain `assert`. What does C++ `assert` do when `NDEBUG` is defined?",
-       "a": "Nothing: the macro expands to no code, so the check disappears. Release builds (`-DNDEBUG`) skip asserts, which is why test executables must be built without NDEBUG."
+       "a": "The first configures: reads CMakeLists.txt from the source dir `.` and generates build files into `build/`. The second runs the actual compile and link in that build directory.",
+       "from": "cpp-w14-3"
       },
       {
        "q": "Why did the `run` function in the last lesson take `std::ostream& out` instead of writing straight to `std::cout`?",
-       "a": "So tests can pass an `std::ostringstream` and compare the exact output string."
+       "a": "So tests can pass an `std::ostringstream` and compare the exact output string.",
+       "from": "cpp-w15-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "This compiles without warnings at the default settings. Predict what happens when you run it, then predict what `-fsanitize=address` would say.\n\n```cpp-snippet\nstd::vector<int> v{1, 2, 3};\nint* first = &v[0];\nfor (int i = 0; i < 100; ++i) v.push_back(i);\nstd::cout << *first << '\\n';\n```\n\nMost likely it prints a plausible-looking number (often 1) and exits normally, which is exactly why this bug survives. AddressSanitizer stops the program at the read with a `heap-use-after-free` report pointing at both the `push_back` that freed the buffer and the line that read it."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n```cpp-snippet\nstd::vector<int> v{1, 2, 3};\nint* first = &v[0];\nfor (int i = 0; i < 100; ++i) v.push_back(i);\nstd::cout << *first << '\\n';\n```\n\nThis compiles without warnings at the default settings. **When you run it**, it most likely prints a plausible-looking number (often 1) and exits normally, which is exactly why this bug survives. The `push_back` calls moved the vector's data to a bigger buffer, so `first` points at freed memory.\n\nWith `-fsanitize=address`, AddressSanitizer stops the program at the read with a `heap-use-after-free` report, pointing at both the `push_back` that freed the buffer and the line that read it. Learn explains how to use it."
     },
     {
      "kind": "learn",
@@ -2543,15 +2555,18 @@
      "questions": [
       {
        "q": "Week 3: what does quicksort's partition step guarantee about the pivot afterwards?",
-       "a": "The pivot is in its final sorted position: everything left is ≤ it, everything right is ≥ it."
+       "a": "The pivot is in its final sorted position: everything left is ≤ it, everything right is ≥ it.",
+       "from": "algo-w03-1"
       },
       {
        "q": "Which heap do you keep for the k largest, and what is its root?",
-       "a": "A min-heap of size k; its root is the k-th largest."
+       "a": "A min-heap of size k; its root is the k-th largest.",
+       "from": "algo-w15-2"
       },
       {
        "q": "Why is a heap a good fit for \"always serve the most urgent job next\"?",
-       "a": "It gives the highest-priority item in O(1) and supports inserts and removals in O(log n) as jobs come and go."
+       "a": "It gives the highest-priority item in O(1) and supports inserts and removals in O(log n) as jobs come and go.",
+       "from": "algo-w15-1"
       }
      ]
     },
@@ -2872,27 +2887,31 @@
      "questions": [
       {
        "q": "Thursday: define a p-value in one sentence.",
-       "a": "The probability, if the null hypothesis were true, of seeing a result at least as extreme as the observed one."
+       "a": "The probability, if the null hypothesis were true, of seeing a result at least as extreme as the observed one.",
+       "from": "ai-w12-5"
       },
       {
        "q": "Tuesday: how do you get a 95% bootstrap CI for a statistic?",
-       "a": "Resample the data with replacement (same size) many times, compute the statistic each time, and take the 2.5th and 97.5th percentiles."
+       "a": "Resample the data with replacement (same size) many times, compute the statistic each time, and take the 2.5th and 97.5th percentiles.",
+       "from": "ai-w10-2"
       },
       {
        "q": "Monday: why does every number in the report need a rerunnable query?",
-       "a": "So anyone, including you next month, can verify and update it; a number without a source cannot be checked."
+       "a": "So anyone, including you next month, can verify and update it; a number without a source cannot be checked.",
+       "from": "ai-w15-3"
       },
       {
        "q": "Week 12: what is the difference between an A/B test and comparing two groups that chose themselves?",
-       "a": "In an A/B test the groups are assigned at random, so differences are attributable to the treatment; self-selected groups can differ in confounders."
+       "a": "In an A/B test the groups are assigned at random, so differences are attributable to the treatment; self-selected groups can differ in confounders.",
+       "from": "ai-w12-5"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Students who attended optional mentor sessions completed 78% of exercises on average; those who did not completed 70%. There are 25 students in each group.\n\nBefore reading on, write down: (1) what else you would need to know before telling the programme lead \"mentor sessions raise completion by 8 points\", and (2) whether 8 points with 25 per group is likely to be distinguishable from noise if individual completion rates have a standard deviation of about 15 points.\n\n(Rough check for 2: the standard error of a difference in means is √(15²/25 + 15²/25) ≈ 4.2, so 8 points is about 1.9 standard errors: borderline, and the interval will be wide. For 1: whether attendance was voluntary, because motivated students may both attend and complete more.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nStudents who attended optional mentor sessions completed 78% of exercises on average; those who did not completed 70%. There are 25 students in each group.\n\n1. Before telling the programme lead \"mentor sessions raise completion by 8 points\", you'd need to know **whether attendance was voluntary**. Motivated students may both attend and complete more.\n2. With a standard deviation of about 15 points, the standard error of the difference is √(15²/25 + 15²/25) ≈ 4.2. So 8 points is about 1.9 standard errors: **borderline**, with a wide confidence interval.\n\nLearn works through both points."
     },
     {
      "kind": "learn",

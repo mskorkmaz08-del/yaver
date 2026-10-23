@@ -36,7 +36,7 @@ export const FILES = {
   'js/views/home.js': 'Home: AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
   'js/views/study.js': 'Study: streak and week stats, roadmap plan, practice counters, focus timer, heatmap, subjects, sessions; the course Today card.',
   'js/views/course.js': 'Course overview: phases, tracks, progress per lane, deadlines, tests, settings.',
-  'js/views/lesson.js': 'Lesson runner: step-by-step lesson with timer, hints, solutions, tutor, review cards and grading.',
+  'js/views/lesson.js': 'Lesson runner: step-by-step lesson with timer, hints, solutions, tutor, review cards and grading. Recall shows only questions from finished lessons; every question has "don\'t know yet"; optional LeetCode problems with solved/stuck and a tutor walk-through.',
   'js/views/calendar.js': 'Meetings: week strip, day agenda, free slots, send to iPhone Calendar.',
   'js/views/money.js': 'Money: month total, budget pace, categories, recent expenses.',
   'js/views/cetele.js': 'Çetele: daily spiritual minimums with +/− counters and done checks, day switcher, streak, and the edit-list sheet.',
@@ -60,6 +60,7 @@ export const FILES = {
   'tests/cetele.mjs': 'Çetele screen, streak, weekly fasting, Home card, reminder and the log_cetele AI tool.',
   'tests/mac-connect.mjs': 'Connection code paste and auto-reconnect after the bridge link changes, with fake cloudflared and ntfy.',
   'tests/course-smoke.mjs': 'Course screens on phone and 1440×900 laptop with a faked clock.',
+  'tests/no-guess.mjs': 'Lessons never ask for a guess: recall only from finished lessons, first example shows its result, "don\'t know yet" everywhere, optional LeetCode problems.',
   'tests/sync-test.mjs': 'Sync between three simulated devices against a mocked GitHub.',
   'tests/validate-course.mjs': 'Validates every course week file (schema, sequence, links).',
   'tests/run-lesson-code.mjs': 'Runs the code blocks inside lessons to prove they work.',
@@ -75,7 +76,7 @@ export const FILES = {
 
 // Folders described as a whole instead of file by file.
 export const FOLDERS = {
-  'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps, questions and review cards.',
+  'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps (recall questions name the earlier lesson that taught them), questions, review cards and optional LeetCode problems.',
   'vendor/': 'Third-party code shipped with the app: the Anthropic SDK bundled with esbuild, and Leaflet for the map.',
   'icons/': 'Home Screen and app icons.',
 };
@@ -118,7 +119,7 @@ export const STORE_FIELDS = {
   tasks: 'title, due, done, doneAt',
   milestones: 'subjectId, title, done, order',
   chats: 'api (Claude history), gapi (Gemini), mapi (Mac), view (bubbles)',
-  kv: 'settings: one row per key (name, currency, goals, keys, course, plan…)',
+  kv: 'settings: one row per key (name, currency, goals, keys, course, plan, leetcode solved/stuck…)',
   courseProgress: 'lessonId, status, startedAt, minutes, score, mastered, attempts, hints',
   cards: 'lessonId, track, front, back, box, due, lapses, history',
   courseLessons: 'AI-generated lessons for weeks without a bundled file',
@@ -207,6 +208,7 @@ export const RECIPES = [
 export const TESTS = [
   ['tests/smoke.mjs', 'Whole app on an iPhone-size browser with mocked AI'],
   ['tests/course-smoke.mjs', 'Course screens, phone and laptop'],
+  ['tests/no-guess.mjs', 'One path, no guessing: recall, examples, LeetCode'],
   ['tests/sync-test.mjs', 'Three-device sync with mocked GitHub'],
   ['tests/mac-bridge.mjs', 'Mac-first routing and fallback'],
   ['tests/mac-connect.mjs', 'Connection code and auto-reconnect'],

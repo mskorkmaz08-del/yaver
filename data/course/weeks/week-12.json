@@ -42,33 +42,37 @@
      "questions": [
       {
        "q": "Why do we pass a `std::string` to a function as `const std::string&` instead of by value?",
-       "a": "By value copies the whole string (heap allocation for long strings). A const reference gives read access to the caller's object with no copy, and `const` promises the function won't change it."
+       "a": "By value copies the whole string (heap allocation for long strings). A const reference gives read access to the caller's object with no copy, and `const` promises the function won't change it.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "What's wrong with returning a `std::string_view` that points into a local `std::string`?",
-       "a": "The local string is destroyed when the function returns, so the view dangles: it points at freed memory. Return a `std::string` instead."
+       "a": "The local string is destroyed when the function returns, so the view dangles: it points at freed memory. Return a `std::string` instead.",
+       "from": "cpp-w09-3"
       },
       {
        "q": "In week 10 you overloaded `operator+` for a small class. Should it be a member or a free function, and what does it return?",
-       "a": "Usually a free (or friend) function taking both operands by const reference and returning a new object by value, so `a + b` leaves both operands unchanged."
+       "a": "Usually a free (or friend) function taking both operands by const reference and returning a new object by value, so `a + b` leaves both operands unchanged.",
+       "from": "cpp-w10-3"
       },
       {
        "q": "What does a constructor's member initializer list do that assignments in the body don't?",
-       "a": "It initializes members directly, in declaration order. Assignment in the body first default-constructs and then assigns; const and reference members can only be set in the initializer list."
+       "a": "It initializes members directly, in declaration order. Assignment in the body first default-constructs and then assigns; const and reference members can only be set in the initializer list.",
+       "from": "cpp-w10-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict the three lines this prints before you read on. Write your guesses down.\n\n```cpp\n#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> v{1, 2, 3};\n    v.push_back(4);\n    std::cout << v.size() << '\\n';\n\n    v.resize(2);\n    std::cout << v.back() << '\\n';\n\n    std::vector<int> w(3);\n    std::vector<int> u{3};\n    std::cout << w.size() << ' ' << u.size() << '\\n';\n}\n```\n\nThe last line is the one people get wrong. Parentheses and braces mean different things here."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp\n#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> v{1, 2, 3};\n    v.push_back(4);\n    std::cout << v.size() << '\\n';\n\n    v.resize(2);\n    std::cout << v.back() << '\\n';\n\n    std::vector<int> w(3);\n    std::vector<int> u{3};\n    std::cout << w.size() << ' ' << u.size() << '\\n';\n}\n```\n\n**It prints `4`, `2`, then `3 1`.** `std::vector<int> w(3)` makes three zeros, but `std::vector<int> u{3}` makes one element, the number 3. Parentheses and braces mean different things here; Learn explains when to use each."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "### Why containers, and which one\n\nA raw C array (`int a[10]`) doesn't know its own size, decays to a pointer the moment you pass it to a function, and can't grow. Modern C++ replaces it with two standard containers:\n\n- **`std::array<T, N>`**: fixed size known at compile time. Lives wherever you declare it (on the stack for a local), no heap allocation, same speed as a C array, but it knows `size()`, can be copied and compared, and works with range-for and the algorithms. Use it for things whose size is part of the meaning: an RGB colour (`std::array<int, 3>`), a 3D point, the 4 wheel speeds of a robot.\n- **`std::vector<T>`**: dynamic size. The elements live in one contiguous block on the heap; the vector object itself is three pointers (begin, end of elements, end of capacity). Use it as your default container whenever the count is known only at run time: sensor readings, students, lines of a file.\n\nBoth store elements **contiguously**, which is why they are fast: the CPU cache loads neighbours for free. That's also why `std::vector` is the right default even when you think you want a linked list.\n\n### Construction: braces vs parentheses\n\n`std::vector<int> w(3);` calls the \"count\" constructor: three value-initialized ints, `{0, 0, 0}`. `std::vector<int> u{3};` is list initialization: one element, `{3}`. So the pretest prints `4`, `2`, then `3 1`. When you mean \"n copies\", use parentheses: `std::vector<double> zeros(n, 0.0);`.\n\n### Size vs capacity\n\n`size()` is how many elements exist. `capacity()` is how many fit before the vector must reallocate. When `push_back` finds `size() == capacity()`, the vector allocates a bigger block (libstdc++ doubles it), moves every element across and frees the old block. That's why `push_back` is *amortized* O(1): most calls are cheap, a few are expensive, and the total over n pushes is O(n).\n\nTwo consequences:\n1. If you know the final count, call `reserve(n)` first. One allocation instead of about log₂ n.\n2. **Reallocation invalidates** every pointer, reference and iterator into the vector. Don't keep `int& first = v[0];` across a `push_back`.\n\n`resize(n)` changes the *size* (adding default values or dropping the tail). `reserve(n)` changes only the *capacity*. Mixing them up is a classic bug: after `v.reserve(5)`, `v[0] = 1` is undefined behaviour because no element 0 exists yet.\n\n### Access: `[]` vs `at()`\n\n`v[i]` does no bounds check: out of range is undefined behaviour (it may \"work\", crash, or corrupt something else). `v.at(i)` checks and throws `std::out_of_range`. Use `at()` while learning and in code that handles untrusted indices; use `[]` in tight loops whose bounds you control. Indices are `std::size_t` (unsigned), so `for (int i = 0; i < v.size(); ++i)` gives a signed/unsigned warning; prefer range-for, or `std::size_t i`.\n\n### Passing and returning\n\nPass containers **by const reference** to read them (`const std::vector<int>&`), by plain reference to modify the caller's container, and **return new containers by value**. Returning by value is cheap: the compiler either constructs the result directly in the caller (copy elision) or moves it, which just steals three pointers.\n\n### Worked example: sensor readings\n\n```cpp\n#include <array>\n#include <iostream>\n#include <stdexcept>\n#include <vector>\n\n// Read-only input: const reference. Result: returned by value.\nstd::vector<double> above(const std::vector<double>& xs, double limit) {\n    std::vector<double> out;\n    for (double x : xs)\n        if (x > limit) out.push_back(x);\n    return out;\n}\n\ndouble mean(const std::vector<double>& xs) {\n    if (xs.empty()) throw std::invalid_argument(\"mean of empty vector\");\n    double sum = 0.0;\n    for (double x : xs) sum += x;\n    return sum / static_cast<double>(xs.size());\n}\n\nint main() {\n    std::vector<double> cm;          // distance readings in cm\n    cm.reserve(6);                   // we know roughly how many\n    for (double r : {42.0, 38.5, 12.0, 55.1, 9.8, 40.0}) cm.push_back(r);\n    std::cout << \"size \" << cm.size() << \", capacity \" << cm.capacity() << '\\n';\n\n    std::vector<double> far = above(cm, 30.0);\n    std::cout << \"far readings: \" << far.size() << \", mean \" << mean(far) << '\\n';\n\n    std::array<int, 3> rgb{255, 128, 0};   // size is part of the type\n    std::cout << \"rgb has \" << rgb.size() << \" channels, green = \" << rgb[1] << '\\n';\n\n    try {\n        std::cout << cm.at(10) << '\\n';\n    } catch (const std::out_of_range&) {\n        std::cout << \"at(10) threw out_of_range\\n\";\n    }\n\n    std::vector<int> growth;\n    std::size_t last = growth.capacity();\n    for (int i = 0; i < 20; ++i) {\n        growth.push_back(i);\n        if (growth.capacity() != last) {\n            last = growth.capacity();\n            std::cout << last << ' ';\n        }\n    }\n    std::cout << '\\n';\n}\n```\n\nOn g++ the last line prints `1 2 4 8 16 32`: each reallocation doubles the capacity. The exact growth factor is up to the library (MSVC uses 1.5), so never write code that depends on it.\n\n### 2D data\n\n`std::vector<std::vector<int>> grid(rows, std::vector<int>(cols, 0));` is the readable way to make a matrix. Each row is its own heap block, which is fine for now; numeric code later uses one flat `std::vector<double>` of size `rows * cols` indexed as `r * cols + c`, the same layout NumPy uses."
+     "body": "### Why containers, and which one\n\nA raw C array (`int a[10]`) doesn't know its own size, decays to a pointer the moment you pass it to a function, and can't grow. Modern C++ replaces it with two standard containers:\n\n- **`std::array<T, N>`**: fixed size known at compile time. Lives wherever you declare it (on the stack for a local), no heap allocation, same speed as a C array, but it knows `size()`, can be copied and compared, and works with range-for and the algorithms. Use it for things whose size is part of the meaning: an RGB colour (`std::array<int, 3>`), a 3D point, the 4 wheel speeds of a robot.\n- **`std::vector<T>`**: dynamic size. The elements live in one contiguous block on the heap; the vector object itself is three pointers (begin, end of elements, end of capacity). Use it as your default container whenever the count is known only at run time: sensor readings, students, lines of a file.\n\nBoth store elements **contiguously**, which is why they are fast: the CPU cache loads neighbours for free. That's also why `std::vector` is the right default even when you think you want a linked list.\n\n### Construction: braces vs parentheses\n\n`std::vector<int> w(3);` calls the \"count\" constructor: three value-initialized ints, `{0, 0, 0}`. `std::vector<int> u{3};` is list initialization: one element, `{3}`. So the first example prints `4`, `2`, then `3 1`. When you mean \"n copies\", use parentheses: `std::vector<double> zeros(n, 0.0);`.\n\n### Size vs capacity\n\n`size()` is how many elements exist. `capacity()` is how many fit before the vector must reallocate. When `push_back` finds `size() == capacity()`, the vector allocates a bigger block (libstdc++ doubles it), moves every element across and frees the old block. That's why `push_back` is *amortized* O(1): most calls are cheap, a few are expensive, and the total over n pushes is O(n).\n\nTwo consequences:\n1. If you know the final count, call `reserve(n)` first. One allocation instead of about log₂ n.\n2. **Reallocation invalidates** every pointer, reference and iterator into the vector. Don't keep `int& first = v[0];` across a `push_back`.\n\n`resize(n)` changes the *size* (adding default values or dropping the tail). `reserve(n)` changes only the *capacity*. Mixing them up is a classic bug: after `v.reserve(5)`, `v[0] = 1` is undefined behaviour because no element 0 exists yet.\n\n### Access: `[]` vs `at()`\n\n`v[i]` does no bounds check: out of range is undefined behaviour (it may \"work\", crash, or corrupt something else). `v.at(i)` checks and throws `std::out_of_range`. Use `at()` while learning and in code that handles untrusted indices; use `[]` in tight loops whose bounds you control. Indices are `std::size_t` (unsigned), so `for (int i = 0; i < v.size(); ++i)` gives a signed/unsigned warning; prefer range-for, or `std::size_t i`.\n\n### Passing and returning\n\nPass containers **by const reference** to read them (`const std::vector<int>&`), by plain reference to modify the caller's container, and **return new containers by value**. Returning by value is cheap: the compiler either constructs the result directly in the caller (copy elision) or moves it, which just steals three pointers.\n\n### Worked example: sensor readings\n\n```cpp\n#include <array>\n#include <iostream>\n#include <stdexcept>\n#include <vector>\n\n// Read-only input: const reference. Result: returned by value.\nstd::vector<double> above(const std::vector<double>& xs, double limit) {\n    std::vector<double> out;\n    for (double x : xs)\n        if (x > limit) out.push_back(x);\n    return out;\n}\n\ndouble mean(const std::vector<double>& xs) {\n    if (xs.empty()) throw std::invalid_argument(\"mean of empty vector\");\n    double sum = 0.0;\n    for (double x : xs) sum += x;\n    return sum / static_cast<double>(xs.size());\n}\n\nint main() {\n    std::vector<double> cm;          // distance readings in cm\n    cm.reserve(6);                   // we know roughly how many\n    for (double r : {42.0, 38.5, 12.0, 55.1, 9.8, 40.0}) cm.push_back(r);\n    std::cout << \"size \" << cm.size() << \", capacity \" << cm.capacity() << '\\n';\n\n    std::vector<double> far = above(cm, 30.0);\n    std::cout << \"far readings: \" << far.size() << \", mean \" << mean(far) << '\\n';\n\n    std::array<int, 3> rgb{255, 128, 0};   // size is part of the type\n    std::cout << \"rgb has \" << rgb.size() << \" channels, green = \" << rgb[1] << '\\n';\n\n    try {\n        std::cout << cm.at(10) << '\\n';\n    } catch (const std::out_of_range&) {\n        std::cout << \"at(10) threw out_of_range\\n\";\n    }\n\n    std::vector<int> growth;\n    std::size_t last = growth.capacity();\n    for (int i = 0; i < 20; ++i) {\n        growth.push_back(i);\n        if (growth.capacity() != last) {\n            last = growth.capacity();\n            std::cout << last << ' ';\n        }\n    }\n    std::cout << '\\n';\n}\n```\n\nOn g++ the last line prints `1 2 4 8 16 32`: each reallocation doubles the capacity. The exact growth factor is up to the library (MSVC uses 1.5), so never write code that depends on it.\n\n### 2D data\n\n`std::vector<std::vector<int>> grid(rows, std::vector<int>(cols, 0));` is the readable way to make a matrix. Each row is its own heap block, which is fine for now; numeric code later uses one flat `std::vector<double>` of size `rows * cols` indexed as `r * cols + c`, the same layout NumPy uses."
     },
     {
      "kind": "practice",
@@ -214,15 +218,18 @@
      "questions": [
       {
        "q": "Two pointers (week 9): why does moving the left pointer right work on a sorted array when the sum is too small?",
-       "a": "Every pair with the current left element and any smaller right element is even smaller, so the left element can't be in any answer; discarding it is safe."
+       "a": "Every pair with the current left element and any smaller right element is even smaller, so the left element can't be in any answer; discarding it is safe.",
+       "from": "algo-w09-1"
       },
       {
        "q": "What's the time complexity of binary search and why?",
-       "a": "O(log n): each step halves the range, so after k steps n/2^k elements remain; it ends when that reaches 1, k = log2 n."
+       "a": "O(log n): each step halves the range, so after k steps n/2^k elements remain; it ends when that reaches 1, k = log2 n.",
+       "from": "algo-w01-3"
       },
       {
        "q": "Sliding window (week 10): what two operations does every window step do?",
-       "a": "Extend the right end (add an element) and, while the window is invalid, shrink the left end (remove an element)."
+       "a": "Extend the right end (add an element) and, while the window is invalid, shrink the left end (remove an element).",
+       "from": "algo-w10-1"
       }
      ]
     },
@@ -631,33 +638,37 @@
      "questions": [
       {
        "q": "Gradient descent (week 10): what does the update x ← x − η·f'(x) do when f'(x) > 0?",
-       "a": "Moves x left (downhill), by a step proportional to the slope and the learning rate."
+       "a": "Moves x left (downhill), by a step proportional to the slope and the learning rate.",
+       "from": "math-w10-3"
       },
       {
        "q": "What's the partial derivative of f(x, y) = x²y with respect to y?",
-       "a": "x²."
+       "a": "x².",
+       "from": "math-w10-1"
       },
       {
        "q": "Descriptive statistics (week 8): what's the difference between the mean and the median, and which is robust to outliers?",
-       "a": "Mean is the sum divided by count; median is the middle value when sorted. The median is robust."
+       "a": "Mean is the sum divided by count; median is the middle value when sorted. The median is robust.",
+       "from": "ai-w08-5"
       },
       {
        "q": "What does a sampling distribution (week 9) describe?",
-       "a": "How a statistic (like the sample mean) varies from sample to sample."
+       "a": "How a statistic (like the sample mean) varies from sample to sample.",
+       "from": "ai-w09-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Answer quickly, before any reading. Write your numbers down.\n\n1. You roll two fair dice. Is \"sum is 7\" or \"sum is 8\" more likely, or are they equal?\n2. Your robot has 3 ultrasonic sensors. Each fails on a given run with probability 0.05, independently. Roughly: is the chance that *at least one* fails closer to 5%, 15% or 50%?\n3. \"Mutually exclusive\" and \"independent\": can two events with non-zero probability be both?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n1. With two fair dice, \"sum is 7\" (6 ways out of 36) is more likely than \"sum is 8\" (5 ways).\n2. Three sensors, each failing with probability 0.05: the chance at least one fails is 1 − 0.95³ ≈ **14%**, closer to 15% than to 5% or 50%.\n3. Two events with non-zero probability **can't** be both mutually exclusive and independent: if one happens, the other can't, so knowing one tells you about the other.\n\nLearn explains all three."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "Probability is the language every later topic speaks: hypothesis tests (this Saturday), Bayes' rule (next week), Kalman and particle filters on the robot (summer). Today is the grammar.\n\n### Sample space and events\n\nAn experiment has a **sample space** Ω: the set of every possible outcome. An **event** is a subset of Ω. Rolling two dice: Ω is the 36 ordered pairs (1,1), (1,2), …, (6,6). The event \"sum is 7\" is {(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)}: 6 outcomes.\n\nIf all outcomes are **equally likely**, then\n\n  P(A) = |A| / |Ω|\n\nso P(sum = 7) = 6/36 = 1/6, and P(sum = 8) = 5/36 ((2,6),(3,5),(4,4),(5,3),(6,2)). The first pretest question trips people who count *unordered* pairs: {3,4} happens two ways, {4,4} only one.\n\nEvery probability rule follows from three axioms: P(A) ≥ 0, P(Ω) = 1, and for **disjoint** events P(A ∪ B) = P(A) + P(B).\n\n### The four rules you'll use constantly\n\n**Complement.** P(not A) = 1 − P(A). Use it whenever the event says \"at least one\": that's the complement of \"none\", which is usually easy.\n\n**Addition (inclusion-exclusion).** P(A ∪ B) = P(A) + P(B) − P(A ∩ B). You subtract the overlap because adding P(A) and P(B) counts it twice. When A and B are **mutually exclusive** (can't both happen), the overlap is 0 and you just add.\n\n**Independence.** A and B are independent if P(A ∩ B) = P(A)·P(B): knowing one happened tells you nothing about the other. Separate dice, separate coin flips, sensors that don't share a failure cause.\n\n**Multiplication for independent events.** P(A₁ ∩ A₂ ∩ … ∩ Aₙ) = P(A₁)·P(A₂)···P(Aₙ).\n\n### Worked example: three sensors\n\nEach of 3 sensors fails with p = 0.05, independently.\n\n- P(a given sensor works) = 0.95.\n- P(all three work) = 0.95³ = 0.857375.\n- P(at least one fails) = 1 − 0.857375 = **0.142625**, about 14%.\n\nSo pretest question 2: closer to 15%. The naive \"3 × 5% = 15%\" is close here only because p is small; it's actually an overestimate (it double-counts runs where two fail), and with 30 sensors it would give 150%, which is nonsense. The complement rule never breaks.\n\n### Mutually exclusive is not independent\n\nIf A and B are mutually exclusive and both have non-zero probability, then P(A ∩ B) = 0 but P(A)·P(B) > 0, so they are **dependent**: learning that A happened tells you B certainly didn't. Pretest question 3: no. Students mix these up constantly; you'll need this distinction when you teach sensor redundancy.\n\n### Counting, briefly\n\nWhen outcomes are equally likely, probability is counting:\n- **Product rule:** k independent choices with n₁, n₂, … options give n₁·n₂·… outcomes (two dice: 6·6).\n- **Permutations:** ordered selections of k from n: n!/(n−k)!.\n- **Combinations:** unordered selections: C(n, k) = n!/(k!(n−k)!). Python: `math.comb(n, k)`.\n\nExample: a box of 20 LEDs has 3 dead ones. You grab 4. P(no dead LED) = C(17, 4)/C(20, 4) = 2380/4845 ≈ 0.491.\n\n### Check it exactly in Python\n\n`fractions.Fraction` keeps answers exact, so you can confirm hand calculations by brute-force enumeration:\n\n```python\nfrom fractions import Fraction\nfrom itertools import product\nfrom math import comb\n\nomega = list(product(range(1, 7), repeat=2))   # 36 ordered pairs\n\ndef P(event):\n    return Fraction(sum(1 for w in omega if event(w)), len(omega))\n\nseven = P(lambda w: w[0] + w[1] == 7)\neight = P(lambda w: w[0] + w[1] == 8)\nat_least_one_six = P(lambda w: 6 in w)\nprint(seven, eight, at_least_one_six, 1 - Fraction(5, 6) ** 2)   # 1/6 5/36 11/36 11/36\n\n# Inclusion-exclusion: A = first die even, B = sum >= 10\nA = lambda w: w[0] % 2 == 0\nB = lambda w: w[0] + w[1] >= 10\nlhs = P(lambda w: A(w) or B(w))\nrhs = P(A) + P(B) - P(lambda w: A(w) and B(w))\nprint(lhs, rhs, lhs == rhs)                                    # 7/12 7/12 True\n\n# Sensors and LEDs\nprint(1 - 0.95 ** 3)                                           # about 0.142625\nprint(Fraction(comb(17, 4), comb(20, 4)), comb(17, 4) / comb(20, 4))\n```\n\nEnumeration is your safety net this week: whenever a hand answer feels off, write a five-line enumerator. Thursday's practice replaces enumeration with simulation, for the cases where Ω is too big to list."
+     "body": "Probability is the language every later topic speaks: hypothesis tests (this Saturday), Bayes' rule (next week), Kalman and particle filters on the robot (summer). Today is the grammar.\n\n### Sample space and events\n\nAn experiment has a **sample space** Ω: the set of every possible outcome. An **event** is a subset of Ω. Rolling two dice: Ω is the 36 ordered pairs (1,1), (1,2), …, (6,6). The event \"sum is 7\" is {(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)}: 6 outcomes.\n\nIf all outcomes are **equally likely**, then\n\n  P(A) = |A| / |Ω|\n\nso P(sum = 7) = 6/36 = 1/6, and P(sum = 8) = 5/36 ((2,6),(3,5),(4,4),(5,3),(6,2)). The first question in the first example trips people who count *unordered* pairs: {3,4} happens two ways, {4,4} only one.\n\nEvery probability rule follows from three axioms: P(A) ≥ 0, P(Ω) = 1, and for **disjoint** events P(A ∪ B) = P(A) + P(B).\n\n### The four rules you'll use constantly\n\n**Complement.** P(not A) = 1 − P(A). Use it whenever the event says \"at least one\": that's the complement of \"none\", which is usually easy.\n\n**Addition (inclusion-exclusion).** P(A ∪ B) = P(A) + P(B) − P(A ∩ B). You subtract the overlap because adding P(A) and P(B) counts it twice. When A and B are **mutually exclusive** (can't both happen), the overlap is 0 and you just add.\n\n**Independence.** A and B are independent if P(A ∩ B) = P(A)·P(B): knowing one happened tells you nothing about the other. Separate dice, separate coin flips, sensors that don't share a failure cause.\n\n**Multiplication for independent events.** P(A₁ ∩ A₂ ∩ … ∩ Aₙ) = P(A₁)·P(A₂)···P(Aₙ).\n\n### Worked example: three sensors\n\nEach of 3 sensors fails with p = 0.05, independently.\n\n- P(a given sensor works) = 0.95.\n- P(all three work) = 0.95³ = 0.857375.\n- P(at least one fails) = 1 − 0.857375 = **0.142625**, about 14%.\n\nSo question 2 of the first example: closer to 15%. The naive \"3 × 5% = 15%\" is close here only because p is small; it's actually an overestimate (it double-counts runs where two fail), and with 30 sensors it would give 150%, which is nonsense. The complement rule never breaks.\n\n### Mutually exclusive is not independent\n\nIf A and B are mutually exclusive and both have non-zero probability, then P(A ∩ B) = 0 but P(A)·P(B) > 0, so they are **dependent**: learning that A happened tells you B certainly didn't. Pretest question 3: no. Students mix these up constantly; you'll need this distinction when you teach sensor redundancy.\n\n### Counting, briefly\n\nWhen outcomes are equally likely, probability is counting:\n- **Product rule:** k independent choices with n₁, n₂, … options give n₁·n₂·… outcomes (two dice: 6·6).\n- **Permutations:** ordered selections of k from n: n!/(n−k)!.\n- **Combinations:** unordered selections: C(n, k) = n!/(k!(n−k)!). Python: `math.comb(n, k)`.\n\nExample: a box of 20 LEDs has 3 dead ones. You grab 4. P(no dead LED) = C(17, 4)/C(20, 4) = 2380/4845 ≈ 0.491.\n\n### Check it exactly in Python\n\n`fractions.Fraction` keeps answers exact, so you can confirm hand calculations by brute-force enumeration:\n\n```python\nfrom fractions import Fraction\nfrom itertools import product\nfrom math import comb\n\nomega = list(product(range(1, 7), repeat=2))   # 36 ordered pairs\n\ndef P(event):\n    return Fraction(sum(1 for w in omega if event(w)), len(omega))\n\nseven = P(lambda w: w[0] + w[1] == 7)\neight = P(lambda w: w[0] + w[1] == 8)\nat_least_one_six = P(lambda w: 6 in w)\nprint(seven, eight, at_least_one_six, 1 - Fraction(5, 6) ** 2)   # 1/6 5/36 11/36 11/36\n\n# Inclusion-exclusion: A = first die even, B = sum >= 10\nA = lambda w: w[0] % 2 == 0\nB = lambda w: w[0] + w[1] >= 10\nlhs = P(lambda w: A(w) or B(w))\nrhs = P(A) + P(B) - P(lambda w: A(w) and B(w))\nprint(lhs, rhs, lhs == rhs)                                    # 7/12 7/12 True\n\n# Sensors and LEDs\nprint(1 - 0.95 ** 3)                                           # about 0.142625\nprint(Fraction(comb(17, 4), comb(20, 4)), comb(17, 4) / comb(20, 4))\n```\n\nEnumeration is your safety net this week: whenever a hand answer feels off, write a five-line enumerator. Thursday's practice replaces enumeration with simulation, for the cases where Ω is too big to list."
     },
     {
      "kind": "practice",
@@ -796,15 +807,18 @@
      "questions": [
       {
        "q": "P(A ∪ B) when A and B overlap?",
-       "a": "P(A) + P(B) − P(A ∩ B)."
+       "a": "P(A) + P(B) − P(A ∩ B).",
+       "from": "math-w12-1"
       },
       {
        "q": "C(5, 2)?",
-       "a": "10."
+       "a": "10.",
+       "from": "math-w12-1"
       },
       {
        "q": "Week 10: what does the learning rate control in gradient descent?",
-       "a": "The step size: too small is slow, too large overshoots or diverges."
+       "a": "The step size: too small is slow, too large overshoots or diverges.",
+       "from": "math-w10-4"
       }
      ]
     },
@@ -1218,33 +1232,37 @@
      "questions": [
       {
        "q": "After `std::vector<int> v; v.reserve(4);` what is `v.size()`?",
-       "a": "0. reserve changes capacity, not size."
+       "a": "0. reserve changes capacity, not size.",
+       "from": "cpp-w12-1"
       },
       {
        "q": "In week 8 you solved arrays-and-hashing problems in Python. What does a Python `dict` give you on average for lookup and insert, and why?",
-       "a": "O(1) average: the key is hashed to a bucket, so you jump straight to it instead of scanning."
+       "a": "O(1) average: the key is hashed to a bucket, so you jump straight to it instead of scanning.",
+       "from": "algo-w04-1"
       },
       {
        "q": "Why return a `std::vector` by value instead of through an output parameter?",
-       "a": "Copy elision or a move makes returning cheap (three pointers move), and the function signature stays clear about what's input and what's output."
+       "a": "Copy elision or a move makes returning cheap (three pointers move), and the function signature stays clear about what's input and what's output.",
+       "from": "cpp-w12-1"
       },
       {
        "q": "What must a class provide to be compared with `<`?",
-       "a": "An `operator<` (member or free function), or in C++20 a defaulted `operator<=>`."
+       "a": "An `operator<` (member or free function), or in C++20 a defaulted `operator<=>`.",
+       "from": "cpp-w10-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Python habit check. Predict what this prints:\n\n```cpp\n#include <iostream>\n#include <map>\n#include <string>\n\nint main() {\n    std::map<std::string, int> age{{\"ali\", 20}};\n    if (age[\"bora\"] == 0) std::cout << \"bora not found\\n\";\n    std::cout << age.size() << '\\n';\n}\n```\n\nIn Python, `age[\"bora\"]` would raise `KeyError`. What does C++ do, and what is the size afterwards?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp\n#include <iostream>\n#include <map>\n#include <string>\n\nint main() {\n    std::map<std::string, int> age{{\"ali\", 20}};\n    if (age[\"bora\"] == 0) std::cout << \"bora not found\\n\";\n    std::cout << age.size() << '\\n';\n}\n```\n\n**It prints `bora not found`, then `2`.** In C++, `age[\"bora\"]` *creates* the key with a default value (0) when it's missing, so the map now has two entries. Python would raise `KeyError`. Learn shows how to look up without inserting."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "### Two families\n\nC++ has two families of associative containers, and the difference is the data structure underneath:\n\n| Container | Underneath | Find / insert / erase | Iteration order |\n| --- | --- | --- | --- |\n| `std::map<K, V>`, `std::set<K>` | balanced binary search tree (red-black tree) | O(log n) | sorted by key |\n| `std::unordered_map<K, V>`, `std::unordered_set<K>` | hash table with buckets | O(1) average, O(n) worst | unspecified |\n\nPython's `dict` and `set` are hash tables, so `unordered_map`/`unordered_set` are the direct equivalents. Reach for them by default when you only look things up. Reach for `std::map`/`std::set` when you need **order**: print keys sorted, find the smallest key above some value (`lower_bound`), or iterate a range of keys. `std::map` also needs only `operator<` on the key, while `unordered_map` needs a hash function (provided for ints, strings, and other standard types).\n\n### The `operator[]` trap\n\n`m[key]` means \"give me a reference to the value for this key, **creating it with a default value if it doesn't exist**\". That's why the pretest prints `bora not found` and then `2`: reading `age[\"bora\"]` inserted `{\"bora\", 0}`. It's convenient for counting (`++counts[word]` works because a new key starts at 0) and a bug everywhere else. It also can't be used on a `const std::map`.\n\nTo **look up without inserting**:\n- `m.contains(key)` (C++20) → bool.\n- `m.count(key)` → 0 or 1 (works before C++20).\n- `auto it = m.find(key); if (it != m.end()) use(it->second);` → when you need the value too, one lookup instead of two.\n- `m.at(key)` → throws `std::out_of_range` if missing, like Python.\n\nTo **insert without overwriting**: `m.insert({key, value})` or `m.try_emplace(key, value)` do nothing if the key exists. To insert or overwrite: `m[key] = value` or `m.insert_or_assign(key, value)`.\n\n### Iterating\n\nElements of a map are `std::pair<const K, V>`. Structured bindings make that readable:\n\n```cpp-snippet\nfor (const auto& [name, score] : scores) std::cout << name << ' ' << score << '\\n';\n```\n\nUse `const auto&`: plain `auto` copies every pair (including the string key).\n\n### Worked example: word counts, two ways\n\n```cpp\n#include <iostream>\n#include <map>\n#include <set>\n#include <sstream>\n#include <string>\n#include <unordered_map>\n\nint main() {\n    std::string text = \"the robot saw the wall and the robot turned\";\n\n    std::unordered_map<std::string, int> counts;   // O(1) average per word\n    std::istringstream in(text);\n    for (std::string w; in >> w; ) ++counts[w];  // [] inserts 0, then ++\n\n    // Order for printing: copy into a std::map, which sorts by key.\n    std::map<std::string, int> sorted(counts.begin(), counts.end());\n    for (const auto& [word, n] : sorted) std::cout << word << '=' << n << ' ';\n    std::cout << '\\n';\n\n    // Lookup without inserting.\n    std::cout << \"contains 'wall': \" << counts.contains(\"wall\") << '\\n';\n    if (auto it = counts.find(\"door\"); it == counts.end())\n        std::cout << \"no 'door', size still \" << counts.size() << '\\n';\n\n    // A set keeps unique keys in sorted order.\n    std::set<int> seen{5, 1, 5, 3, 1};\n    for (int x : seen) std::cout << x << ' ';\n    std::cout << \"(size \" << seen.size() << \")\\n\";\n\n    // Ordered queries: smallest key >= 4.\n    auto it = seen.lower_bound(4);\n    std::cout << \"first >= 4 is \" << *it << '\\n';\n}\n```\n\nOutput: `and=1 robot=2 saw=1 the=3 turned=1 wall=1`, then `contains 'wall': 1`, `no 'door', size still 6`, `1 3 5 (size 3)`, `first >= 4 is 5`.\n\nNotice the `if (init; condition)` form: it scopes `it` to the if statement, which keeps lookups tidy.\n\n### Costs you should know cold\n\n- `std::map` with n = 1,000,000: about 20 comparisons per lookup (log₂ 10⁶ ≈ 20), each one a pointer hop to a separate heap node, so cache misses dominate.\n- `std::unordered_map`: one hash plus usually one or two probes, but iterating it visits buckets in no useful order, and a rehash (when the load factor gets too high) invalidates iterators. `reserve(n)` exists here too.\n- For a small fixed set of keys (say, under ~50), a sorted `std::vector` of pairs searched with binary search often beats both. You'll see binary search in the algorithms block this week.\n\n### Sets\n\n`std::set<T>` is a map without values: unique, sorted keys. `insert` returns a pair `{iterator, bool inserted}`, which gives you \"have I seen this before?\" in one call:\n\n```cpp-snippet\nif (!seen.insert(x).second) { /* x was already there */ }\n```"
+     "body": "### Two families\n\nC++ has two families of associative containers, and the difference is the data structure underneath:\n\n| Container | Underneath | Find / insert / erase | Iteration order |\n| --- | --- | --- | --- |\n| `std::map<K, V>`, `std::set<K>` | balanced binary search tree (red-black tree) | O(log n) | sorted by key |\n| `std::unordered_map<K, V>`, `std::unordered_set<K>` | hash table with buckets | O(1) average, O(n) worst | unspecified |\n\nPython's `dict` and `set` are hash tables, so `unordered_map`/`unordered_set` are the direct equivalents. Reach for them by default when you only look things up. Reach for `std::map`/`std::set` when you need **order**: print keys sorted, find the smallest key above some value (`lower_bound`), or iterate a range of keys. `std::map` also needs only `operator<` on the key, while `unordered_map` needs a hash function (provided for ints, strings, and other standard types).\n\n### The `operator[]` trap\n\n`m[key]` means \"give me a reference to the value for this key, **creating it with a default value if it doesn't exist**\". That's why the first example prints `bora not found` and then `2`: reading `age[\"bora\"]` inserted `{\"bora\", 0}`. It's convenient for counting (`++counts[word]` works because a new key starts at 0) and a bug everywhere else. It also can't be used on a `const std::map`.\n\nTo **look up without inserting**:\n- `m.contains(key)` (C++20) → bool.\n- `m.count(key)` → 0 or 1 (works before C++20).\n- `auto it = m.find(key); if (it != m.end()) use(it->second);` → when you need the value too, one lookup instead of two.\n- `m.at(key)` → throws `std::out_of_range` if missing, like Python.\n\nTo **insert without overwriting**: `m.insert({key, value})` or `m.try_emplace(key, value)` do nothing if the key exists. To insert or overwrite: `m[key] = value` or `m.insert_or_assign(key, value)`.\n\n### Iterating\n\nElements of a map are `std::pair<const K, V>`. Structured bindings make that readable:\n\n```cpp-snippet\nfor (const auto& [name, score] : scores) std::cout << name << ' ' << score << '\\n';\n```\n\nUse `const auto&`: plain `auto` copies every pair (including the string key).\n\n### Worked example: word counts, two ways\n\n```cpp\n#include <iostream>\n#include <map>\n#include <set>\n#include <sstream>\n#include <string>\n#include <unordered_map>\n\nint main() {\n    std::string text = \"the robot saw the wall and the robot turned\";\n\n    std::unordered_map<std::string, int> counts;   // O(1) average per word\n    std::istringstream in(text);\n    for (std::string w; in >> w; ) ++counts[w];  // [] inserts 0, then ++\n\n    // Order for printing: copy into a std::map, which sorts by key.\n    std::map<std::string, int> sorted(counts.begin(), counts.end());\n    for (const auto& [word, n] : sorted) std::cout << word << '=' << n << ' ';\n    std::cout << '\\n';\n\n    // Lookup without inserting.\n    std::cout << \"contains 'wall': \" << counts.contains(\"wall\") << '\\n';\n    if (auto it = counts.find(\"door\"); it == counts.end())\n        std::cout << \"no 'door', size still \" << counts.size() << '\\n';\n\n    // A set keeps unique keys in sorted order.\n    std::set<int> seen{5, 1, 5, 3, 1};\n    for (int x : seen) std::cout << x << ' ';\n    std::cout << \"(size \" << seen.size() << \")\\n\";\n\n    // Ordered queries: smallest key >= 4.\n    auto it = seen.lower_bound(4);\n    std::cout << \"first >= 4 is \" << *it << '\\n';\n}\n```\n\nOutput: `and=1 robot=2 saw=1 the=3 turned=1 wall=1`, then `contains 'wall': 1`, `no 'door', size still 6`, `1 3 5 (size 3)`, `first >= 4 is 5`.\n\nNotice the `if (init; condition)` form: it scopes `it` to the if statement, which keeps lookups tidy.\n\n### Costs you should know cold\n\n- `std::map` with n = 1,000,000: about 20 comparisons per lookup (log₂ 10⁶ ≈ 20), each one a pointer hop to a separate heap node, so cache misses dominate.\n- `std::unordered_map`: one hash plus usually one or two probes, but iterating it visits buckets in no useful order, and a rehash (when the load factor gets too high) invalidates iterators. `reserve(n)` exists here too.\n- For a small fixed set of keys (say, under ~50), a sorted `std::vector` of pairs searched with binary search often beats both. You'll see binary search in the algorithms block this week.\n\n### Sets\n\n`std::set<T>` is a map without values: unique, sorted keys. `insert` returns a pair `{iterator, bool inserted}`, which gives you \"have I seen this before?\" in one call:\n\n```cpp-snippet\nif (!seen.insert(x).second) { /* x was already there */ }\n```"
     },
     {
      "kind": "practice",
@@ -1389,15 +1407,18 @@
      "questions": [
       {
        "q": "What does `bisect_left([1, 3, 3, 7], 3)` return?",
-       "a": "1, the first index whose value is >= 3."
+       "a": "1, the first index whose value is >= 3.",
+       "from": "algo-w12-1"
       },
       {
        "q": "In C++, which container keeps keys sorted so you can ask for 'the first key >= x'?",
-       "a": "std::map / std::set, with lower_bound (Wednesday's C++ lesson)."
+       "a": "std::map / std::set, with lower_bound (Wednesday's C++ lesson).",
+       "from": "cpp-w12-2"
       },
       {
        "q": "What is the predicate behind a lower-bound search?",
-       "a": "nums[i] >= target: false for a prefix, true for the rest."
+       "a": "nums[i] >= target: false for a prefix, true for the rest.",
+       "from": "algo-w12-1"
       }
      ]
     },
@@ -1814,27 +1835,31 @@
      "questions": [
       {
        "q": "P(at least one 6 in two dice rolls)?",
-       "a": "11/36."
+       "a": "11/36.",
+       "from": "python-w02-2"
       },
       {
        "q": "P(both aces) when drawing 2 cards without replacement?",
-       "a": "4/52 · 3/51 = 1/221."
+       "a": "4/52 · 3/51 = 1/221.",
+       "from": "math-w12-2"
       },
       {
        "q": "When are two events independent?",
-       "a": "When P(A ∩ B) = P(A)·P(B)."
+       "a": "When P(A ∩ B) = P(A)·P(B).",
+       "from": "math-w12-2"
       },
       {
        "q": "P(exactly 2 heads in 5 fair flips)?",
-       "a": "C(5,2)/32 = 10/32 = 5/16."
+       "a": "C(5,2)/32 = 10/32 = 5/16.",
+       "from": "math-w12-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "A quick test of intuition:\n\nYou roll two dice and a friend, peeking, tells you \"at least one of them is a 6\". What is the probability that both are 6? Write a number. Then: if instead they tell you \"the **first** die is a 6\", what's the probability both are 6?\n\nMost people say 1/6 for both. One of them is wrong."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nYou roll two dice and a friend, peeking, says \"at least one of them is a 6\". The chance that both are 6 is **1/11**: 11 of the 36 outcomes contain a 6, and only one of them is (6, 6).\n\nIf instead they say \"the **first** die is a 6\", the chance is **1/6**: only the second die is left to chance.\n\nLearn explains why the two pieces of information differ."
     },
     {
      "kind": "learn",
@@ -1971,15 +1996,18 @@
      "questions": [
       {
        "q": "P(both 6 | at least one 6)?",
-       "a": "1/11."
+       "a": "1/11.",
+       "from": "tools-w03-1"
       },
       {
        "q": "Law of total probability in one line?",
-       "a": "P(A) = Σ P(A | Bᵢ)P(Bᵢ)."
+       "a": "P(A) = Σ P(A | Bᵢ)P(Bᵢ).",
+       "from": "math-w12-3"
       },
       {
        "q": "Week 2 (AI track): why is a vectorized NumPy expression faster than a Python loop?",
-       "a": "The loop runs in compiled C over contiguous memory, with no per-element Python interpreter overhead."
+       "a": "The loop runs in compiled C over contiguous memory, with no per-element Python interpreter overhead.",
+       "from": "ai-w02-3"
       }
      ]
     },
@@ -2392,33 +2420,37 @@
      "questions": [
       {
        "q": "What does `std::set<int>{5, 1, 5, 3}` contain, in what order?",
-       "a": "{1, 3, 5}: unique keys, sorted."
+       "a": "{1, 3, 5}: unique keys, sorted.",
+       "from": "cpp-w12-2"
       },
       {
        "q": "Why use `m.find(k)` instead of `m[k]` to read from a map?",
-       "a": "`[]` inserts a default value when the key is missing (and isn't allowed on a const map); find doesn't modify the map."
+       "a": "`[]` inserts a default value when the key is missing (and isn't allowed on a const map); find doesn't modify the map.",
+       "from": "cpp-w12-2"
       },
       {
        "q": "This week's algorithms block: what does a lower-bound binary search return for target 4 in [1, 3, 5, 7]?",
-       "a": "Index 2: the first position whose value is >= 4 (the 5)."
+       "a": "Index 2: the first position whose value is >= 4 (the 5).",
+       "from": "algo-w12-1"
       },
       {
        "q": "What's a lambda in Python, and what's its limitation?",
-       "a": "An anonymous function written inline (`lambda x: x * 2`); its body is a single expression."
+       "a": "An anonymous function written inline (`lambda x: x * 2`); its body is a single expression.",
+       "from": "python-w02-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict the output. One line contains a subtle bug: find it before running anything.\n\n```cpp\n#include <algorithm>\n#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> v{4, 1, 3, 1, 5};\n    std::sort(v.begin(), v.end());\n    auto it = std::find(v.begin(), v.end(), 3);\n    std::cout << (it - v.begin()) << '\\n';\n    std::cout << std::count(v.begin(), v.end(), 1) << '\\n';\n    std::remove(v.begin(), v.end(), 1);\n    std::cout << v.size() << '\\n';\n}\n```"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp\n#include <algorithm>\n#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> v{4, 1, 3, 1, 5};\n    std::sort(v.begin(), v.end());\n    auto it = std::find(v.begin(), v.end(), 3);\n    std::cout << (it - v.begin()) << '\\n';\n    std::cout << std::count(v.begin(), v.end(), 1) << '\\n';\n    std::remove(v.begin(), v.end(), 1);\n    std::cout << v.size() << '\\n';\n}\n```\n\n**It prints `2`, `2`, then `5`.** After sorting, v is 1 1 3 4 5, so 3 sits at index 2, and there are two 1s. The bug: `std::remove` doesn't change the vector's size; it only moves the kept elements forward. You need `v.erase(std::remove(...), v.end())`. Learn explains this."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "### Iterators: positions, not indices\n\nAn iterator is a generalized position in a container. For a vector it behaves like a pointer: `*it` is the element, `++it` moves to the next one, `it - v.begin()` is the index. For a `std::map` it's a node in the tree, and `++it` walks to the next key in order. The point of the abstraction is that **one algorithm works on every container** that can hand out iterators.\n\nEvery range is **half-open**: `[begin, end)`. `begin()` points at the first element, `end()` points *one past the last*, never at an element, so you never dereference it. Half-open ranges make the empty range trivial (`begin == end`), make the size `end - begin`, and make \"not found\" easy to express: algorithms return `end` when they find nothing. That's the same convention as Python's slices and your binary search's `hi = len(nums)`.\n\n### The everyday algorithms\n\nAll in `<algorithm>`, except `accumulate` in `<numeric>`:\n\n| Call | Does | Cost |\n| --- | --- | --- |\n| `std::sort(b, e)` / `std::sort(b, e, cmp)` | sort in place (not stable) | O(n log n) |\n| `std::stable_sort` | sort, equal elements keep their order | O(n log n) |\n| `std::find(b, e, x)` | iterator to first `x`, or `e` | O(n) |\n| `std::find_if(b, e, pred)` | first element where `pred` is true | O(n) |\n| `std::count(b, e, x)`, `std::count_if(b, e, pred)` | how many | O(n) |\n| `std::accumulate(b, e, init)` | sum (type of `init` decides the arithmetic!) | O(n) |\n| `std::min_element`, `std::max_element` | iterator to the extreme | O(n) |\n| `std::lower_bound(b, e, x)` | first element `>= x` in a **sorted** range | O(log n) |\n| `std::binary_search(b, e, x)` | bool, sorted range | O(log n) |\n\n`lower_bound` *is* the binary search you're writing by hand this week in the algorithms block. Once you've written it yourself, use the library one.\n\nA trap with `accumulate`: `std::accumulate(v.begin(), v.end(), 0)` on a `vector<double>` sums into an `int` and truncates every step. Write `0.0`.\n\n### Lambdas\n\nA C++ lambda is an inline function object: `[capture](params) { body }`. The capture list says which local variables it can see: `[limit]` copies `limit` in, `[&total]` refers to `total`, `[]` captures nothing. Unlike Python's, the body can be any number of statements.\n\n```cpp-snippet\nint limit = 30;\nauto far = [limit](double d) { return d > limit; };\n```\n\n### Removing elements: the trap in the pretest\n\n`std::remove` can't change a container's size: it only gets iterators, and an iterator can't erase from its container. It shifts the kept elements forward and returns an iterator to the new logical end; the tail holds leftovers. So the pretest prints `2` (3 sits at index 2 after sorting to 1 1 3 4 5), `2`, and then `5`: the vector is still size 5. The old fix is the **erase-remove idiom**, `v.erase(std::remove(v.begin(), v.end(), 1), v.end());`. In C++20 just write `std::erase(v, 1)` or `std::erase_if(v, pred)`.\n\n### Worked example: ranking students\n\n```cpp\n#include <algorithm>\n#include <iostream>\n#include <numeric>\n#include <string>\n#include <vector>\n\nstruct Student {\n    std::string name;\n    int done;      // lessons completed\n    int total;     // lessons assigned\n    double rate() const { return total ? static_cast<double>(done) / total : 0.0; }\n};\n\nint main() {\n    std::vector<Student> s{{\"Aru\", 18, 20}, {\"Bek\", 9, 20}, {\"Dana\", 18, 20}, {\"Erlan\", 14, 20}};\n\n    // Sort by completion, best first; ties broken by name so the order is deterministic.\n    std::sort(s.begin(), s.end(), [](const Student& a, const Student& b) {\n        if (a.done != b.done) return a.done > b.done;\n        return a.name < b.name;\n    });\n    for (const auto& st : s) std::cout << st.name << ' ' << st.done << '\\n';\n\n    // How many are behind (under 75%)?\n    auto behind = std::count_if(s.begin(), s.end(), [](const Student& st) { return st.rate() < 0.75; });\n    std::cout << \"behind: \" << behind << '\\n';\n\n    // Total lessons done: init 0 (int) is right because done is int.\n    int total_done = std::accumulate(s.begin(), s.end(), 0,\n                                     [](int acc, const Student& st) { return acc + st.done; });\n    std::cout << \"total done: \" << total_done << '\\n';\n\n    // First student under 50%, if any.\n    auto it = std::find_if(s.begin(), s.end(), [](const Student& st) { return st.rate() < 0.5; });\n    if (it != s.end()) std::cout << \"needs help: \" << it->name << '\\n';\n\n    // Binary search on a sorted vector of scores.\n    std::vector<int> scores{55, 61, 70, 70, 84, 92};\n    auto lb = std::lower_bound(scores.begin(), scores.end(), 70);\n    std::cout << \"first 70 at index \" << (lb - scores.begin()) << '\\n';\n\n    // C++20 removal: drop everyone under 50%.\n    std::erase_if(s, [](const Student& st) { return st.rate() < 0.5; });\n    std::cout << \"remaining: \" << s.size() << '\\n';\n}\n```\n\nOutput: `Aru 18`, `Dana 18`, `Erlan 14`, `Bek 9`, then `behind: 2` (Erlan at 70%, Bek at 45%), `total done: 59`, `needs help: Bek`, `first 70 at index 2`, `remaining: 3`.\n\n### The comparator rule\n\nA sort comparator must be a **strict weak ordering**: `cmp(a, a)` is false, and it behaves consistently. Writing `<=` instead of `<` breaks this, and `std::sort` may then read out of bounds. If you ever see a crash inside `std::sort`, check the comparator first.\n\nC++20 also has `std::ranges::sort(v)` and friends, which take the container directly. They're nicer to read; learn the iterator versions first because every codebase (including ROS 2) is full of them."
+     "body": "### Iterators: positions, not indices\n\nAn iterator is a generalized position in a container. For a vector it behaves like a pointer: `*it` is the element, `++it` moves to the next one, `it - v.begin()` is the index. For a `std::map` it's a node in the tree, and `++it` walks to the next key in order. The point of the abstraction is that **one algorithm works on every container** that can hand out iterators.\n\nEvery range is **half-open**: `[begin, end)`. `begin()` points at the first element, `end()` points *one past the last*, never at an element, so you never dereference it. Half-open ranges make the empty range trivial (`begin == end`), make the size `end - begin`, and make \"not found\" easy to express: algorithms return `end` when they find nothing. That's the same convention as Python's slices and your binary search's `hi = len(nums)`.\n\n### The everyday algorithms\n\nAll in `<algorithm>`, except `accumulate` in `<numeric>`:\n\n| Call | Does | Cost |\n| --- | --- | --- |\n| `std::sort(b, e)` / `std::sort(b, e, cmp)` | sort in place (not stable) | O(n log n) |\n| `std::stable_sort` | sort, equal elements keep their order | O(n log n) |\n| `std::find(b, e, x)` | iterator to first `x`, or `e` | O(n) |\n| `std::find_if(b, e, pred)` | first element where `pred` is true | O(n) |\n| `std::count(b, e, x)`, `std::count_if(b, e, pred)` | how many | O(n) |\n| `std::accumulate(b, e, init)` | sum (type of `init` decides the arithmetic!) | O(n) |\n| `std::min_element`, `std::max_element` | iterator to the extreme | O(n) |\n| `std::lower_bound(b, e, x)` | first element `>= x` in a **sorted** range | O(log n) |\n| `std::binary_search(b, e, x)` | bool, sorted range | O(log n) |\n\n`lower_bound` *is* the binary search you're writing by hand this week in the algorithms block. Once you've written it yourself, use the library one.\n\nA trap with `accumulate`: `std::accumulate(v.begin(), v.end(), 0)` on a `vector<double>` sums into an `int` and truncates every step. Write `0.0`.\n\n### Lambdas\n\nA C++ lambda is an inline function object: `[capture](params) { body }`. The capture list says which local variables it can see: `[limit]` copies `limit` in, `[&total]` refers to `total`, `[]` captures nothing. Unlike Python's, the body can be any number of statements.\n\n```cpp-snippet\nint limit = 30;\nauto far = [limit](double d) { return d > limit; };\n```\n\n### Removing elements: the trap in the first example\n\n`std::remove` can't change a container's size: it only gets iterators, and an iterator can't erase from its container. It shifts the kept elements forward and returns an iterator to the new logical end; the tail holds leftovers. So the first example prints `2` (3 sits at index 2 after sorting to 1 1 3 4 5), `2`, and then `5`: the vector is still size 5. The old fix is the **erase-remove idiom**, `v.erase(std::remove(v.begin(), v.end(), 1), v.end());`. In C++20 just write `std::erase(v, 1)` or `std::erase_if(v, pred)`.\n\n### Worked example: ranking students\n\n```cpp\n#include <algorithm>\n#include <iostream>\n#include <numeric>\n#include <string>\n#include <vector>\n\nstruct Student {\n    std::string name;\n    int done;      // lessons completed\n    int total;     // lessons assigned\n    double rate() const { return total ? static_cast<double>(done) / total : 0.0; }\n};\n\nint main() {\n    std::vector<Student> s{{\"Aru\", 18, 20}, {\"Bek\", 9, 20}, {\"Dana\", 18, 20}, {\"Erlan\", 14, 20}};\n\n    // Sort by completion, best first; ties broken by name so the order is deterministic.\n    std::sort(s.begin(), s.end(), [](const Student& a, const Student& b) {\n        if (a.done != b.done) return a.done > b.done;\n        return a.name < b.name;\n    });\n    for (const auto& st : s) std::cout << st.name << ' ' << st.done << '\\n';\n\n    // How many are behind (under 75%)?\n    auto behind = std::count_if(s.begin(), s.end(), [](const Student& st) { return st.rate() < 0.75; });\n    std::cout << \"behind: \" << behind << '\\n';\n\n    // Total lessons done: init 0 (int) is right because done is int.\n    int total_done = std::accumulate(s.begin(), s.end(), 0,\n                                     [](int acc, const Student& st) { return acc + st.done; });\n    std::cout << \"total done: \" << total_done << '\\n';\n\n    // First student under 50%, if any.\n    auto it = std::find_if(s.begin(), s.end(), [](const Student& st) { return st.rate() < 0.5; });\n    if (it != s.end()) std::cout << \"needs help: \" << it->name << '\\n';\n\n    // Binary search on a sorted vector of scores.\n    std::vector<int> scores{55, 61, 70, 70, 84, 92};\n    auto lb = std::lower_bound(scores.begin(), scores.end(), 70);\n    std::cout << \"first 70 at index \" << (lb - scores.begin()) << '\\n';\n\n    // C++20 removal: drop everyone under 50%.\n    std::erase_if(s, [](const Student& st) { return st.rate() < 0.5; });\n    std::cout << \"remaining: \" << s.size() << '\\n';\n}\n```\n\nOutput: `Aru 18`, `Dana 18`, `Erlan 14`, `Bek 9`, then `behind: 2` (Erlan at 70%, Bek at 45%), `total done: 59`, `needs help: Bek`, `first 70 at index 2`, `remaining: 3`.\n\n### The comparator rule\n\nA sort comparator must be a **strict weak ordering**: `cmp(a, a)` is false, and it behaves consistently. Writing `<=` instead of `<` breaks this, and `std::sort` may then read out of bounds. If you ever see a crash inside `std::sort`, check the comparator first.\n\nC++20 also has `std::ranges::sort(v)` and friends, which take the container directly. They're nicer to read; learn the iterator versions first because every codebase (including ROS 2) is full of them."
     },
     {
      "kind": "practice",
@@ -2563,15 +2595,18 @@
      "questions": [
       {
        "q": "Koko Eating Bananas: what is the feasibility check?",
-       "a": "Total hours at speed k, sum of ceil(p / k), is <= h."
+       "a": "Total hours at speed k, sum of ceil(p / k), is <= h.",
+       "from": "algo-w12-2"
       },
       {
        "q": "Which variant of binary search gives the last timestamp <= t?",
-       "a": "bisect_right(times, t) - 1."
+       "a": "bisect_right(times, t) - 1.",
+       "from": "algo-w12-2"
       },
       {
        "q": "What's the loop condition that goes with `hi = mid`?",
-       "a": "while lo < hi (half-open range)."
+       "a": "while lo < hi (half-open range).",
+       "from": "algo-w12-1"
       }
      ]
     },
@@ -2886,33 +2921,37 @@
      "questions": [
       {
        "q": "P(at least one false positive) among 20 independent null tests at α = 0.05?",
-       "a": "1 − 0.95²⁰ ≈ 0.64."
+       "a": "1 − 0.95²⁰ ≈ 0.64.",
+       "from": "ai-w12-4"
       },
       {
        "q": "What does a permutation test shuffle, and what does that simulate?",
-       "a": "The group labels; it simulates the null hypothesis that the labels don't affect the outcome."
+       "a": "The group labels; it simulates the null hypothesis that the labels don't affect the outcome.",
+       "from": "ai-w12-2"
       },
       {
        "q": "Week 10: how does a bootstrap estimate the uncertainty of a mean?",
-       "a": "Resample the data with replacement many times, compute the mean each time, and look at the spread (e.g. the 2.5th to 97.5th percentiles)."
+       "a": "Resample the data with replacement many times, compute the mean each time, and look at the spread (e.g. the 2.5th to 97.5th percentiles).",
+       "from": "ai-w10-2"
       },
       {
        "q": "Standard error of a proportion?",
-       "a": "√(p(1−p)/n)."
+       "a": "√(p(1−p)/n).",
+       "from": "math-w12-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Two versions of a homework reminder were sent to students at random. Version A: 200 students, 116 submitted on time (58%). Version B: 200 students, 134 submitted on time (67%).\n\nBefore calculating anything: is a 9-point difference with 200 per group convincing? Guess the p-value roughly: about 0.5, 0.05 or 0.0005? Write your guess down."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTwo versions of a homework reminder were sent to students at random. Version A: 200 students, 116 submitted on time (58%). Version B: 200 students, 134 submitted on time (67%).\n\nIs a 9-point difference with 200 per group convincing? A two-proportion test gives **p ≈ 0.06**: suggestive, but not significant at the usual 0.05. Learn computes it step by step."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "### The question an A/B test answers\n\nYou changed one thing, assigned it at random, and measured an outcome. The groups differ by some amount. The hypothesis test asks one narrow question: **if the change did nothing, how often would random assignment alone produce a difference at least this big?** That frequency is the p-value. Small p-value: chance is a poor explanation. It does *not* tell you the probability that B is better, nor how much better.\n\nSteps, every time:\n1. Fix the metric, the groups and alpha (usually 0.05) **before** looking at the data.\n2. Compute the observed statistic (difference in means or proportions).\n3. Build its distribution under the null, by shuffling (permutation test) or by formula (z or t).\n4. p-value = share of that distribution at least as extreme as observed (two-sided: in either direction).\n5. Report the effect size with an interval, not just \"significant\".\n\n### Permutation test, vectorized\n\nUnder the null, the labels A/B are arbitrary, so shuffle them. Instead of a Python loop of 10,000 shuffles, build all shuffles at once: take a matrix of 10,000 copies of the pooled data and permute each row independently with `rng.permuted(..., axis=1)`.\n\n### The formula route: two-proportion z-test\n\nFor proportions, the null distribution of the difference is close to normal when the counts are not tiny. Under the null both groups share one rate, estimated by pooling: p̂ = (x_A + x_B)/(n_A + n_B). The standard error of the difference is √(p̂(1−p̂)(1/n_A + 1/n_B)) and z = (p̂_B − p̂_A)/SE. The two-sided p-value is 2·(1 − Φ(|z|)), where Φ is the standard normal CDF: Φ(z) = ½(1 + erf(z/√2)), available as `math.erf`.\n\n### Worked example: the reminder test\n\np̂_A = 0.58, p̂_B = 0.67, difference 0.09. Pooled p̂ = 250/400 = 0.625. SE = √(0.625 · 0.375 · (1/200 + 1/200)) = √(0.234375 · 0.01) ≈ 0.04841. z = 0.09/0.04841 ≈ 1.859. Two-sided p ≈ 0.063.\n\n```python\nimport math\nimport numpy as np\n\ndef two_prop_z(x_a, n_a, x_b, n_b):\n    pa, pb = x_a / n_a, x_b / n_b\n    pooled = (x_a + x_b) / (n_a + n_b)\n    se = math.sqrt(pooled * (1 - pooled) * (1 / n_a + 1 / n_b))\n    z = (pb - pa) / se\n    p = 2 * (1 - 0.5 * (1 + math.erf(abs(z) / math.sqrt(2))))\n    return z, p\n\ndef permutation_p(a, b, trials=10_000, seed=0):\n    \"\"\"Two-sided p-value for the difference in means of a and b.\"\"\"\n    rng = np.random.default_rng(seed)\n    pooled = np.concatenate([a, b]).astype(float)\n    observed = b.mean() - a.mean()\n    shuffled = rng.permuted(np.tile(pooled, (trials, 1)), axis=1)  # each row is one shuffle\n    diffs = shuffled[:, len(a):].mean(axis=1) - shuffled[:, :len(a)].mean(axis=1)\n    return observed, float((np.abs(diffs) >= abs(observed) - 1e-12).mean())\n\nz, p = two_prop_z(116, 200, 134, 200)\nprint(f\"z = {z:.3f}, p = {p:.3f}\")                  # z = 1.859, p = 0.063\n\na = np.array([1] * 116 + [0] * 84)                # 1 = submitted on time\nb = np.array([1] * 134 + [0] * 66)\nobs, p_perm = permutation_p(a, b)\nprint(f\"diff = {obs:.2f}, permutation p = {p_perm:.3f}\")   # close to the z-test\n\n# 95% interval for the difference (unpooled SE, normal approximation)\npa, pb = 116 / 200, 134 / 200\nse = math.sqrt(pa * (1 - pa) / 200 + pb * (1 - pb) / 200)\nprint(f\"95% CI: {obs - 1.96 * se:.3f} to {obs + 1.96 * se:.3f}\")  # about -0.005 to 0.185\n```\n\nSo the pretest answer is \"about 0.06\": suggestive, **not** significant at 0.05. The confidence interval says the same thing more usefully: the true effect could be anywhere from about zero to about +18 points. The honest conclusion: \"B looked better by 9 points (95% CI −0.5 to 18.5); with 200 per group we can't rule out no effect. A follow-up with about 2.5 times the sample would settle it.\" Not \"B doesn't work\", and not \"B works\".\n\n### Mistakes to avoid\n\n- **Peeking:** checking the p-value every day and stopping as soon as it dips under 0.05 inflates false positives massively. Fix the sample size first.\n- **Many metrics:** Thursday's multiple-testing problem. Pick one primary metric.\n- **Significant ≠ important:** with 100,000 users a 0.2-point difference can be \"significant\" and worthless. Always report the effect size.\n- **No randomization, no causal claim:** comparing students who chose to attend labs with those who didn't is an observational comparison, not an A/B test."
+     "body": "### The question an A/B test answers\n\nYou changed one thing, assigned it at random, and measured an outcome. The groups differ by some amount. The hypothesis test asks one narrow question: **if the change did nothing, how often would random assignment alone produce a difference at least this big?** That frequency is the p-value. Small p-value: chance is a poor explanation. It does *not* tell you the probability that B is better, nor how much better.\n\nSteps, every time:\n1. Fix the metric, the groups and alpha (usually 0.05) **before** looking at the data.\n2. Compute the observed statistic (difference in means or proportions).\n3. Build its distribution under the null, by shuffling (permutation test) or by formula (z or t).\n4. p-value = share of that distribution at least as extreme as observed (two-sided: in either direction).\n5. Report the effect size with an interval, not just \"significant\".\n\n### Permutation test, vectorized\n\nUnder the null, the labels A/B are arbitrary, so shuffle them. Instead of a Python loop of 10,000 shuffles, build all shuffles at once: take a matrix of 10,000 copies of the pooled data and permute each row independently with `rng.permuted(..., axis=1)`.\n\n### The formula route: two-proportion z-test\n\nFor proportions, the null distribution of the difference is close to normal when the counts are not tiny. Under the null both groups share one rate, estimated by pooling: p̂ = (x_A + x_B)/(n_A + n_B). The standard error of the difference is √(p̂(1−p̂)(1/n_A + 1/n_B)) and z = (p̂_B − p̂_A)/SE. The two-sided p-value is 2·(1 − Φ(|z|)), where Φ is the standard normal CDF: Φ(z) = ½(1 + erf(z/√2)), available as `math.erf`.\n\n### Worked example: the reminder test\n\np̂_A = 0.58, p̂_B = 0.67, difference 0.09. Pooled p̂ = 250/400 = 0.625. SE = √(0.625 · 0.375 · (1/200 + 1/200)) = √(0.234375 · 0.01) ≈ 0.04841. z = 0.09/0.04841 ≈ 1.859. Two-sided p ≈ 0.063.\n\n```python\nimport math\nimport numpy as np\n\ndef two_prop_z(x_a, n_a, x_b, n_b):\n    pa, pb = x_a / n_a, x_b / n_b\n    pooled = (x_a + x_b) / (n_a + n_b)\n    se = math.sqrt(pooled * (1 - pooled) * (1 / n_a + 1 / n_b))\n    z = (pb - pa) / se\n    p = 2 * (1 - 0.5 * (1 + math.erf(abs(z) / math.sqrt(2))))\n    return z, p\n\ndef permutation_p(a, b, trials=10_000, seed=0):\n    \"\"\"Two-sided p-value for the difference in means of a and b.\"\"\"\n    rng = np.random.default_rng(seed)\n    pooled = np.concatenate([a, b]).astype(float)\n    observed = b.mean() - a.mean()\n    shuffled = rng.permuted(np.tile(pooled, (trials, 1)), axis=1)  # each row is one shuffle\n    diffs = shuffled[:, len(a):].mean(axis=1) - shuffled[:, :len(a)].mean(axis=1)\n    return observed, float((np.abs(diffs) >= abs(observed) - 1e-12).mean())\n\nz, p = two_prop_z(116, 200, 134, 200)\nprint(f\"z = {z:.3f}, p = {p:.3f}\")                  # z = 1.859, p = 0.063\n\na = np.array([1] * 116 + [0] * 84)                # 1 = submitted on time\nb = np.array([1] * 134 + [0] * 66)\nobs, p_perm = permutation_p(a, b)\nprint(f\"diff = {obs:.2f}, permutation p = {p_perm:.3f}\")   # close to the z-test\n\n# 95% interval for the difference (unpooled SE, normal approximation)\npa, pb = 116 / 200, 134 / 200\nse = math.sqrt(pa * (1 - pa) / 200 + pb * (1 - pb) / 200)\nprint(f\"95% CI: {obs - 1.96 * se:.3f} to {obs + 1.96 * se:.3f}\")  # about -0.005 to 0.185\n```\n\nSo the first example's answer is \"about 0.06\": suggestive, **not** significant at 0.05. The confidence interval says the same thing more usefully: the true effect could be anywhere from about zero to about +18 points. The honest conclusion: \"B looked better by 9 points (95% CI −0.5 to 18.5); with 200 per group we can't rule out no effect. A follow-up with about 2.5 times the sample would settle it.\" Not \"B doesn't work\", and not \"B works\".\n\n### Mistakes to avoid\n\n- **Peeking:** checking the p-value every day and stopping as soon as it dips under 0.05 inflates false positives massively. Fix the sample size first.\n- **Many metrics:** Thursday's multiple-testing problem. Pick one primary metric.\n- **Significant ≠ important:** with 100,000 users a 0.2-point difference can be \"significant\" and worthless. Always report the effect size.\n- **No randomization, no causal claim:** comparing students who chose to attend labs with those who didn't is an observational comparison, not an A/B test."
     },
     {
      "kind": "practice",

@@ -37,37 +37,41 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall: tests, files, strings",
+     "title": "Recall",
      "questions": [
       {
        "q": "In pytest, how do you check that `parse('x')` raises `ValueError`?",
-       "a": "`with pytest.raises(ValueError): parse('x')`. The test fails if nothing (or a different exception) is raised."
+       "a": "`with pytest.raises(ValueError): parse('x')`. The test fails if nothing (or a different exception) is raised.",
+       "from": "python-w03-1"
       },
       {
        "q": "What does `Path('data') / 'scores.csv'` give you, and why is it better than `'data' + '/' + 'scores.csv'`?",
-       "a": "A `Path` object for data/scores.csv. It uses the right separator for the OS and comes with `.exists()`, `.read_text()`, `.suffix`, `.stem` and so on."
+       "a": "A `Path` object for data/scores.csv. It uses the right separator for the OS and comes with `.exists()`, `.read_text()`, `.suffix`, `.stem` and so on.",
+       "from": "python-w03-2"
       },
       {
        "q": "What does `f\"{0.4567:.1%}\"` produce?",
-       "a": "'45.7%'. The `%` format multiplies by 100 and adds the percent sign."
+       "a": "'45.7%'. The `%` format multiplies by 100 and adds the percent sign.",
+       "from": "python-w01-1"
       },
       {
        "q": "What is the difference between `'a,,b'.split(',')` and `'a  b'.split()`?",
-       "a": "`['a', '', 'b']` keeps the empty field between the two commas; `split()` with no argument splits on runs of whitespace and never returns empty strings: `['a', 'b']`."
+       "a": "`['a', '', 'b']` keeps the empty field between the two commas; `split()` with no argument splits on runs of whitespace and never returns empty strings: `['a', 'b']`.",
+       "from": "python-w03-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Without looking anything up, write down what you think each line prints. Some of these are guesses; that's the point. You'll check them in the learn step.\n\n```python\nimport re\ns = \"room 101b, floor 3\"\nprint(re.search(r\"\\d+\", s))\nprint(re.findall(r\"\\d+\", s))\nprint(re.match(r\"\\d+\", s))\nprint(re.sub(r\"\\d\", \"#\", s))\nprint(re.findall(r\"<.*>\", \"<a><b>\"))\n```\n\nThen: how would you check that a string is *exactly* a student id like `S-0142` and nothing more?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nimport re\ns = \"room 101b, floor 3\"\nprint(re.search(r\"\\d+\", s))\nprint(re.findall(r\"\\d+\", s))\nprint(re.match(r\"\\d+\", s))\nprint(re.sub(r\"\\d\", \"#\", s))\nprint(re.findall(r\"<.*>\", \"<a><b>\"))\n```\n\n**It prints:**\n\n1. `<re.Match object; span=(5, 8), match='101'>`: `search` finds the first run of digits anywhere.\n2. `['101', '3']`: `findall` returns every match.\n3. `None`: `match` only looks at the very start, and `s` starts with a letter.\n4. `room ###b, floor #`: `sub` replaces every digit.\n5. `['<a><b>']`: `.*` is *greedy* and grabs as much as it can.\n\nTo check that a string is *exactly* a student id like `S-0142`, use `re.fullmatch(r\"S-\\d{4}\", text)`. Learn builds up each piece of these patterns."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "How regex works, and a log parser",
-     "body": "A regular expression is a tiny pattern language for text. You describe the *shape* of what you want (a capital S, a dash, four digits) and the `re` module finds it. It's the right tool when `split`, `startswith` and `in` start turning into a pile of `if`s; it's the wrong tool for nested structures like HTML or JSON, where you want a real parser.\n\n**The building blocks**\n\n- Literal characters match themselves: `cat` matches \"cat\".\n- `.` matches any one character except newline. To match a real dot, escape it: `\\.`.\n- Character classes: `[aeiou]` one vowel, `[0-9]` one digit, `[^0-9]` anything *but* a digit. Shorthands: `\\d` digit, `\\w` word character (letter, digit, underscore), `\\s` whitespace. Capitals invert: `\\D`, `\\W`, `\\S`.\n- Quantifiers apply to the thing just before them: `*` zero or more, `+` one or more, `?` zero or one, `{4}` exactly four, `{1,3}` one to three.\n- Anchors match positions, not characters: `^` start, `$` end, `\\b` a word boundary.\n- Alternation: `cat|dog`. Groups: `( ... )` both group and *capture*; `(?: ... )` only groups. Named group: `(?P<year>\\d{4})`.\n\nAlways write patterns as raw strings, `r\"\\d+\"`. Without the `r`, Python itself processes backslashes first: `\"\\b\"` is a backspace character, not a word boundary, and your pattern silently breaks.\n\n**The functions you'll use**\n\n- `re.search(p, s)` finds the first match *anywhere*; returns a `Match` or `None`.\n- `re.match(p, s)` only tries at position 0.\n- `re.fullmatch(p, s)` must consume the whole string. This is what you want for validation.\n- `re.findall(p, s)` returns all matches as strings; if the pattern has groups, it returns the groups instead (a tuple per match when there are several).\n- `re.sub(p, repl, s)` replaces; `repl` can reference groups as `\\1` or `\\g<name>`.\n- `re.compile(p)` gives you a reusable pattern object with the same methods.\n\nAnswers to the pretest: `search` finds `101` (a Match object, span 5–8); `findall` gives `['101', '3']`; `match` gives `None` because the string starts with \"r\"; `sub` gives `room ###b, floor #`. And `<.*>` on `<a><b>` matches the *whole* string `<a><b>`, because `*` is **greedy**: it grabs as much as possible and only backs off as far as needed. Add `?` to make it lazy: `<.*?>` gives `['<a>', '<b>']`. For the id check: `re.fullmatch(r\"S-\\d{4}\", s)`.\n\n**Worked example: parse a portal activity log**\n\nSay the portal export contains lines like `2026-11-09  S-0142 finished topic 7 (score 88)`, sometimes without a score and sometimes with extra spaces. We want `(date, student, topic, score)`.\n\n```python\nimport re\n\nLOG = re.compile(\n    r\"^(?P<date>\\d{4}-\\d{2}-\\d{2})\\s+\"\n    r\"(?P<student>S-\\d{4})\\s+finished topic\\s+(?P<topic>\\d+)\"\n    r\"(?:\\s+\\(score\\s+(?P<score>\\d{1,3})\\))?\\s*$\"\n)\n\ndef parse(line):\n    m = LOG.match(line)\n    if m is None:\n        return None\n    score = m[\"score\"]\n    return m[\"date\"], m[\"student\"], int(m[\"topic\"]), int(score) if score else None\n\nlines = [\n    \"2026-11-09  S-0142 finished topic 7 (score 88)\",\n    \"2026-11-09 S-0007 finished topic 3\",\n    \"2026-11-10 S-77 finished topic 2\",\n]\nfor line in lines:\n    print(parse(line))\n```\n\nIt prints `('2026-11-09', 'S-0142', 7, 88)`, then `('2026-11-09', 'S-0007', 3, None)`, then `None` for the malformed id. Points to notice: adjacent raw strings are joined, which keeps a long pattern readable; the score part is an optional non-capturing group `(?: ... )?`, and when it doesn't participate, `m[\"score\"]` is `None` rather than an error; `\\(` escapes the literal parenthesis.\n\n**Transforming with sub**\n\nGroups let you rearrange: converting `09.11.2026` to `2026-11-09` is one line.\n\n```python\nimport re\ntext = \"Exam 09.11.2026, retake 23.11.2026\"\nprint(re.sub(r\"\\b(\\d{2})\\.(\\d{2})\\.(\\d{4})\\b\", r\"\\3-\\2-\\1\", text))\n# Exam 2026-11-09, retake 2026-11-23\n```\n\nA working habit: build a pattern in small steps and test each step on two or three real lines, including one that should *not* match. Regex bugs are almost always \"matches too much\"."
+     "body": "A regular expression is a tiny pattern language for text. You describe the *shape* of what you want (a capital S, a dash, four digits) and the `re` module finds it. It's the right tool when `split`, `startswith` and `in` start turning into a pile of `if`s; it's the wrong tool for nested structures like HTML or JSON, where you want a real parser.\n\n**The building blocks**\n\n- Literal characters match themselves: `cat` matches \"cat\".\n- `.` matches any one character except newline. To match a real dot, escape it: `\\.`.\n- Character classes: `[aeiou]` one vowel, `[0-9]` one digit, `[^0-9]` anything *but* a digit. Shorthands: `\\d` digit, `\\w` word character (letter, digit, underscore), `\\s` whitespace. Capitals invert: `\\D`, `\\W`, `\\S`.\n- Quantifiers apply to the thing just before them: `*` zero or more, `+` one or more, `?` zero or one, `{4}` exactly four, `{1,3}` one to three.\n- Anchors match positions, not characters: `^` start, `$` end, `\\b` a word boundary.\n- Alternation: `cat|dog`. Groups: `( ... )` both group and *capture*; `(?: ... )` only groups. Named group: `(?P<year>\\d{4})`.\n\nAlways write patterns as raw strings, `r\"\\d+\"`. Without the `r`, Python itself processes backslashes first: `\"\\b\"` is a backspace character, not a word boundary, and your pattern silently breaks.\n\n**The functions you'll use**\n\n- `re.search(p, s)` finds the first match *anywhere*; returns a `Match` or `None`.\n- `re.match(p, s)` only tries at position 0.\n- `re.fullmatch(p, s)` must consume the whole string. This is what you want for validation.\n- `re.findall(p, s)` returns all matches as strings; if the pattern has groups, it returns the groups instead (a tuple per match when there are several).\n- `re.sub(p, repl, s)` replaces; `repl` can reference groups as `\\1` or `\\g<name>`.\n- `re.compile(p)` gives you a reusable pattern object with the same methods.\n\nThe first example, explained: `search` finds `101` (a Match object, span 5–8); `findall` gives `['101', '3']`; `match` gives `None` because the string starts with \"r\"; `sub` gives `room ###b, floor #`. And `<.*>` on `<a><b>` matches the *whole* string `<a><b>`, because `*` is **greedy**: it grabs as much as possible and only backs off as far as needed. Add `?` to make it lazy: `<.*?>` gives `['<a>', '<b>']`. For the id check: `re.fullmatch(r\"S-\\d{4}\", s)`.\n\n**Worked example: parse a portal activity log**\n\nSay the portal export contains lines like `2026-11-09  S-0142 finished topic 7 (score 88)`, sometimes without a score and sometimes with extra spaces. We want `(date, student, topic, score)`.\n\n```python\nimport re\n\nLOG = re.compile(\n    r\"^(?P<date>\\d{4}-\\d{2}-\\d{2})\\s+\"\n    r\"(?P<student>S-\\d{4})\\s+finished topic\\s+(?P<topic>\\d+)\"\n    r\"(?:\\s+\\(score\\s+(?P<score>\\d{1,3})\\))?\\s*$\"\n)\n\ndef parse(line):\n    m = LOG.match(line)\n    if m is None:\n        return None\n    score = m[\"score\"]\n    return m[\"date\"], m[\"student\"], int(m[\"topic\"]), int(score) if score else None\n\nlines = [\n    \"2026-11-09  S-0142 finished topic 7 (score 88)\",\n    \"2026-11-09 S-0007 finished topic 3\",\n    \"2026-11-10 S-77 finished topic 2\",\n]\nfor line in lines:\n    print(parse(line))\n```\n\nIt prints `('2026-11-09', 'S-0142', 7, 88)`, then `('2026-11-09', 'S-0007', 3, None)`, then `None` for the malformed id. Points to notice: adjacent raw strings are joined, which keeps a long pattern readable; the score part is an optional non-capturing group `(?: ... )?`, and when it doesn't participate, `m[\"score\"]` is `None` rather than an error; `\\(` escapes the literal parenthesis.\n\n**Transforming with sub**\n\nGroups let you rearrange: converting `09.11.2026` to `2026-11-09` is one line.\n\n```python\nimport re\ntext = \"Exam 09.11.2026, retake 23.11.2026\"\nprint(re.sub(r\"\\b(\\d{2})\\.(\\d{2})\\.(\\d{4})\\b\", r\"\\3-\\2-\\1\", text))\n# Exam 2026-11-09, retake 2026-11-23\n```\n\nA working habit: build a pattern in small steps and test each step on two or three real lines, including one that should *not* match. Regex bugs are almost always \"matches too much\"."
     },
     {
      "kind": "practice",
@@ -212,19 +216,22 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Recall: sorting and recursion",
+     "title": "Recall",
      "questions": [
       {
        "q": "Average and worst-case time of quicksort, and what causes the worst case?",
-       "a": "O(n log n) average, O(n²) worst, when the pivot keeps splitting very unevenly (e.g. always the smallest element on already-sorted input)."
+       "a": "O(n log n) average, O(n²) worst, when the pivot keeps splitting very unevenly (e.g. always the smallest element on already-sorted input).",
+       "from": "algo-w03-1"
       },
       {
        "q": "Is merge sort stable? Is it in place?",
-       "a": "Stable yes (equal elements keep their order if you take from the left half on ties); not in place, it needs O(n) extra memory."
+       "a": "Stable yes (equal elements keep their order if you take from the left half on ties); not in place, it needs O(n) extra memory.",
+       "from": "algo-w03-2"
       },
       {
        "q": "Searching a Python list with `x in lst` costs what?",
-       "a": "O(n): it checks elements one by one."
+       "a": "O(n): it checks elements one by one.",
+       "from": "algo-w03-3"
       }
      ]
     },
@@ -325,7 +332,15 @@
      "back": "If a key changed after insertion its hash would change and it would sit in the wrong bucket"
     }
    ],
-   "deliverable": "hashmap.py with HashMap, ResizingHashMap and worst_chain, tests passing, committed."
+   "deliverable": "hashmap.py with HashMap, ResizingHashMap and worst_chain, tests passing, committed.",
+   "leetcode": [
+    {
+     "title": "Design HashMap",
+     "url": "https://leetcode.com/problems/design-hashmap/",
+     "level": "easy",
+     "uses": "a hash map with chaining (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w04-1",
@@ -605,37 +620,41 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall: determinant, rank, composition",
+     "title": "Recall",
      "questions": [
       {
        "q": "What does det(A) = 0 tell you about the transformation A (2×2)?",
-       "a": "It squashes the plane onto a line or a point: area goes to zero, so information is lost and A has no inverse."
+       "a": "It squashes the plane onto a line or a point: area goes to zero, so information is lost and A has no inverse.",
+       "from": "math-w03-1"
       },
       {
        "q": "Define the rank of a matrix in words.",
-       "a": "The number of dimensions of its output (column space): how many independent directions the columns span."
+       "a": "The number of dimensions of its output (column space): how many independent directions the columns span.",
+       "from": "math-w03-3"
       },
       {
        "q": "In `B @ A @ x`, which transformation is applied first?",
-       "a": "A first, then B: read right to left, like function composition B(A(x))."
+       "a": "A first, then B: read right to left, like function composition B(A(x)).",
+       "from": "math-w02-1"
       },
       {
        "q": "If A is 2×2 with columns (1, 0) and (0, 2), what does it do to the unit square?",
-       "a": "Stretches it vertically by 2: the square becomes a 1 × 2 rectangle, determinant 2."
+       "a": "Stretches it vertically by 2: the square becomes a 1 × 2 rectangle, determinant 2.",
+       "from": "math-w03-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Try these before the video:\n\n1. A matrix has 3 rows and 2 columns. Multiplying it by a vector gives a vector. How many entries does the input vector need, and how many does the output have?\n2. Can the matrix `[[1, 0, 0], [0, 1, 0]]` (2×3) be undone by some other matrix, so that you always get your original 3D vector back? Why or why not?\n3. Compute `[[1, 0], [0, 1], [1, 1]] @ [2, 3]`."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n1. A matrix with 3 rows and 2 columns takes a vector with **2** entries and gives a vector with **3**.\n2. The 2×3 matrix `[[1, 0, 0], [0, 1, 0]]` **can't** be undone: it drops the z coordinate, so (1, 2, 0) and (1, 2, 5) give the same output, and nothing can tell them apart afterwards.\n3. `[[1, 0], [0, 1], [1, 1]] @ [2, 3]` = **[2, 3, 5]**.\n\nLearn explains non-square matrices with these examples."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Shapes are dimensions",
-     "body": "Everything from the last weeks carries over: a matrix is a transformation, and **its columns are where the input basis vectors land**. The only new idea is that input and output can have different dimensions.\n\n**Reading the shape**\n\nAn **m × n** matrix has n columns, one per input basis vector, so it eats vectors with n entries. Each column has m entries, so each basis vector lands in an m-dimensional space. An m × n matrix is a map **from Rⁿ to Rᵐ**. Read the shape right to left: \"n in, m out\".\n\n**3×2: from the plane into space**\n\nTake\n\n```\nA = [[1, 0],\n     [0, 1],\n     [1, 1]]\n```\n\nThe first column says î = (1, 0) lands on (1, 0, 1); the second says ĵ = (0, 1) lands on (0, 1, 1). Every 2D input (x, y) = x·î + y·ĵ lands on x·(1, 0, 1) + y·(0, 1, 1) = (x, y, x + y). For the pretest: A·(2, 3) = 2·(1, 0, 1) + 3·(0, 1, 1) = (2, 3, 5).\n\nThe output is not all of 3D. It's the **column space**: all combinations of the two columns, a flat plane through the origin (here the plane z = x + y). The plane is tilted inside 3D, but it's two-dimensional, so the rank is 2. A 3×2 matrix can never fill 3D: two columns span at most a plane. If the columns were dependent, say (1, 2, 3) and (2, 4, 6), the whole plane would collapse onto a line: rank 1.\n\n**2×3: from space onto the plane**\n\nNow\n\n```\nB = [[1, 0, 0],\n     [0, 1, 0]]\n```\n\nThe three columns say î ↦ (1, 0), ĵ ↦ (0, 1), k̂ ↦ (0, 0). So (x, y, z) ↦ (x, y): it drops z, like a shadow cast straight down onto the floor. Every vector of the form (0, 0, z) goes to zero; that line is the **null space**. Rank 2 (the output fills the plane), null space dimension 1, and 2 + 1 = 3, the input dimension. That bookkeeping always holds: **rank + nullity = number of columns**.\n\nPretest question 2: no matrix can undo B, because (1, 2, 5) and (1, 2, −7) both land on (1, 2). Once two inputs share an output, nothing can tell them apart again. In general a 2×3 matrix always loses at least a dimension (three columns in a 2D space must be dependent), and a 3×2 matrix can't reach most of 3D, so no matrix sends every output back. That's why inverses and determinants are only defined for square matrices.\n\n**Products of nonsquare matrices**\n\nComposition still works: `C @ D` means \"D first, then C\". D's output must be C's input, so the inner dimensions must agree: (m × **k**) times (**k** × n) gives m × n. For A (3×2) and B (2×3):\n\n- `B @ A` is 2×2: plane → space → plane. Here B·A = [[1, 0], [0, 1]] = I: lifting into the tilted plane and dropping z gets you back exactly where you started. \n- `A @ B` is 3×3: space → plane → space. It is not the identity: it flattens all of space onto the tilted plane, and its rank is only 2.\n\nSo `B @ A = I` but `A @ B ≠ I`. B is a \"left inverse\" of A, but not an inverse.\n\n**Check it numerically**\n\n```python\nimport numpy as np\n\nA = np.array([[1, 0], [0, 1], [1, 1]])\nB = np.array([[1, 0, 0], [0, 1, 0]])\n\nprint(A @ np.array([2, 3]))           # [2 3 5]\nprint(B @ A)                          # identity 2x2\nprint(A @ B)                          # 3x3, not the identity\nprint(np.linalg.matrix_rank(A @ B))   # 2\nprint(B @ np.array([1, 2, 5]), B @ np.array([1, 2, -7]))   # both [1 2]\n```\n\n**Why you care.** Machine learning is full of nonsquare matrices: a linear layer mapping 784 pixel values to 10 class scores is a 10×784 matrix, a dimension drop by design. In robotics, a camera turns 3D points into 2D image points, and the part that loses depth is exactly this kind of projection. Whenever you see a weight matrix, ask: what dimension goes in, what comes out, and what information can't survive?"
+     "body": "Everything from the last weeks carries over: a matrix is a transformation, and **its columns are where the input basis vectors land**. The only new idea is that input and output can have different dimensions.\n\n**Reading the shape**\n\nAn **m × n** matrix has n columns, one per input basis vector, so it eats vectors with n entries. Each column has m entries, so each basis vector lands in an m-dimensional space. An m × n matrix is a map **from Rⁿ to Rᵐ**. Read the shape right to left: \"n in, m out\".\n\n**3×2: from the plane into space**\n\nTake\n\n```\nA = [[1, 0],\n     [0, 1],\n     [1, 1]]\n```\n\nThe first column says î = (1, 0) lands on (1, 0, 1); the second says ĵ = (0, 1) lands on (0, 1, 1). Every 2D input (x, y) = x·î + y·ĵ lands on x·(1, 0, 1) + y·(0, 1, 1) = (x, y, x + y). For the first example: A·(2, 3) = 2·(1, 0, 1) + 3·(0, 1, 1) = (2, 3, 5).\n\nThe output is not all of 3D. It's the **column space**: all combinations of the two columns, a flat plane through the origin (here the plane z = x + y). The plane is tilted inside 3D, but it's two-dimensional, so the rank is 2. A 3×2 matrix can never fill 3D: two columns span at most a plane. If the columns were dependent, say (1, 2, 3) and (2, 4, 6), the whole plane would collapse onto a line: rank 1.\n\n**2×3: from space onto the plane**\n\nNow\n\n```\nB = [[1, 0, 0],\n     [0, 1, 0]]\n```\n\nThe three columns say î ↦ (1, 0), ĵ ↦ (0, 1), k̂ ↦ (0, 0). So (x, y, z) ↦ (x, y): it drops z, like a shadow cast straight down onto the floor. Every vector of the form (0, 0, z) goes to zero; that line is the **null space**. Rank 2 (the output fills the plane), null space dimension 1, and 2 + 1 = 3, the input dimension. That bookkeeping always holds: **rank + nullity = number of columns**.\n\nPretest question 2: no matrix can undo B, because (1, 2, 5) and (1, 2, −7) both land on (1, 2). Once two inputs share an output, nothing can tell them apart again. In general a 2×3 matrix always loses at least a dimension (three columns in a 2D space must be dependent), and a 3×2 matrix can't reach most of 3D, so no matrix sends every output back. That's why inverses and determinants are only defined for square matrices.\n\n**Products of nonsquare matrices**\n\nComposition still works: `C @ D` means \"D first, then C\". D's output must be C's input, so the inner dimensions must agree: (m × **k**) times (**k** × n) gives m × n. For A (3×2) and B (2×3):\n\n- `B @ A` is 2×2: plane → space → plane. Here B·A = [[1, 0], [0, 1]] = I: lifting into the tilted plane and dropping z gets you back exactly where you started. \n- `A @ B` is 3×3: space → plane → space. It is not the identity: it flattens all of space onto the tilted plane, and its rank is only 2.\n\nSo `B @ A = I` but `A @ B ≠ I`. B is a \"left inverse\" of A, but not an inverse.\n\n**Check it numerically**\n\n```python\nimport numpy as np\n\nA = np.array([[1, 0], [0, 1], [1, 1]])\nB = np.array([[1, 0, 0], [0, 1, 0]])\n\nprint(A @ np.array([2, 3]))           # [2 3 5]\nprint(B @ A)                          # identity 2x2\nprint(A @ B)                          # 3x3, not the identity\nprint(np.linalg.matrix_rank(A @ B))   # 2\nprint(B @ np.array([1, 2, 5]), B @ np.array([1, 2, -7]))   # both [1 2]\n```\n\n**Why you care.** Machine learning is full of nonsquare matrices: a linear layer mapping 784 pixel values to 10 class scores is a 10×784 matrix, a dimension drop by design. In robotics, a camera turns 3D points into 2D image points, and the part that loses depth is exactly this kind of projection. Whenever you see a weight matrix, ask: what dimension goes in, what comes out, and what information can't survive?"
     },
     {
      "kind": "practice",
@@ -778,15 +797,18 @@
      "questions": [
       {
        "q": "What does the 2×3 matrix [[1,0,0],[0,1,0]] do to (4, 5, 6)?",
-       "a": "Gives (4, 5): drops the z coordinate."
+       "a": "Gives (4, 5): drops the z coordinate.",
+       "from": "math-w03-1"
       },
       {
        "q": "What does `np.linalg.matrix_rank(A @ B)` give for A 3×2, B 2×3 from this morning?",
-       "a": "2"
+       "a": "2",
+       "from": "math-w04-1"
       },
       {
        "q": "What is `np.array([1, 2]) @ np.array([3, 4])`?",
-       "a": "11: the sum of products 1·3 + 2·4."
+       "a": "11: the sum of products 1·3 + 2·4.",
+       "from": "math-w04-1"
       }
      ]
     },
@@ -1171,37 +1193,41 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall: regex and earlier weeks",
+     "title": "Recall",
      "questions": [
       {
        "q": "Write a check that a string `s` is exactly three capital letters.",
-       "a": "`re.fullmatch(r\"[A-Z]{3}\", s) is not None`"
+       "a": "`re.fullmatch(r\"[A-Z]{3}\", s) is not None`",
+       "from": "python-w04-1"
       },
       {
        "q": "A function raises `ValueError` and nobody catches it. What happens to the caller?",
-       "a": "The exception propagates up through every caller until something catches it; if nothing does, the program stops with a traceback."
+       "a": "The exception propagates up through every caller until something catches it; if nothing does, the program stops with a traceback.",
+       "from": "python-w02-1"
       },
       {
        "q": "Build a dict from `names = ['ana', 'bo']` mapping each name to its length, in one expression.",
-       "a": "`{n: len(n) for n in names}` gives `{'ana': 3, 'bo': 2}`."
+       "a": "`{n: len(n) for n in names}` gives `{'ana': 3, 'bo': 2}`.",
+       "from": "python-w02-3"
       },
       {
        "q": "What does `re.sub(r'(\\w+)@(\\w+)', r'\\2:\\1', 'ana@aql')` return?",
-       "a": "'aql:ana'"
+       "a": "'aql:ana'",
+       "from": "python-w04-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "What does this print? Commit to an answer, including the third number.\n\n```python\nclass Counter:\n    count = 0\n\n    def __init__(self):\n        self.count += 1\n\na = Counter()\nb = Counter()\nprint(a.count, b.count, Counter.count)\n```\n\nSecond question: in the tracker you've been passing around dicts like `{\"id\": \"S-0142\", \"done\": 12, \"total\": 20}`. Name one bug that a dict can't stop but a class could."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nclass Counter:\n    count = 0\n\n    def __init__(self):\n        self.count += 1\n\na = Counter()\nb = Counter()\nprint(a.count, b.count, Counter.count)\n```\n\n**It prints `1 1 0`.** `self.count += 1` reads the class attribute (0), then creates a separate *instance* attribute set to 1 on each object. `Counter.count` itself stays 0. Learn explains class versus instance attributes.\n\nWhy classes help with the tracker: a dict like `{\"id\": \"S-0142\", \"done\": 12, \"total\": 20}` happily accepts a typo such as `\"dnoe\"` or `done > total`. A class can fix the field names and check the values in `__init__`."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Classes as data plus rules",
-     "body": "A class bundles three things: some data, the operations on that data, and the **rules** the data must always obey (invariants). A dict gives you the first only. Nothing stops `student[\"done\"] = 25` when there are 20 topics, or a typo like `student[\"dnoe\"]`. A class can.\n\n**The basic shape**\n\n`class Student:` defines a new type. Calling `Student(...)` creates an object (an *instance*) and runs `__init__` on it. `self` is simply the instance being worked on; Python passes it as the first argument, so `s.complete_topic()` is really `Student.complete_topic(s)`. Attributes set as `self.x = ...` belong to that one instance.\n\n**Class attributes vs instance attributes (the pretest)**\n\nA variable written directly in the class body belongs to the class and is shared. When you *read* `self.count`, Python looks on the instance first, then on the class. When you *assign* `self.count = ...`, it always creates or updates an attribute **on the instance**. So `self.count += 1` reads the class's 0, adds 1, and stores 1 on the instance. Output: `1 1 0`. If you really meant a shared counter, write `Counter.count += 1`. Use class attributes for constants (`MAX_TOPICS = 20`), not for per-object state, and never as a mutable default like `roster = []`, which every instance would share.\n\n**Properties: attribute syntax, method power**\n\nYou want `s.done = 12` to stay as easy as a dict but refuse nonsense. A `@property` makes an attribute that runs code when read; `@x.setter` runs code when assigned. The real value lives in `self._done`; the leading underscore is the convention for \"internal, don't touch\". Python won't stop anyone, but it signals intent.\n\nA property with no setter is read-only and is perfect for **derived** values like a completion rate: always computed from the current data, so it can't go stale.\n\n**Alternative constructors with @classmethod**\n\nA `@classmethod` receives the class (`cls`) instead of an instance. The classic use is a second way to build objects, like from a CSV row. Using `cls(...)` rather than `Student(...)` means subclasses get the right type later.\n\n**Worked example**\n\n```python\nclass Student:\n    TOTAL = 20  # class attribute: a constant shared by all students\n\n    def __init__(self, student_id, name, done=0):\n        self.student_id = student_id\n        self.name = name\n        self.done = done  # goes through the setter, so it is validated too\n\n    @property\n    def done(self):\n        return self._done\n\n    @done.setter\n    def done(self, value):\n        if not 0 <= value <= self.TOTAL:\n            raise ValueError(f\"done must be 0..{self.TOTAL}, got {value}\")\n        self._done = value\n\n    @property\n    def completion(self):\n        return self.done / self.TOTAL\n\n    def complete_topic(self):\n        self.done += 1  # the setter refuses a 21st topic\n\n    @classmethod\n    def from_row(cls, row):\n        return cls(row[\"id\"], row[\"name\"], int(row[\"done\"]))\n\n    def __str__(self):\n        return f\"{self.name} ({self.student_id}): {self.completion:.0%}\"\n\n\ns = Student.from_row({\"id\": \"S-0142\", \"name\": \"Aigerim\", \"done\": \"12\"})\ns.complete_topic()\nprint(s)               # Aigerim (S-0142): 65%\ntry:\n    s.done = 25\nexcept ValueError as e:\n    print(\"refused:\", e)\nassert s.done == 13   # unchanged after the failed assignment\n```\n\nWalk through it: `from_row` converts the string `\"12\"` once, at the boundary, so the rest of the code can trust that `done` is an int. `__init__` assigns `self.done`, which calls the setter, so even construction is validated; that's why the setter, not `__init__`, holds the rule. `completion` has no setter, so `s.completion = 1` raises `AttributeError`. `__str__` controls what `print` shows (you'll meet its siblings on Friday).\n\n**What goes in a class and what doesn't**\n\nPut a method on the class when it needs the object's data or protects its rules. A function that just computes something from a few values can stay a plain function. A class with only `__init__` and one method is often a function wearing a costume."
+     "body": "A class bundles three things: some data, the operations on that data, and the **rules** the data must always obey (invariants). A dict gives you the first only. Nothing stops `student[\"done\"] = 25` when there are 20 topics, or a typo like `student[\"dnoe\"]`. A class can.\n\n**The basic shape**\n\n`class Student:` defines a new type. Calling `Student(...)` creates an object (an *instance*) and runs `__init__` on it. `self` is simply the instance being worked on; Python passes it as the first argument, so `s.complete_topic()` is really `Student.complete_topic(s)`. Attributes set as `self.x = ...` belong to that one instance.\n\n**Class attributes vs instance attributes (the first example)**\n\nA variable written directly in the class body belongs to the class and is shared. When you *read* `self.count`, Python looks on the instance first, then on the class. When you *assign* `self.count = ...`, it always creates or updates an attribute **on the instance**. So `self.count += 1` reads the class's 0, adds 1, and stores 1 on the instance. Output: `1 1 0`. If you really meant a shared counter, write `Counter.count += 1`. Use class attributes for constants (`MAX_TOPICS = 20`), not for per-object state, and never as a mutable default like `roster = []`, which every instance would share.\n\n**Properties: attribute syntax, method power**\n\nYou want `s.done = 12` to stay as easy as a dict but refuse nonsense. A `@property` makes an attribute that runs code when read; `@x.setter` runs code when assigned. The real value lives in `self._done`; the leading underscore is the convention for \"internal, don't touch\". Python won't stop anyone, but it signals intent.\n\nA property with no setter is read-only and is perfect for **derived** values like a completion rate: always computed from the current data, so it can't go stale.\n\n**Alternative constructors with @classmethod**\n\nA `@classmethod` receives the class (`cls`) instead of an instance. The classic use is a second way to build objects, like from a CSV row. Using `cls(...)` rather than `Student(...)` means subclasses get the right type later.\n\n**Worked example**\n\n```python\nclass Student:\n    TOTAL = 20  # class attribute: a constant shared by all students\n\n    def __init__(self, student_id, name, done=0):\n        self.student_id = student_id\n        self.name = name\n        self.done = done  # goes through the setter, so it is validated too\n\n    @property\n    def done(self):\n        return self._done\n\n    @done.setter\n    def done(self, value):\n        if not 0 <= value <= self.TOTAL:\n            raise ValueError(f\"done must be 0..{self.TOTAL}, got {value}\")\n        self._done = value\n\n    @property\n    def completion(self):\n        return self.done / self.TOTAL\n\n    def complete_topic(self):\n        self.done += 1  # the setter refuses a 21st topic\n\n    @classmethod\n    def from_row(cls, row):\n        return cls(row[\"id\"], row[\"name\"], int(row[\"done\"]))\n\n    def __str__(self):\n        return f\"{self.name} ({self.student_id}): {self.completion:.0%}\"\n\n\ns = Student.from_row({\"id\": \"S-0142\", \"name\": \"Aigerim\", \"done\": \"12\"})\ns.complete_topic()\nprint(s)               # Aigerim (S-0142): 65%\ntry:\n    s.done = 25\nexcept ValueError as e:\n    print(\"refused:\", e)\nassert s.done == 13   # unchanged after the failed assignment\n```\n\nWalk through it: `from_row` converts the string `\"12\"` once, at the boundary, so the rest of the code can trust that `done` is an int. `__init__` assigns `self.done`, which calls the setter, so even construction is validated; that's why the setter, not `__init__`, holds the rule. `completion` has no setter, so `s.completion = 1` raises `AttributeError`. `__str__` controls what `print` shows (you'll meet its siblings on Friday).\n\n**What goes in a class and what doesn't**\n\nPut a method on the class when it needs the object's data or protects its rules. A function that just computes something from a few values can stay a plain function. A class with only `__init__` and one method is often a function wearing a costume."
     },
     {
      "kind": "practice",
@@ -1256,7 +1282,7 @@
        "a": "The instance the method is working on. Python passes it automatically as the first argument: the call is `Student.complete_topic(s)`."
       },
       {
-       "q": "Why does the pretest print `1 1 0`?",
+       "q": "Why does the first example print `1 1 0`?",
        "a": "`self.count += 1` reads `count` from the class (0), then assignment creates an instance attribute set to 1. The class attribute is never changed."
       },
       {
@@ -1293,7 +1319,15 @@
      "back": "All instances share the one list, so adding to it from one object changes it for all"
     }
    ],
-   "deliverable": "classes_practice.py with Temperature, Course and Rect, tests passing, committed to learning-log."
+   "deliverable": "classes_practice.py with Temperature, Course and Rect, tests passing, committed to learning-log.",
+   "leetcode": [
+    {
+     "title": "Design Parking System",
+     "url": "https://leetcode.com/problems/design-parking-system/",
+     "level": "easy",
+     "uses": "a class with __init__ and a method (this lesson)"
+    }
+   ]
   },
   {
    "id": "algo-w04-2",
@@ -1334,15 +1368,13 @@
      "questions": [
       {
        "q": "In your HashMap, what happens to the bucket count after the load factor passes 0.75?",
-       "a": "It doubles and every pair is re-inserted into its new bucket."
-      },
-      {
-       "q": "What does `Counter('banana')` give?",
-       "a": "Counter({'a': 3, 'n': 2, 'b': 1})"
+       "a": "It doubles and every pair is re-inserted into its new bucket.",
+       "from": "algo-w04-1"
       },
       {
        "q": "Complexity of checking membership in a set vs a list?",
-       "a": "Set: O(1) average. List: O(n)."
+       "a": "Set: O(1) average. List: O(n).",
+       "from": "algo-w01-3"
       }
      ]
     },
@@ -1451,7 +1483,15 @@
      "back": "Missing keys are created with an empty list automatically on first access"
     }
    ],
-   "deliverable": "hashing_problems.py with the four solutions and tests, plus Two Sum, Valid Anagram and Group Anagrams solved on NeetCode."
+   "deliverable": "hashing_problems.py with the four solutions and tests, plus Two Sum, Valid Anagram and Group Anagrams solved on NeetCode.",
+   "leetcode": [
+    {
+     "title": "Ransom Note",
+     "url": "https://leetcode.com/problems/ransom-note/",
+     "level": "easy",
+     "uses": "frequency counts with a dict (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w04-3",
@@ -1726,27 +1766,31 @@
      "questions": [
       {
        "q": "Tuesday: what was the projection of (2, 1) onto the line along (0.6, 0.8)?",
-       "a": "(1.2, 1.6)."
+       "a": "(1.2, 1.6).",
+       "from": "math-w04-2"
       },
       {
        "q": "A 1×3 matrix maps from which space to which?",
-       "a": "From R³ to R¹, a single number."
+       "a": "From R³ to R¹, a single number.",
+       "from": "math-w03-3"
       },
       {
        "q": "What does matrix multiplication 'mean' geometrically (week 2)?",
-       "a": "Composition: applying one transformation after another, right to left."
+       "a": "Composition: applying one transformation after another, right to left.",
+       "from": "math-w02-1"
       },
       {
        "q": "Rank and null-space dimension of the 2×3 matrix [[1,1,0],[0,1,1]]?",
-       "a": "Rank 2, null space dimension 1 (spanned by (1, −1, 1))."
+       "a": "Rank 2, null space dimension 1 (spanned by (1, −1, 1)).",
+       "from": "math-w03-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "1. Compute (2, 1)·(−1, 2). Sketch both vectors. What do you notice?\n2. Without calculating exactly, is (3, 1)·(−2, −1) positive, zero or negative? Why?\n3. Monday's 1×2 matrix [[1, 1]] sent (x, y) to x + y. Is there a vector w such that this is the same as w·(x, y)?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n1. (2, 1)·(−1, 2) = −2 + 2 = **0**. Sketch both: they are at a right angle. A zero dot product means perpendicular.\n2. (3, 1)·(−2, −1) = −6 − 1 = **−7**, negative: the two vectors point more *against* each other than with each other (the angle is over 90°).\n3. Monday's 1×2 matrix [[1, 1]] sends (x, y) to x + y, and so does the dot product with **w = (1, 1)**: a 1×2 matrix and a dot product are the same thing.\n\nLearn explains why."
     },
     {
      "kind": "learn",
@@ -1891,15 +1935,18 @@
      "questions": [
       {
        "q": "cos θ between (3, 4) and (4, 0)?",
-       "a": "0.6"
+       "a": "0.6",
+       "from": "tools-w04-1"
       },
       {
        "q": "What is the dot product of two unit vectors?",
-       "a": "The cosine of the angle between them."
+       "a": "The cosine of the angle between them.",
+       "from": "math-w04-3"
       },
       {
        "q": "How did you count word frequencies in Wednesday's algorithms lesson?",
-       "a": "With a dict or `collections.Counter`."
+       "a": "With a dict or `collections.Counter`.",
+       "from": "algo-w04-2"
       }
      ]
     },
@@ -2291,31 +2338,35 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall: properties, regex, comprehensions",
+     "title": "Recall",
      "questions": [
       {
        "q": "A property `done` has a setter that validates. Why does `__init__` write `self.done = done` and not `self._done = done`?",
-       "a": "So construction goes through the setter and gets validated too."
+       "a": "So construction goes through the setter and gets validated too.",
+       "from": "python-w04-2"
       },
       {
        "q": "What does `@classmethod` let `Student.from_row(row)` do that a plain function couldn't do as neatly?",
-       "a": "It receives the class as `cls`, so it builds the right type (including subclasses) and lives next to the class it constructs."
+       "a": "It receives the class as `cls`, so it builds the right type (including subclasses) and lives next to the class it constructs.",
+       "from": "python-w04-2"
       },
       {
        "q": "What does `re.findall(r'(\\w+)=(\\d+)', 'a=1 b=22')` return?",
-       "a": "`[('a', '1'), ('b', '22')]`: a tuple per match because there are two groups."
+       "a": "`[('a', '1'), ('b', '22')]`: a tuple per match because there are two groups.",
+       "from": "python-w04-1"
       },
       {
        "q": "Sort a list of `(name, score)` tuples by score, highest first.",
-       "a": "`sorted(pairs, key=lambda p: p[1], reverse=True)`"
+       "a": "`sorted(pairs, key=lambda p: p[1], reverse=True)`",
+       "from": "python-w02-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict both lines:\n\n```python\nclass P:\n    def __init__(self, x):\n        self.x = x\n\nprint(P(1) == P(1))\nprint(len([P(1), P(2)]), P(1))\n```\n\nThen guess: what would you have to add to `P` so that `P(1) == P(1)` is `True` and `print(P(1))` shows `P(x=1)`?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nclass P:\n    def __init__(self, x):\n        self.x = x\n\nprint(P(1) == P(1))\nprint(len([P(1), P(2)]), P(1))\n```\n\n**It prints** `False`, then something like `2 <__main__.P object at 0x10f3c2d50>`. By default `==` compares identity (are these the same object?), and `print` shows the object's type and memory address.\n\nTo make `P(1) == P(1)` be `True` and `print(P(1))` show `P(x=1)`, you add `__eq__` and `__repr__` methods, or simply put `@dataclass` above the class. That's today's lesson."
     },
     {
      "kind": "learn",
@@ -2477,15 +2528,18 @@
      "questions": [
       {
        "q": "In your linked list from week 2, what does inserting at the head cost, and why?",
-       "a": "O(1): create a node pointing at the old head, then move head; nothing shifts."
+       "a": "O(1): create a node pointing at the old head, then move head; nothing shifts.",
+       "from": "algo-w01-2"
       },
       {
        "q": "What is on the call stack while `fact(3)` is computing `fact(1)`?",
-       "a": "Frames for fact(3), fact(2) and fact(1), each waiting for the one above it to return."
+       "a": "Frames for fact(3), fact(2) and fact(1), each waiting for the one above it to return.",
+       "from": "algo-w02-2"
       },
       {
        "q": "Two-sum in one pass: what goes in the dict?",
-       "a": "Value → index for every element already seen."
+       "a": "Value → index for every element already seen.",
+       "from": "algo-w04-2"
       }
      ]
     },
@@ -2598,7 +2652,15 @@
      "back": "indices whose answer isn't known yet, in sorted order of value"
     }
    ],
-   "deliverable": "stacks_queues.py with Stack, MinStack, eval_rpn, QueueFromStacks and daily_warmer, tests passing, committed."
+   "deliverable": "stacks_queues.py with Stack, MinStack, eval_rpn, QueueFromStacks and daily_warmer, tests passing, committed.",
+   "leetcode": [
+    {
+     "title": "Baseball Game",
+     "url": "https://leetcode.com/problems/baseball-game/",
+     "level": "easy",
+     "uses": "a stack (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w04-5",
@@ -2809,27 +2871,31 @@
      "questions": [
       {
        "q": "Which `read_csv` argument turns '-' and 'n/a' into missing values?",
-       "a": "na_values=['-', 'n/a']"
+       "a": "na_values=['-', 'n/a']",
+       "from": "ai-w04-1"
       },
       {
        "q": "Thursday: what does `drop_duplicates(subset=['student', 'topic'], keep='last')` do?",
-       "a": "Keeps only the last row for each student–topic pair, dropping earlier repeats."
+       "a": "Keeps only the last row for each student–topic pair, dropping earlier repeats.",
+       "from": "ai-w04-2"
       },
       {
        "q": "Week 3: `df.loc` vs `df.iloc`?",
-       "a": "loc selects by labels (and boolean masks), iloc by integer positions."
+       "a": "loc selects by labels (and boolean masks), iloc by integer positions.",
+       "from": "ai-w03-2"
       },
       {
        "q": "Week 4 Monday: a regex for an id like S-0142, whole string only?",
-       "a": "re.fullmatch(r'S-\\d{4}', s), or in pandas `s.str.fullmatch(r'S-\\d{4}')`."
+       "a": "re.fullmatch(r'S-\\d{4}', s), or in pandas `s.str.fullmatch(r'S-\\d{4}')`.",
+       "from": "python-w04-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Here's a column as it comes from a spreadsheet export: `[\" 87\", \"92%\", \"n/a\", \"\", \"1O0\", \"75.5\"]`. Before reading on, write down what you'd want each value to become, and which ones you'd treat as missing versus as an error to report. What does `pd.to_numeric` do with `\"92%\"` by default?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nA column as it comes from a spreadsheet export: `[\" 87\", \"92%\", \"n/a\", \"\", \"1O0\", \"75.5\"]`.\n\n- `\" 87\"` → 87 (strip the space) and `\"92%\"` → 92 (strip the `%`).\n- `\"n/a\"` and `\"\"` → **missing** (`NaN`): nobody entered a value.\n- `\"1O0\"` (with a letter O) → an **error to report**: someone typed something wrong, and guessing 100 would hide it.\n- `\"75.5\"` → 75.5.\n\nBy default `pd.to_numeric` raises a `ValueError` on `\"92%\"`; with `errors=\"coerce\"` it turns it into `NaN` silently. Learn shows a cleaning function that handles each case on purpose."
     },
     {
      "kind": "learn",

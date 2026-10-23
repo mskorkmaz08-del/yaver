@@ -50,33 +50,37 @@
      "questions": [
       {
        "q": "Week 13: what does RAII mean, in one sentence?",
-       "a": "A resource is acquired in a constructor and released in the destructor, so leaving scope (normally or by exception) always cleans it up."
+       "a": "A resource is acquired in a constructor and released in the destructor, so leaving scope (normally or by exception) always cleans it up.",
+       "from": "cpp-w13-2"
       },
       {
        "q": "Week 8: what goes in a header file and what goes in the .cpp file?",
-       "a": "The header holds declarations (class definitions, function prototypes) that other files need to see; the .cpp holds the definitions (function bodies) that are compiled once."
+       "a": "The header holds declarations (class definitions, function prototypes) that other files need to see; the .cpp holds the definitions (function bodies) that are compiled once.",
+       "from": "cpp-w08-2"
       },
       {
        "q": "Week 13: why prefer std::unique_ptr over a raw new/delete pair?",
-       "a": "It deletes the object automatically when it goes out of scope and makes ownership explicit; you can't forget the delete or delete twice."
+       "a": "It deletes the object automatically when it goes out of scope and makes ownership explicit; you can't forget the delete or delete twice.",
+       "from": "cpp-w13-3"
       },
       {
        "q": "Week 12 robotics: why should a sensor loop avoid delay()?",
-       "a": "delay() blocks the whole loop, so nothing else (buttons, motors, other sensors) is serviced; millis()-based timing lets several tasks share the loop."
+       "a": "delay() blocks the whole loop, so nothing else (buttons, motors, other sensors) is serviced; millis()-based timing lets several tasks share the loop.",
+       "from": "robo-w07-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before reading on, answer these two from what you already know about separate compilation:\n\n1. You put a class *and* the bodies of its member functions (written outside the class, not marked `inline`) in `Smooth.h`, then `#include \"Smooth.h\"` from both `main.cpp` and `motor.cpp`. Does it compile? Does it link? Why?\n2. An Arduino `.ino` sketch never writes `#include <Arduino.h>`, yet it can call `digitalWrite`. Who adds that include? Does a library's `.cpp` file get the same treatment?\n\nWrite your answers down; you'll check them against the explanation."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n1. A class *and* the bodies of its member functions (written outside the class, not marked `inline`) in `Smooth.h`, included from both `main.cpp` and `motor.cpp`: it **compiles, but doesn't link**. Each `.cpp` file gets its own copy of the function bodies, and the linker refuses the duplicates.\n2. An Arduino `.ino` sketch can call `digitalWrite` without `#include <Arduino.h>` because the Arduino build tools add that include to the sketch for you. A library's `.cpp` file does **not** get this treatment; it has to include `Arduino.h` itself.\n\nLearn explains both."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## What an Arduino library really is\n\nAn Arduino sketch is C++. When you press Upload, the IDE does a little preprocessing on the `.ino` file (it adds `#include <Arduino.h>` at the top and generates prototypes for your functions), saves it as a `.cpp`, and hands everything to `avr-g++` (on an Uno). Library files get **no** preprocessing: they are plain `.h` and `.cpp` files, so a library's `.cpp` must write `#include <Arduino.h>` itself if it uses `millis()` or `analogRead()`. That answers the pretest's second question.\n\nA library is just a folder the IDE knows to compile alongside your sketch. Put it in the `libraries` folder of your sketchbook (on your Mac that's `~/Documents/Arduino/libraries/`), restart the IDE, and `#include \"Smooth.h\"` works from any sketch. The modern layout (the \"1.5 library format\") looks like this:\n\n```text\nSmooth/\n  library.properties      name, version, author, sentence, architectures ...\n  keywords.txt            optional: words the IDE colours\n  src/\n    Smooth.h              the class declaration\n    Smooth.cpp            the member function bodies\n  examples/\n    BasicSmoothing/\n      BasicSmoothing.ino  appears under File > Examples > Smooth\n```\n\n`library.properties` is a short text file of `key=value` lines:\n\n```text\nname=Smooth\nversion=0.1.0\nauthor=Mustafa\nmaintainer=Mustafa\nsentence=Moving-average smoothing for noisy sensor readings.\nparagraph=Fixed-size buffer, no heap allocation, works on an Uno.\ncategory=Signal Input/Output\nurl=https://www.learncpp.com/\narchitectures=*\n```\n\n(Point `url` at your own repo once it exists.)\n\n## The two design rules that matter more than the folder\n\n**1. Keep the hardware out of the class.** A `MovingAverage` that calls `analogRead(A0)` inside itself can only be tested on a board, with a real sensor, by eye. A `MovingAverage` whose `add(int sample)` takes the number as an argument can be tested on your laptop with `assert`, in milliseconds. The sketch does the I/O; the class does the logic. This is the single habit that makes embedded C++ testable, and it's exactly how ROS 2 nodes are written later (the node does I/O, plain classes do the maths).\n\n**2. No `new` on an Uno.** An ATmega328P has 2 KB of RAM. Heap allocation fragments that tiny space and fails silently. Use fixed-size arrays sized at compile time. Also remember `int` is **16 bits** on AVR: the sum of 64 readings of 1023 (65,472) overflows an `int`, so accumulate in `long` (32 bits).\n\n## Worked example: a moving average\n\nThe trick is a *running sum*: when a new sample arrives, subtract the oldest one and add the new one, so `value()` is O(1) no matter the window size. A ring index (`next_`) wraps around the array.\n\n```cpp\n#include <cassert>\n#include <iostream>\n\nclass MovingAverage {\npublic:\n    void add(int sample) {\n        sum_ -= buf_[next_];      // drop the oldest (0 while the buffer fills)\n        buf_[next_] = sample;\n        sum_ += sample;\n        next_ = (next_ + 1) % kSize;\n        if (count_ < kSize) ++count_;\n    }\n    int value() const { return count_ == 0 ? 0 : static_cast<int>(sum_ / count_); }\n    int count() const { return count_; }\n    void reset() {\n        for (int& b : buf_) b = 0;\n        sum_ = 0; next_ = 0; count_ = 0;\n    }\nprivate:\n    static constexpr int kSize = 4;\n    int buf_[kSize] = {};\n    long sum_ = 0;\n    int next_ = 0;\n    int count_ = 0;\n};\n\nint main() {\n    MovingAverage avg;\n    assert(avg.value() == 0);\n    avg.add(100);            // [100]           -> 100\n    assert(avg.value() == 100);\n    avg.add(200);            // [100,200]       -> 150\n    assert(avg.value() == 150);\n    avg.add(300); avg.add(400);   // full: 1000/4 -> 250\n    assert(avg.value() == 250);\n    avg.add(800);            // 100 drops out: (200+300+400+800)/4 = 425\n    assert(avg.value() == 425);\n    avg.reset();\n    assert(avg.count() == 0);\n    std::cout << \"MovingAverage ok\\n\";\n}\n```\n\nTrace the last step by hand once: the sum was 1000, `next_` points at slot 0 (holding 100), so the sum becomes 1000 − 100 + 800 = 1700, and 1700 / 4 = 425.\n\n## Splitting it into the library\n\nThe header declares; the source defines. `#pragma once` (or a classic `#ifndef SMOOTH_H` guard) stops double inclusion within one translation unit.\n\n```cpp-snippet\n// src/Smooth.h\n#pragma once\n\nclass MovingAverage {\npublic:\n    void add(int sample);\n    int value() const;\n    int count() const;\n    void reset();\nprivate:\n    static constexpr int kSize = 8;\n    int buf_[kSize] = {};\n    long sum_ = 0;\n    int next_ = 0;\n    int count_ = 0;\n};\n```\n\n```cpp-snippet\n// src/Smooth.cpp\n#include \"Smooth.h\"\n\nvoid MovingAverage::add(int sample) {\n    sum_ -= buf_[next_];\n    buf_[next_] = sample;\n    sum_ += sample;\n    next_ = (next_ + 1) % kSize;\n    if (count_ < kSize) ++count_;\n}\nint MovingAverage::value() const { return count_ == 0 ? 0 : static_cast<int>(sum_ / count_); }\nint MovingAverage::count() const { return count_; }\nvoid MovingAverage::reset() { for (int& b : buf_) b = 0; sum_ = 0; next_ = 0; count_ = 0; }\n```\n\nAnd the example sketch, which does the I/O:\n\n```arduino\n#include <Smooth.h>\n\nMovingAverage avg;\n\nvoid setup() { Serial.begin(115200); }\n\nvoid loop() {\n  avg.add(analogRead(A0));\n  Serial.print(analogRead(A0));\n  Serial.print(' ');\n  Serial.println(avg.value());   // two lines in the Serial Plotter\n  delay(10);\n}\n```\n\nNow the pretest's first question: if the member function bodies sat in the header without `inline`, every `.cpp` that includes it would contain its own definition of `MovingAverage::add`. Each file compiles fine; the **linker** then sees two definitions and fails with \"multiple definition\". Functions defined *inside* the class body are implicitly `inline`, which is why the single-file version above is fine.\n"
+     "body": "## What an Arduino library really is\n\nAn Arduino sketch is C++. When you press Upload, the IDE does a little preprocessing on the `.ino` file (it adds `#include <Arduino.h>` at the top and generates prototypes for your functions), saves it as a `.cpp`, and hands everything to `avr-g++` (on an Uno). Library files get **no** preprocessing: they are plain `.h` and `.cpp` files, so a library's `.cpp` must write `#include <Arduino.h>` itself if it uses `millis()` or `analogRead()`. That answers the first example's second question.\n\nA library is just a folder the IDE knows to compile alongside your sketch. Put it in the `libraries` folder of your sketchbook (on your Mac that's `~/Documents/Arduino/libraries/`), restart the IDE, and `#include \"Smooth.h\"` works from any sketch. The modern layout (the \"1.5 library format\") looks like this:\n\n```text\nSmooth/\n  library.properties      name, version, author, sentence, architectures ...\n  keywords.txt            optional: words the IDE colours\n  src/\n    Smooth.h              the class declaration\n    Smooth.cpp            the member function bodies\n  examples/\n    BasicSmoothing/\n      BasicSmoothing.ino  appears under File > Examples > Smooth\n```\n\n`library.properties` is a short text file of `key=value` lines:\n\n```text\nname=Smooth\nversion=0.1.0\nauthor=Mustafa\nmaintainer=Mustafa\nsentence=Moving-average smoothing for noisy sensor readings.\nparagraph=Fixed-size buffer, no heap allocation, works on an Uno.\ncategory=Signal Input/Output\nurl=https://www.learncpp.com/\narchitectures=*\n```\n\n(Point `url` at your own repo once it exists.)\n\n## The two design rules that matter more than the folder\n\n**1. Keep the hardware out of the class.** A `MovingAverage` that calls `analogRead(A0)` inside itself can only be tested on a board, with a real sensor, by eye. A `MovingAverage` whose `add(int sample)` takes the number as an argument can be tested on your laptop with `assert`, in milliseconds. The sketch does the I/O; the class does the logic. This is the single habit that makes embedded C++ testable, and it's exactly how ROS 2 nodes are written later (the node does I/O, plain classes do the maths).\n\n**2. No `new` on an Uno.** An ATmega328P has 2 KB of RAM. Heap allocation fragments that tiny space and fails silently. Use fixed-size arrays sized at compile time. Also remember `int` is **16 bits** on AVR: the sum of 64 readings of 1023 (65,472) overflows an `int`, so accumulate in `long` (32 bits).\n\n## Worked example: a moving average\n\nThe trick is a *running sum*: when a new sample arrives, subtract the oldest one and add the new one, so `value()` is O(1) no matter the window size. A ring index (`next_`) wraps around the array.\n\n```cpp\n#include <cassert>\n#include <iostream>\n\nclass MovingAverage {\npublic:\n    void add(int sample) {\n        sum_ -= buf_[next_];      // drop the oldest (0 while the buffer fills)\n        buf_[next_] = sample;\n        sum_ += sample;\n        next_ = (next_ + 1) % kSize;\n        if (count_ < kSize) ++count_;\n    }\n    int value() const { return count_ == 0 ? 0 : static_cast<int>(sum_ / count_); }\n    int count() const { return count_; }\n    void reset() {\n        for (int& b : buf_) b = 0;\n        sum_ = 0; next_ = 0; count_ = 0;\n    }\nprivate:\n    static constexpr int kSize = 4;\n    int buf_[kSize] = {};\n    long sum_ = 0;\n    int next_ = 0;\n    int count_ = 0;\n};\n\nint main() {\n    MovingAverage avg;\n    assert(avg.value() == 0);\n    avg.add(100);            // [100]           -> 100\n    assert(avg.value() == 100);\n    avg.add(200);            // [100,200]       -> 150\n    assert(avg.value() == 150);\n    avg.add(300); avg.add(400);   // full: 1000/4 -> 250\n    assert(avg.value() == 250);\n    avg.add(800);            // 100 drops out: (200+300+400+800)/4 = 425\n    assert(avg.value() == 425);\n    avg.reset();\n    assert(avg.count() == 0);\n    std::cout << \"MovingAverage ok\\n\";\n}\n```\n\nTrace the last step by hand once: the sum was 1000, `next_` points at slot 0 (holding 100), so the sum becomes 1000 − 100 + 800 = 1700, and 1700 / 4 = 425.\n\n## Splitting it into the library\n\nThe header declares; the source defines. `#pragma once` (or a classic `#ifndef SMOOTH_H` guard) stops double inclusion within one translation unit.\n\n```cpp-snippet\n// src/Smooth.h\n#pragma once\n\nclass MovingAverage {\npublic:\n    void add(int sample);\n    int value() const;\n    int count() const;\n    void reset();\nprivate:\n    static constexpr int kSize = 8;\n    int buf_[kSize] = {};\n    long sum_ = 0;\n    int next_ = 0;\n    int count_ = 0;\n};\n```\n\n```cpp-snippet\n// src/Smooth.cpp\n#include \"Smooth.h\"\n\nvoid MovingAverage::add(int sample) {\n    sum_ -= buf_[next_];\n    buf_[next_] = sample;\n    sum_ += sample;\n    next_ = (next_ + 1) % kSize;\n    if (count_ < kSize) ++count_;\n}\nint MovingAverage::value() const { return count_ == 0 ? 0 : static_cast<int>(sum_ / count_); }\nint MovingAverage::count() const { return count_; }\nvoid MovingAverage::reset() { for (int& b : buf_) b = 0; sum_ = 0; next_ = 0; count_ = 0; }\n```\n\nAnd the example sketch, which does the I/O:\n\n```arduino\n#include <Smooth.h>\n\nMovingAverage avg;\n\nvoid setup() { Serial.begin(115200); }\n\nvoid loop() {\n  avg.add(analogRead(A0));\n  Serial.print(analogRead(A0));\n  Serial.print(' ');\n  Serial.println(avg.value());   // two lines in the Serial Plotter\n  delay(10);\n}\n```\n\nNow the first example's first question: if the member function bodies sat in the header without `inline`, every `.cpp` that includes it would contain its own definition of `MovingAverage::add`. Each file compiles fine; the **linker** then sees two definitions and fails with \"multiple definition\". Functions defined *inside* the class body are implicitly `inline`, which is why the single-file version above is fine.\n"
     },
     {
      "kind": "practice",
@@ -218,19 +222,22 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Warm-up",
+     "title": "Recall",
      "questions": [
       {
        "q": "Week 7: in a binary search tree, where is every value smaller than the root?",
-       "a": "In the root's left subtree."
+       "a": "In the root's left subtree.",
+       "from": "algo-w07-1"
       },
       {
        "q": "Week 5: which data structure drives BFS, and which drives an iterative DFS?",
-       "a": "BFS uses a queue (FIFO); iterative DFS uses a stack (LIFO)."
+       "a": "BFS uses a queue (FIFO); iterative DFS uses a stack (LIFO).",
+       "from": "algo-w05-2"
       },
       {
        "q": "Week 13: what's the dummy-head trick in linked-list problems for?",
-       "a": "It gives every real node a predecessor, so inserting or deleting at the head needs no special case."
+       "a": "It gives every real node a predecessor, so inserting or deleting at the head needs no special case.",
+       "from": "algo-w13-1"
       }
      ]
     },
@@ -632,33 +639,37 @@
      "questions": [
       {
        "q": "Week 13: what does a PMF give you, and what must its values sum to?",
-       "a": "The probability of each possible value of a discrete random variable; the probabilities sum to 1."
+       "a": "The probability of each possible value of a discrete random variable; the probabilities sum to 1.",
+       "from": "math-w13-3"
       },
       {
        "q": "Week 13: Bayes' rule in one line.",
-       "a": "P(A|B) = P(B|A)·P(A) / P(B)."
+       "a": "P(A|B) = P(B|A)·P(A) / P(B).",
+       "from": "math-w13-1"
       },
       {
        "q": "Week 12: when are two events independent?",
-       "a": "When P(A and B) = P(A)·P(B), i.e. knowing one doesn't change the probability of the other."
+       "a": "When P(A and B) = P(A)·P(B), i.e. knowing one doesn't change the probability of the other.",
+       "from": "math-w12-1"
       },
       {
        "q": "Week 8 (descriptive statistics): what's the difference between the mean and the median of a skewed sample?",
-       "a": "The mean is pulled toward the long tail; the median is the middle value and resists outliers."
+       "a": "The mean is pulled toward the long tail; the median is the middle value and resists outliers.",
+       "from": "ai-w08-5"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "A fair die pays you the number it shows, in lira. Before reading:\n\n1. What's your average payout per roll over many rolls? \n2. Now the game pays **twice** the number, minus 1. Guess the new average without recomputing from scratch.\n3. Which is more \"spread out\": one roll, or the average of 4 rolls? By roughly how much?\n\nWrite numbers, even rough ones."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nA fair die pays you the number it shows, in lira.\n\n1. The average payout per roll is **3.5** lira.\n2. If the game pays twice the number minus 1, the new average is 2 · 3.5 − 1 = **6**: averages follow the same formula.\n3. One roll is more spread out than the average of 4 rolls; averaging 4 rolls **halves** the standard deviation.\n\nLearn explains all three."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## Expectation: the long-run average\n\nA random variable X takes values x with probabilities p(x). Its **expectation** (mean) is the probability-weighted average:\n\nE[X] = Σ x · p(x)\n\nIt's the number the sample mean settles toward over many trials. For a fair die: (1 + 2 + 3 + 4 + 5 + 6) / 6 = 21/6 = **3.5**. Note it need not be a value X can actually take.\n\nA robot example. Your encoder (week 13) reports ticks per 10 ms window. Because the window edges don't line up with the slots, the count jitters: 9 ticks with probability 0.25, 10 with 0.5, 11 with 0.25. Then E[X] = 9(0.25) + 10(0.5) + 11(0.25) = 2.25 + 5 + 2.75 = **10**.\n\n## Variance: how far from the mean, on average (squared)\n\nVar(X) = E[(X − μ)²], where μ = E[X]. Squared, so positive and negative deviations don't cancel. The **standard deviation** σ = √Var(X) is back in the original units.\n\nThe shortcut you'll use most: **Var(X) = E[X²] − (E[X])²**.\n\nEncoder: E[X²] = 81(0.25) + 100(0.5) + 121(0.25) = 20.25 + 50 + 30.25 = 100.5, so Var = 100.5 − 10² = **0.5**, σ ≈ 0.707 ticks. Check directly: deviations −1, 0, +1 squared are 1, 0, 1; weighted: 0.25 + 0 + 0.25 = 0.5. Same.\n\nDie: E[X²] = (1 + 4 + 9 + 16 + 25 + 36)/6 = 91/6 ≈ 15.167, Var = 15.167 − 12.25 = 35/12 ≈ **2.917**, σ ≈ 1.708.\n\n## The rules that do the real work\n\n1. **Linearity**: E[aX + b] = a·E[X] + b, and E[X + Y] = E[X] + E[Y] **always**, even if X and Y are dependent. Pretest question 2: E[2X − 1] = 2(3.5) − 1 = 6.\n2. **Scaling variance**: Var(aX + b) = a²·Var(X). Shifting by b moves the distribution, not its spread; scaling by a stretches deviations by a, so squared deviations by a². Var(2X − 1) = 4 × 35/12 ≈ 11.67.\n3. **Sums of independent variables**: Var(X + Y) = Var(X) + Var(Y) **if X and Y are independent**. (Variances add; standard deviations don't.)\n\nPut 2 and 3 together for the most useful result of the week. Average n independent readings, each with variance σ²:\n\nVar(X̄) = Var((X₁ + … + Xₙ)/n) = (1/n²)·(nσ²) = σ²/n, so **sd(X̄) = σ/√n**.\n\nThat's what Monday's `MovingAverage` buys you. A line sensor with σ = 8 ADC counts, averaged over 8 readings, has σ ≈ 8/√8 ≈ 2.8 counts. Averaging 4 die rolls (pretest question 3) halves the standard deviation: 1.708 → 0.854. The catch is the √n: four times the readings for half the noise, and averaging adds delay, which you'll feel in the PID loop this week.\n\n## Standard distributions, for reference\n\n| | mean | variance |\n|---|---|---|\n| Bernoulli(p): 1 with prob p, else 0 | p | p(1 − p) |\n| Binomial(n, p): successes in n trials | np | np(1 − p) |\n| Uniform(a, b) (continuous) | (a + b)/2 | (b − a)²/12 |\n\nBinomial follows from the rules: it's a sum of n independent Bernoullis, so the means add (np) and the variances add (np(1 − p)).\n\n## In code\n\n```python\nimport numpy as np\n\ndef expectation(values, probs):\n    return sum(v * p for v, p in zip(values, probs))\n\ndef variance(values, probs):\n    mu = expectation(values, probs)\n    return sum(p * (v - mu) ** 2 for v, p in zip(values, probs))\n\ndie = range(1, 7)\np = [1 / 6] * 6\nassert abs(expectation(die, p) - 3.5) < 1e-12\nassert abs(variance(die, p) - 35 / 12) < 1e-12\n\n# Check sd of an average of 4 rolls by simulation\nrng = np.random.default_rng(0)\nmeans = rng.integers(1, 7, size=(200_000, 4)).mean(axis=1)\nprint(round(means.std(), 3), \"vs theory\", round((35 / 12) ** 0.5 / 2, 3))   # about 0.854\n```\n\n(For continuous variables the sums become integrals, E[X] = ∫ x f(x) dx, and every rule above still holds.)"
+     "body": "## Expectation: the long-run average\n\nA random variable X takes values x with probabilities p(x). Its **expectation** (mean) is the probability-weighted average:\n\nE[X] = Σ x · p(x)\n\nIt's the number the sample mean settles toward over many trials. For a fair die: (1 + 2 + 3 + 4 + 5 + 6) / 6 = 21/6 = **3.5**. Note it need not be a value X can actually take.\n\nA robot example. Your encoder (week 13) reports ticks per 10 ms window. Because the window edges don't line up with the slots, the count jitters: 9 ticks with probability 0.25, 10 with 0.5, 11 with 0.25. Then E[X] = 9(0.25) + 10(0.5) + 11(0.25) = 2.25 + 5 + 2.75 = **10**.\n\n## Variance: how far from the mean, on average (squared)\n\nVar(X) = E[(X − μ)²], where μ = E[X]. Squared, so positive and negative deviations don't cancel. The **standard deviation** σ = √Var(X) is back in the original units.\n\nThe shortcut you'll use most: **Var(X) = E[X²] − (E[X])²**.\n\nEncoder: E[X²] = 81(0.25) + 100(0.5) + 121(0.25) = 20.25 + 50 + 30.25 = 100.5, so Var = 100.5 − 10² = **0.5**, σ ≈ 0.707 ticks. Check directly: deviations −1, 0, +1 squared are 1, 0, 1; weighted: 0.25 + 0 + 0.25 = 0.5. Same.\n\nDie: E[X²] = (1 + 4 + 9 + 16 + 25 + 36)/6 = 91/6 ≈ 15.167, Var = 15.167 − 12.25 = 35/12 ≈ **2.917**, σ ≈ 1.708.\n\n## The rules that do the real work\n\n1. **Linearity**: E[aX + b] = a·E[X] + b, and E[X + Y] = E[X] + E[Y] **always**, even if X and Y are dependent. Pretest question 2: E[2X − 1] = 2(3.5) − 1 = 6.\n2. **Scaling variance**: Var(aX + b) = a²·Var(X). Shifting by b moves the distribution, not its spread; scaling by a stretches deviations by a, so squared deviations by a². Var(2X − 1) = 4 × 35/12 ≈ 11.67.\n3. **Sums of independent variables**: Var(X + Y) = Var(X) + Var(Y) **if X and Y are independent**. (Variances add; standard deviations don't.)\n\nPut 2 and 3 together for the most useful result of the week. Average n independent readings, each with variance σ²:\n\nVar(X̄) = Var((X₁ + … + Xₙ)/n) = (1/n²)·(nσ²) = σ²/n, so **sd(X̄) = σ/√n**.\n\nThat's what Monday's `MovingAverage` buys you. A line sensor with σ = 8 ADC counts, averaged over 8 readings, has σ ≈ 8/√8 ≈ 2.8 counts. Averaging 4 die rolls (question 3 of the first example) halves the standard deviation: 1.708 → 0.854. The catch is the √n: four times the readings for half the noise, and averaging adds delay, which you'll feel in the PID loop this week.\n\n## Standard distributions, for reference\n\n| | mean | variance |\n|---|---|---|\n| Bernoulli(p): 1 with prob p, else 0 | p | p(1 − p) |\n| Binomial(n, p): successes in n trials | np | np(1 − p) |\n| Uniform(a, b) (continuous) | (a + b)/2 | (b − a)²/12 |\n\nBinomial follows from the rules: it's a sum of n independent Bernoullis, so the means add (np) and the variances add (np(1 − p)).\n\n## In code\n\n```python\nimport numpy as np\n\ndef expectation(values, probs):\n    return sum(v * p for v, p in zip(values, probs))\n\ndef variance(values, probs):\n    mu = expectation(values, probs)\n    return sum(p * (v - mu) ** 2 for v, p in zip(values, probs))\n\ndie = range(1, 7)\np = [1 / 6] * 6\nassert abs(expectation(die, p) - 3.5) < 1e-12\nassert abs(variance(die, p) - 35 / 12) < 1e-12\n\n# Check sd of an average of 4 rolls by simulation\nrng = np.random.default_rng(0)\nmeans = rng.integers(1, 7, size=(200_000, 4)).mean(axis=1)\nprint(round(means.std(), 3), \"vs theory\", round((35 / 12) ** 0.5 / 2, 3))   # about 0.854\n```\n\n(For continuous variables the sums become integrals, E[X] = ∫ x f(x) dx, and every rule above still holds.)"
     },
     {
      "kind": "practice",
@@ -802,19 +813,22 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Warm-up",
+     "title": "Recall",
      "questions": [
       {
        "q": "This morning: Var of a Bernoulli(p)?",
-       "a": "p(1 − p)."
+       "a": "p(1 − p).",
+       "from": "math-w14-1"
       },
       {
        "q": "Week 13: why seed a random generator in tests?",
-       "a": "So the samples, and therefore the results, are the same every run."
+       "a": "So the samples, and therefore the results, are the same every run.",
+       "from": "ai-w02-4"
       },
       {
        "q": "Week 2 (NumPy): what does `x.mean(axis=1)` do on a 2-D array?",
-       "a": "Averages across each row, giving one mean per row."
+       "a": "Averages across each row, giving one mean per row.",
+       "from": "ai-w01-3"
       }
      ]
     },
@@ -1226,33 +1240,37 @@
      "questions": [
       {
        "q": "Monday: why did the MovingAverage class take `int sample` as an argument instead of reading A0 itself?",
-       "a": "So the logic has no hardware dependency and can be tested on the laptop with asserts."
+       "a": "So the logic has no hardware dependency and can be tested on the laptop with asserts.",
+       "from": "cpp-w14-1"
       },
       {
        "q": "Week 12: std::vector<int> and std::array<int, 5>: what does each angle-bracket argument mean?",
-       "a": "vector<int>: the element type. array<int, 5>: the element type and the size, which is fixed at compile time."
+       "a": "vector<int>: the element type. array<int, 5>: the element type and the size, which is fixed at compile time.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "Monday: what linker error do you get when a non-inline function body is defined in a header included by two .cpp files?",
-       "a": "multiple definition of the function."
+       "a": "multiple definition of the function.",
+       "from": "cpp-w08-2"
       },
       {
        "q": "Week 13: what does std::unique_ptr<T> manage, and what does T stand for there?",
-       "a": "It owns one heap object and deletes it when it goes out of scope; T is the type of the owned object, a template parameter."
+       "a": "It owns one heap object and deletes it when it goes out of scope; T is the type of the owned object, a template parameter.",
+       "from": "cpp-w13-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Monday's `MovingAverage` only works for `int` and only for a window of 8. Before reading:\n\n1. How would you make a version for `float` readings with a window of 16 *without copying the class*?\n2. Predict: given `template <typename T> T biggest(T a, T b)`, does `biggest(3, 4.5)` compile? What about `biggest<double>(3, 4.5)`?\n\nWrite one-line guesses, then read on."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nMonday's `MovingAverage` only works for `int` and only for a window of 8.\n\n1. A template makes one class that works for any type and size: `template <typename T, int N> class MovingAverage`. Then `MovingAverage<float, 16>` is the version you need.\n2. Given `template <typename T> T biggest(T a, T b)`, `biggest(3, 4.5)` does **not** compile: T can't be both `int` and `double`. `biggest<double>(3, 4.5)` does, and returns 4.5.\n\nLearn builds both."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## The problem templates solve\n\nYou've already been *using* templates since week 12: `std::vector<int>`, `std::array<double, 3>`, `std::unique_ptr<Node>`. Each is one piece of source code that the compiler stamps out for whatever type you put in the angle brackets. Today you write your own.\n\nWithout templates you'd write `maxInt`, `maxDouble`, `maxLong`: identical bodies, different types. Copy-paste code drifts apart the moment you fix a bug in one copy.\n\n## Function templates\n\n```cpp-snippet\ntemplate <typename T>\nT biggest(T a, T b) { return a < b ? b : a; }\n```\n\n`T` is a placeholder for a type. When you call `biggest(3, 7)`, the compiler **deduces** `T = int` from the arguments and generates `int biggest(int, int)`. Call `biggest(2.5, 1.0)` and it generates a `double` version too. That generation is called **instantiation**, and it happens at compile time: there is no runtime cost and no type checking at runtime.\n\nDeduction has one strict rule worth knowing early: every argument that uses `T` must agree. `biggest(3, 4.5)` asks for `T = int` from the first argument and `T = double` from the second, so deduction fails and the compiler refuses (that's the pretest). You fix it by saying the type yourself: `biggest<double>(3, 4.5)` converts the `3` to `3.0`. That's not a quirk to memorise; it's the compiler declining to guess which conversion you meant.\n\nThe body must make sense for the type you use. `biggest` needs `operator<`. Call it with a type that has no `<` and you get an error **at the line inside the template**, reported \"in instantiation of ...\". Template errors are long; read the first line that mentions *your* file and *your* call, ignore the rest.\n\n## Class templates and non-type parameters\n\nA template parameter can also be a **value** known at compile time, like the `5` in `std::array<int, 5>`. That's exactly what Monday's smoothing class needs: element type *and* window size.\n\n```cpp\n#include <cassert>\n#include <cstddef>\n#include <iostream>\n\ntemplate <typename T, std::size_t N>\nclass RingAverage {\n    static_assert(N > 0, \"window must hold at least one sample\");\npublic:\n    void add(T sample) {\n        sum_ -= buf_[next_];\n        buf_[next_] = sample;\n        sum_ += sample;\n        next_ = (next_ + 1) % N;\n        if (count_ < N) ++count_;\n    }\n    T value() const { return count_ == 0 ? T{} : sum_ / static_cast<T>(count_); }\n    std::size_t size() const { return count_; }\n    static constexpr std::size_t capacity() { return N; }\nprivate:\n    T buf_[N] = {};\n    T sum_{};\n    std::size_t next_ = 0;\n    std::size_t count_ = 0;\n};\n\ntemplate <typename T>\nT clampTo(T v, T lo, T hi) { return v < lo ? lo : (hi < v ? hi : v); }\n\nint main() {\n    RingAverage<double, 3> d;\n    d.add(1.0); d.add(2.0); d.add(6.0);\n    assert(d.value() == 3.0);          // (1 + 2 + 6) / 3\n    d.add(10.0);                        // 1.0 drops out: (2 + 6 + 10) / 3 = 6\n    assert(d.value() == 6.0);\n\n    RingAverage<long, 4> l;\n    for (long x : {100L, 200L, 300L, 401L}) l.add(x);\n    assert(l.value() == 250);           // 1001 / 4 = 250 in integer division\n    static_assert(RingAverage<int, 16>::capacity() == 16);\n\n    assert(clampTo(15, 0, 10) == 10);\n    assert(clampTo<double>(-0.5, 0, 1) == 0.0);  // explicit T: 0 and 1 become doubles\n    std::cout << \"templates ok\\n\";\n}\n```\n\nNotice three things. `T{}` means \"a value-initialised T\" (0 for numbers), so the class works for `int`, `long`, `float` or `double`. `static_assert` turns a nonsense instantiation (`RingAverage<int, 0>`) into a clear compile-time message. And `RingAverage<double, 3>` and `RingAverage<long, 4>` are **two completely different classes** to the compiler; each gets its own generated code. On an Uno that matters: every distinct instantiation costs flash memory, so don't instantiate ten variants for fun.\n\n## Why templates live in headers\n\nOn Monday you put declarations in `Smooth.h` and bodies in `Smooth.cpp`. That doesn't work for templates. When `main.cpp` writes `RingAverage<float, 16>`, the compiler must generate the code *right there*, which means it must see the full body. If the body sits in `Ring.cpp`, the compiler of `main.cpp` can't see it, and the compiler of `Ring.cpp` doesn't know anyone wants a `float, 16` version. Result: \"undefined reference\" at link time. So template libraries are usually **header-only**: everything in the `.h`. Many Arduino libraries you'll download are header-only for exactly this reason.\n\n## On the Arduino\n\nTemplates work on AVR because they're a compiler feature, not a library feature. What the classic AVR toolchain lacks is most of the **standard library** (`<vector>`, `<algorithm>`, `std::min`). That's one reason small embedded code bases write their own tiny templated containers, like `RingAverage`, instead of reaching for `std::vector`.\n"
+     "body": "## The problem templates solve\n\nYou've already been *using* templates since week 12: `std::vector<int>`, `std::array<double, 3>`, `std::unique_ptr<Node>`. Each is one piece of source code that the compiler stamps out for whatever type you put in the angle brackets. Today you write your own.\n\nWithout templates you'd write `maxInt`, `maxDouble`, `maxLong`: identical bodies, different types. Copy-paste code drifts apart the moment you fix a bug in one copy.\n\n## Function templates\n\n```cpp-snippet\ntemplate <typename T>\nT biggest(T a, T b) { return a < b ? b : a; }\n```\n\n`T` is a placeholder for a type. When you call `biggest(3, 7)`, the compiler **deduces** `T = int` from the arguments and generates `int biggest(int, int)`. Call `biggest(2.5, 1.0)` and it generates a `double` version too. That generation is called **instantiation**, and it happens at compile time: there is no runtime cost and no type checking at runtime.\n\nDeduction has one strict rule worth knowing early: every argument that uses `T` must agree. `biggest(3, 4.5)` asks for `T = int` from the first argument and `T = double` from the second, so deduction fails and the compiler refuses (that's the first example). You fix it by saying the type yourself: `biggest<double>(3, 4.5)` converts the `3` to `3.0`. That's not a quirk to memorise; it's the compiler declining to guess which conversion you meant.\n\nThe body must make sense for the type you use. `biggest` needs `operator<`. Call it with a type that has no `<` and you get an error **at the line inside the template**, reported \"in instantiation of ...\". Template errors are long; read the first line that mentions *your* file and *your* call, ignore the rest.\n\n## Class templates and non-type parameters\n\nA template parameter can also be a **value** known at compile time, like the `5` in `std::array<int, 5>`. That's exactly what Monday's smoothing class needs: element type *and* window size.\n\n```cpp\n#include <cassert>\n#include <cstddef>\n#include <iostream>\n\ntemplate <typename T, std::size_t N>\nclass RingAverage {\n    static_assert(N > 0, \"window must hold at least one sample\");\npublic:\n    void add(T sample) {\n        sum_ -= buf_[next_];\n        buf_[next_] = sample;\n        sum_ += sample;\n        next_ = (next_ + 1) % N;\n        if (count_ < N) ++count_;\n    }\n    T value() const { return count_ == 0 ? T{} : sum_ / static_cast<T>(count_); }\n    std::size_t size() const { return count_; }\n    static constexpr std::size_t capacity() { return N; }\nprivate:\n    T buf_[N] = {};\n    T sum_{};\n    std::size_t next_ = 0;\n    std::size_t count_ = 0;\n};\n\ntemplate <typename T>\nT clampTo(T v, T lo, T hi) { return v < lo ? lo : (hi < v ? hi : v); }\n\nint main() {\n    RingAverage<double, 3> d;\n    d.add(1.0); d.add(2.0); d.add(6.0);\n    assert(d.value() == 3.0);          // (1 + 2 + 6) / 3\n    d.add(10.0);                        // 1.0 drops out: (2 + 6 + 10) / 3 = 6\n    assert(d.value() == 6.0);\n\n    RingAverage<long, 4> l;\n    for (long x : {100L, 200L, 300L, 401L}) l.add(x);\n    assert(l.value() == 250);           // 1001 / 4 = 250 in integer division\n    static_assert(RingAverage<int, 16>::capacity() == 16);\n\n    assert(clampTo(15, 0, 10) == 10);\n    assert(clampTo<double>(-0.5, 0, 1) == 0.0);  // explicit T: 0 and 1 become doubles\n    std::cout << \"templates ok\\n\";\n}\n```\n\nNotice three things. `T{}` means \"a value-initialised T\" (0 for numbers), so the class works for `int`, `long`, `float` or `double`. `static_assert` turns a nonsense instantiation (`RingAverage<int, 0>`) into a clear compile-time message. And `RingAverage<double, 3>` and `RingAverage<long, 4>` are **two completely different classes** to the compiler; each gets its own generated code. On an Uno that matters: every distinct instantiation costs flash memory, so don't instantiate ten variants for fun.\n\n## Why templates live in headers\n\nOn Monday you put declarations in `Smooth.h` and bodies in `Smooth.cpp`. That doesn't work for templates. When `main.cpp` writes `RingAverage<float, 16>`, the compiler must generate the code *right there*, which means it must see the full body. If the body sits in `Ring.cpp`, the compiler of `main.cpp` can't see it, and the compiler of `Ring.cpp` doesn't know anyone wants a `float, 16` version. Result: \"undefined reference\" at link time. So template libraries are usually **header-only**: everything in the `.h`. Many Arduino libraries you'll download are header-only for exactly this reason.\n\n## On the Arduino\n\nTemplates work on AVR because they're a compiler feature, not a library feature. What the classic AVR toolchain lacks is most of the **standard library** (`<vector>`, `<algorithm>`, `std::min`). That's one reason small embedded code bases write their own tiny templated containers, like `RingAverage`, instead of reaching for `std::vector`.\n"
     },
     {
      "kind": "practice",
@@ -1397,19 +1415,22 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Warm-up",
+     "title": "Recall",
      "questions": [
       {
        "q": "Monday: what's the recursive shape shared by invert_tree and max_depth?",
-       "a": "Handle None, then combine the results of the left and right subtrees."
+       "a": "Handle None, then combine the results of the left and right subtrees.",
+       "from": "algo-w14-1"
       },
       {
        "q": "Week 7: what's the height of a BST built by inserting 1, 2, 3, 4, 5 in that order?",
-       "a": "5 levels (it degenerates into a chain), so search is O(n)."
+       "a": "5 levels (it degenerates into a chain), so search is O(n).",
+       "from": "algo-w07-1"
       },
       {
        "q": "Monday: in post-order, when is a node processed?",
-       "a": "After both its children."
+       "a": "After both its children.",
+       "from": "algo-w07-1"
       }
      ]
     },
@@ -1811,27 +1832,31 @@
      "questions": [
       {
        "q": "Tuesday: Var(aX + b)?",
-       "a": "a²·Var(X)."
+       "a": "a²·Var(X).",
+       "from": "robo-w12-lab"
       },
       {
        "q": "Tuesday: sd of the mean of n independent readings with sd σ?",
-       "a": "σ/√n."
+       "a": "σ/√n.",
+       "from": "math-w12-3"
       },
       {
        "q": "Week 13: what is a PDF, and how do you get a probability from it?",
-       "a": "A probability density for a continuous variable; the probability of an interval is the area under the PDF over that interval (the integral)."
+       "a": "A probability density for a continuous variable; the probability of an interval is the area under the PDF over that interval (the integral).",
+       "from": "math-w13-3"
       },
       {
        "q": "Week 9: what does a sampling distribution describe?",
-       "a": "How a statistic (like the sample mean) varies from sample to sample."
+       "a": "How a statistic (like the sample mean) varies from sample to sample.",
+       "from": "ai-w09-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Your line sensor reads about 120 over white paper with a typical wobble of ±15 counts. Before reading, guess:\n\n1. Roughly what fraction of readings fall between 105 and 135?\n2. How often would a reading exceed 150?\n3. If you set the 'black' threshold at 150, how many false 'line!' detections per second at 1,000 readings per second?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nYour line sensor reads about 120 over white paper with a typical wobble (standard deviation) of 15 counts. If the readings are roughly normal:\n\n1. About **68%** of readings fall between 105 and 135 (within one standard deviation).\n2. About **2.5%** exceed 150 (two standard deviations above).\n3. With a 'black' threshold at 150 and 1,000 readings per second, that's about **25 false 'line!' detections every second**.\n\nLearn shows how to choose a better threshold."
     },
     {
      "kind": "learn",
@@ -1975,19 +2000,22 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Warm-up",
+     "title": "Recall",
      "questions": [
       {
        "q": "This morning: P(|Z| < 2) for a standard normal?",
-       "a": "About 0.954."
+       "a": "About 0.954.",
+       "from": "math-w10-4"
       },
       {
        "q": "Tuesday: sd of the average of n independent readings?",
-       "a": "σ/√n."
+       "a": "σ/√n.",
+       "from": "math-w14-3"
       },
       {
        "q": "Week 9 stats: what is a sampling distribution?",
-       "a": "The distribution of a statistic (e.g. the mean) across many samples of the same size."
+       "a": "The distribution of a statistic (e.g. the mean) across many samples of the same size.",
+       "from": "ai-w10-2"
       }
      ]
     },
@@ -2390,27 +2418,26 @@
      "questions": [
       {
        "q": "Wednesday: why are template libraries usually header-only?",
-       "a": "The compiler must see a template's full definition wherever it's used to instantiate it."
+       "a": "The compiler must see a template's full definition wherever it's used to instantiate it.",
+       "from": "cpp-w14-2"
       },
       {
        "q": "Week 8: list the commands to compile main.cpp and util.cpp into one program by hand with g++.",
-       "a": "g++ -std=c++20 main.cpp util.cpp -o app (or compile each with -c into .o files, then link them)."
+       "a": "g++ -std=c++20 main.cpp util.cpp -o app (or compile each with -c into .o files, then link them).",
+       "from": "cpp-w08-1"
       },
       {
        "q": "Monday: what file tells the Arduino IDE a folder is a library, and which folder holds the code?",
-       "a": "library.properties at the top; the .h/.cpp go in src/."
-      },
-      {
-       "q": "Tools week 3: what belongs in .gitignore for a compiled project?",
-       "a": "Build output: the build/ directory, object files and binaries, not the source."
+       "a": "library.properties at the top; the .h/.cpp go in src/.",
+       "from": "cpp-w14-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "You have `src/pid.cpp`, `include/pid.h` and `tests/test_pid.cpp`. Without CMake, write the exact `g++` command(s) to build the test program. Now imagine 40 source files, three executables, a Debug and a Release build, and a teammate on Windows. Predict what goes wrong with your command-line approach, and guess what a build system has to know about each file to do better."
+     "title": "First example",
+     "body": "You have `src/pid.cpp`, `include/pid.h` and `tests/test_pid.cpp`. Without a build system, the command is:\n\n```bash\ng++ -std=c++20 -Iinclude src/pid.cpp tests/test_pid.cpp -o test_pid\n```\n\nThat's fine for three files. With 40 source files, three programs, Debug and Release builds and a teammate on Windows, it falls apart: every change rebuilds everything, the flags differ per build, and the commands differ per compiler. A build system needs to know, for each target, its sources, its include folders, what it depends on and its flags. That's what CMake describes; Learn shows how."
     },
     {
      "kind": "learn",
@@ -2552,19 +2579,22 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Warm-up",
+     "title": "Recall",
      "questions": [
       {
        "q": "Wednesday: in the diameter problem, which direction does information flow: up or down?",
-       "a": "Up: each call returns its height to the parent (post-order)."
+       "a": "Up: each call returns its height to the parent (post-order).",
+       "from": "algo-w14-2"
       },
       {
        "q": "Monday: what does an inorder traversal of a BST produce?",
-       "a": "The values in sorted order."
+       "a": "The values in sorted order.",
+       "from": "algo-w07-2"
       },
       {
        "q": "Week 12: binary search halves the range each step. What's the analogous step in a BST search?",
-       "a": "Compare with the node and go left or right, discarding the other subtree."
+       "a": "Compare with the node and go left or right, discarding the other subtree.",
+       "from": "algo-w07-1"
       }
      ]
     },
@@ -2899,27 +2929,31 @@
      "questions": [
       {
        "q": "Thursday: what fraction of a normal distribution lies within 2 sd of the mean?",
-       "a": "About 95%."
+       "a": "About 95%.",
+       "from": "math-w14-3"
       },
       {
        "q": "Tuesday light: what does the coefficient of a dummy variable mean?",
-       "a": "The difference in the predicted outcome between that level and the reference level, other predictors held fixed."
+       "a": "The difference in the predicted outcome between that level and the reference level, other predictors held fixed.",
+       "from": "ai-w14-2"
       },
       {
        "q": "Week 13: what does a correlation of 0.9 between two columns tell you, and what doesn't it?",
-       "a": "They have a strong linear relationship; it says nothing about causation or about non-linear relationships."
+       "a": "They have a strong linear relationship; it says nothing about causation or about non-linear relationships.",
+       "from": "ai-w08-4"
       },
       {
        "q": "Week 4: name three kinds of mess you clean in a raw dataset.",
-       "a": "Missing values, duplicates, inconsistent categories/strings (also wrong types and impossible values)."
+       "a": "Missing values, duplicates, inconsistent categories/strings (also wrong types and impossible values).",
+       "from": "ai-w04-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "You've just downloaded a CSV of 1,000 students' exam scores with columns for gender, lunch type and whether they took a test-prep course. Before looking at anything, write down:\n\n1. The first five things you'd check, in order.\n2. One relationship you expect to find and one you'd be surprised by.\n3. One way the data could fool you into a wrong conclusion.\n\nYou'll compare with the checklist below."
+     "title": "First example",
+     "body": "You've downloaded a CSV of 1,000 students' exam scores, with columns for gender, lunch type and whether they took a test-prep course. The first checks, in order, are: the shape and column types, missing values, duplicate rows, each column's distribution, and only then relationships between columns.\n\nThe data can fool you: for example, students who took the prep course may differ in other ways too. Learn gives the full checklist you'll use today."
     },
     {
      "kind": "learn",

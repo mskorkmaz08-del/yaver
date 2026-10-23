@@ -42,33 +42,37 @@
      "questions": [
       {
        "q": "Why is `void show(const std::string& s)` usually better than `void show(std::string s)`?",
-       "a": "Passing by const reference avoids copying the string, and `const` promises the function won't change the caller's object. It also binds to temporaries, so `show(\"hi\")` still works."
+       "a": "Passing by const reference avoids copying the string, and `const` promises the function won't change the caller's object. It also binds to temporaries, so `show(\"hi\")` still works.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "A function returns a `std::string_view` that points into a local `std::string`. What goes wrong?",
-       "a": "The local string is destroyed when the function returns, so the view dangles: it points at freed memory and reading it is undefined behaviour."
+       "a": "The local string is destroyed when the function returns, so the view dangles: it points at freed memory and reading it is undefined behaviour.",
+       "from": "cpp-w09-3"
       },
       {
        "q": "Can a reference be made to refer to a different variable after it is initialized?",
-       "a": "No. A reference is bound once at initialization. `r = y;` assigns y's value into whatever r already refers to."
+       "a": "No. A reference is bound once at initialization. `r = y;` assigns y's value into whatever r already refers to.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "What does an include guard (or `#pragma once`) protect against?",
-       "a": "The same header being pasted twice into one translation unit, which would redefine its types and break the build."
+       "a": "The same header being pasted twice into one translation unit, which would redefine its types and break the build.",
+       "from": "cpp-w08-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Read this program and write down exactly what it prints before you run anything. Then predict: what does the line marked `(?)` create?\n\n```cpp-snippet\n#include <iostream>\n\nstruct Motor {\n    int speed = 10;\n    Motor() { std::cout << \"A\" << speed << ' '; }\n    Motor(int s) : speed{s} { std::cout << \"B\" << speed << ' '; }\n};\n\nint main() {\n    Motor m1;\n    Motor m2{50};\n    Motor m3();   // (?)\n}\n```\n\nWrite your prediction in one line. The answer is in the Learn step, near the end."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp-snippet\n#include <iostream>\n\nstruct Motor {\n    int speed = 10;\n    Motor() { std::cout << \"A\" << speed << ' '; }\n    Motor(int s) : speed{s} { std::cout << \"B\" << speed << ' '; }\n};\n\nint main() {\n    Motor m1;\n    Motor m2{50};\n    Motor m3();   // (?)\n}\n```\n\n**It prints `A10 B50`.** `m1` uses the default constructor, and `m2{50}` the one that takes an `int`. The line marked `(?)` creates **nothing**: `Motor m3();` declares a *function* named `m3` that returns a `Motor`. That's the \"most vexing parse\", and the reason to prefer braces. Learn explains constructors."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## Why classes\n\nIn week 9 you passed `const std::string&` around and wrote free functions. That works until data has rules. A servo command must stay between 0 and 180 degrees. A battery's charge can't go below zero. If the data is a plain struct, any line of code anywhere can break those rules, and you find out much later when the robot twitches.\n\nA **class** bundles data with the functions allowed to touch it. The rules the data must always satisfy are called **invariants**, and the class is the one place that enforces them. The first enforcement point is the **constructor**: if every constructor leaves the object valid, and every member function keeps it valid, the invariant can never be broken from outside.\n\n`class` and `struct` are the same thing in C++ with one difference: members of a `class` are `private` by default, members of a `struct` are `public`. Convention: use `struct` for plain bundles of data with no invariants, `class` when there are rules.\n\n## Constructors\n\nA constructor has the class's name and no return type. It runs exactly once, when the object is created.\n\n```cpp-snippet\nclass Rect {\npublic:\n    Rect(double w, double h) : w_{w}, h_{h} {}   // member initializer list\nprivate:\n    double w_;\n    double h_;\n};\n```\n\nThe part after the colon is the **member initializer list**. It initializes members directly, instead of default-constructing them and then assigning in the body. For `double` the difference is invisible, but for members that are `const`, references, or class types without a default constructor, the initializer list is the only way. Make it your habit.\n\nFour rules that catch people:\n\n1. **Members are initialized in the order they are declared in the class**, not the order you list them after the colon. If `charge_` is declared before `capacity_` and you write `charge_{capacity_}`, you read an uninitialized value. Compilers warn with `-Wall` (`-Wreorder`); turn that on.\n2. **Default member initializers** (`int speed = 10;`) are used whenever a constructor doesn't mention that member. They remove a whole class of \"forgot to initialize\" bugs.\n3. **The compiler writes a default constructor for you only if you declare no constructors at all.** The moment you write `Rect(double, double)`, `Rect r;` stops compiling. If you want both, write `Rect() = default;` (it then uses the default member initializers).\n4. **Single-argument constructors are implicit conversions** unless marked `explicit`. Without `explicit`, `Battery b = 1200;` and passing `1200` to a function that wants a `Battery` both compile silently. Mark single-argument constructors `explicit` unless the conversion is genuinely natural.\n\nA constructor can also **delegate** to another one of the same class, to avoid repeating validation.\n\n## Worked example: a battery model\n\n```cpp\n#include <algorithm>\n#include <iostream>\n#include <string>\n#include <utility>\n\nclass Battery {\npublic:\n    Battery(std::string name, double capacity_mAh)\n        : name_{std::move(name)},\n          capacity_{std::max(0.0, capacity_mAh)},\n          charge_{capacity_} {}              // OK: capacity_ is declared before charge_\n\n    explicit Battery(double capacity_mAh) : Battery(\"unnamed\", capacity_mAh) {}  // delegating\n\n    void draw(double mA, double hours) { charge_ = std::max(0.0, charge_ - mA * hours); }\n    double percent() const { return capacity_ > 0 ? 100.0 * charge_ / capacity_ : 0.0; }\n    const std::string& name() const { return name_; }\n\nprivate:\n    std::string name_;\n    double capacity_;\n    double charge_;\n};\n\nint main() {\n    Battery pack{\"robot pack\", 2000};\n    pack.draw(500, 1.5);                       // 750 mAh used\n    std::cout << pack.name() << \": \" << pack.percent() << \"%\\n\";   // robot pack: 62.5%\n\n    Battery spare{1200};\n    spare.draw(5000, 1);                       // more than it has: clamps at 0\n    std::cout << spare.name() << \": \" << spare.percent() << \"%\\n\"; // unnamed: 0%\n    // Battery wrong = 1200;   // does not compile: the constructor is explicit\n}\n```\n\nWalk through it: `pack` is built by the two-argument constructor, which clamps a negative capacity to zero and starts fully charged. `spare` goes through the `explicit` one-argument constructor, which hands off to the two-argument one. `draw` keeps the invariant `0 <= charge_ <= capacity_`. The `const` after `percent()` means \"this function doesn't modify the object\"; that's Wednesday's topic.\n\n## The pretest answer\n\n`Motor m1;` uses the default constructor: prints `A10`. `Motor m2{50};` prints `B50`. `Motor m3();` creates nothing: it **declares a function** named `m3` that takes no arguments and returns a `Motor` (the \"most vexing parse\"). Output: `A10 B50 `. Brace initialization, `Motor m3{};`, avoids the trap, which is one reason to prefer braces.\n"
+     "body": "## Why classes\n\nIn week 9 you passed `const std::string&` around and wrote free functions. That works until data has rules. A servo command must stay between 0 and 180 degrees. A battery's charge can't go below zero. If the data is a plain struct, any line of code anywhere can break those rules, and you find out much later when the robot twitches.\n\nA **class** bundles data with the functions allowed to touch it. The rules the data must always satisfy are called **invariants**, and the class is the one place that enforces them. The first enforcement point is the **constructor**: if every constructor leaves the object valid, and every member function keeps it valid, the invariant can never be broken from outside.\n\n`class` and `struct` are the same thing in C++ with one difference: members of a `class` are `private` by default, members of a `struct` are `public`. Convention: use `struct` for plain bundles of data with no invariants, `class` when there are rules.\n\n## Constructors\n\nA constructor has the class's name and no return type. It runs exactly once, when the object is created.\n\n```cpp-snippet\nclass Rect {\npublic:\n    Rect(double w, double h) : w_{w}, h_{h} {}   // member initializer list\nprivate:\n    double w_;\n    double h_;\n};\n```\n\nThe part after the colon is the **member initializer list**. It initializes members directly, instead of default-constructing them and then assigning in the body. For `double` the difference is invisible, but for members that are `const`, references, or class types without a default constructor, the initializer list is the only way. Make it your habit.\n\nFour rules that catch people:\n\n1. **Members are initialized in the order they are declared in the class**, not the order you list them after the colon. If `charge_` is declared before `capacity_` and you write `charge_{capacity_}`, you read an uninitialized value. Compilers warn with `-Wall` (`-Wreorder`); turn that on.\n2. **Default member initializers** (`int speed = 10;`) are used whenever a constructor doesn't mention that member. They remove a whole class of \"forgot to initialize\" bugs.\n3. **The compiler writes a default constructor for you only if you declare no constructors at all.** The moment you write `Rect(double, double)`, `Rect r;` stops compiling. If you want both, write `Rect() = default;` (it then uses the default member initializers).\n4. **Single-argument constructors are implicit conversions** unless marked `explicit`. Without `explicit`, `Battery b = 1200;` and passing `1200` to a function that wants a `Battery` both compile silently. Mark single-argument constructors `explicit` unless the conversion is genuinely natural.\n\nA constructor can also **delegate** to another one of the same class, to avoid repeating validation.\n\n## Worked example: a battery model\n\n```cpp\n#include <algorithm>\n#include <iostream>\n#include <string>\n#include <utility>\n\nclass Battery {\npublic:\n    Battery(std::string name, double capacity_mAh)\n        : name_{std::move(name)},\n          capacity_{std::max(0.0, capacity_mAh)},\n          charge_{capacity_} {}              // OK: capacity_ is declared before charge_\n\n    explicit Battery(double capacity_mAh) : Battery(\"unnamed\", capacity_mAh) {}  // delegating\n\n    void draw(double mA, double hours) { charge_ = std::max(0.0, charge_ - mA * hours); }\n    double percent() const { return capacity_ > 0 ? 100.0 * charge_ / capacity_ : 0.0; }\n    const std::string& name() const { return name_; }\n\nprivate:\n    std::string name_;\n    double capacity_;\n    double charge_;\n};\n\nint main() {\n    Battery pack{\"robot pack\", 2000};\n    pack.draw(500, 1.5);                       // 750 mAh used\n    std::cout << pack.name() << \": \" << pack.percent() << \"%\\n\";   // robot pack: 62.5%\n\n    Battery spare{1200};\n    spare.draw(5000, 1);                       // more than it has: clamps at 0\n    std::cout << spare.name() << \": \" << spare.percent() << \"%\\n\"; // unnamed: 0%\n    // Battery wrong = 1200;   // does not compile: the constructor is explicit\n}\n```\n\nWalk through it: `pack` is built by the two-argument constructor, which clamps a negative capacity to zero and starts fully charged. `spare` goes through the `explicit` one-argument constructor, which hands off to the two-argument one. `draw` keeps the invariant `0 <= charge_ <= capacity_`. The `const` after `percent()` means \"this function doesn't modify the object\"; that's Wednesday's topic.\n\n## The first example, explained\n\n`Motor m1;` uses the default constructor: prints `A10`. `Motor m2{50};` prints `B50`. `Motor m3();` creates nothing: it **declares a function** named `m3` that takes no arguments and returns a `Motor` (the \"most vexing parse\"). Output: `A10 B50 `. Brace initialization, `Motor m3{};`, avoids the trap, which is one reason to prefer braces.\n"
     },
     {
      "kind": "practice",
@@ -213,15 +217,18 @@
      "questions": [
       {
        "q": "Two pointers from both ends (week 9): what property of the input makes it work for 'pair with target sum'?",
-       "a": "The array is sorted, so moving the left pointer right only increases the sum and moving the right one left only decreases it."
+       "a": "The array is sorted, so moving the left pointer right only increases the sum and moving the right one left only decreases it.",
+       "from": "algo-w09-1"
       },
       {
        "q": "In same-direction two pointers, why is the total work O(n) even with a loop inside a loop?",
-       "a": "Each pointer only moves forward and moves at most n times in total, so the inner loop's iterations summed over the whole run are at most n."
+       "a": "Each pointer only moves forward and moves at most n times in total, so the inner loop's iterations summed over the whole run are at most n.",
+       "from": "algo-w01-2"
       },
       {
        "q": "What does a hash map from character to count let you check in O(1)?",
-       "a": "Whether a character is already present, and how many times, without rescanning."
+       "a": "Whether a character is already present, and how many times, without rescanning.",
+       "from": "algo-w08-3"
       }
      ]
     },
@@ -624,33 +631,37 @@
      "questions": [
       {
        "q": "Chain rule: d/dx of (3x + 1)^4?",
-       "a": "4(3x + 1)^3 * 3 = 12(3x + 1)^3."
+       "a": "4(3x + 1)^3 * 3 = 12(3x + 1)^3.",
+       "from": "math-w09-4"
       },
       {
        "q": "What is the derivative of e^(2x)?",
-       "a": "2e^(2x)."
+       "a": "2e^(2x).",
+       "from": "math-w09-4"
       },
       {
        "q": "Week 9's numerical gradient check: why use the central difference (f(x+h) - f(x-h)) / 2h instead of (f(x+h) - f(x)) / h?",
-       "a": "Its error shrinks like h^2 rather than h, so it's far more accurate for the same h."
+       "a": "Its error shrinks like h^2 rather than h, so it's far more accurate for the same h.",
+       "from": "math-w09-4"
       },
       {
        "q": "Dot product of (3, 4) and (4, -3), and what does the result tell you?",
-       "a": "12 - 12 = 0: the vectors are perpendicular."
+       "a": "12 - 12 = 0: the vectors are perpendicular.",
+       "from": "math-w05-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Take f(x, y) = x^2 + 4y^2. You're standing at (2, 1).\n\n1. If you hold y fixed at 1 and nudge x up a little, does f go up or down, and roughly how fast (per unit of x)?\n2. Same question for nudging y with x fixed.\n3. Guess: in which direction (a 2D vector) should you step to make f decrease fastest?\n\nWrite the three answers down. You'll check them in the Learn step."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTake f(x, y) = x² + 4y², standing at (2, 1).\n\n1. Nudge x with y fixed: f goes **up**, at about **4** per unit of x (∂f/∂x = 2x = 4).\n2. Nudge y with x fixed: f goes **up**, at about **8** per unit of y (∂f/∂y = 8y = 8).\n3. The direction that makes f decrease fastest is **(−4, −8)**, the negative gradient.\n\nLearn works through this example."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## From one input to several\n\nEvery loss function you'll train in ML has many inputs (the model's parameters), and every robot's cost or error depends on several variables. So the single-variable derivative from Essence of Calculus needs one generalisation: **ask about one input at a time.**\n\nThe **partial derivative** of f(x, y) with respect to x, written ∂f/∂x, is the ordinary derivative you get by treating y as a constant. Geometrically, slice the surface z = f(x, y) with the plane y = constant and take the slope of that curve.\n\nWorked example: f(x, y) = x^2·y + 3y.\n\n- ∂f/∂x: y is a constant, so x^2·y differentiates to 2x·y, and 3y is a constant whose derivative is 0. Result: **2xy**.\n- ∂f/∂y: x is a constant, so x^2·y differentiates to x^2, and 3y to 3. Result: **x^2 + 3**.\n\nAt the point (1, 2): ∂f/∂x = 2·1·2 = 4 and ∂f/∂y = 1 + 3 = 4.\n\n## The gradient\n\nStack the partial derivatives into a vector and you have the **gradient**:\n\n∇f(x, y) = (∂f/∂x, ∂f/∂y).\n\nFor the example, ∇f(1, 2) = (4, 4). MML writes the gradient as a row vector (a 1×n matrix, the Jacobian of a scalar function); in code you'll mostly treat it as a plain array of the same shape as the input. Don't let the convention confuse you: the numbers are the same.\n\nThree facts do almost all the work in ML and robotics:\n\n1. **Linear approximation.** Near a point p, f(p + Δ) ≈ f(p) + ∇f(p)·Δ. It's the tangent line, now a tangent plane. For a small step Δ = (0.01, -0.02) from (1, 2): f changes by about 4·0.01 + 4·(-0.02) = -0.04.\n2. **Directional derivative.** The rate of change in the direction of a unit vector u is ∇f·u. Because ∇f·u = |∇f| cos θ, it's largest when u points along ∇f (θ = 0): **the gradient points in the direction of steepest ascent, and its length is that steepest rate.** The negative gradient is steepest descent. That sentence is gradient descent.\n3. **Perpendicular to contours.** Along a contour line f doesn't change, so the directional derivative along it is zero, which means the gradient is perpendicular to the contour. On a contour map, the gradient arrows cross the lines at right angles.\n\n## The pretest, worked\n\nf(x, y) = x^2 + 4y^2: ∂f/∂x = 2x, ∂f/∂y = 8y. At (2, 1): ∇f = (4, 8). Nudging x raises f at 4 per unit, nudging y raises it at 8 per unit, and the fastest decrease is along -(4, 8), normalised -(1, 2)/√5 ≈ (-0.447, -0.894). Notice it's **not** pointing at the minimum (0, 0), which would be the direction -(2, 1). The gradient is local: it only knows the slope where you stand. That's why gradient descent zigzags in stretched bowls, which is Thursday's topic.\n\n## Checking it numerically\n\nLast week you wrote a numerical derivative. The same central difference, applied one coordinate at a time, gives a numerical gradient. This is how you check hand-derived gradients, and later how you'll check backpropagation code.\n\n```python\nimport numpy as np\n\ndef f(p):\n    x, y = p\n    return x**2 * y + 3 * y\n\ndef grad_f(p):\n    x, y = p\n    return np.array([2 * x * y, x**2 + 3])\n\ndef numerical_gradient(func, p, h=1e-5):\n    p = np.asarray(p, dtype=float)\n    g = np.zeros_like(p)\n    for i in range(p.size):\n        e = np.zeros_like(p)\n        e[i] = h\n        g[i] = (func(p + e) - func(p - e)) / (2 * h)\n    return g\n\np = np.array([1.0, 2.0])\nprint(grad_f(p), numerical_gradient(f, p))          # [4. 4.] [4. 4.]\nu = np.array([3.0, 4.0]) / 5                         # a unit direction\nprint(\"rate along u:\", grad_f(p) @ u)                # 4*0.6 + 4*0.8 = 5.6\nprint(\"max rate:\", np.linalg.norm(grad_f(p)))        # sqrt(32) = 5.657\nassert np.allclose(grad_f(p), numerical_gradient(f, p), atol=1e-6)\n```\n\nThe rate along u (5.6) is just below the maximum (5.657) because u = (0.6, 0.8) is close to the gradient's direction (0.707, 0.707).\n"
+     "body": "## From one input to several\n\nEvery loss function you'll train in ML has many inputs (the model's parameters), and every robot's cost or error depends on several variables. So the single-variable derivative from Essence of Calculus needs one generalisation: **ask about one input at a time.**\n\nThe **partial derivative** of f(x, y) with respect to x, written ∂f/∂x, is the ordinary derivative you get by treating y as a constant. Geometrically, slice the surface z = f(x, y) with the plane y = constant and take the slope of that curve.\n\nWorked example: f(x, y) = x^2·y + 3y.\n\n- ∂f/∂x: y is a constant, so x^2·y differentiates to 2x·y, and 3y is a constant whose derivative is 0. Result: **2xy**.\n- ∂f/∂y: x is a constant, so x^2·y differentiates to x^2, and 3y to 3. Result: **x^2 + 3**.\n\nAt the point (1, 2): ∂f/∂x = 2·1·2 = 4 and ∂f/∂y = 1 + 3 = 4.\n\n## The gradient\n\nStack the partial derivatives into a vector and you have the **gradient**:\n\n∇f(x, y) = (∂f/∂x, ∂f/∂y).\n\nFor the example, ∇f(1, 2) = (4, 4). MML writes the gradient as a row vector (a 1×n matrix, the Jacobian of a scalar function); in code you'll mostly treat it as a plain array of the same shape as the input. Don't let the convention confuse you: the numbers are the same.\n\nThree facts do almost all the work in ML and robotics:\n\n1. **Linear approximation.** Near a point p, f(p + Δ) ≈ f(p) + ∇f(p)·Δ. It's the tangent line, now a tangent plane. For a small step Δ = (0.01, -0.02) from (1, 2): f changes by about 4·0.01 + 4·(-0.02) = -0.04.\n2. **Directional derivative.** The rate of change in the direction of a unit vector u is ∇f·u. Because ∇f·u = |∇f| cos θ, it's largest when u points along ∇f (θ = 0): **the gradient points in the direction of steepest ascent, and its length is that steepest rate.** The negative gradient is steepest descent. That sentence is gradient descent.\n3. **Perpendicular to contours.** Along a contour line f doesn't change, so the directional derivative along it is zero, which means the gradient is perpendicular to the contour. On a contour map, the gradient arrows cross the lines at right angles.\n\n## The first example, worked\n\nf(x, y) = x^2 + 4y^2: ∂f/∂x = 2x, ∂f/∂y = 8y. At (2, 1): ∇f = (4, 8). Nudging x raises f at 4 per unit, nudging y raises it at 8 per unit, and the fastest decrease is along -(4, 8), normalised -(1, 2)/√5 ≈ (-0.447, -0.894). Notice it's **not** pointing at the minimum (0, 0), which would be the direction -(2, 1). The gradient is local: it only knows the slope where you stand. That's why gradient descent zigzags in stretched bowls, which is Thursday's topic.\n\n## Checking it numerically\n\nLast week you wrote a numerical derivative. The same central difference, applied one coordinate at a time, gives a numerical gradient. This is how you check hand-derived gradients, and later how you'll check backpropagation code.\n\n```python\nimport numpy as np\n\ndef f(p):\n    x, y = p\n    return x**2 * y + 3 * y\n\ndef grad_f(p):\n    x, y = p\n    return np.array([2 * x * y, x**2 + 3])\n\ndef numerical_gradient(func, p, h=1e-5):\n    p = np.asarray(p, dtype=float)\n    g = np.zeros_like(p)\n    for i in range(p.size):\n        e = np.zeros_like(p)\n        e[i] = h\n        g[i] = (func(p + e) - func(p - e)) / (2 * h)\n    return g\n\np = np.array([1.0, 2.0])\nprint(grad_f(p), numerical_gradient(f, p))          # [4. 4.] [4. 4.]\nu = np.array([3.0, 4.0]) / 5                         # a unit direction\nprint(\"rate along u:\", grad_f(p) @ u)                # 4*0.6 + 4*0.8 = 5.6\nprint(\"max rate:\", np.linalg.norm(grad_f(p)))        # sqrt(32) = 5.657\nassert np.allclose(grad_f(p), numerical_gradient(f, p), atol=1e-6)\n```\n\nThe rate along u (5.6) is just below the maximum (5.657) because u = (0.6, 0.8) is close to the gradient's direction (0.707, 0.707).\n"
     },
     {
      "kind": "practice",
@@ -791,15 +802,18 @@
      "questions": [
       {
        "q": "Gradient of f(x, y) = x^2 + 4y^2?",
-       "a": "(2x, 8y)."
+       "a": "(2x, 8y).",
+       "from": "math-w10-1"
       },
       {
        "q": "Which direction makes f decrease fastest?",
-       "a": "Minus the gradient."
+       "a": "Minus the gradient.",
+       "from": "math-w10-1"
       },
       {
        "q": "What does `np.linalg.norm(np.array([3, 4]))` return?",
-       "a": "5.0."
+       "a": "5.0.",
+       "from": "math-w10-1"
       }
      ]
     },
@@ -1189,33 +1203,37 @@
      "questions": [
       {
        "q": "Members are declared `int a_; int b_;`. In which order are they initialized?",
-       "a": "a_ first, then b_: declaration order, whatever the initializer list says."
+       "a": "a_ first, then b_: declaration order, whatever the initializer list says.",
+       "from": "cpp-w10-1"
       },
       {
        "q": "Why mark a one-argument constructor `explicit`?",
-       "a": "So it can't be used as a silent implicit conversion, like `Battery b = 1200;`."
+       "a": "So it can't be used as a silent implicit conversion, like `Battery b = 1200;`.",
+       "from": "cpp-w10-1"
       },
       {
        "q": "A function takes `const std::vector<int>& v`. Can it call `v.push_back(1)`?",
-       "a": "No. Through a const reference you can only call const member functions; push_back modifies the vector."
+       "a": "No. Through a const reference you can only call const member functions; push_back modifies the vector.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "In a two-file program (week 8), what goes in the `.h` and what in the `.cpp`?",
-       "a": "Declarations (and type definitions) in the header, with an include guard; function definitions in the .cpp, which includes the header."
+       "a": "Declarations (and type definitions) in the header, with an include guard; function definitions in the .cpp, which includes the header.",
+       "from": "cpp-w08-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Which of the marked lines compile? Decide for each of (1) to (4), with a one-word reason, before reading on.\n\n```cpp-snippet\nclass Tank {\npublic:\n    double level() { return level_; }\n    void fill(double l) { level_ = l; }\nprivate:\n    double level_ = 0;\n};\n\nvoid report(const Tank& t) {\n    double x = t.level();      // (1)\n}\n\nint main() {\n    Tank t;\n    t.fill(3.5);               // (2)\n    t.level_ = 9;              // (3)\n    const Tank empty;\n    empty.fill(1);             // (4)\n}\n```\n\nAnswers: (1) fails, (2) compiles, (3) fails, (4) fails. If (1) surprised you, that's today's main lesson."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n```cpp-snippet\nclass Tank {\npublic:\n    double level() { return level_; }\n    void fill(double l) { level_ = l; }\nprivate:\n    double level_ = 0;\n};\n\nvoid report(const Tank& t) {\n    double x = t.level();      // (1)\n}\n\nint main() {\n    Tank t;\n    t.fill(3.5);               // (2)\n    t.level_ = 9;              // (3)\n    const Tank empty;\n    empty.fill(1);             // (4)\n}\n```\n\n**Which lines compile:** (1) fails, (2) compiles, (3) fails, (4) fails.\n\n- (1) fails because `level()` isn't marked `const`, so it can't be called on a `const Tank&`.\n- (3) fails because `level_` is private.\n- (4) fails because `empty` is `const` and `fill` changes it.\n\nThe first one is today's main lesson."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## Public, private and the invariant\n\n`public` members are the class's interface: what other code may call. `private` members are the implementation: only the class's own member functions (and friends) may touch them. The compiler enforces this, which is the whole point. In the pretest, `t.level_ = 9;` fails because `level_` is private.\n\nWhy bother? Because a class with private data has **one place** where its rules live. Look at the `MovingAverage` below: it keeps a running sum so `average()` is O(1). That only works if `sum_` always equals the sum of the values in the buffer. If `sum_` were public, any caller could break that, and the bug would show up far from its cause. Private data plus member functions that maintain the invariant means you only have to check the class to trust it.\n\nA practical rule: **make data private by default**; expose behaviour (`add`, `withdraw`, `set`) rather than setters that let callers write any value. A getter is fine; a setter that just assigns is often a sign the rule belongs inside the class.\n\n## const member functions\n\nEvery non-static member function receives a hidden pointer `this` to the object it was called on. Writing `const` after the parameter list makes `this` a pointer to const: the function promises not to modify the object, and the compiler checks the promise.\n\nThe other side of that rule: **on a const object, or through a const reference, you can only call const member functions.** That's why (1) failed: `report` receives a `const Tank&`, and `level()` wasn't marked `const`, so the compiler must assume it modifies the tank. Since week 9 you pass objects by `const&` everywhere, so any getter that isn't marked `const` becomes unusable. Rule: **every member function that doesn't modify the object gets `const`.** (4) fails for the same reason in the other direction: `fill` modifies, so it can't be called on a const object.\n\nGetters that return a big member return it by `const&` (`const std::string& name() const`), so callers can read without copying and can't modify through it.\n\n## Defining members outside the class\n\nFor anything longer than a line, declare in the class and define outside with the scope operator `ClassName::`:\n\n```cpp-snippet\n// moving_average.h\n#pragma once\n#include <cstddef>\n#include <vector>\n\nclass MovingAverage {\npublic:\n    explicit MovingAverage(std::size_t window);\n    void add(double x);\n    double average() const;\nprivate:\n    std::vector<double> buf_;\n    std::size_t next_ = 0, count_ = 0;\n    double sum_ = 0.0;\n};\n\n// moving_average.cpp\n#include \"moving_average.h\"\nMovingAverage::MovingAverage(std::size_t window) : buf_(window == 0 ? 1 : window, 0.0) {}\ndouble MovingAverage::average() const { return count_ == 0 ? 0.0 : sum_ / count_; }\n```\n\nNote that `const` is repeated in the definition: it's part of the function's signature. Functions defined inside the class body are implicitly `inline`, which is why they can live in a header without breaking the one-definition rule.\n\n## Worked example: a moving average for noisy sensors\n\nThis is exactly what you'll need in tomorrow's robotics prep to smooth an ultrasonic sensor. A ring buffer of the last `n` readings and a running sum:\n\n```cpp\n#include <cstddef>\n#include <iostream>\n#include <vector>\n\nclass MovingAverage {\npublic:\n    explicit MovingAverage(std::size_t window) : buf_(window == 0 ? 1 : window, 0.0) {}\n    void add(double x);\n    double average() const { return count_ == 0 ? 0.0 : sum_ / count_; }\n    std::size_t count() const { return count_; }\nprivate:\n    std::vector<double> buf_;\n    std::size_t next_ = 0;   // where the next value goes\n    std::size_t count_ = 0;  // how many slots hold real values\n    double sum_ = 0.0;       // invariant: sum of the real values in buf_\n};\n\nvoid MovingAverage::add(double x) {\n    if (count_ == buf_.size()) sum_ -= buf_[next_];  // full: drop the oldest\n    else ++count_;\n    buf_[next_] = x;\n    sum_ += x;\n    next_ = (next_ + 1) % buf_.size();\n}\n\nint main() {\n    MovingAverage m{3};\n    for (double x : {10.0, 20.0, 30.0, 40.0}) {\n        m.add(x);\n        std::cout << m.average() << ' ';   // 10 15 20 30\n    }\n    std::cout << '\\n';\n}\n```\n\nTrace the fourth call: the buffer is full (`count_ == 3`), `next_` is 0 and holds 10, so the sum goes 60 - 10 + 40 = 90 and the average is 30. The invariant holds after every `add`, and no outside code can touch `sum_`.\n"
+     "body": "## Public, private and the invariant\n\n`public` members are the class's interface: what other code may call. `private` members are the implementation: only the class's own member functions (and friends) may touch them. The compiler enforces this, which is the whole point. In the first example, `t.level_ = 9;` fails because `level_` is private.\n\nWhy bother? Because a class with private data has **one place** where its rules live. Look at the `MovingAverage` below: it keeps a running sum so `average()` is O(1). That only works if `sum_` always equals the sum of the values in the buffer. If `sum_` were public, any caller could break that, and the bug would show up far from its cause. Private data plus member functions that maintain the invariant means you only have to check the class to trust it.\n\nA practical rule: **make data private by default**; expose behaviour (`add`, `withdraw`, `set`) rather than setters that let callers write any value. A getter is fine; a setter that just assigns is often a sign the rule belongs inside the class.\n\n## const member functions\n\nEvery non-static member function receives a hidden pointer `this` to the object it was called on. Writing `const` after the parameter list makes `this` a pointer to const: the function promises not to modify the object, and the compiler checks the promise.\n\nThe other side of that rule: **on a const object, or through a const reference, you can only call const member functions.** That's why (1) failed: `report` receives a `const Tank&`, and `level()` wasn't marked `const`, so the compiler must assume it modifies the tank. Since week 9 you pass objects by `const&` everywhere, so any getter that isn't marked `const` becomes unusable. Rule: **every member function that doesn't modify the object gets `const`.** (4) fails for the same reason in the other direction: `fill` modifies, so it can't be called on a const object.\n\nGetters that return a big member return it by `const&` (`const std::string& name() const`), so callers can read without copying and can't modify through it.\n\n## Defining members outside the class\n\nFor anything longer than a line, declare in the class and define outside with the scope operator `ClassName::`:\n\n```cpp-snippet\n// moving_average.h\n#pragma once\n#include <cstddef>\n#include <vector>\n\nclass MovingAverage {\npublic:\n    explicit MovingAverage(std::size_t window);\n    void add(double x);\n    double average() const;\nprivate:\n    std::vector<double> buf_;\n    std::size_t next_ = 0, count_ = 0;\n    double sum_ = 0.0;\n};\n\n// moving_average.cpp\n#include \"moving_average.h\"\nMovingAverage::MovingAverage(std::size_t window) : buf_(window == 0 ? 1 : window, 0.0) {}\ndouble MovingAverage::average() const { return count_ == 0 ? 0.0 : sum_ / count_; }\n```\n\nNote that `const` is repeated in the definition: it's part of the function's signature. Functions defined inside the class body are implicitly `inline`, which is why they can live in a header without breaking the one-definition rule.\n\n## Worked example: a moving average for noisy sensors\n\nThis is exactly what you'll need in tomorrow's robotics prep to smooth an ultrasonic sensor. A ring buffer of the last `n` readings and a running sum:\n\n```cpp\n#include <cstddef>\n#include <iostream>\n#include <vector>\n\nclass MovingAverage {\npublic:\n    explicit MovingAverage(std::size_t window) : buf_(window == 0 ? 1 : window, 0.0) {}\n    void add(double x);\n    double average() const { return count_ == 0 ? 0.0 : sum_ / count_; }\n    std::size_t count() const { return count_; }\nprivate:\n    std::vector<double> buf_;\n    std::size_t next_ = 0;   // where the next value goes\n    std::size_t count_ = 0;  // how many slots hold real values\n    double sum_ = 0.0;       // invariant: sum of the real values in buf_\n};\n\nvoid MovingAverage::add(double x) {\n    if (count_ == buf_.size()) sum_ -= buf_[next_];  // full: drop the oldest\n    else ++count_;\n    buf_[next_] = x;\n    sum_ += x;\n    next_ = (next_ + 1) % buf_.size();\n}\n\nint main() {\n    MovingAverage m{3};\n    for (double x : {10.0, 20.0, 30.0, 40.0}) {\n        m.add(x);\n        std::cout << m.average() << ' ';   // 10 15 20 30\n    }\n    std::cout << '\\n';\n}\n```\n\nTrace the fourth call: the buffer is full (`count_ == 3`), `next_` is 0 and holds 10, so the sum goes 60 - 10 + 40 = 90 and the average is 30. The invariant holds after every `add`, and no outside code can touch `sum_`.\n"
     },
     {
      "kind": "practice",
@@ -1360,15 +1378,18 @@
      "questions": [
       {
        "q": "In the variable sliding window template, when does `best` get updated?",
-       "a": "After the shrink loop, when the window [l, r] is valid again."
+       "a": "After the shrink loop, when the window [l, r] is valid again.",
+       "from": "algo-w10-1"
       },
       {
        "q": "Longest Repeating Character Replacement: what's the condition to shrink?",
-       "a": "(r - l + 1) - max_freq > k."
+       "a": "(r - l + 1) - max_freq > k.",
+       "from": "algo-w10-1"
       },
       {
        "q": "What does `collections.Counter('abca')` give?",
-       "a": "Counter({'a': 2, 'b': 1, 'c': 1})."
+       "a": "Counter({'a': 2, 'b': 1, 'c': 1}).",
+       "from": "algo-w08-1"
       }
      ]
     },
@@ -1772,27 +1793,31 @@
      "questions": [
       {
        "q": "∇f for f(x, y) = x^2 + 4y^2?",
-       "a": "(2x, 8y)."
+       "a": "(2x, 8y).",
+       "from": "math-w10-1"
       },
       {
        "q": "For f(x) = x^2, why does η = 1 never converge?",
-       "a": "Each step multiplies x by 1 - 2η = -1, so x flips sign forever with the same size."
+       "a": "Each step multiplies x by 1 - 2η = -1, so x flips sign forever with the same size.",
+       "from": "math-w10-2"
       },
       {
        "q": "Yesterday's stopping rule?",
-       "a": "Stop when the gradient norm is below a tolerance, with a max-iteration guard."
+       "a": "Stop when the gradient norm is below a tolerance, with a max-iteration guard.",
+       "from": "math-w10-2"
       },
       {
        "q": "Product rule: d/dw of (w·x - y)^2 with x, y constants?",
-       "a": "2(w·x - y)·x (chain rule, really: outer square, inner derivative x)."
+       "a": "2(w·x - y)·x (chain rule, really: outer square, inner derivative x).",
+       "from": "math-w09-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Without a calculator beyond simple arithmetic: f(x, y) = x^2 + 4y^2, start at (2, 1), learning rate 0.1.\n\n1. Compute the gradient at (2, 1) and the next point.\n2. Which coordinate do you expect to shrink faster over many steps, and why?\n3. What happens if the learning rate is 0.3?\n\nWrite your numbers down; the Learn step works the same example."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nf(x, y) = x² + 4y², start at (2, 1), learning rate 0.1.\n\n1. The gradient at (2, 1) is (4, 8), so the next point is (2, 1) − 0.1 · (4, 8) = **(1.6, 0.2)**.\n2. **y** shrinks faster: each step multiplies x by 0.8 but y by 0.2, because f is steeper in y.\n3. With learning rate 0.3, y is multiplied by 1 − 2.4 = −1.4 each step: it flips sign and grows, so gradient descent **diverges**.\n\nLearn works through the same example."
     },
     {
      "kind": "learn",
@@ -1937,15 +1962,13 @@
      "questions": [
       {
        "q": "dL/db for mean squared error?",
-       "a": "2·mean(e), e = predictions - targets."
+       "a": "2·mean(e), e = predictions - targets.",
+       "from": "math-w10-3"
       },
       {
        "q": "Learning-rate ceiling for curvature 8?",
-       "a": "η < 2/8 = 0.25."
-      },
-      {
-       "q": "Week 5 math: how do you standardise a feature?",
-       "a": "Subtract its mean and divide by its standard deviation."
+       "a": "η < 2/8 = 0.25.",
+       "from": "math-w10-3"
       }
      ]
     },
@@ -2332,33 +2355,37 @@
      "questions": [
       {
        "q": "A getter isn't marked `const`. Where does that bite?",
-       "a": "You can't call it on a const object or through a const reference, which is how you usually pass objects."
+       "a": "You can't call it on a const object or through a const reference, which is how you usually pass objects.",
+       "from": "cpp-w10-2"
       },
       {
        "q": "What does a static member function lack that a normal member function has?",
-       "a": "A `this` pointer: it isn't called on an object."
+       "a": "A `this` pointer: it isn't called on an object.",
+       "from": "cpp-w10-2"
       },
       {
        "q": "Why does a function that returns `int&` let you write `f() = 5;`?",
-       "a": "It returns a reference to an existing object, which is an lvalue, so it can be assigned to."
+       "a": "It returns a reference to an existing object, which is an lvalue, so it can be assigned to.",
+       "from": "cpp-w09-2"
       },
       {
        "q": "In the chain rule from week 9, what is d/dx of sin(x^2)?",
-       "a": "cos(x^2) * 2x."
+       "a": "cos(x^2) * 2x.",
+       "from": "robo-w04-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Assume `Vec2` has a **member** function `Vec2 operator*(double k) const`. For each line, predict: compiles or not?\n\n```cpp-snippet\nVec2 v{1, 2};\nVec2 a = v * 2.0;   // (1)\nVec2 b = 2.0 * v;   // (2)\nv += Vec2{1, 1};    // (3)  no operator+= has been written\n```\n\nThen guess: how many lines of code do you need to make all three work?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nAssume `Vec2` has a **member** function `Vec2 operator*(double k) const`.\n\n```cpp-snippet\nVec2 v{1, 2};\nVec2 a = v * 2.0;   // (1)\nVec2 b = 2.0 * v;   // (2)\nv += Vec2{1, 1};    // (3)  no operator+= has been written\n```\n\n**Results:** (1) compiles. (2) does **not**: a member operator needs your type on the *left*. (3) does **not**, because no `operator+=` exists.\n\nTwo short functions fix both: a free function `Vec2 operator*(double k, const Vec2& v) { return v * k; }` and a member `operator+=`. Learn shows them."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## Operators are functions with funny names\n\nWhen you write `a + b` for class types, the compiler looks for a function called `operator+` that accepts `a` and `b`. Either a member, called as `a.operator+(b)`, or a non-member, called as `operator+(a, b)`. That's all overloading is. You can't invent new operators or change precedence; you can only give existing ones meaning for your types.\n\nThe one real rule: **only overload when the meaning is obvious.** `pos + vel * dt` for 2D vectors reads like the math. `motor + 5` meaning \"speed up\" doesn't; write `motor.accelerate(5)`.\n\n## Member or non-member?\n\nFor a member operator the **left operand must be your type**. That's the pretest: with a member `operator*(double)`, `v * 2.0` works but `2.0 * v` doesn't, because `2.0.operator*(v)` makes no sense. Rules of thumb:\n\n- Operators that **modify** the left operand (`+=`, `-=`, `*=`, `=`, `[]`) are members and **return `*this` by reference**, so `a += b += c` and chains behave like they do for `int`.\n- **Symmetric** binary operators (`+`, `-`, `*`, `==`) are non-members, so conversions work on both sides. Implement them using the compound version: take the left side **by value** (that's your copy), apply `+=`, return it.\n- `operator<<` for printing **must** be a non-member, because the left operand is a `std::ostream`. It takes `std::ostream&`, returns the same stream so `std::cout << a << b` chains.\n\nIn C++20 you can ask the compiler for `==` by writing `bool operator==(const T&) const = default;`, which compares members in order. `!=` comes free from `==`. For ordering you write `operator<` yourself today; `<=>` (the spaceship) generates all four orderings but can wait.\n\n## Worked example: 2D vectors for a robot\n\n```cpp\n#include <cmath>\n#include <iostream>\n\nstruct Vec2 {\n    double x = 0, y = 0;\n\n    Vec2& operator+=(const Vec2& o) { x += o.x; y += o.y; return *this; }\n    Vec2& operator*=(double k) { x *= k; y *= k; return *this; }\n    double norm() const { return std::hypot(x, y); }\n    bool operator==(const Vec2&) const = default;\n};\n\ninline Vec2 operator+(Vec2 a, const Vec2& b) { a += b; return a; }   // a is a copy\ninline Vec2 operator*(Vec2 v, double k) { v *= k; return v; }\ninline Vec2 operator*(double k, Vec2 v) { v *= k; return v; }       // the symmetric one\n\nstd::ostream& operator<<(std::ostream& os, const Vec2& v) {\n    return os << '(' << v.x << \", \" << v.y << ')';\n}\n\nint main() {\n    Vec2 pos{1, 2}, vel{0.5, -1};\n    double dt = 2;\n    pos += vel * dt;                                  // (1, 2) + (1, -2)\n    std::cout << pos << ' ' << (2 * vel) << ' '\n              << (pos == Vec2{2, 0}) << ' ' << Vec2{3, 4}.norm() << '\\n';\n    // prints: (2, 0) (1, -2) 1 5\n}\n```\n\nRead it top to bottom. `+=` and `*=` are members returning `Vec2&`. `+` and both `*` are free functions written in one line each from the compound operators, so the arithmetic lives in one place. `==` is defaulted. `<<` returns `os`. `Vec2` is a `struct` because it has no invariant: any x and y are valid.\n\nPretest answer: (1) compiles, (2) doesn't, (3) doesn't. Adding a member `operator+=` (3 lines) and a non-member `operator*(double, Vec2)` (1 line) fixes both.\n\n## A type with an invariant: fractions\n\nA `Fraction` keeps the invariant \"stored in lowest terms, denominator positive\", so 2/4 and 1/2 are the same object state and the defaulted `==` is correct. That invariant belongs in the constructor; every operator then builds its result through the constructor and inherits it for free. You'll write it in the practice. `std::gcd` from `<numeric>` does the reduction.\n\nPitfalls to avoid: returning a reference from `operator+` (it would refer to a local that dies), forgetting `const` on comparison operators (they then fail on const objects), and making `operator<<` a member.\n"
+     "body": "## Operators are functions with funny names\n\nWhen you write `a + b` for class types, the compiler looks for a function called `operator+` that accepts `a` and `b`. Either a member, called as `a.operator+(b)`, or a non-member, called as `operator+(a, b)`. That's all overloading is. You can't invent new operators or change precedence; you can only give existing ones meaning for your types.\n\nThe one real rule: **only overload when the meaning is obvious.** `pos + vel * dt` for 2D vectors reads like the math. `motor + 5` meaning \"speed up\" doesn't; write `motor.accelerate(5)`.\n\n## Member or non-member?\n\nFor a member operator the **left operand must be your type**. That's the first example: with a member `operator*(double)`, `v * 2.0` works but `2.0 * v` doesn't, because `2.0.operator*(v)` makes no sense. Rules of thumb:\n\n- Operators that **modify** the left operand (`+=`, `-=`, `*=`, `=`, `[]`) are members and **return `*this` by reference**, so `a += b += c` and chains behave like they do for `int`.\n- **Symmetric** binary operators (`+`, `-`, `*`, `==`) are non-members, so conversions work on both sides. Implement them using the compound version: take the left side **by value** (that's your copy), apply `+=`, return it.\n- `operator<<` for printing **must** be a non-member, because the left operand is a `std::ostream`. It takes `std::ostream&`, returns the same stream so `std::cout << a << b` chains.\n\nIn C++20 you can ask the compiler for `==` by writing `bool operator==(const T&) const = default;`, which compares members in order. `!=` comes free from `==`. For ordering you write `operator<` yourself today; `<=>` (the spaceship) generates all four orderings but can wait.\n\n## Worked example: 2D vectors for a robot\n\n```cpp\n#include <cmath>\n#include <iostream>\n\nstruct Vec2 {\n    double x = 0, y = 0;\n\n    Vec2& operator+=(const Vec2& o) { x += o.x; y += o.y; return *this; }\n    Vec2& operator*=(double k) { x *= k; y *= k; return *this; }\n    double norm() const { return std::hypot(x, y); }\n    bool operator==(const Vec2&) const = default;\n};\n\ninline Vec2 operator+(Vec2 a, const Vec2& b) { a += b; return a; }   // a is a copy\ninline Vec2 operator*(Vec2 v, double k) { v *= k; return v; }\ninline Vec2 operator*(double k, Vec2 v) { v *= k; return v; }       // the symmetric one\n\nstd::ostream& operator<<(std::ostream& os, const Vec2& v) {\n    return os << '(' << v.x << \", \" << v.y << ')';\n}\n\nint main() {\n    Vec2 pos{1, 2}, vel{0.5, -1};\n    double dt = 2;\n    pos += vel * dt;                                  // (1, 2) + (1, -2)\n    std::cout << pos << ' ' << (2 * vel) << ' '\n              << (pos == Vec2{2, 0}) << ' ' << Vec2{3, 4}.norm() << '\\n';\n    // prints: (2, 0) (1, -2) 1 5\n}\n```\n\nRead it top to bottom. `+=` and `*=` are members returning `Vec2&`. `+` and both `*` are free functions written in one line each from the compound operators, so the arithmetic lives in one place. `==` is defaulted. `<<` returns `os`. `Vec2` is a `struct` because it has no invariant: any x and y are valid.\n\nPretest answer: (1) compiles, (2) doesn't, (3) doesn't. Adding a member `operator+=` (3 lines) and a non-member `operator*(double, Vec2)` (1 line) fixes both.\n\n## A type with an invariant: fractions\n\nA `Fraction` keeps the invariant \"stored in lowest terms, denominator positive\", so 2/4 and 1/2 are the same object state and the defaulted `==` is correct. That invariant belongs in the constructor; every operator then builds its result through the constructor and inherits it for free. You'll write it in the practice. `std::gcd` from `<numeric>` does the reduction.\n\nPitfalls to avoid: returning a reference from `operator+` (it would refer to a local that dies), forgetting `const` on comparison operators (they then fail on const objects), and making `operator<<` a member.\n"
     },
     {
      "kind": "practice",
@@ -2504,15 +2531,18 @@
      "questions": [
       {
        "q": "Week 4: how does a stack check `{[()]}` is balanced?",
-       "a": "Push each opener; on a closer, the top must be its matching opener, which you pop. At the end the stack must be empty."
+       "a": "Push each opener; on a closer, the top must be its matching opener, which you pop. At the end the stack must be empty.",
+       "from": "algo-w04-3"
       },
       {
        "q": "What's the cost of `list.append` and `list.pop()` in Python?",
-       "a": "Amortized O(1) at the end of the list."
+       "a": "Amortized O(1) at the end of the list.",
+       "from": "python-w02-3"
       },
       {
        "q": "Monotonic deque from Wednesday: what did popping from the back achieve?",
-       "a": "It removed values that could never be the answer again, keeping the deque ordered."
+       "a": "It removed values that could never be the answer again, keeping the deque ordered.",
+       "from": "algo-w10-2"
       }
      ]
     },
@@ -2844,33 +2874,37 @@
      "questions": [
       {
        "q": "Logical order of a SELECT's clauses?",
-       "a": "FROM/JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT."
+       "a": "FROM/JOIN, WHERE, GROUP BY, HAVING, SELECT, ORDER BY, LIMIT.",
+       "from": "ai-w10-1"
       },
       {
        "q": "INNER JOIN vs LEFT JOIN (week 9)?",
-       "a": "INNER keeps only rows with a match on both sides; LEFT keeps every left row and fills missing right columns with NULL."
+       "a": "INNER keeps only rows with a match on both sides; LEFT keeps every left row and fills missing right columns with NULL.",
+       "from": "ai-w09-1"
       },
       {
        "q": "Why use `?` placeholders in sqlite3?",
-       "a": "Values are passed separately, so quotes in data can't break or change the SQL (no injection)."
+       "a": "Values are passed separately, so quotes in data can't break or change the SQL (no injection).",
+       "from": "ai-w10-3"
       },
       {
        "q": "From last week's distributions lesson: is a completion-rate distribution with a few students far behind left- or right-skewed?",
-       "a": "Left-skewed: the long tail is on the low side, so the mean sits below the median."
+       "a": "Left-skewed: the long tail is on the low side, so the mean sits below the median.",
+       "from": "ai-w08-5"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Tables: `students(id, name)`, `completions(student_id, module_id)`. Erlan has no completions.\n\n```sql\nSELECT s.name, COUNT(*) AS n\nFROM students s LEFT JOIN completions c ON c.student_id = s.id\nGROUP BY s.id;\n```\n\nPredict Erlan's `n`. Then predict it with `COUNT(c.module_id)` instead. Write both numbers down before reading on."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTables: `students(id, name)`, `completions(student_id, module_id)`. Erlan has no completions.\n\n```sql\nSELECT s.name, COUNT(*) AS n\nFROM students s LEFT JOIN completions c ON c.student_id = s.id\nGROUP BY s.id;\n```\n\n**Erlan's `n` is 1**, not 0: the LEFT JOIN keeps one row for Erlan with NULLs, and `COUNT(*)` counts rows. With `COUNT(c.module_id)` it's **0**, because `COUNT(column)` skips NULLs. Learn explains this."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "Your tracker has so far lived in CSV files and pandas. A database adds two things that matter as it grows: data split into tables that don't repeat themselves (a student's name is stored once, not on every completion row), and a query language that joins and summarises them. Python ships with SQLite, a whole database in a single file (or in memory) with no server. Everything here runs with the standard library.\n\n## The shape of the data\n\nThree tables, the classic layout for \"who did what\":\n\n- `students(id, name, cohort)`: one row per student.\n- `modules(id, title, topic)`: one row per course module.\n- `completions(student_id, module_id, score, done_on)`: one row per completion, pointing at the other two by id.\n\n## sqlite3 in five moves\n\n```python\nimport sqlite3\nimport pandas as pd\n\nconn = sqlite3.connect(\":memory:\")       # or \"tracker.db\" for a file\nconn.executescript(\"\"\"\nCREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cohort TEXT);\nCREATE TABLE modules (id INTEGER PRIMARY KEY, title TEXT, topic TEXT);\nCREATE TABLE completions (student_id INTEGER, module_id INTEGER, score INTEGER, done_on TEXT);\n\"\"\")\nconn.executemany(\"INSERT INTO students VALUES (?, ?, ?)\",\n                 [(1, \"Aru\", \"A\"), (2, \"Bek\", \"A\"), (3, \"Dana\", \"B\"), (4, \"Erlan\", \"B\")])\nconn.executemany(\"INSERT INTO modules VALUES (?, ?, ?)\",\n                 [(1, \"Ohm\", \"electronics\"), (2, \"Dividers\", \"electronics\"),\n                  (3, \"Loops\", \"python\"), (4, \"Lists\", \"python\")])\nconn.executemany(\"INSERT INTO completions VALUES (?, ?, ?, ?)\",\n                 [(1, 1, 90, \"2026-12-01\"), (1, 2, 80, \"2026-12-03\"), (1, 3, 70, \"2026-12-05\"),\n                  (2, 1, 60, \"2026-12-02\"), (2, 3, 100, \"2026-12-06\"), (3, 1, 85, \"2026-12-04\")])\nconn.commit()\n\nquery = \"\"\"\nSELECT s.name, COUNT(c.module_id) AS done, ROUND(AVG(c.score), 1) AS avg_score\nFROM students s\nLEFT JOIN completions c ON c.student_id = s.id\nWHERE s.cohort = ?\nGROUP BY s.id\nORDER BY done DESC, s.name\n\"\"\"\nfor cohort in (\"A\", \"B\"):\n    print(cohort, conn.execute(query, (cohort,)).fetchall())\n# A [('Aru', 3, 80.0), ('Bek', 2, 80.0)]\n# B [('Dana', 1, 85.0), ('Erlan', 0, None)]\n\ndf = pd.read_sql_query(\"\"\"\n    SELECT s.name, m.topic, c.score\n    FROM completions c\n    JOIN students s ON s.id = c.student_id\n    JOIN modules m ON m.id = c.module_id\n\"\"\", conn)\nprint(df.pivot_table(index=\"name\", columns=\"topic\", values=\"score\", aggfunc=\"mean\"))\n```\n\nThe five moves: `connect`, `executescript` for schema, `executemany` with `?` for data, `execute(sql, params).fetchall()` for queries, and `pd.read_sql_query` when you want a DataFrame.\n\n## The pretest: COUNT after a LEFT JOIN\n\nA LEFT JOIN keeps Erlan even though he has no completions, by producing **one row** for him with every `c.` column NULL. `COUNT(*)` counts rows, so it reports **1**: wrong. `COUNT(c.module_id)` counts non-NULL values, so it reports **0**: right. This is the single most common bug in \"how many X per Y\" queries. Rule: after a LEFT JOIN, count a column from the right-hand table.\n\nLikewise `AVG(c.score)` ignores NULLs, so Erlan's average is NULL (`None` in Python), not 0. Decide deliberately whether a student with no work should show as missing or as zero; `COALESCE(AVG(c.score), 0)` makes it zero.\n\n## WHERE vs HAVING, again, with joins\n\n`WHERE s.cohort = ?` filters students before grouping. \"Students with fewer than 2 completions\" is a condition on a group, so it's `HAVING COUNT(c.module_id) < 2`. And a condition on the right table inside a LEFT JOIN belongs in the `ON` clause, not WHERE: `LEFT JOIN completions c ON c.student_id = s.id AND c.done_on >= '2026-12-03'` keeps students with no December completions, while the same test in WHERE would silently turn the LEFT JOIN back into an INNER one (NULL >= '2026-12-03' is not true, so those rows vanish).\n\n## Why join in SQL rather than pandas?\n\nFor data this size, either works; pandas `merge` is the same idea. SQL wins when the data lives in a database already (the AQL portal, a robot's log store), when it's bigger than memory, or when you want the database to enforce rules. The skill transfers: a pandas `merge(how=\"left\")` followed by `groupby().count()` has exactly the same COUNT trap.\n"
+     "body": "Your tracker has so far lived in CSV files and pandas. A database adds two things that matter as it grows: data split into tables that don't repeat themselves (a student's name is stored once, not on every completion row), and a query language that joins and summarises them. Python ships with SQLite, a whole database in a single file (or in memory) with no server. Everything here runs with the standard library.\n\n## The shape of the data\n\nThree tables, the classic layout for \"who did what\":\n\n- `students(id, name, cohort)`: one row per student.\n- `modules(id, title, topic)`: one row per course module.\n- `completions(student_id, module_id, score, done_on)`: one row per completion, pointing at the other two by id.\n\n## sqlite3 in five moves\n\n```python\nimport sqlite3\nimport pandas as pd\n\nconn = sqlite3.connect(\":memory:\")       # or \"tracker.db\" for a file\nconn.executescript(\"\"\"\nCREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cohort TEXT);\nCREATE TABLE modules (id INTEGER PRIMARY KEY, title TEXT, topic TEXT);\nCREATE TABLE completions (student_id INTEGER, module_id INTEGER, score INTEGER, done_on TEXT);\n\"\"\")\nconn.executemany(\"INSERT INTO students VALUES (?, ?, ?)\",\n                 [(1, \"Aru\", \"A\"), (2, \"Bek\", \"A\"), (3, \"Dana\", \"B\"), (4, \"Erlan\", \"B\")])\nconn.executemany(\"INSERT INTO modules VALUES (?, ?, ?)\",\n                 [(1, \"Ohm\", \"electronics\"), (2, \"Dividers\", \"electronics\"),\n                  (3, \"Loops\", \"python\"), (4, \"Lists\", \"python\")])\nconn.executemany(\"INSERT INTO completions VALUES (?, ?, ?, ?)\",\n                 [(1, 1, 90, \"2026-12-01\"), (1, 2, 80, \"2026-12-03\"), (1, 3, 70, \"2026-12-05\"),\n                  (2, 1, 60, \"2026-12-02\"), (2, 3, 100, \"2026-12-06\"), (3, 1, 85, \"2026-12-04\")])\nconn.commit()\n\nquery = \"\"\"\nSELECT s.name, COUNT(c.module_id) AS done, ROUND(AVG(c.score), 1) AS avg_score\nFROM students s\nLEFT JOIN completions c ON c.student_id = s.id\nWHERE s.cohort = ?\nGROUP BY s.id\nORDER BY done DESC, s.name\n\"\"\"\nfor cohort in (\"A\", \"B\"):\n    print(cohort, conn.execute(query, (cohort,)).fetchall())\n# A [('Aru', 3, 80.0), ('Bek', 2, 80.0)]\n# B [('Dana', 1, 85.0), ('Erlan', 0, None)]\n\ndf = pd.read_sql_query(\"\"\"\n    SELECT s.name, m.topic, c.score\n    FROM completions c\n    JOIN students s ON s.id = c.student_id\n    JOIN modules m ON m.id = c.module_id\n\"\"\", conn)\nprint(df.pivot_table(index=\"name\", columns=\"topic\", values=\"score\", aggfunc=\"mean\"))\n```\n\nThe five moves: `connect`, `executescript` for schema, `executemany` with `?` for data, `execute(sql, params).fetchall()` for queries, and `pd.read_sql_query` when you want a DataFrame.\n\n## The first example: COUNT after a LEFT JOIN\n\nA LEFT JOIN keeps Erlan even though he has no completions, by producing **one row** for him with every `c.` column NULL. `COUNT(*)` counts rows, so it reports **1**: wrong. `COUNT(c.module_id)` counts non-NULL values, so it reports **0**: right. This is the single most common bug in \"how many X per Y\" queries. Rule: after a LEFT JOIN, count a column from the right-hand table.\n\nLikewise `AVG(c.score)` ignores NULLs, so Erlan's average is NULL (`None` in Python), not 0. Decide deliberately whether a student with no work should show as missing or as zero; `COALESCE(AVG(c.score), 0)` makes it zero.\n\n## WHERE vs HAVING, again, with joins\n\n`WHERE s.cohort = ?` filters students before grouping. \"Students with fewer than 2 completions\" is a condition on a group, so it's `HAVING COUNT(c.module_id) < 2`. And a condition on the right table inside a LEFT JOIN belongs in the `ON` clause, not WHERE: `LEFT JOIN completions c ON c.student_id = s.id AND c.done_on >= '2026-12-03'` keeps students with no December completions, while the same test in WHERE would silently turn the LEFT JOIN back into an INNER one (NULL >= '2026-12-03' is not true, so those rows vanish).\n\n## Why join in SQL rather than pandas?\n\nFor data this size, either works; pandas `merge` is the same idea. SQL wins when the data lives in a database already (the AQL portal, a robot's log store), when it's bigger than memory, or when you want the database to enforce rules. The skill transfers: a pandas `merge(how=\"left\")` followed by `groupby().count()` has exactly the same COUNT trap.\n"
     },
     {
      "kind": "practice",

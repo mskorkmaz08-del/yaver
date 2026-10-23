@@ -113,6 +113,21 @@ export function checkSlotTimes(kind, overrides) {
 // ---------- Progress ----------
 export const progress = id => db.get('courseProgress', id) || null;
 const completed = id => ['done', 'flagged'].includes(progress(id)?.status);
+export const finished = completed;
+// Recall questions you have definitely met: one exit-ticket question from each lesson
+// you finished, most recently finished first. Used when a warm-up has too few of its own.
+export function recallFromFinished(trackId, n, skip = new Set()) {
+  const out = [];
+  const rows = db.all('courseProgress').filter(p => completed(p.lessonId) && p.completedAt).sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+  for (const p of rows) {
+    const l = lesson(p.lessonId);
+    if (!l || l.virtual || (trackId && trackId !== 'mixed' && l.track !== trackId)) continue;
+    const q = (l.steps?.find(s => s.kind === 'exit')?.questions || []).find(x => !skip.has(x.q));
+    if (q) { out.push({ ...q, from: l.id }); skip.add(q.q); }
+    if (out.length >= n) break;
+  }
+  return out;
+}
 export function status(id) {
   const p = progress(id);
   if (!p) return 'todo';
@@ -550,7 +565,7 @@ export async function saveWeekLessons(week, lessons) {
 
 export function template(kind, minutes) {
   switch (kind) {
-    case 'deep': return [['warmup', 10], ['pretest', 5], ['learn', 35], ['practice', 30], ['exit', 10]];
+    case 'deep': return [['warmup', 10], ['example', 5], ['learn', 35], ['practice', 30], ['exit', 10]];
     case 'practice': return [['warmup', 5], ['learn', 10], ['practice', 60], ['reflect', 10], ['exit', 5]];
     case 'build': return [['plan', 10], ['build', minutes - 25], ['test', 10], ['log', 5]];
     case 'prep': return [['learn', 15], ['simulate', 20], ['measure', 15], ['teachnotes', 10]];

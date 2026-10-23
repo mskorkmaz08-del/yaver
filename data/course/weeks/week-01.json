@@ -38,27 +38,25 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall from Week 0",
+     "title": "Recall",
      "questions": [
       {
        "q": "Which Terminal command shows the Python version you'll run this week?",
-       "a": "`python3 --version` (it should print 3.12 or newer after the Homebrew install)."
-      },
-      {
-       "q": "Diagnostic problem 1: how do you find the second-largest number in one pass, without sorting?",
-       "a": "Keep two trackers, `first` and `second`, both starting at negative infinity. When x beats `first`, the old `first` moves down to `second`; when x is strictly between them, it becomes `second`. O(n) time, O(1) memory."
+       "a": "`python3 --version` (it should print 3.12 or newer after the Homebrew install).",
+       "from": "tools-w00-1"
       },
       {
        "q": "What is the difference between `git commit` and `git push`?",
-       "a": "`commit` records a snapshot in your local repository; `push` sends your local commits to GitHub."
+       "a": "`commit` records a snapshot in your local repository; `push` sends your local commits to GitHub.",
+       "from": "tools-w00-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before the lecture, write down on paper what this prints, line by line. Then run it.\n\n```python\ndef double(x):\n    print(x * 2)\n\nresult = double(4)\nprint(result)\nprint(\"7\" + \"3\", 7 + 3, \"7\" * 3)\nprint(7 / 2, 7 // 2, 7 % 2, -7 // 2)\n```\n\nAnswer (only after predicting): `8`, then `None`, then `73 10 777`, then `3.5 3 1 -4`. If you predicted `8` on the second line, that is exactly today's lesson: `double` prints but never returns, so `result` is `None`. If `-7 // 2` surprised you, read the arithmetic part closely."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\ndef double(x):\n    print(x * 2)\n\nresult = double(4)\nprint(result)\nprint(\"7\" + \"3\", 7 + 3, \"7\" * 3)\nprint(7 / 2, 7 // 2, 7 % 2, -7 // 2)\n```\n\n**It prints** `8`, then `None`, then `73 10 777`, then `3.5 3 1 -4`.\n\nTwo things to notice, both explained in Learn: `double` *prints* but never *returns*, so `result` is `None`; and `-7 // 2` is `-4`, because `//` rounds down."
     },
     {
      "kind": "learn",
@@ -207,15 +205,12 @@
     {
      "kind": "warmup",
      "minutes": 5,
-     "title": "Recall from the diagnostic",
+     "title": "Recall",
      "questions": [
       {
-       "q": "Diagnostic problem 4: why do two nested loops over the same list cost O(n²)?",
-       "a": "The outer loop runs n times and the inner loop up to n times for each of them, so the work grows like n·n."
-      },
-      {
        "q": "How did `has_pair_sum` get down to O(n)?",
-       "a": "One pass with a set of numbers seen so far: for each x, check whether `target - x` is in the set (O(1) on average), then add x."
+       "a": "One pass with a set of numbers seen so far: for each x, check whether `target - x` is in the set (O(1) on average), then add x.",
+       "from": "algo-w00-1"
       }
      ]
     },
@@ -330,7 +325,21 @@
    ],
    "deliverable": "learning-log/week01/algo/search.py with binary_search, search_steps, compare and lower_bound, plus the timing table in notes.md, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Binary Search",
+     "url": "https://leetcode.com/problems/binary-search/",
+     "level": "easy",
+     "uses": "binary search (this lesson)"
+    },
+    {
+     "title": "Search Insert Position",
+     "url": "https://leetcode.com/problems/search-insert-position/",
+     "level": "easy",
+     "uses": "binary search that returns where the target would go (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w01-1",
@@ -634,24 +643,22 @@
      "title": "Recall",
      "questions": [
       {
-       "q": "Diagnostic problem 6: a 9 V supply, a red LED at 2 V and 20 mA. Resistor value, chosen standard value, and actual current?",
-       "a": "(9 − 2) / 0.020 = 350 Ω; next standard value up is 390 Ω; 7 / 390 ≈ 18 mA."
-      },
-      {
        "q": "From Monday's algorithms lesson: about how many halvings take 1,000,000 down to 1?",
-       "a": "About 20 (2²⁰ ≈ 1,048,576)."
+       "a": "About 20 (2²⁰ ≈ 1,048,576).",
+       "from": "algo-w01-1"
       },
       {
        "q": "From Monday's Python lesson: what does `100 * 7 / 10` evaluate to, and what type is it?",
-       "a": "70.0, a float: `/` always produces a float."
+       "a": "70.0, a float: `/` always produces a float.",
+       "from": "python-w01-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Try before the videos",
-     "body": "On paper, with v = [2, 1] and w = [−1, 3]:\n\n1. Compute 2v + w and sketch v, w and the result as arrows from the origin.\n2. Guess: if you may use *any* numbers a and b, which points can a·v + b·w reach? A line? The whole plane? Something else?\n3. Same question for v = [1, 2] and w = [2, 4].\n\nAnswers come in the explanation: 2v + w = [3, 5]; the first pair reaches the whole plane; the second pair only reaches the line y = 2x, because w = 2v."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTake v = [2, 1] and w = [−1, 3].\n\n1. 2v + w = [4, 2] + [−1, 3] = **[3, 5]**. Sketch v, w and [3, 5] as arrows from the origin.\n2. Using any numbers a and b, a·v + b·w reaches **every point of the plane**: v and w point in different directions.\n3. For v = [1, 2] and w = [2, 4], a·v + b·w only reaches **the line y = 2x**, because w = 2v points the same way.\n\nThe set of points you can reach is called the *span*; that is today's topic."
     },
     {
      "kind": "learn",
@@ -806,11 +813,13 @@
      "questions": [
       {
        "q": "What is the span of [1, 2] and [2, 4]?",
-       "a": "The line y = 2x: [2, 4] = 2·[1, 2]."
+       "a": "The line y = 2x: [2, 4] = 2·[1, 2].",
+       "from": "math-w01-1"
       },
       {
        "q": "Express [3, 1] in the basis [1, 1], [1, −1].",
-       "a": "2·[1, 1] + 1·[1, −1]"
+       "a": "2·[1, 1] + 1·[1, −1]",
+       "from": "math-w01-1"
       }
      ]
     },
@@ -1215,23 +1224,21 @@
      "questions": [
       {
        "q": "Why did `percent(done, total)` on Monday start with `if total == 0: return 0.0`?",
-       "a": "`100 * done / 0` raises ZeroDivisionError; a module with no lessons is a real case in portal exports, so the guard handles it."
+       "a": "`100 * done / 0` raises ZeroDivisionError; a module with no lessons is a real case in portal exports, so the guard handles it.",
+       "from": "python-w01-1"
       },
       {
        "q": "What is `f\"{27.2727:6.1f}\"`?",
-       "a": "`'  27.3'`: width 6, one decimal, right-aligned by default for numbers."
-      },
-      {
-       "q": "Diagnostic problem 2: why does simply counting opening and closing brackets fail?",
-       "a": "Counting accepts `([)]`: the counts match but the order is wrong. You need a stack: the most recently opened bracket must close first."
+       "a": "`'  27.3'`: width 6, one decimal, right-aligned by default for numbers.",
+       "from": "python-w01-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict `True` or `False` for each value, then run it:\n\n```python\nfor value in [0, 1, -3, \"\", \"0\", \" \", [], [0], None, 0.0]:\n    print(repr(value), bool(value))\n\nprint(0 or \"default\", 5 or \"default\", 0 and 5, 3 and 5)\n```\n\nAnswer: falsy are `0`, `\"\"`, `[]`, `None`, `0.0`; everything else here is truthy, including `\"0\"`, `\" \"` and `[0]` (non-empty). The last line prints `default 5 0 5`: `or` and `and` return one of their operands, not necessarily `True`/`False`."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nfor value in [0, 1, -3, \"\", \"0\", \" \", [], [0], None, 0.0]:\n    print(repr(value), bool(value))\n\nprint(0 or \"default\", 5 or \"default\", 0 and 5, 3 and 5)\n```\n\n**Result:** the falsy values are `0`, `\"\"`, `[]`, `None` and `0.0`. Everything else here is truthy, including `\"0\"`, `\" \"` and `[0]`, because they are not empty. The last line prints `default 5 0 5`: `or` and `and` return one of their operands, not necessarily `True` or `False`."
     },
     {
      "kind": "learn",
@@ -1384,15 +1391,13 @@
      "questions": [
       {
        "q": "Worst-case looks for binary search on 1,024 sorted elements?",
-       "a": "11"
+       "a": "11",
+       "from": "algo-w01-1"
       },
       {
        "q": "In `lower_bound`, why can't you return as soon as `nums[mid] == x`?",
-       "a": "There may be earlier copies of x to the left; you need the first index with nums[i] >= x, so you keep narrowing with hi = mid."
-      },
-      {
-       "q": "How many times does the inner body of `for i in range(n): for j in range(i+1, n):` run?",
-       "a": "n(n−1)/2"
+       "a": "There may be earlier copies of x to the left; you need the first index with nums[i] >= x, so you keep narrowing with hi = mid.",
+       "from": "algo-w01-1"
       }
      ]
     },
@@ -1505,7 +1510,15 @@
    ],
    "deliverable": "learning-log/week01/algo/sorting_lists.py with selection_sort, count_comparisons and the Node functions, plus the four choices in notes.md, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Move Zeroes",
+     "url": "https://leetcode.com/problems/move-zeroes/",
+     "level": "easy",
+     "uses": "walking an array and swapping in place (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w01-3",
@@ -1789,29 +1802,32 @@
      "questions": [
       {
        "q": "Express [3, 1] in the basis b₁ = [1, 1], b₂ = [1, −1].",
-       "a": "[3, 1] = 2b₁ + 1b₂"
+       "a": "[3, 1] = 2b₁ + 1b₂",
+       "from": "math-w01-1"
       },
       {
        "q": "When do two 2D vectors v and w span the whole plane?",
-       "a": "When they aren't on one line: v₁w₂ − v₂w₁ ≠ 0."
+       "a": "When they aren't on one line: v₁w₂ − v₂w₁ ≠ 0.",
+       "from": "math-w01-2"
       },
       {
        "q": "In NumPy, how do you get 2v + w for arrays v and w, and how do you compare the result to [3, 5]?",
-       "a": "`2 * v + w`; compare with `np.allclose(result, [3, 5])`."
+       "a": "`2 * v + w`; compare with `np.allclose(result, [3, 5])`.",
+       "from": "math-w01-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Try before the video",
-     "body": "A transformation of the plane keeps the origin fixed and keeps grid lines straight, parallel and evenly spaced. It sends î = [1, 0] to [2, 1] and ĵ = [0, 1] to [−1, 1].\n\nWhere does [3, 2] go? Try it using only Tuesday's idea that [3, 2] means \"3 of î plus 2 of ĵ\".\n\nAnswer: 3·[2, 1] + 2·[−1, 1] = [6 − 2, 3 + 2] = **[4, 5]**. If you got that, you already understand matrix–vector multiplication; the video gives it its notation."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nA transformation of the plane keeps the origin fixed and keeps grid lines straight, parallel and evenly spaced. It sends î = [1, 0] to [2, 1] and ĵ = [0, 1] to [−1, 1].\n\nWhere does [3, 2] go? Use Tuesday's idea that [3, 2] means \"3 of î plus 2 of ĵ\": it goes to 3·[2, 1] + 2·[−1, 1] = [6 − 2, 3 + 2] = **[4, 5]**.\n\nThat calculation *is* matrix–vector multiplication; the video gives it its notation."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "A matrix is where the basis vectors land",
-     "body": "Watch chapter 3 of *Essence of Linear Algebra* (about 11 minutes). It may be the most important ten minutes of the whole math track: matrices in ML, robotics frames and graphics all come back to this picture.\n\n**Linear transformation.** A function that takes vectors to vectors is *linear* if it respects the two vector operations:\n\n  T(v + w) = T(v) + T(w)  and  T(c·v) = c·T(v)\n\nGeometrically: the origin stays put, and grid lines stay straight, parallel and evenly spaced. Rotations, scalings, shears and reflections about the origin are linear. A shift (translation) is not, because it moves the origin. A bend is not, because lines become curves.\n\n**Why two vectors determine everything.** Any v = [x, y] is x·î + y·ĵ. Linearity gives\n\n  T(v) = x·T(î) + y·T(ĵ)\n\nSo once you know where î and ĵ land, you know where *every* vector lands. Record those two landing spots as the columns of a 2×2 matrix:\n\n  M = [ T(î)  T(ĵ) ] = [[a, b], [c, d]] where T(î) = [a, c] and T(ĵ) = [b, d].\n\n**Matrix–vector product, column view.** M·[x, y] = x·(first column) + y·(second column). It *is* a linear combination of the columns, with the vector's coordinates as weights.\n\n**Row view (for computing).** Each output component is a row of M dotted with v: [a·x + b·y, c·x + d·y]. Same numbers, different reading. Use the column view to understand what a matrix does, the row view to compute by hand fast.\n\n### Worked examples\n\n**1. Rotation by 90° counter-clockwise.** î = [1, 0] goes to [0, 1]; ĵ = [0, 1] goes to [−1, 0]. So\n\n  R = [[0, −1], [1, 0]] (columns [0, 1] and [−1, 0])\n\nApply to [3, 2]: 3·[0, 1] + 2·[−1, 0] = **[−2, 3]**. Row view check: [0·3 + (−1)·2, 1·3 + 0·2] = [−2, 3]. ✓ Sketch it: the arrow turned a quarter turn left.\n\n**2. Shear.** î stays at [1, 0]; ĵ goes to [1, 1]. So S = [[1, 1], [0, 1]]. Apply to [2, 3]: 2·[1, 0] + 3·[1, 1] = **[5, 3]**. Points slide sideways in proportion to their height, like pushing the top of a deck of cards.\n\n**3. The pretest matrix.** M = [[2, −1], [1, 1]] (columns [2, 1] and [−1, 1]). M·[3, 2] = [4, 5], as you found.\n\n**4. Rotation by any angle θ.** î lands on [cos θ, sin θ] (the unit circle), and ĵ, a quarter turn ahead, lands on [−sin θ, cos θ]. So\n\n  R(θ) = [[cos θ, −sin θ], [sin θ, cos θ]]\n\nFor θ = 30°: cos 30° ≈ 0.866, sin 30° = 0.5, and R·[2, 0] = 2·[0.866, 0.5] = [1.732, 1]. That rotation matrix will be with you all the way to ROS 2: every robot heading is one.\n\n**Dependent columns squash space.** If M's columns are on one line, e.g. [[1, 2], [2, 4]], every output x·[1, 2] + y·[2, 4] lies on the line y = 2x: the whole plane is flattened onto a line. That's Tuesday's span, seen as a transformation. The \"column space\" (Week 3) is exactly the span of the columns.\n\n**Is it linear?** f(x, y) = (x + y, x·y) is not: f(1, 1) = (2, 1) but f(2, 2) = (4, 4), not 2·(2, 1) = (4, 2). Scaling the input didn't scale the output. g(x, y) = (y, x) is linear: it swaps coordinates, which is the reflection across the line y = x, with matrix [[0, 1], [1, 0]].\n\nRobotics preview: moving a robot both rotates and translates, and translation isn't linear. Robotics handles it with a trick (an extra coordinate, \"homogeneous coordinates\") that makes it a matrix again. You'll meet it in Phase D."
+     "body": "Watch chapter 3 of *Essence of Linear Algebra* (about 11 minutes). It may be the most important ten minutes of the whole math track: matrices in ML, robotics frames and graphics all come back to this picture.\n\n**Linear transformation.** A function that takes vectors to vectors is *linear* if it respects the two vector operations:\n\n  T(v + w) = T(v) + T(w)  and  T(c·v) = c·T(v)\n\nGeometrically: the origin stays put, and grid lines stay straight, parallel and evenly spaced. Rotations, scalings, shears and reflections about the origin are linear. A shift (translation) is not, because it moves the origin. A bend is not, because lines become curves.\n\n**Why two vectors determine everything.** Any v = [x, y] is x·î + y·ĵ. Linearity gives\n\n  T(v) = x·T(î) + y·T(ĵ)\n\nSo once you know where î and ĵ land, you know where *every* vector lands. Record those two landing spots as the columns of a 2×2 matrix:\n\n  M = [ T(î)  T(ĵ) ] = [[a, b], [c, d]] where T(î) = [a, c] and T(ĵ) = [b, d].\n\n**Matrix–vector product, column view.** M·[x, y] = x·(first column) + y·(second column). It *is* a linear combination of the columns, with the vector's coordinates as weights.\n\n**Row view (for computing).** Each output component is a row of M dotted with v: [a·x + b·y, c·x + d·y]. Same numbers, different reading. Use the column view to understand what a matrix does, the row view to compute by hand fast.\n\n### Worked examples\n\n**1. Rotation by 90° counter-clockwise.** î = [1, 0] goes to [0, 1]; ĵ = [0, 1] goes to [−1, 0]. So\n\n  R = [[0, −1], [1, 0]] (columns [0, 1] and [−1, 0])\n\nApply to [3, 2]: 3·[0, 1] + 2·[−1, 0] = **[−2, 3]**. Row view check: [0·3 + (−1)·2, 1·3 + 0·2] = [−2, 3]. ✓ Sketch it: the arrow turned a quarter turn left.\n\n**2. Shear.** î stays at [1, 0]; ĵ goes to [1, 1]. So S = [[1, 1], [0, 1]]. Apply to [2, 3]: 2·[1, 0] + 3·[1, 1] = **[5, 3]**. Points slide sideways in proportion to their height, like pushing the top of a deck of cards.\n\n**3. The first example matrix.** M = [[2, −1], [1, 1]] (columns [2, 1] and [−1, 1]). M·[3, 2] = [4, 5], as you found.\n\n**4. Rotation by any angle θ.** î lands on [cos θ, sin θ] (the unit circle), and ĵ, a quarter turn ahead, lands on [−sin θ, cos θ]. So\n\n  R(θ) = [[cos θ, −sin θ], [sin θ, cos θ]]\n\nFor θ = 30°: cos 30° ≈ 0.866, sin 30° = 0.5, and R·[2, 0] = 2·[0.866, 0.5] = [1.732, 1]. That rotation matrix will be with you all the way to ROS 2: every robot heading is one.\n\n**Dependent columns squash space.** If M's columns are on one line, e.g. [[1, 2], [2, 4]], every output x·[1, 2] + y·[2, 4] lies on the line y = 2x: the whole plane is flattened onto a line. That's Tuesday's span, seen as a transformation. The \"column space\" (Week 3) is exactly the span of the columns.\n\n**Is it linear?** f(x, y) = (x + y, x·y) is not: f(1, 1) = (2, 1) but f(2, 2) = (4, 4), not 2·(2, 1) = (4, 2). Scaling the input didn't scale the output. g(x, y) = (y, x) is linear: it swaps coordinates, which is the reflection across the line y = x, with matrix [[0, 1], [1, 0]].\n\nRobotics preview: moving a robot both rotates and translates, and translation isn't linear. Robotics handles it with a trick (an extra coordinate, \"homogeneous coordinates\") that makes it a matrix again. You'll meet it in Phase D."
     },
     {
      "kind": "practice",
@@ -1961,11 +1977,13 @@
      "questions": [
       {
        "q": "Matrix with columns [2, 1] and [−1, 1] applied to [3, 2]?",
-       "a": "3·[2, 1] + 2·[−1, 1] = [4, 5]"
+       "a": "3·[2, 1] + 2·[−1, 1] = [4, 5]",
+       "from": "math-w01-3"
       },
       {
        "q": "Rotation matrix for θ, from this morning?",
-       "a": "[[cos θ, −sin θ], [sin θ, cos θ]]"
+       "a": "[[cos θ, −sin θ], [sin θ, cos θ]]",
+       "from": "math-w01-3"
       }
      ]
     },
@@ -2370,23 +2388,26 @@
      "questions": [
       {
        "q": "In Week 0 you put a breakpoint on the `return` line of `hello.py`. When the debugger stopped there, what did the Variables panel show?",
-       "a": "The local names of `greet` at that moment: `name` (the current person) and `message` (the finished greeting string). Execution was paused before the return ran."
+       "a": "The local names of `greet` at that moment: `name` (the current person) and `message` (the finished greeting string). Execution was paused before the return ran.",
+       "from": "tools-w00-1"
       },
       {
        "q": "Is `\"0\"` truthy? What does `bool([])` give?",
-       "a": "`\"0\"` is truthy (non-empty string); `bool([])` is False."
+       "a": "`\"0\"` is truthy (non-empty string); `bool([])` is False.",
+       "from": "python-w01-2"
       },
       {
        "q": "Write `is_leap(year)` as a single return statement.",
-       "a": "`return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)`"
+       "a": "`return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)`",
+       "from": "python-w01-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict both numbers before running:\n\n```python\ntotal = 0\nfor i in range(1, 5):\n    if i == 3:\n        continue\n    total += i\nprint(total)\n\nn = 10\nsteps = 0\nwhile n > 1:\n    n = n // 2\n    steps += 1\nprint(steps)\n```\n\nAnswer: `7` (1 + 2 + 4; `range(1, 5)` stops before 5 and 3 is skipped) and `3` (10 → 5 → 2 → 1). The second loop counts how many times you can halve n: that is roughly log₂ n, the number behind Monday's binary search."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\ntotal = 0\nfor i in range(1, 5):\n    if i == 3:\n        continue\n    total += i\nprint(total)\n\nn = 10\nsteps = 0\nwhile n > 1:\n    n = n // 2\n    steps += 1\nprint(steps)\n```\n\n**It prints** `7` (1 + 2 + 4: `range(1, 5)` stops before 5, and 3 is skipped by `continue`) and then `3` (10 → 5 → 2 → 1). The second loop counts how many times you can halve n: roughly log₂ n, the number behind Monday's binary search."
     },
     {
      "kind": "learn",
@@ -2498,7 +2519,15 @@
    ],
    "deliverable": "learning-log/week01/python/loops.py with the four functions, the fixed longest_streak, and a note on the bug you found with the debugger, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Palindrome Number",
+     "url": "https://leetcode.com/problems/palindrome-number/",
+     "level": "easy",
+     "uses": "a while loop with // and % (this lesson); no strings needed"
+    }
+   ]
   },
   {
    "id": "algo-w01-3",
@@ -2540,15 +2569,18 @@
      "questions": [
       {
        "q": "Comparisons made by selection sort on 10 elements?",
-       "a": "45"
+       "a": "45",
+       "from": "algo-w01-2"
       },
       {
        "q": "Cost of `list.pop(0)` on a Python list of n elements, and why?",
-       "a": "O(n): every remaining element shifts one place left."
+       "a": "O(n): every remaining element shifts one place left.",
+       "from": "algo-w01-2"
       },
       {
        "q": "This morning's `pairs_summing_to` used nested loops with `j` from `i + 1`. Its Big-O?",
-       "a": "O(n²): n(n−1)/2 inner iterations."
+       "a": "O(n²): n(n−1)/2 inner iterations.",
+       "from": "python-w01-3"
       }
      ]
     },
@@ -2657,7 +2689,15 @@
    ],
    "deliverable": "learning-log/week01/algo/bigo.md with the 15 classifications and reasons, and bigo.py with has_duplicates and common_items, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Number of Good Pairs",
+     "url": "https://leetcode.com/problems/number-of-good-pairs/",
+     "level": "easy",
+     "uses": "the nested i < j loop and its O(n²) cost (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w01-5",
@@ -2792,7 +2832,7 @@
      "kind": "learn",
      "minutes": 15,
      "title": "How first-years learn electricity",
-     "body": "You now have four sets of notes. Today they become one lesson (or a two-session block) your students can follow. Three things from teaching research and experience shape it:\n\n**1. Misconceptions don't disappear by being told the right answer.** The common ones at this stage:\n- *Current is used up* along the circuit (\"less current after the resistor\"). Counter it by measurement: students measure current before and after a resistor and see the same number.\n- *The battery delivers a fixed current.* It holds a voltage; the resistance decides the current. Counter it with Tuesday's table: one battery, four resistors, four currents.\n- *Voltage flows through things.* Insist on the language: voltage *across*, current *through*.\n- *A bigger resistor means more heat.* At fixed voltage it's the reverse: P = V²/R. Thursday's table shows it.\n\n**2. Predict, then measure.** A prediction written down before measuring is what makes the measurement memorable (it's the same pretest idea your own lessons use).\n\n**3. One concept per activity, with a check at the end of each.** Students lose the thread when voltage, current and power arrive in one breath.\n\n**The order** (matches this week's prep): closed loop → current → voltage → resistance → Ohm's law → measuring with the multimeter → power. If you have one 90-minute session, stop after Ohm's law with measurement and leave power for the start of the next session."
+     "body": "You now have four sets of notes. Today they become one lesson (or a two-session block) your students can follow. Three things from teaching research and experience shape it:\n\n**1. Misconceptions don't disappear by being told the right answer.** The common ones at this stage:\n- *Current is used up* along the circuit (\"less current after the resistor\"). Counter it by measurement: students measure current before and after a resistor and see the same number.\n- *The battery delivers a fixed current.* It holds a voltage; the resistance decides the current. Counter it with Tuesday's table: one battery, four resistors, four currents.\n- *Voltage flows through things.* Insist on the language: voltage *across*, current *through*.\n- *A bigger resistor means more heat.* At fixed voltage it's the reverse: P = V²/R. Thursday's table shows it.\n\n**2. Predict, then measure.** A prediction written down before measuring is what makes the measurement memorable (the same reason Yaver's lessons show worked examples and then check you).\n\n**3. One concept per activity, with a check at the end of each.** Students lose the thread when voltage, current and power arrive in one breath.\n\n**The order** (matches this week's prep): closed loop → current → voltage → resistance → Ohm's law → measuring with the multimeter → power. If you have one 90-minute session, stop after Ohm's law with measurement and leave power for the start of the next session."
     },
     {
      "kind": "simulate",
@@ -2875,27 +2915,31 @@
      "questions": [
       {
        "q": "Thursday: why is `M @ v` in NumPy so much faster than the same product with Python loops?",
-       "a": "Compiled code over contiguous, typed memory; no per-element interpreter overhead. Same O(n²) work, much smaller constant."
+       "a": "Compiled code over contiguous, typed memory; no per-element interpreter overhead. Same O(n²) work, much smaller constant.",
+       "from": "math-w01-4"
       },
       {
        "q": "Thursday: how do you get column j and row i of a NumPy array M?",
-       "a": "M[:, j] and M[i] (or M[i, :])."
+       "a": "M[:, j] and M[i] (or M[i, :]).",
+       "from": "math-w01-2"
       },
       {
        "q": "Tuesday's reading: after `b = a` for a list, does `a.append(4)` change b? Why?",
-       "a": "Yes: both names refer to the same list object."
+       "a": "Yes: both names refer to the same list object.",
+       "from": "ai-w01-1"
       },
       {
        "q": "Week 0 spec: what does one row of your tracker CSV look like?",
-       "a": "Something like `student_id,module,lesson,completed_at,score`, e.g. `S001,Python Basics,Loops,2026-10-05,78` (anonymized IDs, no names)."
+       "a": "Something like `student_id,module,lesson,completed_at,score`, e.g. `S001,Python Basics,Loops,2026-10-05,78` (anonymized IDs, no names).",
+       "from": "build-w01-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict each printed line before running:\n\n```python\nimport numpy as np\n\na = np.arange(6)\nb = a[2:5]\nb[0] = 99\nprint(a)\n\nm = a.reshape(2, 3)\nprint(m.shape, m[1, 2], m[:, 1])\nprint(m > 3)\n```\n\nAnswer: `[ 0  1 99  3  4  5]` (a slice is a *view*: changing `b` changed `a`, unlike Python lists, where slices are copies), then `(2, 3) 5 [1 4]`, then `[[False False  True] [False  True  True]]`. The view behaviour is the single most common NumPy surprise."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nimport numpy as np\n\na = np.arange(6)\nb = a[2:5]\nb[0] = 99\nprint(a)\n\nm = a.reshape(2, 3)\nprint(m.shape, m[1, 2], m[:, 1])\nprint(m > 3)\n```\n\n**It prints** `[ 0  1 99  3  4  5]`, then `(2, 3) 5 [1 4]`, then `[[False False  True] [False  True  True]]`.\n\nThe surprise is the first line: a NumPy slice is a *view*, so changing `b` changed `a`. Python list slices are copies. This is the most common NumPy surprise, and Learn covers it."
     },
     {
      "kind": "learn",

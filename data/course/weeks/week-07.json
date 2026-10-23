@@ -42,23 +42,26 @@
      "questions": [
       {
        "q": "In week 3 you wrote pytest tests. Why is a function that returns a value easier to test than one that prints it?",
-       "a": "A returned value can be compared with assert directly. Printed output has to be captured (capsys) and parsed, and the function usually mixes computing with formatting, so one test checks two things."
+       "a": "A returned value can be compared with assert directly. Printed output has to be captured (capsys) and parsed, and the function usually mixes computing with formatting, so one test checks two things.",
+       "from": "python-w03-1"
       },
       {
        "q": "What does `def f(*args, **kwargs)` collect in `args` and in `kwargs`? (week 5)",
-       "a": "`args` is a tuple of the extra positional arguments; `kwargs` is a dict of the extra keyword arguments."
+       "a": "`args` is a tuple of the extra positional arguments; `kwargs` is a dict of the extra keyword arguments.",
+       "from": "python-w05-3"
       },
       {
-       "q": "Your diagnostic resistor problem: 9 V supply, red LED at 2 V and 20 mA. Which resistor, and which standard value do you buy?",
-       "a": "(9 − 2) / 0.020 = 350 Ω; round up to the next E12 value, 390 Ω, which gives about 18 mA."
+       "q": "From the LED lesson: 9 V supply, red LED at 2 V and 20 mA. Which resistor, and which standard value do you buy?",
+       "a": "(9 − 2) / 0.020 = 350 Ω; round up to the next E12 value, 390 Ω, which gives about 18 mA.",
+       "from": "robo-w03-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "You are about to write a program that you will still be maintaining in three weeks. Before reading on, write down (paper is fine) answers to these:\n\n1. Name three functions your program will need, with their parameters and return values.\n2. Which of them read input or print? Which only compute?\n3. What is one input that should make a function raise an error instead of returning something?\n\nKeep the sheet. At the end of the lesson compare it with the design you actually choose."
+     "title": "First example",
+     "body": "You are about to write a program you will still be maintaining in three weeks. Here is the shape the Learn step builds on, using a resistor calculator as the example:\n\n1. **Three functions with clear inputs and outputs**, for example `parse_value(text) -> float`, `color_bands(ohms) -> list[str]` and `divider_out(vin, r1, r2) -> float`.\n2. **Only `main()` reads input or prints.** The other functions only compute, so they are easy to test.\n3. **Bad input raises an error** instead of returning something odd: a negative resistance raises `ValueError`.\n\nKeep this in mind while you read; at the end you'll write the same three lists for your own project."
     },
     {
      "kind": "learn",
@@ -204,11 +207,13 @@
      "questions": [
       {
        "q": "Week 5: which data structure drives breadth-first search, and why?",
-       "a": "A queue (FIFO), so nodes are visited in order of distance from the start."
+       "a": "A queue (FIFO), so nodes are visited in order of distance from the start.",
+       "from": "algo-w05-1"
       },
       {
        "q": "Week 2: what lives on the call stack during a recursive call?",
-       "a": "One frame per active call, holding its arguments, local variables and where to return."
+       "a": "One frame per active call, holding its arguments, local variables and where to return.",
+       "from": "python-w05-1"
       }
      ]
     },
@@ -317,7 +322,15 @@
      "back": "Preorder: node, left, right. Postorder: left, right, node."
     }
    ],
-   "deliverable": "bst_basics.py with contains, min/max, four traversals, height and sorted_to_bst, all asserts passing, committed."
+   "deliverable": "bst_basics.py with contains, min/max, four traversals, height and sorted_to_bst, all asserts passing, committed.",
+   "leetcode": [
+    {
+     "title": "Range Sum of BST",
+     "url": "https://leetcode.com/problems/range-sum-of-bst/",
+     "level": "easy",
+     "uses": "BST traversal that skips subtrees (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w07-1",
@@ -608,29 +621,32 @@
      "questions": [
       {
        "q": "Week 3: what does det(A) = 0 mean geometrically?",
-       "a": "The transformation squashes space into a lower dimension (a line or a point in 2D), so A is not invertible and some non-zero vector maps to 0."
+       "a": "The transformation squashes space into a lower dimension (a line or a point in 2D), so A is not invertible and some non-zero vector maps to 0.",
+       "from": "math-w03-3"
       },
       {
        "q": "Week 5: in a change of basis, what does B⁻¹AB represent if B's columns are a new basis?",
-       "a": "The same transformation as A, written in the coordinates of the new basis."
+       "a": "The same transformation as A, written in the coordinates of the new basis.",
+       "from": "math-w05-3"
       },
       {
        "q": "Week 1: what are the columns of a 2×2 matrix?",
-       "a": "Where the basis vectors î and ĵ land after the transformation."
+       "a": "Where the basis vectors î and ĵ land after the transformation.",
+       "from": "math-w02-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Take A = [[3, 1], [0, 2]] (rows). Before watching anything, apply A to these vectors and write down the results: (1, 0), (0, 1), (1, 1), (1, −1). Which of the outputs point in the same direction as their input (or exactly opposite)? Guess what is special about those vectors."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTake A = [[3, 1], [0, 2]] (rows) and apply it to four vectors:\n\n- (1, 0) → **(3, 0)**: same direction, stretched by 3.\n- (0, 1) → (1, 2): a different direction.\n- (1, 1) → (4, 2): a different direction.\n- (1, −1) → **(2, −2)**: same direction, stretched by 2.\n\nVectors that A only stretches, without turning, are its *eigenvectors*, and the stretch factors (3 and 2) are its *eigenvalues*. That's today's topic."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## The idea\n\nA matrix moves almost every vector off the line it was on. An **eigenvector** of A is a non-zero vector that stays on its own line (its span): A only stretches or flips it. The stretch factor is the **eigenvalue** λ:\n\n**A v = λ v**\n\nFrom your prediction: A = [[3, 1], [0, 2]] sends (1, 0) to (3, 0), the same direction stretched by 3, and (1, −1) to (3 − 1, −2) = (2, −2) = 2·(1, −1). So (1, 0) is an eigenvector with λ = 3 and (1, −1) one with λ = 2. (1, 1) goes to (4, 2): it is knocked off its line, so it is not an eigenvector. Any multiple of an eigenvector is one too; what matters is the line.\n\nWhy care: a rotation in 3D has an eigenvector with λ = 1, and that line is the **axis of rotation**. In robotics that is exactly how you read a rotation matrix. In data science, the eigenvectors of a covariance matrix are the principal directions (PCA, later in the course). In your Week 7 power-iteration practice, repeatedly applying A pulls every vector toward the eigenvector with the largest |λ|.\n\n## Finding them: det(A − λI) = 0\n\nRewrite A v = λ v as (A − λI) v = 0. A non-zero v is sent to zero only if (A − λI) squashes space, i.e. **det(A − λI) = 0** (week 3). For A = [[a, b], [c, d]]:\n\n(a − λ)(d − λ) − bc = 0, that is λ² − (a + d)λ + (ad − bc) = 0.\n\nSo the eigenvalues depend only on the **trace** (a + d) and the **determinant** (ad − bc).\n\n### Worked example 1\n\nA = [[2, 1], [1, 2]]. Trace 4, determinant 3: λ² − 4λ + 3 = 0, so λ = 3 or λ = 1.\n\n- λ = 3: A − 3I = [[−1, 1], [1, −1]]. The rows say −x + y = 0, so v = (1, 1).\n- λ = 1: A − I = [[1, 1], [1, 1]] → x + y = 0, v = (1, −1).\n\nCheck: A(1, 1) = (3, 3) ✓ and A(1, −1) = (1, −1) ✓.\n\n### The quick trick (3Blue1Brown's second video)\n\nLet m = trace / 2 (the mean of the two eigenvalues) and p = det (their product). Then\n\n**λ = m ± √(m² − p)**\n\nFor [[2, 1], [1, 2]]: m = 2, p = 3, λ = 2 ± √1 = 3, 1. For [[3, 1], [0, 2]]: m = 2.5, p = 6, λ = 2.5 ± √0.25 = 3, 2. If m² − p < 0 the eigenvalues are complex: no real vector stays on its line, as with a 90° rotation [[0, −1], [1, 0]] (m = 0, p = 1).\n\n### Not every matrix has enough eigenvectors\n\nThe shear [[1, 1], [0, 1]] has λ = 1 twice, but only the x-axis stays put: one eigen-line, not two. Such matrices cannot be diagonalized.\n\n## Eigenbasis: why it simplifies everything\n\nIf the eigenvectors span the space, use them as a basis (week 5). In that basis A is **diagonal**: it just scales each axis. With V = [eigenvectors as columns] and D = diag(λ):\n\nA = V D V⁻¹, so Aⁿ = V Dⁿ V⁻¹, and Dⁿ is just each λ to the n-th power.\n\n```python\nimport numpy as np\n\nA = np.array([[2.0, 1.0], [1.0, 2.0]])\nV = np.array([[1.0, 1.0], [1.0, -1.0]])      # eigenvectors (1,1) and (1,-1) as columns\nD = np.diag([3.0, 1.0])\n\nprint(np.allclose(A, V @ D @ np.linalg.inv(V)))           # True\n\nn = 10\nA10 = V @ np.diag([3.0**n, 1.0**n]) @ np.linalg.inv(V)\nprint(A10)                                                  # [[29525, 29524], [29524, 29525]]\nprint(np.allclose(A10, np.linalg.matrix_power(A, n)))     # True\n\nvals, vecs = np.linalg.eig(A)\nprint(vals)                    # 3 and 1 (order may vary)\nprint(vecs)                    # columns are unit eigenvectors, sign may differ\nfor i in range(2):\n    v = vecs[:, i]\n    print(np.allclose(A @ v, vals[i] * v))                 # True, True\n```\n\nRead the A¹⁰ result: 29525 ≈ 3¹⁰/2. After many applications the λ = 3 direction dominates completely; that is the whole idea behind power iteration on Tuesday's practice. Also note that `np.linalg.eig` returns *unit* eigenvectors whose sign is arbitrary, so compare directions, not raw numbers."
+     "body": "## The idea\n\nA matrix moves almost every vector off the line it was on. An **eigenvector** of A is a non-zero vector that stays on its own line (its span): A only stretches or flips it. The stretch factor is the **eigenvalue** λ:\n\n**A v = λ v**\n\nFrom the first example: A = [[3, 1], [0, 2]] sends (1, 0) to (3, 0), the same direction stretched by 3, and (1, −1) to (3 − 1, −2) = (2, −2) = 2·(1, −1). So (1, 0) is an eigenvector with λ = 3 and (1, −1) one with λ = 2. (1, 1) goes to (4, 2): it is knocked off its line, so it is not an eigenvector. Any multiple of an eigenvector is one too; what matters is the line.\n\nWhy care: a rotation in 3D has an eigenvector with λ = 1, and that line is the **axis of rotation**. In robotics that is exactly how you read a rotation matrix. In data science, the eigenvectors of a covariance matrix are the principal directions (PCA, later in the course). In your Week 7 power-iteration practice, repeatedly applying A pulls every vector toward the eigenvector with the largest |λ|.\n\n## Finding them: det(A − λI) = 0\n\nRewrite A v = λ v as (A − λI) v = 0. A non-zero v is sent to zero only if (A − λI) squashes space, i.e. **det(A − λI) = 0** (week 3). For A = [[a, b], [c, d]]:\n\n(a − λ)(d − λ) − bc = 0, that is λ² − (a + d)λ + (ad − bc) = 0.\n\nSo the eigenvalues depend only on the **trace** (a + d) and the **determinant** (ad − bc).\n\n### Worked example 1\n\nA = [[2, 1], [1, 2]]. Trace 4, determinant 3: λ² − 4λ + 3 = 0, so λ = 3 or λ = 1.\n\n- λ = 3: A − 3I = [[−1, 1], [1, −1]]. The rows say −x + y = 0, so v = (1, 1).\n- λ = 1: A − I = [[1, 1], [1, 1]] → x + y = 0, v = (1, −1).\n\nCheck: A(1, 1) = (3, 3) ✓ and A(1, −1) = (1, −1) ✓.\n\n### The quick trick (3Blue1Brown's second video)\n\nLet m = trace / 2 (the mean of the two eigenvalues) and p = det (their product). Then\n\n**λ = m ± √(m² − p)**\n\nFor [[2, 1], [1, 2]]: m = 2, p = 3, λ = 2 ± √1 = 3, 1. For [[3, 1], [0, 2]]: m = 2.5, p = 6, λ = 2.5 ± √0.25 = 3, 2. If m² − p < 0 the eigenvalues are complex: no real vector stays on its line, as with a 90° rotation [[0, −1], [1, 0]] (m = 0, p = 1).\n\n### Not every matrix has enough eigenvectors\n\nThe shear [[1, 1], [0, 1]] has λ = 1 twice, but only the x-axis stays put: one eigen-line, not two. Such matrices cannot be diagonalized.\n\n## Eigenbasis: why it simplifies everything\n\nIf the eigenvectors span the space, use them as a basis (week 5). In that basis A is **diagonal**: it just scales each axis. With V = [eigenvectors as columns] and D = diag(λ):\n\nA = V D V⁻¹, so Aⁿ = V Dⁿ V⁻¹, and Dⁿ is just each λ to the n-th power.\n\n```python\nimport numpy as np\n\nA = np.array([[2.0, 1.0], [1.0, 2.0]])\nV = np.array([[1.0, 1.0], [1.0, -1.0]])      # eigenvectors (1,1) and (1,-1) as columns\nD = np.diag([3.0, 1.0])\n\nprint(np.allclose(A, V @ D @ np.linalg.inv(V)))           # True\n\nn = 10\nA10 = V @ np.diag([3.0**n, 1.0**n]) @ np.linalg.inv(V)\nprint(A10)                                                  # [[29525, 29524], [29524, 29525]]\nprint(np.allclose(A10, np.linalg.matrix_power(A, n)))     # True\n\nvals, vecs = np.linalg.eig(A)\nprint(vals)                    # 3 and 1 (order may vary)\nprint(vecs)                    # columns are unit eigenvectors, sign may differ\nfor i in range(2):\n    v = vecs[:, i]\n    print(np.allclose(A @ v, vals[i] * v))                 # True, True\n```\n\nRead the A¹⁰ result: 29525 ≈ 3¹⁰/2. After many applications the λ = 3 direction dominates completely; that is the whole idea behind power iteration on Tuesday's practice. Also note that `np.linalg.eig` returns *unit* eigenvectors whose sign is arbitrary, so compare directions, not raw numbers."
     },
     {
      "kind": "practice",
@@ -771,11 +787,13 @@
      "questions": [
       {
        "q": "This morning: eigenvalues of [[2, 1], [1, 2]] and their eigenvectors?",
-       "a": "3 with (1, 1), and 1 with (1, −1)."
+       "a": "3 with (1, 1), and 1 with (1, −1).",
+       "from": "math-w07-1"
       },
       {
        "q": "Why did A¹⁰ for that matrix look like 3¹⁰/2 in every entry?",
-       "a": "The λ = 3 component grows like 3ⁿ and swamps the λ = 1 component."
+       "a": "The λ = 3 component grows like 3ⁿ and swamps the λ = 1 component.",
+       "from": "math-w07-1"
       }
      ]
     },
@@ -1175,29 +1193,32 @@
      "questions": [
       {
        "q": "What does `for ... else` do in Python? (CS50P 2 / week 1)",
-       "a": "The else block runs only if the loop finished without hitting break."
+       "a": "The else block runs only if the loop finished without hitting break.",
+       "from": "python-w01-3"
       },
       {
        "q": "What is the difference between `raise ValueError(\"x\") from None` and a plain raise inside an except block?",
-       "a": "`from None` hides the original exception from the traceback, so the user sees only your clear message."
+       "a": "`from None` hides the original exception from the traceback, so the user sees only your clear message.",
+       "from": "python-w02-1"
       },
       {
        "q": "From Monday: what does e12_up(8300) return and why?",
-       "a": "10000: 8.2 kΩ is too small, so the value rolls over to the next decade."
+       "a": "10000: 8.2 kΩ is too small, so the value rolls over to the next decade.",
+       "from": "python-w07-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict what each of these does when the program is run from a terminal, before reading on:\n\n```python-snippet\nimport sys\nsys.exit(\"resistance must be positive\")\n```\n\n```python-snippet\nimport sys\nsys.exit(0)\n```\n\nWhat is printed, where (stdout or stderr), and what exit code does the shell see in each case?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n```python-snippet\nimport sys\nsys.exit(\"resistance must be positive\")\n```\n\n```python-snippet\nimport sys\nsys.exit(0)\n```\n\n**Results:** `sys.exit(\"resistance must be positive\")` prints the message to **stderr** and the shell sees exit code **1**. `sys.exit(0)` prints nothing, and the shell sees **0**, which means success. Learn uses this for the program's error handling."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## Today's goal\n\nMonday you wrote the core for the `led` command. Today you finish the core (`parse_value`, `color_bands`, `divider_out`) and write the shell: a `main()` that turns command-line words into function calls.\n\n## Answer to the prediction\n\n`sys.exit(\"message\")` prints the message to **stderr** and exits with code **1**. `sys.exit(0)` prints nothing and exits with 0, which means success. That is exactly what a command-line tool should do on bad input: a human-readable message, and a non-zero code that scripts (like the bash script you wrote in week 4) can check with `$?`.\n\n## Parsing values the way schematics write them\n\nEngineers write `4.7k`, `2k2` (the letter replaces the decimal point, so it cannot be lost when a photocopy drops a dot), `1M`, `330` and `4R7` (4.7 Ω). A parser that accepts all of them:\n\n```python\ndef parse_value(text):\n    \"\"\"'4.7k' -> 4700.0, '2k2' -> 2200.0, '1M' -> 1e6, '330' -> 330.0\"\"\"\n    t = text.strip()\n    if not t:\n        raise ValueError(\"empty value\")\n    mult = {\"k\": 1e3, \"K\": 1e3, \"M\": 1e6, \"R\": 1.0}\n    for letter, factor in mult.items():\n        if letter in t:\n            head, _, tail = t.partition(letter)\n            if tail and not tail.isdigit():\n                raise ValueError(f\"bad value: {text!r}\")\n            number = head + (\".\" + tail if tail else \"\")\n            try:\n                value = float(number) * factor\n            except ValueError:\n                raise ValueError(f\"bad value: {text!r}\") from None\n            break\n    else:\n        try:\n            value = float(t)\n        except ValueError:\n            raise ValueError(f\"bad value: {text!r}\") from None\n    if value <= 0:\n        raise ValueError(\"value must be positive\")\n    return round(value, 6)\n\n\nfor s in [\"330\", \"4.7k\", \"2k2\", \"1M\", \"4R7\", \" 10k \"]:\n    print(f\"{s!r:>8} -> {parse_value(s)}\")\nfor bad in [\"\", \"abc\", \"4k7x\", \"-5\"]:\n    try:\n        parse_value(bad)\n    except ValueError as e:\n        print(f\"{bad!r:>8} -> ValueError: {e}\")\n```\n\nThe `for ... else` is doing real work: the `else` runs only when no suffix letter was found, so plain numbers fall through to `float`. Note `except ValueError: raise ValueError(...) from None`: the user sees *your* message, not `could not convert string to float`.\n\n## The shell: a dispatch table\n\nInstead of a chain of `if command == \"led\": ... elif ...`, map command names to handler functions. Each handler takes the remaining arguments as strings and returns the text to print. Keep the dispatching in a `run(argv)` function that returns a string; `main()` only calls it and prints. That makes the whole command line testable without a terminal.\n\n```python\nimport sys\n\n\ndef cmd_double(args):\n    (x,) = args               # raises ValueError if not exactly one arg\n    return str(2 * float(x))\n\n\ndef cmd_add(args):\n    return str(sum(float(a) for a in args))\n\n\nCOMMANDS = {\"double\": cmd_double, \"add\": cmd_add}\n\n\ndef run(argv):\n    if not argv or argv[0] not in COMMANDS:\n        raise ValueError(\"usage: project.py {\" + \",\".join(COMMANDS) + \"} ARGS...\")\n    return COMMANDS[argv[0]](argv[1:])\n\n\ndef main():\n    try:\n        print(run(sys.argv[1:]))\n    except ValueError as e:\n        sys.exit(str(e))\n\n\n# Instead of a terminal, call run() the way main() would:\nprint(run([\"double\", \"21\"]))\nprint(run([\"add\", \"1\", \"2\", \"3.5\"]))\ntry:\n    run([\"nope\"])\nexcept ValueError as e:\n    print(\"error:\", e)\n```\n\nTwo details. Unpacking `(x,) = args` is a compact arity check: wrong number of arguments raises `ValueError`, which `main` already handles. And a new command is one function plus one dict entry, which is the open/closed idea you met with classes in week 4, done with plain functions.\n\nIn the real file, end with the usual guard so importing `project` from `test_project.py` does not run `main()`:\n\n```python-snippet\nif __name__ == \"__main__\":\n    main()\n```\n\n## Plan for the 30 minutes\n\nWrite `color_bands` and `divider_out` (tasks 1 and 2), then wire `run` with three commands (task 3). If time is left, try the program from a real terminal with good and bad input and check `echo $?` after each."
+     "body": "## Today's goal\n\nMonday you wrote the core for the `led` command. Today you finish the core (`parse_value`, `color_bands`, `divider_out`) and write the shell: a `main()` that turns command-line words into function calls.\n\n## The first example, explained\n\n`sys.exit(\"message\")` prints the message to **stderr** and exits with code **1**. `sys.exit(0)` prints nothing and exits with 0, which means success. That is exactly what a command-line tool should do on bad input: a human-readable message, and a non-zero code that scripts (like the bash script you wrote in week 4) can check with `$?`.\n\n## Parsing values the way schematics write them\n\nEngineers write `4.7k`, `2k2` (the letter replaces the decimal point, so it cannot be lost when a photocopy drops a dot), `1M`, `330` and `4R7` (4.7 Ω). A parser that accepts all of them:\n\n```python\ndef parse_value(text):\n    \"\"\"'4.7k' -> 4700.0, '2k2' -> 2200.0, '1M' -> 1e6, '330' -> 330.0\"\"\"\n    t = text.strip()\n    if not t:\n        raise ValueError(\"empty value\")\n    mult = {\"k\": 1e3, \"K\": 1e3, \"M\": 1e6, \"R\": 1.0}\n    for letter, factor in mult.items():\n        if letter in t:\n            head, _, tail = t.partition(letter)\n            if tail and not tail.isdigit():\n                raise ValueError(f\"bad value: {text!r}\")\n            number = head + (\".\" + tail if tail else \"\")\n            try:\n                value = float(number) * factor\n            except ValueError:\n                raise ValueError(f\"bad value: {text!r}\") from None\n            break\n    else:\n        try:\n            value = float(t)\n        except ValueError:\n            raise ValueError(f\"bad value: {text!r}\") from None\n    if value <= 0:\n        raise ValueError(\"value must be positive\")\n    return round(value, 6)\n\n\nfor s in [\"330\", \"4.7k\", \"2k2\", \"1M\", \"4R7\", \" 10k \"]:\n    print(f\"{s!r:>8} -> {parse_value(s)}\")\nfor bad in [\"\", \"abc\", \"4k7x\", \"-5\"]:\n    try:\n        parse_value(bad)\n    except ValueError as e:\n        print(f\"{bad!r:>8} -> ValueError: {e}\")\n```\n\nThe `for ... else` is doing real work: the `else` runs only when no suffix letter was found, so plain numbers fall through to `float`. Note `except ValueError: raise ValueError(...) from None`: the user sees *your* message, not `could not convert string to float`.\n\n## The shell: a dispatch table\n\nInstead of a chain of `if command == \"led\": ... elif ...`, map command names to handler functions. Each handler takes the remaining arguments as strings and returns the text to print. Keep the dispatching in a `run(argv)` function that returns a string; `main()` only calls it and prints. That makes the whole command line testable without a terminal.\n\n```python\nimport sys\n\n\ndef cmd_double(args):\n    (x,) = args               # raises ValueError if not exactly one arg\n    return str(2 * float(x))\n\n\ndef cmd_add(args):\n    return str(sum(float(a) for a in args))\n\n\nCOMMANDS = {\"double\": cmd_double, \"add\": cmd_add}\n\n\ndef run(argv):\n    if not argv or argv[0] not in COMMANDS:\n        raise ValueError(\"usage: project.py {\" + \",\".join(COMMANDS) + \"} ARGS...\")\n    return COMMANDS[argv[0]](argv[1:])\n\n\ndef main():\n    try:\n        print(run(sys.argv[1:]))\n    except ValueError as e:\n        sys.exit(str(e))\n\n\n# Instead of a terminal, call run() the way main() would:\nprint(run([\"double\", \"21\"]))\nprint(run([\"add\", \"1\", \"2\", \"3.5\"]))\ntry:\n    run([\"nope\"])\nexcept ValueError as e:\n    print(\"error:\", e)\n```\n\nTwo details. Unpacking `(x,) = args` is a compact arity check: wrong number of arguments raises `ValueError`, which `main` already handles. And a new command is one function plus one dict entry, which is the open/closed idea you met with classes in week 4, done with plain functions.\n\nIn the real file, end with the usual guard so importing `project` from `test_project.py` does not run `main()`:\n\n```python-snippet\nif __name__ == \"__main__\":\n    main()\n```\n\n## Plan for the 30 minutes\n\nWrite `color_bands` and `divider_out` (tasks 1 and 2), then wire `run` with three commands (task 3). If time is left, try the program from a real terminal with good and bad input and check `echo $?` after each."
     },
     {
      "kind": "practice",
@@ -1333,11 +1354,13 @@
      "questions": [
       {
        "q": "Monday: inorder of build([8, 3, 10, 1, 6, 14])?",
-       "a": "[1, 3, 6, 8, 10, 14]"
+       "a": "[1, 3, 6, 8, 10, 14]",
+       "from": "algo-w07-1"
       },
       {
        "q": "Week 5: what does `yield from gen()` do inside a generator?",
-       "a": "It yields every value produced by gen() in turn, as if you looped over it and yielded each one."
+       "a": "It yields every value produced by gen() in turn, as if you looped over it and yielded each one.",
+       "from": "python-w05-2"
       }
      ]
     },
@@ -1446,7 +1469,15 @@
      "back": "__contains__, __len__, __iter__"
     }
    ],
-   "deliverable": "bst.py with the BST class, delete, is_bst and range_keys, each with plain-assert tests, committed."
+   "deliverable": "bst.py with the BST class, delete, is_bst and range_keys, each with plain-assert tests, committed.",
+   "leetcode": [
+    {
+     "title": "Convert Sorted Array to Binary Search Tree",
+     "url": "https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/",
+     "level": "easy",
+     "uses": "building a BST recursively (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w07-3",
@@ -1725,29 +1756,32 @@
      "questions": [
       {
        "q": "Week 3: what are the column space and the null space of A?",
-       "a": "Column space: all outputs Ax (span of the columns). Null space: all x with Ax = 0."
+       "a": "Column space: all outputs Ax (span of the columns). Null space: all x with Ax = 0.",
+       "from": "math-w04-1"
       },
       {
        "q": "Tuesday: eigenvalues of [[4, 1], [2, 3]]?",
-       "a": "5 and 2."
+       "a": "5 and 2.",
+       "from": "math-w07-1"
       },
       {
        "q": "Week 3: what does rank mean geometrically?",
-       "a": "The number of dimensions of the output (column) space."
+       "a": "The number of dimensions of the output (column) space.",
+       "from": "math-w04-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Without computing anything, predict: how many solutions does this system have, and why?\n\nx + 2y + z = 4\n2x + 4y = 4\n3x + 6y + z = 8\n\n(Hint to check yourself afterwards: look at how the third equation relates to the first two.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nHow many solutions does this system have?\n\nx + 2y + z = 4\n2x + 4y = 4\n3x + 6y + z = 8\n\n**Infinitely many.** The third equation is the first plus the second, so it adds no new information: you have two independent equations for three unknowns, and one unknown stays free. Learn works through this system step by step."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Learn",
-     "body": "## Why this chapter now\n\n3Blue1Brown gave you the geometry; *Mathematics for Machine Learning* chapter 2 gives you the algebra you will need to read ML papers and textbooks: solving systems, vector spaces, independence, basis, rank, linear maps. Most of it is one algorithm, **Gaussian elimination**, looked at from different sides. Read the chapter's sections in this order and use this lesson as the map.\n\n## Gaussian elimination\n\nWrite the system as an augmented matrix [A | b] and use three row operations that do not change the solution set: swap two rows, multiply a row by a non-zero number, add a multiple of one row to another. Goal: **row echelon form** (a staircase of leading entries), then **reduced** row echelon form (RREF: each leading entry is 1 and is the only non-zero in its column).\n\n### Worked example: the prediction system\n\n```\n[1 2 1 | 4]\n[2 4 0 | 4]     R2 ← R2 − 2R1   →  [0 0 −2 | −4]\n[3 6 1 | 8]     R3 ← R3 − 3R1   →  [0 0 −2 | −4]\n```\n\nR3 ← R3 − R2 gives a zero row: [0 0 0 | 0]. The third equation was the sum of the first two, so it added no information. Scale R2 by −1/2: z = 2. Then R1 ← R1 − R2: x + 2y = 2.\n\nRREF:\n```\n[1 2 0 | 2]\n[0 0 1 | 2]\n[0 0 0 | 0]\n```\n\nColumns 1 and 3 have pivots; column 2 (y) has none, so **y is free**. Every solution is\n\n(x, y, z) = (2 − 2t, t, 2) = **(2, 0, 2) + t·(−2, 1, 0)**.\n\nThat shape is the main result of the solving-systems section: **general solution = one particular solution + anything in the null space**. Check: A(2, 0, 2) = (4, 4, 8) = b, and A(−2, 1, 0) = (0, 0, 0). Infinitely many solutions, on a line.\n\n## The same reduction answers four questions\n\n- **Rank** = number of pivots = 2 here. It is the dimension of the column space (week 3's picture: the 3D space is squashed onto a plane).\n- **Linear independence**: the columns are independent exactly when every column has a pivot. Column 2 = 2 × column 1, so they are dependent.\n- **Null space**: one basis vector per free column. Here one free column → the null space is a line spanned by (−2, 1, 0).\n- **Rank–nullity**: rank + dim(null space) = number of columns: 2 + 1 = 3.\n\nAnd the solution count: a system has a solution iff b is in the column space (no row [0 … 0 | non-zero] appears). If it has one, it has exactly one when the null space is {0} (no free variables), otherwise infinitely many.\n\n## Exact RREF in code\n\nFloating point hides zeros (1e-17 instead of 0), so to *see* the structure, use fractions:\n\n```python\nfrom fractions import Fraction\n\n\ndef rref(rows):\n    \"\"\"Reduced row echelon form with exact fractions. Returns (matrix, pivot_columns).\"\"\"\n    M = [[Fraction(x) for x in row] for row in rows]\n    n_rows, n_cols = len(M), len(M[0])\n    pivots = []\n    r = 0\n    for c in range(n_cols):\n        pivot = next((i for i in range(r, n_rows) if M[i][c] != 0), None)\n        if pivot is None:\n            continue\n        M[r], M[pivot] = M[pivot], M[r]\n        lead = M[r][c]\n        M[r] = [x / lead for x in M[r]]\n        for i in range(n_rows):\n            if i != r and M[i][c] != 0:\n                f = M[i][c]\n                M[i] = [a - f * b for a, b in zip(M[i], M[r])]\n        pivots.append(c)\n        r += 1\n        if r == n_rows:\n            break\n    return M, pivots\n\n\nA_b = [[1, 2, 1, 4],\n       [2, 4, 0, 4],\n       [3, 6, 1, 8]]\nR, piv = rref(A_b)\nfor row in R:\n    print([str(x) for x in row])\nprint(\"pivot columns:\", piv)          # [0, 2]: y (column 1) is free\n\nimport numpy as np\nA = np.array(A_b, dtype=float)[:, :3]\nprint(\"rank:\", np.linalg.matrix_rank(A))                           # 2\nprint(\"A @ particular:\", A @ np.array([2.0, 0.0, 2.0]))            # [4. 4. 8.]\nprint(\"A @ null vector:\", A @ np.array([-2.0, 1.0, 0.0]))          # [0. 0. 0.]\n```\n\n`np.linalg.solve(A, b)` would fail here: it only works for square, invertible A. For real data with more equations than unknowns you will use least squares instead, which is where chapter 3 of MML goes next.\n\n## Vector spaces and linear maps, briefly\n\nThe chapter defines a vector space by its rules (closed under addition and scaling, with a zero) so the same theorems apply to arrows, lists of numbers, polynomials and images. A **linear mapping** is any function with f(ax + by) = af(x) + bf(y); every linear map between finite-dimensional spaces is a matrix once you pick bases, and changing the bases changes the matrix (your week 5 change of basis). An **affine** map adds a shift, f(x) = Ax + c: it is not linear (f(0) ≠ 0 unless c = 0), which matters later when you meet homogeneous coordinates in robotics."
+     "body": "## Why this chapter now\n\n3Blue1Brown gave you the geometry; *Mathematics for Machine Learning* chapter 2 gives you the algebra you will need to read ML papers and textbooks: solving systems, vector spaces, independence, basis, rank, linear maps. Most of it is one algorithm, **Gaussian elimination**, looked at from different sides. Read the chapter's sections in this order and use this lesson as the map.\n\n## Gaussian elimination\n\nWrite the system as an augmented matrix [A | b] and use three row operations that do not change the solution set: swap two rows, multiply a row by a non-zero number, add a multiple of one row to another. Goal: **row echelon form** (a staircase of leading entries), then **reduced** row echelon form (RREF: each leading entry is 1 and is the only non-zero in its column).\n\n### Worked example: the system from the first example\n\n```\n[1 2 1 | 4]\n[2 4 0 | 4]     R2 ← R2 − 2R1   →  [0 0 −2 | −4]\n[3 6 1 | 8]     R3 ← R3 − 3R1   →  [0 0 −2 | −4]\n```\n\nR3 ← R3 − R2 gives a zero row: [0 0 0 | 0]. The third equation was the sum of the first two, so it added no information. Scale R2 by −1/2: z = 2. Then R1 ← R1 − R2: x + 2y = 2.\n\nRREF:\n```\n[1 2 0 | 2]\n[0 0 1 | 2]\n[0 0 0 | 0]\n```\n\nColumns 1 and 3 have pivots; column 2 (y) has none, so **y is free**. Every solution is\n\n(x, y, z) = (2 − 2t, t, 2) = **(2, 0, 2) + t·(−2, 1, 0)**.\n\nThat shape is the main result of the solving-systems section: **general solution = one particular solution + anything in the null space**. Check: A(2, 0, 2) = (4, 4, 8) = b, and A(−2, 1, 0) = (0, 0, 0). Infinitely many solutions, on a line.\n\n## The same reduction answers four questions\n\n- **Rank** = number of pivots = 2 here. It is the dimension of the column space (week 3's picture: the 3D space is squashed onto a plane).\n- **Linear independence**: the columns are independent exactly when every column has a pivot. Column 2 = 2 × column 1, so they are dependent.\n- **Null space**: one basis vector per free column. Here one free column → the null space is a line spanned by (−2, 1, 0).\n- **Rank–nullity**: rank + dim(null space) = number of columns: 2 + 1 = 3.\n\nAnd the solution count: a system has a solution iff b is in the column space (no row [0 … 0 | non-zero] appears). If it has one, it has exactly one when the null space is {0} (no free variables), otherwise infinitely many.\n\n## Exact RREF in code\n\nFloating point hides zeros (1e-17 instead of 0), so to *see* the structure, use fractions:\n\n```python\nfrom fractions import Fraction\n\n\ndef rref(rows):\n    \"\"\"Reduced row echelon form with exact fractions. Returns (matrix, pivot_columns).\"\"\"\n    M = [[Fraction(x) for x in row] for row in rows]\n    n_rows, n_cols = len(M), len(M[0])\n    pivots = []\n    r = 0\n    for c in range(n_cols):\n        pivot = next((i for i in range(r, n_rows) if M[i][c] != 0), None)\n        if pivot is None:\n            continue\n        M[r], M[pivot] = M[pivot], M[r]\n        lead = M[r][c]\n        M[r] = [x / lead for x in M[r]]\n        for i in range(n_rows):\n            if i != r and M[i][c] != 0:\n                f = M[i][c]\n                M[i] = [a - f * b for a, b in zip(M[i], M[r])]\n        pivots.append(c)\n        r += 1\n        if r == n_rows:\n            break\n    return M, pivots\n\n\nA_b = [[1, 2, 1, 4],\n       [2, 4, 0, 4],\n       [3, 6, 1, 8]]\nR, piv = rref(A_b)\nfor row in R:\n    print([str(x) for x in row])\nprint(\"pivot columns:\", piv)          # [0, 2]: y (column 1) is free\n\nimport numpy as np\nA = np.array(A_b, dtype=float)[:, :3]\nprint(\"rank:\", np.linalg.matrix_rank(A))                           # 2\nprint(\"A @ particular:\", A @ np.array([2.0, 0.0, 2.0]))            # [4. 4. 8.]\nprint(\"A @ null vector:\", A @ np.array([-2.0, 1.0, 0.0]))          # [0. 0. 0.]\n```\n\n`np.linalg.solve(A, b)` would fail here: it only works for square, invertible A. For real data with more equations than unknowns you will use least squares instead, which is where chapter 3 of MML goes next.\n\n## Vector spaces and linear maps, briefly\n\nThe chapter defines a vector space by its rules (closed under addition and scaling, with a zero) so the same theorems apply to arrows, lists of numbers, polynomials and images. A **linear mapping** is any function with f(ax + by) = af(x) + bf(y); every linear map between finite-dimensional spaces is a matrix once you pick bases, and changing the bases changes the matrix (your week 5 change of basis). An **affine** map adds a shift, f(x) = Ax + c: it is not linear (f(0) ≠ 0 unless c = 0), which matters later when you meet homogeneous coordinates in robotics."
     },
     {
      "kind": "practice",
@@ -1877,11 +1911,13 @@
      "questions": [
       {
        "q": "This morning: what are the free variables of an RREF matrix?",
-       "a": "The variables whose columns have no pivot."
+       "a": "The variables whose columns have no pivot.",
+       "from": "math-w07-3"
       },
       {
        "q": "Week 5: to get the coordinates of v in a basis B (columns), what do you solve?",
-       "a": "B c = v, i.e. c = B⁻¹ v."
+       "a": "B c = v, i.e. c = B⁻¹ v.",
+       "from": "math-w07-3"
       }
      ]
     },
@@ -2255,23 +2291,26 @@
      "questions": [
       {
        "q": "In week 3 you met pytest. How does pytest find tests?",
-       "a": "It collects files named test_*.py (or *_test.py) and runs functions whose names start with test_."
+       "a": "It collects files named test_*.py (or *_test.py) and runs functions whose names start with test_.",
+       "from": "python-w03-1"
       },
       {
        "q": "From Wednesday: what does run([\"bands\", \"390\"]) return?",
-       "a": "\"orange white brown\""
+       "a": "\"orange white brown\"",
+       "from": "python-w07-2"
       },
       {
        "q": "Week 5: what is the difference between a generator and a list?",
-       "a": "A generator produces values lazily, one at a time, and can be consumed once; a list holds all values in memory and can be iterated many times."
+       "a": "A generator produces values lazily, one at a time, and can be consumed once; a list holds all values in memory and can be iterated many times.",
+       "from": "python-w05-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "For `parse_value` from Wednesday, write down (no code yet) every input you think deserves its own test. Aim for at least eight, grouped as: normal values, unusual-but-valid values, and invalid values. Then count how many of your groups have only one example."
+     "title": "First example",
+     "body": "`parse_value` from Wednesday turns text such as `\"4.7k\"` into a number. Here is the kind of test list this lesson builds, in three groups:\n\n- **Normal values:** `\"220\"`, `\"4.7k\"`, `\"1M\"`.\n- **Unusual but valid:** `\" 10k \"` with spaces, `\"0\"`, `\"1.0\"`.\n- **Invalid, should raise `ValueError`:** `\"\"`, `\"abc\"`, `\"4.7x\"`.\n\nA group with only one example usually hides a case you haven't thought about. Learn shows how to write these as pytest tests."
     },
     {
      "kind": "learn",
@@ -2406,11 +2445,13 @@
      "questions": [
       {
        "q": "Week 5: why does BFS find shortest paths in an unweighted graph?",
-       "a": "It visits nodes in order of number of edges from the start, so the first time it reaches a node is by a path with the fewest edges."
+       "a": "It visits nodes in order of number of edges from the start, so the first time it reaches a node is by a path with the fewest edges.",
+       "from": "algo-w05-1"
       },
       {
        "q": "Week 4: what does a dict lookup cost on average?",
-       "a": "O(1)."
+       "a": "O(1).",
+       "from": "algo-w01-3"
       }
      ]
     },
@@ -2517,7 +2558,15 @@
      "back": "BFS."
     }
    ],
-   "deliverable": "dijkstra.py with dijkstra, shortest_path and grid_cost plus their asserts, and the negative-edge counterexample in a comment, committed."
+   "deliverable": "dijkstra.py with dijkstra, shortest_path and grid_cost plus their asserts, and the negative-edge counterexample in a comment, committed.",
+   "leetcode": [
+    {
+     "title": "Network Delay Time",
+     "url": "https://leetcode.com/problems/network-delay-time/",
+     "level": "medium",
+     "uses": "Dijkstra's algorithm with a heap (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w07-5",
@@ -2732,23 +2781,26 @@
      "questions": [
       {
        "q": "Thursday: agg or transform to compute each score minus the student's own mean?",
-       "a": "transform, because the result must line up with every original row."
+       "a": "transform, because the result must line up with every original row.",
+       "from": "ai-w07-2"
       },
       {
        "q": "Week 4 (McKinney ch. 7): name three kinds of mess you check for in a raw dataset.",
-       "a": "Missing values, duplicate rows, inconsistent strings/categories (e.g. \" python\" vs \"Python\"), plus impossible values or wrong types."
+       "a": "Missing values, duplicate rows, inconsistent strings/categories (e.g. \" python\" vs \"Python\"), plus impossible values or wrong types.",
+       "from": "ai-w04-3"
       },
       {
        "q": "Week 5: what makes a chart honest?",
-       "a": "Axes that do not exaggerate (bar charts start at zero), labelled units, the right chart for the comparison, and no cherry-picked ranges."
+       "a": "Axes that do not exaggerate (bar charts start at zero), labelled units, the right chart for the comparison, and no cherry-picked ranges.",
+       "from": "ai-w05-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before reading: write the three questions about your students you most want this project to answer. For each, write which columns of the export you need and what a \"finding\" would look like as one sentence (for example, \"Students who skip week 2 are three times more likely to stop by week 5\"). Keep the sheet; it is the seed of today's plan."
+     "title": "First example",
+     "body": "This project starts from questions, not from code. A good question names the columns it needs and what a finding would look like as one sentence. For example: \"Students who skip week 2 are three times more likely to stop by week 5\" needs `student_id`, `module` and `completed_at`.\n\nThe Learn step walks through turning questions like this into today's plan. Afterwards you'll write three of your own."
     },
     {
      "kind": "learn",
@@ -2800,7 +2852,7 @@
       {
        "prompt": "Unguided: rewrite `PLAN.md` for your real data: 3–5 questions, one precise metric each, the data checks, one named chart per question, and the limits. Then map each metric to the function in `analysis/metrics.py` that computes it, and list the gaps.",
        "hints": [
-        "Start from your pretest sheet.",
+        "Start from the three lists in the first example.",
         "For each question ask: what single number or table would change my mind?",
         "If a metric needs a threshold (like \"behind\"), write the rule and a reason for it."
        ],

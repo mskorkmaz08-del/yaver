@@ -30,7 +30,7 @@ const urlOk = u => verified.has(u) || verified.has(u.replace(/\/$/, '')) || veri
 // Step template per lesson kind: [kind, minutes] (minutes for 90/120 or 60/90 variants are computed).
 export function template(kind, minutes) {
   switch (kind) {
-    case 'deep': return [['warmup', 10], ['pretest', 5], ['learn', 35], ['practice', 30], ['exit', 10]];
+    case 'deep': return [['warmup', 10], ['example', 5], ['learn', 35], ['practice', 30], ['exit', 10]];
     case 'practice': return [['warmup', 5], ['learn', 10], ['practice', 60], ['reflect', 10], ['exit', 5]];
     case 'build': return [['plan', 10], ['build', minutes - 25], ['test', 10], ['log', 5]];
     case 'prep': return [['learn', 15], ['simulate', 20], ['measure', 15], ['teachnotes', 10]];
@@ -49,6 +49,7 @@ export function laneCounts(phase) {
 }
 
 const allLessons = new Map();
+const lessonOrder = new Map(); // course order: week, then file order
 const weekFiles = [];
 for (const w of course.weeks) {
   if (!w.file) continue;
@@ -60,6 +61,7 @@ for (const w of course.weeks) {
   for (const l of data.lessons || []) {
     if (allLessons.has(l.id)) err(l.id, `duplicate id (also in week ${allLessons.get(l.id).week})`);
     allLessons.set(l.id, l);
+    lessonOrder.set(l.id, lessonOrder.size);
   }
 }
 
@@ -111,10 +113,17 @@ function checkLesson(l, week) {
   } else if (steps.length < 2) err(id, 'free-form lessons still need at least 2 steps');
   for (const s of steps) {
     if (!s.title) err(id, `step ${s.kind} needs a title`);
-    if (['learn', 'pretest', 'read', 'summary', 'plan', 'build', 'test', 'log', 'simulate', 'measure', 'teachnotes', 'handout', 'reflect', 'cards'].includes(s.kind) && !s.body && !s.tasks) err(id, `step ${s.kind} needs a body`);
+    if (['learn', 'example', 'read', 'summary', 'plan', 'build', 'test', 'log', 'simulate', 'measure', 'teachnotes', 'handout', 'reflect', 'cards'].includes(s.kind) && !s.body && !s.tasks) err(id, `step ${s.kind} needs a body`);
     if (s.kind === 'learn' && l.kind === 'deep' && (s.body || '').length < 900) err(id, `learn body is thin (${(s.body || '').length} chars; deep lessons need a real explanation and a worked example)`);
     if ((s.kind === 'warmup' || s.kind === 'exit') && (!Array.isArray(s.questions) || !s.questions.length)) err(id, `${s.kind} needs questions`);
     for (const q of s.questions || []) if (!q.q || !q.a) err(id, `${s.kind} question needs q and a`);
+    // Warm-ups only recall what an earlier lesson taught: each question names that lesson.
+    if (s.kind === 'warmup') for (const q of s.questions || []) {
+      if (!q.from) err(id, `warmup question needs "from" (the earlier lesson that taught it): ${String(q.q).slice(0, 40)}`);
+      else if (!allLessons.has(q.from)) err(id, `warmup question from unknown lesson ${q.from}`);
+      else if (lessonOrder.get(q.from) >= lessonOrder.get(l.id)) err(id, `warmup question from ${q.from}, which comes later`);
+    }
+    if (s.kind === 'example' && /\b(predict|guess)\b/i.test(s.body || '') && !/nothing to guess/i.test(s.body || '')) err(id, 'first example asks to predict or guess; show the result instead');
     if (s.kind === 'exit' && (s.questions?.length < 3 || s.questions?.length > 5)) err(id, 'exit ticket: 3–5 questions');
     if (s.kind === 'exit' && l.kind === 'deep' && !s.teachBack) err(id, 'exit ticket needs a teachBack prompt');
     if (s.kind === 'practice') {
@@ -130,6 +139,11 @@ function checkLesson(l, week) {
       if (!u.startsWith('https://')) err(id, `link not https: ${u}`);
       else if (verified.size && !urlOk(u)) err(id, `link not in verified list: ${u}`);
     }
+  }
+  for (const p of l.leetcode || []) {
+    if (!p.title || !/^https:\/\/leetcode\.com\/problems\/[a-z0-9-]+\/$/.test(p.url || '')) err(id, `leetcode problem needs a title and a leetcode.com/problems/<slug>/ url`);
+    if (!['easy', 'medium', 'hard'].includes(p.level)) err(id, `leetcode level must be easy, medium or hard`);
+    if (!p.uses) err(id, `leetcode problem needs "uses": what it needs and where that was taught`);
   }
   if (!free && (!Array.isArray(l.cards) || l.cards.length < 3 || l.cards.length > 6)) err(id, 'cards: 3–6');
   for (const c of l.cards || []) if (!c.front || !c.back) err(id, 'card needs front and back');

@@ -51,31 +51,35 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall from Python",
+     "title": "Recall",
      "questions": [
       {
        "q": "In Python, what happens if you call `len(5)`, and *when* do you find out?",
-       "a": "A `TypeError`, raised at run time when that line executes. Nothing checks it earlier."
+       "a": "A `TypeError`, raised at run time when that line executes. Nothing checks it earlier.",
+       "from": "python-w02-1"
       },
       {
        "q": "Your CS50P final project: name one bug a type checker or compiler could have caught before you ran it.",
-       "a": "Any wrong-type use: passing a str where an int was expected, a misspelled attribute, a function called with the wrong number of arguments. In C++ these are compile errors."
+       "a": "Any wrong-type use: passing a str where an int was expected, a misspelled attribute, a function called with the wrong number of arguments. In C++ these are compile errors.",
+       "from": "python-w07-2"
       },
       {
        "q": "What is `7 // 2` and `7 / 2` in Python 3?",
-       "a": "`7 // 2` is 3 (floor division), `7 / 2` is 3.5 (true division always gives a float)."
+       "a": "`7 // 2` is 3 (floor division), `7 / 2` is 3.5 (true division always gives a float).",
+       "from": "python-w01-1"
       },
       {
        "q": "Week 1 electronics: a 5 V pin drives a red LED (2 V) through 220 Ω. Current?",
-       "a": "(5 − 2) / 220 ≈ 0.0136 A, about 13.6 mA."
+       "a": "(5 − 2) / 220 ≈ 0.0136 A, about 13.6 mA.",
+       "from": "tools-w01-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before reading anything, predict what each line prints. Write your guesses down; you'll check them in the practice step.\n\n```cpp-snippet\nint a = 7 / 2;          // ?\ndouble b = 7 / 2;       // ?\ndouble c = 7.0 / 2;     // ?\nint d = 3.9;            // compiles? value?\nint e {3.9};            // compiles?\nint big = 2147483647;\nbig = big + 1;          // ?\n```\n\nTwo hints about the mindset: C++ decides the type of every expression at compile time, and the type of `7 / 2` is decided by the operands, not by the variable you store it in."
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```cpp-snippet\nint a = 7 / 2;          // ?\ndouble b = 7 / 2;       // ?\ndouble c = 7.0 / 2;     // ?\nint d = 3.9;            // compiles? value?\nint e {3.9};            // compiles?\nint big = 2147483647;\nbig = big + 1;          // ?\n```\n\n**Results:** `a` is `3` and `b` is `3.0` (printed as `3`), because `7 / 2` is integer division before it is ever stored. `c` is `3.5`. `int d = 3.9;` compiles (perhaps with a warning) and `d` is `3`. `int e {3.9};` does **not** compile, because braces refuse narrowing conversions. `big + 1` overflows a signed `int`, which is undefined behaviour; in practice you usually see `-2147483648`.\n\nC++ decides the type of every expression at compile time, from the operands, not from the variable you store it in. Learn explains each line."
     },
     {
      "kind": "learn",
@@ -233,15 +237,18 @@
      "questions": [
       {
        "q": "Week 4: what is the average-case cost of `x in some_set` versus `x in some_list`?",
-       "a": "Set: O(1) on average (hash lookup). List: O(n) (scans element by element)."
+       "a": "Set: O(1) on average (hash lookup). List: O(n) (scans element by element).",
+       "from": "python-w02-3"
       },
       {
        "q": "Week 1: a loop inside a loop over the same list of n items. Big-O?",
-       "a": "O(n²)."
+       "a": "O(n²).",
+       "from": "python-w03-3"
       },
       {
        "q": "What two things must be true of a Python object to be a dict key?",
-       "a": "It must be hashable (stable `__hash__`) and comparable with `==`; in practice immutable: str, int, tuple of immutables, frozenset. Lists can't be keys."
+       "a": "It must be hashable (stable `__hash__`) and comparable with `==`; in practice immutable: str, int, tuple of immutables, frozenset. Lists can't be keys.",
+       "from": "python-w04-3"
       }
      ]
     },
@@ -657,29 +664,32 @@
      "questions": [
       {
        "q": "Week 7: what does it mean that v is an eigenvector of A?",
-       "a": "A v = λ v: the transformation only stretches v by λ, it doesn't change its direction (or flips it if λ < 0)."
+       "a": "A v = λ v: the transformation only stretches v by λ, it doesn't change its direction (or flips it if λ < 0).",
+       "from": "math-w07-1"
       },
       {
        "q": "Week 1: the slope of the line through (1, 3) and (4, 9)?",
-       "a": "(9 − 3) / (4 − 1) = 2."
+       "a": "(9 − 3) / (4 − 1) = 2.",
+       "from": "robo-w04-2"
       },
       {
        "q": "Week 4 electronics: in an RC circuit, is the capacitor voltage changing fastest at the start or the end of charging?",
-       "a": "At the start; the curve flattens as it approaches the supply voltage."
+       "a": "At the start; the curve flattens as it approaches the supply voltage.",
+       "from": "robo-w04-5"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "A cart's position is s(t) = t² metres (t in seconds). Without any formulas, estimate its speed *at exactly* t = 3 s. How would you get that number from position measurements alone, if all you can measure is position at two different times?\n\nWrite your estimate and your method down. Then think: what goes wrong if the two times are the *same*?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nA cart's position is s(t) = t² metres (t in seconds). How fast is it going *at exactly* t = 3 s?\n\nFrom positions alone, take two times close together: between t = 3 and t = 3 + h, the average speed is ((3 + h)² − 9) / h = 6 + h. With h = 0.1 that's 6.1 m/s, with h = 0.001 it's 6.001 m/s. As h shrinks, the answer approaches **6 m/s**.\n\nYou can't use the *same* time twice: the distance is 0 and the time is 0, and 0/0 means nothing. Taking the limit as h shrinks is exactly what a derivative is. Learn builds this up."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "From average rate to instantaneous rate",
-     "body": "**The paradox.** Speed is distance divided by time. But \"speed at an instant\" involves zero distance over zero time, 0/0, which is meaningless. 3Blue1Brown's chapter 2 is about how calculus escapes this: you never divide by zero; you look at what the ratio *approaches* as the time interval shrinks.\n\n**Average rate of change.** Over an interval from t to t + h:\n\n  average rate = (s(t + h) − s(t)) / h\n\nGeometrically, that's the slope of the *secant* line through two points on the graph.\n\n**Worked example: s(t) = t² at t = 3.**\n\n| h | s(3 + h) | s(3 + h) − s(3) | ratio |\n| --- | --- | --- | --- |\n| 1 | 16 | 7 | 7 |\n| 0.1 | 9.61 | 0.61 | 6.1 |\n| 0.01 | 9.0601 | 0.0601 | 6.01 |\n| 0.001 | 9.006001 | 0.006001 | 6.001 |\n\nThe ratios close in on 6. That limit is the *derivative* of s at t = 3: the instantaneous speed is 6 m/s. Geometrically, the secant lines rotate toward the *tangent* line, which has slope 6.\n\n**Doing it with symbols.** Expand the ratio for general t:\n\n  (s(t + h) − s(t)) / h = ((t + h)² − t²) / h = (t² + 2th + h² − t²) / h = 2t + h\n\nFor every h ≠ 0 this is exactly 2t + h. As h → 0 it approaches 2t. So\n\n  s′(t) = ds/dt = 2t,   and at t = 3: 2·3 = 6. ✔\n\nNotice the h left over in the table: 6.1 = 6 + 0.1, 6.01 = 6 + 0.01. The error is exactly h, which is the \"forward difference error\" you'll measure in NumPy in the next block.\n\n**The definition.**\n\n  f′(x) = lim_{h → 0} (f(x + h) − f(x)) / h\n\nRead the notation dy/dx as \"a tiny change in y per tiny change in x\". It's not a fraction you can divide, but it behaves like one surprisingly often (that's next week's chain rule).\n\n**Units make it concrete.** The derivative has units of (output units) / (input units):\n- position (m) vs time (s) → velocity in m/s;\n- capacitor voltage (V) vs time (s) → V/s; and since i = C · dV/dt, the derivative tells you the current;\n- loss (unitless) vs a model weight → \"how much the loss changes per unit nudge of the weight\", the quantity gradient descent follows in Week 10.\n\n**Robotics link: encoders.** A wheel encoder gives you position counts at time steps. Speed is the derivative, estimated as (count now − count before) / Δt. That's literally the secant slope with h = Δt. Too large a Δt and you smear out changes; too small and quantization noise dominates (1 tick of difference over 1 ms is a big jump). Same trade-off you'll measure this afternoon.\n\n```python\ndef s(t):\n    return t ** 2\n\nfor h in [1, 0.1, 0.01, 0.001, 1e-6]:\n    slope = (s(3 + h) - s(3)) / h\n    print(f\"h={h:<8} slope={slope:.6f}  error={slope - 6:.2e}\")\n```\n\n**What the derivative is *not*.** Not the value of the function (s(3) = 9 m, the derivative is 6 m/s), and not the average speed from 0 to 3 (that's 9/3 = 3 m/s). The pretest's \"same two times\" problem is the 0/0 paradox: one measurement gives position, never speed.\n\n**Watch** chapters 1 and 2 of Essence of Calculus with these questions in mind: how does chapter 1 turn a circle's area into a sum of thin rings, and why is \"approaching\" the honest word for what dt does?"
+     "body": "**The paradox.** Speed is distance divided by time. But \"speed at an instant\" involves zero distance over zero time, 0/0, which is meaningless. 3Blue1Brown's chapter 2 is about how calculus escapes this: you never divide by zero; you look at what the ratio *approaches* as the time interval shrinks.\n\n**Average rate of change.** Over an interval from t to t + h:\n\n  average rate = (s(t + h) − s(t)) / h\n\nGeometrically, that's the slope of the *secant* line through two points on the graph.\n\n**Worked example: s(t) = t² at t = 3.**\n\n| h | s(3 + h) | s(3 + h) − s(3) | ratio |\n| --- | --- | --- | --- |\n| 1 | 16 | 7 | 7 |\n| 0.1 | 9.61 | 0.61 | 6.1 |\n| 0.01 | 9.0601 | 0.0601 | 6.01 |\n| 0.001 | 9.006001 | 0.006001 | 6.001 |\n\nThe ratios close in on 6. That limit is the *derivative* of s at t = 3: the instantaneous speed is 6 m/s. Geometrically, the secant lines rotate toward the *tangent* line, which has slope 6.\n\n**Doing it with symbols.** Expand the ratio for general t:\n\n  (s(t + h) − s(t)) / h = ((t + h)² − t²) / h = (t² + 2th + h² − t²) / h = 2t + h\n\nFor every h ≠ 0 this is exactly 2t + h. As h → 0 it approaches 2t. So\n\n  s′(t) = ds/dt = 2t,   and at t = 3: 2·3 = 6. ✔\n\nNotice the h left over in the table: 6.1 = 6 + 0.1, 6.01 = 6 + 0.01. The error is exactly h, which is the \"forward difference error\" you'll measure in NumPy in the next block.\n\n**The definition.**\n\n  f′(x) = lim_{h → 0} (f(x + h) − f(x)) / h\n\nRead the notation dy/dx as \"a tiny change in y per tiny change in x\". It's not a fraction you can divide, but it behaves like one surprisingly often (that's next week's chain rule).\n\n**Units make it concrete.** The derivative has units of (output units) / (input units):\n- position (m) vs time (s) → velocity in m/s;\n- capacitor voltage (V) vs time (s) → V/s; and since i = C · dV/dt, the derivative tells you the current;\n- loss (unitless) vs a model weight → \"how much the loss changes per unit nudge of the weight\", the quantity gradient descent follows in Week 10.\n\n**Robotics link: encoders.** A wheel encoder gives you position counts at time steps. Speed is the derivative, estimated as (count now − count before) / Δt. That's literally the secant slope with h = Δt. Too large a Δt and you smear out changes; too small and quantization noise dominates (1 tick of difference over 1 ms is a big jump). Same trade-off you'll measure this afternoon.\n\n```python\ndef s(t):\n    return t ** 2\n\nfor h in [1, 0.1, 0.01, 0.001, 1e-6]:\n    slope = (s(3 + h) - s(3)) / h\n    print(f\"h={h:<8} slope={slope:.6f}  error={slope - 6:.2e}\")\n```\n\n**What the derivative is *not*.** Not the value of the function (s(3) = 9 m, the derivative is 6 m/s), and not the average speed from 0 to 3 (that's 9/3 = 3 m/s). The first example's \"same two times\" problem is the 0/0 paradox: one measurement gives position, never speed.\n\n**Watch** chapters 1 and 2 of Essence of Calculus with these questions in mind: how does chapter 1 turn a circle's area into a sum of thin rings, and why is \"approaching\" the honest word for what dt does?"
     },
     {
      "kind": "practice",
@@ -821,15 +831,18 @@
      "questions": [
       {
        "q": "This morning: what is the forward-difference slope of t² at t = 3 with h = 0.01?",
-       "a": "6.01."
+       "a": "6.01.",
+       "from": "math-w08-1"
       },
       {
        "q": "Week 2: what does `np.arange(5)[1:] - np.arange(5)[:-1]` give?",
-       "a": "`array([1, 1, 1, 1])`: differences of consecutive elements, vectorized."
+       "a": "`array([1, 1, 1, 1])`: differences of consecutive elements, vectorized.",
+       "from": "ai-w02-3"
       },
       {
        "q": "Week 2: why is a vectorized NumPy expression faster than a Python loop?",
-       "a": "The loop runs in compiled C over a contiguous array instead of executing Python bytecode per element."
+       "a": "The loop runs in compiled C over a contiguous array instead of executing Python bytecode per element.",
+       "from": "ai-w02-3"
       }
      ]
     },
@@ -1240,29 +1253,27 @@
      "questions": [
       {
        "q": "Monday: what does `double b = 7 / 2;` store?",
-       "a": "3.0. The division happens in `int` first."
-      },
-      {
-       "q": "Python Week 2: what happens the first time you `import tracker` and why doesn't a second import re-run it?",
-       "a": "Python executes tracker.py once and caches the module object in `sys.modules`; later imports reuse it."
+       "a": "3.0. The division happens in `int` first.",
+       "from": "cpp-w08-1"
       },
       {
        "q": "Week 7 Arduino: which two functions must every sketch define?",
-       "a": "`setup()` (runs once) and `loop()` (runs forever)."
+       "a": "`setup()` (runs once) and `loop()` (runs forever).",
+       "from": "robo-w07-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "This file won't compile. Why? And what is the smallest change that fixes it without moving `main`?\n\n```cpp-snippet\n#include <iostream>\n\nint main() {\n    std::cout << square(4) << '\\n';\n}\n\nint square(int x) { return x * x; }\n```\n\nSecond question: if you put `int square(int x) { return x * x; }` in a header and include that header from two different `.cpp` files, what do you predict happens when you link them?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n```cpp-snippet\n#include <iostream>\n\nint main() {\n    std::cout << square(4) << '\\n';\n}\n\nint square(int x) { return x * x; }\n```\n\n**This doesn't compile**, because `main` uses `square` before the compiler has seen it. The smallest fix is one line above `main`, a declaration: `int square(int x);`.\n\nAnd if you put `int square(int x) { return x * x; }` in a header and include it from two `.cpp` files, each file compiles, but **linking fails** with a \"duplicate symbol\" error: the function is defined twice. Learn explains declarations, definitions and the one definition rule."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Declarations, definitions and the header contract",
-     "body": "**The compiler reads top to bottom, one file at a time.** When it reaches `square(4)` it must already know that `square` exists, what it takes and what it returns. It does not look ahead, and it never looks into other `.cpp` files. That's the whole reason headers exist.\n\n**Declaration vs definition.**\n\n- A *declaration* introduces a name and its type: `int square(int x);` (note the semicolon, no body). It's a promise: \"this exists somewhere.\"\n- A *definition* provides the body: `int square(int x) { return x * x; }`.\n\nYou can declare something many times; you may define it only once in the whole program (the *one definition rule*). A forward declaration above `main` fixes the pretest:\n\n```cpp\n#include <iostream>\n\nint square(int x);          // declaration: enough for the compiler\n\nint main() {\n    std::cout << square(4) << '\\n';   // 16\n    return 0;\n}\n\nint square(int x) {         // definition: needed by the linker\n    return x * x;\n}\n```\n\n**Scaling up: one header per module.** In Python, `import sensors` gives you a module. In C++, you split a module into two files:\n\n- `sensors.h`: the *interface*. Declarations only, plus constants and types callers need.\n- `sensors.cpp`: the *implementation*. Definitions. It includes its own header so the compiler checks that declaration and definition agree.\n- `main.cpp` includes `sensors.h` and calls the functions.\n\n```cpp-snippet\n// sensors.h\n#pragma once\n\nnamespace sensors {\n    constexpr int adc_max = 1023;\n    double adc_to_volts(int raw, double vref);\n    int volts_to_adc(double volts, double vref);\n}\n```\n\n```cpp-snippet\n// sensors.cpp\n#include \"sensors.h\"\n#include <cmath>\n\nnamespace sensors {\n    double adc_to_volts(int raw, double vref) {\n        return raw * vref / adc_max;\n    }\n    int volts_to_adc(double volts, double vref) {\n        return static_cast<int>(std::lround(volts / vref * adc_max));\n    }\n}\n```\n\n```cpp-snippet\n// main.cpp\n#include <iostream>\n#include \"sensors.h\"\n\nint main() {\n    std::cout << sensors::adc_to_volts(512, 5.0) << '\\n';   // about 2.502\n}\n```\n\nQuotes (`\"sensors.h\"`) search your project folder first; angle brackets (`<iostream>`) search the system include paths.\n\n**Building it.** Either all at once, or one object file per `.cpp` and then link:\n\n```bash\ng++ -std=c++20 -Wall -Wextra -c sensors.cpp      # -> sensors.o\ng++ -std=c++20 -Wall -Wextra -c main.cpp         # -> main.o\ng++ sensors.o main.o -o app                      # link\n./app\n```\n\nSeparate compilation is why big projects build quickly: change `main.cpp` and only `main.o` is rebuilt. (CMake, in Week 14, automates exactly this.)\n\n**Header guards.** `#pragma once` (or the classic `#ifndef SENSORS_H / #define SENSORS_H / #endif`) stops the same header being pasted twice into *one* `.cpp` file, for example when `main.cpp` includes `sensors.h` and also `filters.h`, which itself includes `sensors.h`. Without a guard you'd get \"redefinition\" errors for the `constexpr` and any types.\n\n**What guards don't fix.** Guards work per `.cpp` file. If a header contains a *function definition* (with a body) and two `.cpp` files include it, each object file gets its own copy, and the linker reports `multiple definition of 'square(int)'`. Fixes: keep only the declaration in the header and the body in one `.cpp`, or mark the function `inline`, which tells the linker that identical copies are fine (that's how header-only libraries work).\n\n**Namespaces** stop names colliding across modules: `sensors::adc_to_volts` and `motors::adc_to_volts` can coexist. Avoid `using namespace std;` in headers: it leaks into every file that includes yours.\n\n**Reading errors fast.** Two error families:\n\n| Message | Stage | Usual cause |\n| --- | --- | --- |\n| `'square' was not declared in this scope` | compiler | missing `#include` or forward declaration |\n| `undefined reference to 'sensors::adc_to_volts(int, double)'` | linker | .cpp not in the build, or declaration and definition signatures differ |\n| `multiple definition of ...` | linker | a function body in a header included twice, or the same function defined in two .cpp files |\n\n**Arduino link.** An Arduino sketch hides this: the IDE generates forward declarations for your functions and compiles each `.cpp`/`.h` tab separately. When you write your own Arduino library in Week 14, this is the layout you'll use."
+     "body": "**The compiler reads top to bottom, one file at a time.** When it reaches `square(4)` it must already know that `square` exists, what it takes and what it returns. It does not look ahead, and it never looks into other `.cpp` files. That's the whole reason headers exist.\n\n**Declaration vs definition.**\n\n- A *declaration* introduces a name and its type: `int square(int x);` (note the semicolon, no body). It's a promise: \"this exists somewhere.\"\n- A *definition* provides the body: `int square(int x) { return x * x; }`.\n\nYou can declare something many times; you may define it only once in the whole program (the *one definition rule*). A forward declaration above `main` fixes the first example:\n\n```cpp\n#include <iostream>\n\nint square(int x);          // declaration: enough for the compiler\n\nint main() {\n    std::cout << square(4) << '\\n';   // 16\n    return 0;\n}\n\nint square(int x) {         // definition: needed by the linker\n    return x * x;\n}\n```\n\n**Scaling up: one header per module.** In Python, `import sensors` gives you a module. In C++, you split a module into two files:\n\n- `sensors.h`: the *interface*. Declarations only, plus constants and types callers need.\n- `sensors.cpp`: the *implementation*. Definitions. It includes its own header so the compiler checks that declaration and definition agree.\n- `main.cpp` includes `sensors.h` and calls the functions.\n\n```cpp-snippet\n// sensors.h\n#pragma once\n\nnamespace sensors {\n    constexpr int adc_max = 1023;\n    double adc_to_volts(int raw, double vref);\n    int volts_to_adc(double volts, double vref);\n}\n```\n\n```cpp-snippet\n// sensors.cpp\n#include \"sensors.h\"\n#include <cmath>\n\nnamespace sensors {\n    double adc_to_volts(int raw, double vref) {\n        return raw * vref / adc_max;\n    }\n    int volts_to_adc(double volts, double vref) {\n        return static_cast<int>(std::lround(volts / vref * adc_max));\n    }\n}\n```\n\n```cpp-snippet\n// main.cpp\n#include <iostream>\n#include \"sensors.h\"\n\nint main() {\n    std::cout << sensors::adc_to_volts(512, 5.0) << '\\n';   // about 2.502\n}\n```\n\nQuotes (`\"sensors.h\"`) search your project folder first; angle brackets (`<iostream>`) search the system include paths.\n\n**Building it.** Either all at once, or one object file per `.cpp` and then link:\n\n```bash\ng++ -std=c++20 -Wall -Wextra -c sensors.cpp      # -> sensors.o\ng++ -std=c++20 -Wall -Wextra -c main.cpp         # -> main.o\ng++ sensors.o main.o -o app                      # link\n./app\n```\n\nSeparate compilation is why big projects build quickly: change `main.cpp` and only `main.o` is rebuilt. (CMake, in Week 14, automates exactly this.)\n\n**Header guards.** `#pragma once` (or the classic `#ifndef SENSORS_H / #define SENSORS_H / #endif`) stops the same header being pasted twice into *one* `.cpp` file, for example when `main.cpp` includes `sensors.h` and also `filters.h`, which itself includes `sensors.h`. Without a guard you'd get \"redefinition\" errors for the `constexpr` and any types.\n\n**What guards don't fix.** Guards work per `.cpp` file. If a header contains a *function definition* (with a body) and two `.cpp` files include it, each object file gets its own copy, and the linker reports `multiple definition of 'square(int)'`. Fixes: keep only the declaration in the header and the body in one `.cpp`, or mark the function `inline`, which tells the linker that identical copies are fine (that's how header-only libraries work).\n\n**Namespaces** stop names colliding across modules: `sensors::adc_to_volts` and `motors::adc_to_volts` can coexist. Avoid `using namespace std;` in headers: it leaks into every file that includes yours.\n\n**Reading errors fast.** Two error families:\n\n| Message | Stage | Usual cause |\n| --- | --- | --- |\n| `'square' was not declared in this scope` | compiler | missing `#include` or forward declaration |\n| `undefined reference to 'sensors::adc_to_volts(int, double)'` | linker | .cpp not in the build, or declaration and definition signatures differ |\n| `multiple definition of ...` | linker | a function body in a header included twice, or the same function defined in two .cpp files |\n\n**Arduino link.** An Arduino sketch hides this: the IDE generates forward declarations for your functions and compiles each `.cpp`/`.h` tab separately. When you write your own Arduino library in Week 14, this is the layout you'll use."
     },
     {
      "kind": "practice",
@@ -1403,15 +1414,18 @@
      "questions": [
       {
        "q": "Monday: what is the key in Group Anagrams, and why that type?",
-       "a": "A tuple of 26 counts (or the sorted word as a string); it must be hashable and identical for anagrams."
+       "a": "A tuple of 26 counts (or the sorted word as a string); it must be hashable and identical for anagrams.",
+       "from": "algo-w08-1"
       },
       {
        "q": "Week 3: complexity of sorting n items with merge sort?",
-       "a": "O(n log n)."
+       "a": "O(n log n).",
+       "from": "algo-w08-1"
       },
       {
        "q": "What does `collections.Counter([1,1,2]).most_common(1)` return?",
-       "a": "`[(1, 2)]`: a list of (value, count) pairs."
+       "a": "`[(1, 2)]`: a list of (value, count) pairs.",
+       "from": "algo-w04-2"
       }
      ]
     },
@@ -1803,23 +1817,26 @@
      "questions": [
       {
        "q": "Tuesday: write the central difference for f′(x).",
-       "a": "(f(x + h) − f(x − h)) / (2h)."
+       "a": "(f(x + h) − f(x − h)) / (2h).",
+       "from": "math-w08-2"
       },
       {
        "q": "Tuesday: from the definition, d/dx x² = ?",
-       "a": "2x."
+       "a": "2x.",
+       "from": "math-w07-1"
       },
       {
        "q": "Week 5 math: what is the length of the vector (cos θ, sin θ)?",
-       "a": "1, since cos²θ + sin²θ = 1. It lies on the unit circle."
+       "a": "1, since cos²θ + sin²θ = 1. It lies on the unit circle.",
+       "from": "math-w01-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "A square has side x. You increase the side by a tiny amount dx. Sketch the new square. What *shapes* make up the extra area? Which piece is so small you could ignore it?\n\nThen guess: what is the derivative of x³? Of √x? Write guesses before watching chapter 3."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nA square has side x. Increase the side by a tiny amount dx. The extra area is made of **two thin strips** (x by dx each) and **one tiny corner square** (dx by dx). The corner is so small you can ignore it, so the area grows by about 2x·dx: the derivative of x² is 2x.\n\nThe same idea gives the derivative of x³ as **3x²** and of √x as **1/(2√x)**. Chapter 3 shows the pictures."
     },
     {
      "kind": "learn",
@@ -1966,15 +1983,18 @@
      "questions": [
       {
        "q": "d/dx (7x³ − x) = ?",
-       "a": "21x² − 1."
+       "a": "21x² − 1.",
+       "from": "math-w08-3"
       },
       {
        "q": "This morning: what is dA/dr for A = πr², and what is it geometrically?",
-       "a": "2πr, the circumference."
+       "a": "2πr, the circumference.",
+       "from": "math-w08-3"
       },
       {
        "q": "Week 2: what does `[c * i for i, c in enumerate([5, 0, 3])]` give?",
-       "a": "[0, 0, 6]."
+       "a": "[0, 0, 6].",
+       "from": "math-w07-4"
       }
      ]
     },
@@ -2362,29 +2382,32 @@
      "questions": [
       {
        "q": "Week 1 Python: in the VS Code debugger, what is the difference between Step Over and Step Into?",
-       "a": "Step Over runs the current line, including any function calls, and stops on the next line. Step Into enters the function called on that line."
+       "a": "Step Over runs the current line, including any function calls, and stops on the next line. Step Into enters the function called on that line.",
+       "from": "python-w01-3"
       },
       {
        "q": "Wednesday: `undefined reference` vs `was not declared in this scope`. Which stage reports each?",
-       "a": "`undefined reference`: the linker. `was not declared`: the compiler."
+       "a": "`undefined reference`: the linker. `was not declared`: the compiler.",
+       "from": "cpp-w08-2"
       },
       {
        "q": "Monday: what does an uninitialized `int x;` contain?",
-       "a": "An indeterminate value (garbage); reading it is undefined behaviour."
+       "a": "An indeterminate value (garbage); reading it is undefined behaviour.",
+       "from": "cpp-w08-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "This function is meant to average the readings. It compiles. Predict what it returns for `{3, 4}` and spot every bug before you read on.\n\n```cpp-snippet\ndouble average(std::vector<int> v) {\n    int sum;\n    for (int i = 0; i <= v.size(); ++i) {\n        sum += v[i];\n    }\n    return sum / v.size();\n}\n```\n\n(`std::vector<int>` is C++'s growable array, like a Python list of ints. `v.size()` is its length and `v[i]` indexes it without any bounds check. The full story comes in Week 12.)"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n```cpp-snippet\ndouble average(std::vector<int> v) {\n    int sum;\n    for (int i = 0; i <= v.size(); ++i) {\n        sum += v[i];\n    }\n    return sum / v.size();\n}\n```\n\n(`std::vector<int>` is C++'s growable array, like a Python list of ints. `v.size()` is its length and `v[i]` indexes it without any bounds check. The full story comes in Week 12.)\n\n**It returns garbage for `{3, 4}`**, because of four bugs:\n\n1. `sum` is never initialized, so it starts with whatever was in memory.\n2. `i <= v.size()` reads `v[2]`, one past the end.\n3. `sum / v.size()` is integer division, so even with the first two fixed you'd get 3, not 3.5.\n4. Comparing the signed `i` with the unsigned `v.size()` gives a warning.\n\nLearn fixes them one by one."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "A method for C++ bugs",
-     "body": "The pretest has four bugs: `sum` is never initialized, the loop reads `v[2]` which doesn't exist (`<=` instead of `<`), `sum / v.size()` is integer division, and comparing `int i` with the unsigned `v.size()` earns a warning. The nasty part: it may still print a plausible number. C++ doesn't stop you at the first mistake the way Python's `IndexError` does. Undefined behaviour means \"anything\", including \"looks fine today\".\n\nSo C++ debugging has layers. Use them in this order.\n\n**1. Warnings.** `-Wall -Wextra` flags the signed/unsigned comparison, and Apple clang also flags the uninitialized `sum`. Read every warning; treat them as errors (`-Werror`) in your own projects.\n\n**2. Sanitizers.** Compile with runtime checks that turn silent undefined behaviour into a loud report with a line number:\n\n```bash\ng++ -std=c++20 -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer bug.cpp -o bug && ./bug\n```\n\nAddressSanitizer catches out-of-bounds access and use-after-free; UBSan catches signed overflow, bad shifts and more. For `v[2]` on a heap-allocated vector you get `heap-buffer-overflow ... READ of size 4` and a stack trace ending in `average` at the exact line. Slower and bigger, so for debugging only. For uninitialized reads, rely on the compiler: Apple clang warns `variable 'sum' is uninitialized when used here` with `-Wall`. (Valgrind, the usual Linux tool for this, doesn't run on Apple Silicon Macs.)\n\n**3. The debugger.** When the program is wrong but not crashing, stop it and look. On your Mac the debugger is **lldb** (it came with the Command Line Tools on Monday); VS Code's debugger drives it underneath, so learn its handful of commands once. (On Ubuntu later you'll meet gdb: same ideas, slightly different spellings.)\n\n```bash\ng++ -std=c++20 -g -O0 avg.cpp -o avg     # -g: debug info, -O0: no optimization\nlldb ./avg\n```\n\n```text\n(lldb) b average             # breakpoint when average() is entered (or: b avg.cpp:12)\n(lldb) run\n(lldb) n                     # next: run one line, stepping over calls\n(lldb) s                     # step: run one line, stepping into calls\n(lldb) p sum                 # print a variable; also: p v.size(), p v[i]\n(lldb) frame variable        # every local in the current function (fr v)\n(lldb) display i             # show i after every stop\n(lldb) bt                    # backtrace: the call stack, who called whom\n(lldb) finish                # run until the current function returns\n(lldb) c                     # continue to the next breakpoint\n(lldb) watchpoint set variable total   # stop whenever total changes (w s v total)\n(lldb) q\n```\n\nWithout `-O0`, the compiler rearranges code and the debugger shows variables as unavailable or optimized out; always debug unoptimized builds.\n\n**4. VS Code on macOS.** Install the *CodeLLDB* extension (alongside Microsoft's C/C++ extension). Open the folder, then *Run and Debug* → create a `launch.json` → choose LLDB. You need two files in `.vscode/`: a `tasks.json` with the compile command (a shell task running `g++` with `-std=c++20 -Wall -Wextra -g -O0`) and a `launch.json` entry of type `lldb` whose `program` is the built executable and whose `preLaunchTask` is that build task. Then breakpoints, the Variables pane and the Call Stack pane work just like in your Python debugging in Week 1.\n\n**5. Print debugging and asserts** remain useful, especially on hardware where there is no debugger (the Arduino serial monitor tomorrow is exactly this). `assert(cond)` from `<cassert>` stops the program with the file and line when `cond` is false: cheap, permanent checks of your assumptions.\n\n**The method, every time.** (1) Reproduce with the smallest input that fails. (2) State what you *expect* at a specific line. (3) Stop there and compare with what *is*. (4) The first place where expectation and reality differ is where the bug lives, or just after. (5) Fix one thing, rerun. This is the scientific method with a breakpoint, and it's the same thing you'll teach students when their LED doesn't light.\n\n**Worked example: the fixed version.**\n\n```cpp\n#include <cassert>\n#include <iostream>\n#include <vector>\n\ndouble average(std::vector<int> v) {\n    assert(!v.empty());                        // the caller's contract\n    long long sum {0};                         // initialized, and wide enough\n    for (std::size_t i = 0; i < v.size(); ++i) {   // < not <=, unsigned index\n        sum += v[i];\n    }\n    return static_cast<double>(sum) / v.size();    // floating-point division\n}\n\nint main() {\n    std::cout << average({3, 4}) << '\\n';      // 3.5\n    std::cout << average({10}) << '\\n';        // 10\n    std::vector<int> readings {512, 515, 509, 514};\n    std::cout << average(readings) << '\\n';    // 512.5\n    return 0;\n}\n```\n\nEach fix answers a specific root cause. Writing the cause down (not just the fix) is what makes you faster next time."
+     "body": "The first example has four bugs: `sum` is never initialized, the loop reads `v[2]` which doesn't exist (`<=` instead of `<`), `sum / v.size()` is integer division, and comparing `int i` with the unsigned `v.size()` earns a warning. The nasty part: it may still print a plausible number. C++ doesn't stop you at the first mistake the way Python's `IndexError` does. Undefined behaviour means \"anything\", including \"looks fine today\".\n\nSo C++ debugging has layers. Use them in this order.\n\n**1. Warnings.** `-Wall -Wextra` flags the signed/unsigned comparison, and Apple clang also flags the uninitialized `sum`. Read every warning; treat them as errors (`-Werror`) in your own projects.\n\n**2. Sanitizers.** Compile with runtime checks that turn silent undefined behaviour into a loud report with a line number:\n\n```bash\ng++ -std=c++20 -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer bug.cpp -o bug && ./bug\n```\n\nAddressSanitizer catches out-of-bounds access and use-after-free; UBSan catches signed overflow, bad shifts and more. For `v[2]` on a heap-allocated vector you get `heap-buffer-overflow ... READ of size 4` and a stack trace ending in `average` at the exact line. Slower and bigger, so for debugging only. For uninitialized reads, rely on the compiler: Apple clang warns `variable 'sum' is uninitialized when used here` with `-Wall`. (Valgrind, the usual Linux tool for this, doesn't run on Apple Silicon Macs.)\n\n**3. The debugger.** When the program is wrong but not crashing, stop it and look. On your Mac the debugger is **lldb** (it came with the Command Line Tools on Monday); VS Code's debugger drives it underneath, so learn its handful of commands once. (On Ubuntu later you'll meet gdb: same ideas, slightly different spellings.)\n\n```bash\ng++ -std=c++20 -g -O0 avg.cpp -o avg     # -g: debug info, -O0: no optimization\nlldb ./avg\n```\n\n```text\n(lldb) b average             # breakpoint when average() is entered (or: b avg.cpp:12)\n(lldb) run\n(lldb) n                     # next: run one line, stepping over calls\n(lldb) s                     # step: run one line, stepping into calls\n(lldb) p sum                 # print a variable; also: p v.size(), p v[i]\n(lldb) frame variable        # every local in the current function (fr v)\n(lldb) display i             # show i after every stop\n(lldb) bt                    # backtrace: the call stack, who called whom\n(lldb) finish                # run until the current function returns\n(lldb) c                     # continue to the next breakpoint\n(lldb) watchpoint set variable total   # stop whenever total changes (w s v total)\n(lldb) q\n```\n\nWithout `-O0`, the compiler rearranges code and the debugger shows variables as unavailable or optimized out; always debug unoptimized builds.\n\n**4. VS Code on macOS.** Install the *CodeLLDB* extension (alongside Microsoft's C/C++ extension). Open the folder, then *Run and Debug* → create a `launch.json` → choose LLDB. You need two files in `.vscode/`: a `tasks.json` with the compile command (a shell task running `g++` with `-std=c++20 -Wall -Wextra -g -O0`) and a `launch.json` entry of type `lldb` whose `program` is the built executable and whose `preLaunchTask` is that build task. Then breakpoints, the Variables pane and the Call Stack pane work just like in your Python debugging in Week 1.\n\n**5. Print debugging and asserts** remain useful, especially on hardware where there is no debugger (the Arduino serial monitor tomorrow is exactly this). `assert(cond)` from `<cassert>` stops the program with the file and line when `cond` is false: cheap, permanent checks of your assumptions.\n\n**The method, every time.** (1) Reproduce with the smallest input that fails. (2) State what you *expect* at a specific line. (3) Stop there and compare with what *is*. (4) The first place where expectation and reality differ is where the bug lives, or just after. (5) Fix one thing, rerun. This is the scientific method with a breakpoint, and it's the same thing you'll teach students when their LED doesn't light.\n\n**Worked example: the fixed version.**\n\n```cpp\n#include <cassert>\n#include <iostream>\n#include <vector>\n\ndouble average(std::vector<int> v) {\n    assert(!v.empty());                        // the caller's contract\n    long long sum {0};                         // initialized, and wide enough\n    for (std::size_t i = 0; i < v.size(); ++i) {   // < not <=, unsigned index\n        sum += v[i];\n    }\n    return static_cast<double>(sum) / v.size();    // floating-point division\n}\n\nint main() {\n    std::cout << average({3, 4}) << '\\n';      // 3.5\n    std::cout << average({10}) << '\\n';        // 10\n    std::vector<int> readings {512, 515, 509, 514};\n    std::cout << average(readings) << '\\n';    // 512.5\n    return 0;\n}\n```\n\nEach fix answers a specific root cause. Writing the cause down (not just the fix) is what makes you faster next time."
     },
     {
      "kind": "practice",
@@ -2392,7 +2415,7 @@
      "title": "Practice without notes",
      "tasks": [
       {
-       "prompt": "Copy the pretest's broken `average` into `avg.cpp` with a `main` that calls it on `{3, 4}`. Compile it three ways (plain, with `-Wall -Wextra`, with `-fsanitize=address,undefined -g`) and record what each tells you. Then step through it in lldb with `b average`, `run`, `display i`, `display sum`, `n` until you see the bad read. Finally write the fixed `double average(std::vector<int> v)`.",
+       "prompt": "Copy the first example's broken `average` into `avg.cpp` with a `main` that calls it on `{3, 4}`. Compile it three ways (plain, with `-Wall -Wextra`, with `-fsanitize=address,undefined -g`) and record what each tells you. Then step through it in lldb with `b average`, `run`, `display i`, `display sum`, `n` until you see the bad read. Finally write the fixed `double average(std::vector<int> v)`.",
        "hints": [
         "The plain build says nothing; that's the point.",
         "The sanitizer build should name the line of `sum += v[i]`; in lldb, `p v.size()` and watch `i` reach it.",
@@ -2528,16 +2551,14 @@
      "title": "Recall",
      "questions": [
       {
-       "q": "Wednesday: how does the length-prefix decoder know where a string ends?",
-       "a": "It reads the number before '#' and takes exactly that many characters after it."
-      },
-      {
        "q": "Week 5: what does a tuple `(r, c)` give you that a list `[r, c]` doesn't, as a set element?",
-       "a": "It's hashable, so it can be stored in a set or used as a dict key."
+       "a": "It's hashable, so it can be stored in a set or used as a dict key.",
+       "from": "algo-w08-1"
       },
       {
        "q": "For a 3×3 box index in Sudoku, what does `(r // 3, c // 3)` compute for cell (4, 7)?",
-       "a": "(1, 2): the middle row of boxes, right column."
+       "a": "(1, 2): the middle row of boxes, right column.",
+       "from": "python-w01-1"
       }
      ]
     },
@@ -2850,33 +2871,37 @@
      "questions": [
       {
        "q": "Tuesday: what does the median absolute deviation measure, and how is it computed?",
-       "a": "Spread, robustly: the median of |x − median(x)|."
+       "a": "Spread, robustly: the median of |x − median(x)|.",
+       "from": "ai-w08-2"
       },
       {
        "q": "Week 7: what does `df.groupby('cohort')['completed'].agg(['mean', 'median'])` return?",
-       "a": "A DataFrame indexed by cohort with mean and median completion columns."
+       "a": "A DataFrame indexed by cohort with mean and median completion columns.",
+       "from": "ai-w07-3"
       },
       {
        "q": "Thursday: a boxplot shows the median line near the bottom of the box and a long upper whisker. What shape is the distribution?",
-       "a": "Right-skewed: a long tail of large values."
+       "a": "Right-skewed: a long tail of large values.",
+       "from": "ai-w08-4"
       },
       {
        "q": "Wednesday SQL: rows 6–10 of a result sorted by score?",
-       "a": "`ORDER BY score LIMIT 5 OFFSET 5`."
+       "a": "`ORDER BY score LIMIT 5 OFFSET 5`.",
+       "from": "ai-w08-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Ten students' completed lessons: 3, 14, 15, 15, 16, 17, 17, 18, 19, 20.\n\nWithout computing, predict: is the mean above or below the median? Which single number moves if you change the 3 to a 10: the median, the mean, both? Which student would a z-score flag, and would an IQR fence flag the same one?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nTen students' completed lessons: 3, 14, 15, 15, 16, 17, 17, 18, 19, 20.\n\n- The mean is 154 / 10 = **15.4** and the median is (16 + 17) / 2 = **16.5**. The single low value (3) pulls the mean *below* the median.\n- Changing the 3 to a 10 moves the **mean** (to 16.1); the median stays at 16.5.\n- The z-score flags the student with 3: z ≈ −2.6 (flagged if your cut-off is |z| > 2). The IQR fence flags the same student: Q1 ≈ 15 and Q3 ≈ 18, so the lower fence is about 10.5.\n\nLearn works through each number by hand."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Summarizing a column honestly",
-     "body": "Descriptive statistics answer \"what does this data look like?\" before any modelling. Three families: **location** (where is the middle), **spread** (how far apart are values), **shape** (symmetric, skewed, multiple peaks). Always report one from each, and pick robust versions when the data is messy.\n\n**Worked example by hand.** Data from the pretest, n = 10, sorted: 3, 14, 15, 15, 16, 17, 17, 18, 19, 20.\n\n*Location.*\n- Mean = 154 / 10 = **15.4**.\n- Median = average of the 5th and 6th values = (16 + 17) / 2 = **16.5**.\n- Mode = 15 and 17 (bimodal; the mode is rarely useful for continuous data).\n- Mean < median: the low value 3 pulls the mean down. Long tail on the left = **left skew**.\n\n*Spread.*\n- Range = 20 − 3 = 17 (driven entirely by the extremes).\n- Sample variance: deviations from 15.4 are −12.4, −1.4, −0.4, −0.4, 0.6, 1.6, 1.6, 2.6, 3.6, 4.6. Squares sum to 153.76 + 1.96 + 0.16 + 0.16 + 0.36 + 2.56 + 2.56 + 6.76 + 12.96 + 21.16 = 202.4. Divide by n − 1 = 9: s² ≈ **22.49**, so s ≈ **4.74**.\n- Quartiles: there are several conventions. NumPy's default (linear interpolation) gives Q1 = 15, Q3 = 17.75, so **IQR = 2.75**. Quote which method you used if it matters.\n\n*Outliers, two ways.*\n- **z-score**: z = (x − mean) / s. For 3: (3 − 15.4) / 4.74 ≈ **−2.62**. A common rule flags |z| > 2 (or > 3 with lots of data). Problem: the outlier itself inflated s and dragged the mean, which makes it look less extreme. With one big outlier in a small sample, z-scores under-flag.\n- **IQR fences** (Tukey): flag below Q1 − 1.5·IQR = 15 − 4.125 = **10.875** or above Q3 + 1.5·IQR = 17.75 + 4.125 = **21.875**. 3 is flagged; nothing else is. The fences come from the median-based middle half, so the outlier can't hide itself.\n\nChange the 3 to 10: the median stays 16.5 (only the order matters), the mean rises to 16.1. That's what \"robust\" means in practice.\n\n*Shape.* Skewness formally is the average cubed z-score; in practice compare mean and median and look at a histogram. Report a median and IQR for skewed data, mean and standard deviation for roughly symmetric data.\n\n**In pandas.**\n\n```python\nimport numpy as np\nimport pandas as pd\n\nx = pd.Series([3, 14, 15, 15, 16, 17, 17, 18, 19, 20], name=\"completed\")\nprint(x.describe().round(2))            # count, mean, std (ddof=1), min, quartiles, max\nprint(\"median\", x.median(), \"skew\", round(x.skew(), 2))\n\nz = (x - x.mean()) / x.std()\nq1, q3 = x.quantile([0.25, 0.75])\niqr = q3 - q1\nfence_out = x[(x < q1 - 1.5 * iqr) | (x > q3 + 1.5 * iqr)]\nprint(\"z-flagged:\", x[z.abs() > 2].tolist(), \" IQR-flagged:\", fence_out.tolist())\n\n# Grouped summary: the one table a teaching team actually reads\ndf = pd.DataFrame({\n    \"cohort\": [\"a\", \"a\", \"a\", \"b\", \"b\", \"b\", \"b\", \"c\", \"c\", \"c\"],\n    \"completed\": x.to_numpy(),\n})\nsummary = df.groupby(\"cohort\")[\"completed\"].agg(\n    n=\"count\", median=\"median\", mean=\"mean\",\n    q1=lambda s: s.quantile(0.25), q3=lambda s: s.quantile(0.75),\n)\nprint(summary.round(2))\n```\n\nNote `x.std()` in pandas uses n − 1 by default, while `np.std(arr)` uses n unless you pass `ddof=1`. Mixing them up is a classic silent bug.\n\n**Writing it up.** A good descriptive summary is a few sentences, not a dump of `describe()`: \"Median completion is 16.5 of 20 lessons (IQR 15–17.75). One student is far behind at 3 lessons; excluding them, the mean is 16.8. Cohort b has the widest spread.\" Numbers with context, the outlier named, robust statistics first."
+     "body": "Descriptive statistics answer \"what does this data look like?\" before any modelling. Three families: **location** (where is the middle), **spread** (how far apart are values), **shape** (symmetric, skewed, multiple peaks). Always report one from each, and pick robust versions when the data is messy.\n\n**Worked example by hand.** Data from the first example, n = 10, sorted: 3, 14, 15, 15, 16, 17, 17, 18, 19, 20.\n\n*Location.*\n- Mean = 154 / 10 = **15.4**.\n- Median = average of the 5th and 6th values = (16 + 17) / 2 = **16.5**.\n- Mode = 15 and 17 (bimodal; the mode is rarely useful for continuous data).\n- Mean < median: the low value 3 pulls the mean down. Long tail on the left = **left skew**.\n\n*Spread.*\n- Range = 20 − 3 = 17 (driven entirely by the extremes).\n- Sample variance: deviations from 15.4 are −12.4, −1.4, −0.4, −0.4, 0.6, 1.6, 1.6, 2.6, 3.6, 4.6. Squares sum to 153.76 + 1.96 + 0.16 + 0.16 + 0.36 + 2.56 + 2.56 + 6.76 + 12.96 + 21.16 = 202.4. Divide by n − 1 = 9: s² ≈ **22.49**, so s ≈ **4.74**.\n- Quartiles: there are several conventions. NumPy's default (linear interpolation) gives Q1 = 15, Q3 = 17.75, so **IQR = 2.75**. Quote which method you used if it matters.\n\n*Outliers, two ways.*\n- **z-score**: z = (x − mean) / s. For 3: (3 − 15.4) / 4.74 ≈ **−2.62**. A common rule flags |z| > 2 (or > 3 with lots of data). Problem: the outlier itself inflated s and dragged the mean, which makes it look less extreme. With one big outlier in a small sample, z-scores under-flag.\n- **IQR fences** (Tukey): flag below Q1 − 1.5·IQR = 15 − 4.125 = **10.875** or above Q3 + 1.5·IQR = 17.75 + 4.125 = **21.875**. 3 is flagged; nothing else is. The fences come from the median-based middle half, so the outlier can't hide itself.\n\nChange the 3 to 10: the median stays 16.5 (only the order matters), the mean rises to 16.1. That's what \"robust\" means in practice.\n\n*Shape.* Skewness formally is the average cubed z-score; in practice compare mean and median and look at a histogram. Report a median and IQR for skewed data, mean and standard deviation for roughly symmetric data.\n\n**In pandas.**\n\n```python\nimport numpy as np\nimport pandas as pd\n\nx = pd.Series([3, 14, 15, 15, 16, 17, 17, 18, 19, 20], name=\"completed\")\nprint(x.describe().round(2))            # count, mean, std (ddof=1), min, quartiles, max\nprint(\"median\", x.median(), \"skew\", round(x.skew(), 2))\n\nz = (x - x.mean()) / x.std()\nq1, q3 = x.quantile([0.25, 0.75])\niqr = q3 - q1\nfence_out = x[(x < q1 - 1.5 * iqr) | (x > q3 + 1.5 * iqr)]\nprint(\"z-flagged:\", x[z.abs() > 2].tolist(), \" IQR-flagged:\", fence_out.tolist())\n\n# Grouped summary: the one table a teaching team actually reads\ndf = pd.DataFrame({\n    \"cohort\": [\"a\", \"a\", \"a\", \"b\", \"b\", \"b\", \"b\", \"c\", \"c\", \"c\"],\n    \"completed\": x.to_numpy(),\n})\nsummary = df.groupby(\"cohort\")[\"completed\"].agg(\n    n=\"count\", median=\"median\", mean=\"mean\",\n    q1=lambda s: s.quantile(0.25), q3=lambda s: s.quantile(0.75),\n)\nprint(summary.round(2))\n```\n\nNote `x.std()` in pandas uses n − 1 by default, while `np.std(arr)` uses n unless you pass `ddof=1`. Mixing them up is a classic silent bug.\n\n**Writing it up.** A good descriptive summary is a few sentences, not a dump of `describe()`: \"Median completion is 16.5 of 20 lessons (IQR 15–17.75). One student is far behind at 3 lessons; excluding them, the mean is 16.8. Cohort b has the widest spread.\" Numbers with context, the outlier named, robust statistics first."
     },
     {
      "kind": "practice",

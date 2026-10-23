@@ -50,29 +50,32 @@
      "questions": [
       {
        "q": "From the Week 2 algorithms lessons: what two parts does every recursive function need?",
-       "a": "A base case that returns without recursing, and a recursive case that calls itself on a strictly smaller input, so every chain of calls reaches the base case."
+       "a": "A base case that returns without recursing, and a recursive case that calls itself on a strictly smaller input, so every chain of calls reaches the base case.",
+       "from": "algo-w02-2"
       },
       {
        "q": "Week 4: what does `@dataclass` write for you when you list annotated fields?",
-       "a": "`__init__`, `__repr__` and `__eq__` built from the fields (and more if you ask, e.g. `order=True` adds comparisons)."
+       "a": "`__init__`, `__repr__` and `__eq__` built from the fields (and more if you ask, e.g. `order=True` adds comparisons).",
+       "from": "python-w04-3"
       },
       {
        "q": "Week 4 algorithms: a stack is LIFO. Which two list methods give you push and pop in O(1)?",
-       "a": "`append` to push and `pop()` (no argument) to pop from the end."
+       "a": "`append` to push and `pop()` (no argument) to pop from the end.",
+       "from": "algo-w04-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Before reading on, write down on paper exactly what this prints, line by line. Then run it.\n\n```python\ndef total(n):\n    print(\"  \" * (3 - n) + f\"call total({n})\")\n    if n == 0:\n        return 0\n    result = n + total(n - 1)\n    print(\"  \" * (3 - n) + f\"total({n}) returns {result}\")\n    return result\n\ntotal(3)\n```\n\nTwo things to predict: in which order do the `returns` lines appear, and how many calls to `total` are alive (started, not finished) at the moment `total(0)` runs?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\ndef total(n):\n    print(\"  \" * (3 - n) + f\"call total({n})\")\n    if n == 0:\n        return 0\n    result = n + total(n - 1)\n    print(\"  \" * (3 - n) + f\"total({n}) returns {result}\")\n    return result\n\ntotal(3)\n```\n\n**It prints:**\n\n```text\ncall total(3)\n  call total(2)\n    call total(1)\n      call total(0)\n    total(1) returns 1\n  total(2) returns 3\ntotal(3) returns 6\n```\n\nThe `returns` lines come out innermost first: `total(1)`, then `total(2)`, then `total(3)`. While `total(0)` runs, **four** calls are alive (started, not finished): `total(3)`, `total(2)`, `total(1)` and `total(0)`. Learn explains this with the call stack."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Frames, the stack, and recursion on nested data",
-     "body": "**What actually happens on a call.** Every time Python calls a function it creates a *frame*: a small record holding that call's local variables and the place to return to. Frames live on the *call stack*. A call pushes a frame; a `return` pops it and hands the value to the frame underneath. In the pretest, `total(3)` is waiting on `total(2)`, which waits on `total(1)`, which waits on `total(0)`. At the deepest point four frames are alive, each with its *own* `n`. That is why the `returns` lines come out in reverse order: 0 returns first, then 1, 2, 3. Nothing about recursion is magic; it's ordinary calls that happen to target the same function.\n\n**Two consequences.**\n\n1. Depth costs memory. Python caps the stack at about 1000 frames (`sys.getrecursionlimit()`), and Python does *not* turn tail calls into loops. `total(5000)` raises `RecursionError`. For deep linear problems (a list of a million items) a loop is the right tool; recursion shines when the data itself is shaped like a tree and depth is small.\n2. Repeated work explodes. Naive Fibonacci calls `fib(n-1)` and `fib(n-2)`, and both re-solve the same smaller problems. Caching each answer (*memoization*) turns exponential time into linear.\n\n**Recursion fits recursive data.** A nested list is \"a list whose items are numbers or nested lists\". The function mirrors that sentence: a base case for a number, a loop over items for a list.\n\n```python\nimport sys\nfrom functools import lru_cache\n\ndef nested_sum(data):\n    if isinstance(data, int):        # base case: a plain number\n        return data\n    return sum(nested_sum(item) for item in data)   # a list: add up its parts\n\nprint(nested_sum([1, [2, 3], [[4]], []]))   # 10\n\ncalls = 0\ndef fib_slow(n):\n    global calls\n    calls += 1\n    return n if n < 2 else fib_slow(n - 1) + fib_slow(n - 2)\n\nfib_slow(25)\nprint(\"slow calls:\", calls)            # 242785\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\nprint(fib(90), fib.cache_info().misses)   # 2880067194370816120 91\n\nprint(\"limit:\", sys.getrecursionlimit())\ndeep = 1\nfor _ in range(2000):\n    deep = [deep]                     # [[[...[1]...]]], 2000 levels\ntry:\n    nested_sum(deep)\nexcept RecursionError:\n    print(\"2000 levels deep: RecursionError\")\n```\n\n`lru_cache` stores results keyed by the arguments, so arguments must be hashable (ints, strings, tuples; not lists).\n\n**From recursion to an explicit stack.** Any recursion can be rewritten with your own list as the stack: push the starting item, then loop \"pop one, process it, push its children\". This removes the depth limit and is exactly what you'll do for depth-first search on Wednesday.\n\n```python\ntree = {\"name\": \"root\", \"size\": 1, \"children\": [\n    {\"name\": \"a\", \"size\": 4, \"children\": []},\n    {\"name\": \"b\", \"size\": 2, \"children\": [{\"name\": \"c\", \"size\": 8, \"children\": []}]},\n]}\n\ndef size_recursive(node):\n    return node[\"size\"] + sum(size_recursive(ch) for ch in node[\"children\"])\n\ndef size_iterative(root):\n    total, stack = 0, [root]\n    while stack:\n        node = stack.pop()\n        total += node[\"size\"]\n        stack.extend(node[\"children\"])\n    return total\n\nprint(size_recursive(tree), size_iterative(tree))   # 15 15\n```\n\n**How to design one.** Say the definition out loud in one sentence (\"the size of a folder is its own size plus the sizes of its children\"). The base case is the part of the sentence that doesn't mention the thing itself; the recursive case is the rest. Then trust the recursive call to do its job for the smaller piece; don't trace it all the way down in your head."
+     "body": "**What actually happens on a call.** Every time Python calls a function it creates a *frame*: a small record holding that call's local variables and the place to return to. Frames live on the *call stack*. A call pushes a frame; a `return` pops it and hands the value to the frame underneath. In the first example, `total(3)` is waiting on `total(2)`, which waits on `total(1)`, which waits on `total(0)`. At the deepest point four frames are alive, each with its *own* `n`. That is why the `returns` lines come out in reverse order: 0 returns first, then 1, 2, 3. Nothing about recursion is magic; it's ordinary calls that happen to target the same function.\n\n**Two consequences.**\n\n1. Depth costs memory. Python caps the stack at about 1000 frames (`sys.getrecursionlimit()`), and Python does *not* turn tail calls into loops. `total(5000)` raises `RecursionError`. For deep linear problems (a list of a million items) a loop is the right tool; recursion shines when the data itself is shaped like a tree and depth is small.\n2. Repeated work explodes. Naive Fibonacci calls `fib(n-1)` and `fib(n-2)`, and both re-solve the same smaller problems. Caching each answer (*memoization*) turns exponential time into linear.\n\n**Recursion fits recursive data.** A nested list is \"a list whose items are numbers or nested lists\". The function mirrors that sentence: a base case for a number, a loop over items for a list.\n\n```python\nimport sys\nfrom functools import lru_cache\n\ndef nested_sum(data):\n    if isinstance(data, int):        # base case: a plain number\n        return data\n    return sum(nested_sum(item) for item in data)   # a list: add up its parts\n\nprint(nested_sum([1, [2, 3], [[4]], []]))   # 10\n\ncalls = 0\ndef fib_slow(n):\n    global calls\n    calls += 1\n    return n if n < 2 else fib_slow(n - 1) + fib_slow(n - 2)\n\nfib_slow(25)\nprint(\"slow calls:\", calls)            # 242785\n\n@lru_cache(maxsize=None)\ndef fib(n):\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\nprint(fib(90), fib.cache_info().misses)   # 2880067194370816120 91\n\nprint(\"limit:\", sys.getrecursionlimit())\ndeep = 1\nfor _ in range(2000):\n    deep = [deep]                     # [[[...[1]...]]], 2000 levels\ntry:\n    nested_sum(deep)\nexcept RecursionError:\n    print(\"2000 levels deep: RecursionError\")\n```\n\n`lru_cache` stores results keyed by the arguments, so arguments must be hashable (ints, strings, tuples; not lists).\n\n**From recursion to an explicit stack.** Any recursion can be rewritten with your own list as the stack: push the starting item, then loop \"pop one, process it, push its children\". This removes the depth limit and is exactly what you'll do for depth-first search on Wednesday.\n\n```python\ntree = {\"name\": \"root\", \"size\": 1, \"children\": [\n    {\"name\": \"a\", \"size\": 4, \"children\": []},\n    {\"name\": \"b\", \"size\": 2, \"children\": [{\"name\": \"c\", \"size\": 8, \"children\": []}]},\n]}\n\ndef size_recursive(node):\n    return node[\"size\"] + sum(size_recursive(ch) for ch in node[\"children\"])\n\ndef size_iterative(root):\n    total, stack = 0, [root]\n    while stack:\n        node = stack.pop()\n        total += node[\"size\"]\n        stack.extend(node[\"children\"])\n    return total\n\nprint(size_recursive(tree), size_iterative(tree))   # 15 15\n```\n\n**How to design one.** Say the definition out loud in one sentence (\"the size of a folder is its own size plus the sizes of its children\"). The base case is the part of the sentence that doesn't mention the thing itself; the recursive case is the rest. Then trust the recursive call to do its job for the smaller piece; don't trace it all the way down in your head."
     },
     {
      "kind": "practice",
@@ -224,12 +227,9 @@
      "title": "Recall",
      "questions": [
       {
-       "q": "Week 4: why is `x in some_set` O(1) on average but `x in some_list` O(n)?",
-       "a": "A set hashes x to find its bucket directly; a list must compare x with each element in turn."
-      },
-      {
        "q": "Week 4: which end does a queue remove from, and why is `list.pop(0)` a bad queue?",
-       "a": "The front (FIFO). pop(0) shifts every remaining element, O(n); collections.deque.popleft() is O(1)."
+       "a": "The front (FIFO). pop(0) shifts every remaining element, O(n); collections.deque.popleft() is O(1).",
+       "from": "algo-w04-3"
       }
      ]
     },
@@ -352,7 +352,15 @@
      "back": "At the start of each round pop exactly len(queue) nodes."
     }
    ],
-   "deliverable": "bfs.py in learning-log/algo/week05 with build_graph, shortest_path, grid_steps and levels, with tests, committed."
+   "deliverable": "bfs.py in learning-log/algo/week05 with build_graph, shortest_path, grid_steps and levels, with tests, committed.",
+   "leetcode": [
+    {
+     "title": "Find if Path Exists in Graph",
+     "url": "https://leetcode.com/problems/find-if-path-exists-in-graph/",
+     "level": "easy",
+     "uses": "an adjacency list and breadth-first search (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w05-1",
@@ -643,29 +651,32 @@
      "questions": [
       {
        "q": "Week 3: what does det(A) = -2 tell you about the transformation A in 2D?",
-       "a": "It scales every area by 2 and flips orientation (the sign is negative)."
+       "a": "It scales every area by 2 and flips orientation (the sign is negative).",
+       "from": "math-w03-1"
       },
       {
        "q": "Week 4: compute (1, 2, 3) · (4, 5, 6) and say what its sign means.",
-       "a": "4 + 10 + 18 = 32. Positive: the vectors point broadly in the same direction (angle under 90 degrees)."
+       "a": "4 + 10 + 18 = 32. Positive: the vectors point broadly in the same direction (angle under 90 degrees).",
+       "from": "math-w04-3"
       },
       {
        "q": "Week 4 (duality): what does it mean to say \"every linear map from 2D vectors to numbers is a dot product with some vector\"?",
-       "a": "A 1 x 2 matrix [a b] applied to v gives a*v1 + b*v2, which is the dot product of (a, b) with v; the row and the vector are the same information."
+       "a": "A 1 x 2 matrix [a b] applied to v gives a*v1 + b*v2, which is the dot product of (a, b) with v; the row and the vector are the same information.",
+       "from": "math-w04-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Without computing anything: v = (1, 0, 0) points along x, w = (0, 1, 0) along y. Their cross product is a vector. Which direction does it point, and how long is it? Now swap the order (w then v). What changes?\n\nSecond guess: what is v x v for any vector v?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nv = (1, 0, 0) points along x, w = (0, 1, 0) along y.\n\n- v × w = **(0, 0, 1)**: it points along +z (right-hand rule) and has length 1, the area of the unit square v and w span.\n- w × v = **(0, 0, −1)**: swapping the order flips the direction.\n- v × v = **0** for any v: a vector spans no area with itself.\n\nLearn explains the cross product with these three facts."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "What the cross product is and how to compute it",
-     "body": "**Start in 2D.** Take two vectors v = (3, 1) and w = (1, 2). They span a parallelogram. Its area is the determinant of the matrix with v and w as columns:\n\ndet [[3, 1], [1, 2]] = 3*2 - 1*1 = 5.\n\nThe sign carries orientation: positive when w is counter-clockwise from v (a \"left turn\"), negative when clockwise. Swapping v and w flips the sign. People sometimes call this number \"the 2D cross product\". It isn't a vector, but it's the most useful number in 2D geometry: robotics code uses its sign to decide whether a point is left or right of a robot's heading, and whether a path turns left or right.\n\n**In 3D the cross product is a vector.** v x w is defined by three properties:\n\n1. Its **direction** is perpendicular to both v and w, chosen by the right-hand rule (fingers along v, curl toward w, thumb points along v x w).\n2. Its **length** equals the area of the parallelogram spanned by v and w, i.e. |v| |w| sin(theta).\n3. Order matters: w x v = -(v x w). And v x v = 0 (a flat parallelogram has no area).\n\nSo the pretest: x-hat x y-hat = z-hat, length 1 (the unit square); y-hat x x-hat = -z-hat.\n\n**The formula.** For v = (v1, v2, v3), w = (w1, w2, w3):\n\nv x w = (v2 w3 - v3 w2,  v3 w1 - v1 w3,  v1 w2 - v2 w1)\n\nA way to remember it is the \"fake determinant\" of a 3 x 3 matrix whose first row is the basis vectors i, j, k and whose other rows are v and w, expanded along the first row (note the minus sign on the middle term).\n\n**Worked example.** v = (2, 0, 1), w = (1, 3, 0).\n\n- x: 0*0 - 1*3 = -3\n- y: 1*1 - 2*0 = 1\n- z: 2*3 - 0*1 = 6\n\nv x w = (-3, 1, 6). Check perpendicularity with dot products: (-3, 1, 6)·(2, 0, 1) = -6 + 0 + 6 = 0, and (-3, 1, 6)·(1, 3, 0) = -3 + 3 + 0 = 0. Length: sqrt(9 + 1 + 36) = sqrt(46) ≈ 6.78, which is the area of the parallelogram; the triangle with those two sides has half that, ≈ 3.39.\n\n```python\nimport numpy as np\n\nv = np.array([2, 0, 1])\nw = np.array([1, 3, 0])\nc = np.cross(v, w)\nprint(c, c @ v, c @ w, np.linalg.norm(c))   # [-3  1  6] 0 0 6.78...\nprint(np.cross(w, v))                         # [ 3 -1 -6]\n# 2D: the sign of the determinant says left or right\nheading, to_point = np.array([1, 0]), np.array([1, 1])\nprint(np.linalg.det(np.column_stack([heading, to_point])))  # 1.0 > 0: point is to the left\n```\n\n**Why the formula is what it is (chapter 11).** Fix v and w and look at the function f(p) = det[p, v, w], the signed volume of the box spanned by p, v, w. It's linear in p, so by last week's duality there is exactly one vector c with f(p) = c · p for every p. That c is v x w. Read it geometrically: the volume of the box is (area of the base parallelogram) times (the height of p perpendicular to that base). A dot product with a vector perpendicular to the base, whose length is the base area, computes exactly that. This is why the cross product's length is the area and its direction is perpendicular: it is the dual vector of \"volume with v and w\".\n\n**Where you'll meet it.** Normals of surfaces and triangles (3D graphics, point clouds), torque τ = r x F, angular velocity in robot kinematics (Modern Robotics uses it constantly), and the left/right test in 2D path planning."
+     "body": "**Start in 2D.** Take two vectors v = (3, 1) and w = (1, 2). They span a parallelogram. Its area is the determinant of the matrix with v and w as columns:\n\ndet [[3, 1], [1, 2]] = 3*2 - 1*1 = 5.\n\nThe sign carries orientation: positive when w is counter-clockwise from v (a \"left turn\"), negative when clockwise. Swapping v and w flips the sign. People sometimes call this number \"the 2D cross product\". It isn't a vector, but it's the most useful number in 2D geometry: robotics code uses its sign to decide whether a point is left or right of a robot's heading, and whether a path turns left or right.\n\n**In 3D the cross product is a vector.** v x w is defined by three properties:\n\n1. Its **direction** is perpendicular to both v and w, chosen by the right-hand rule (fingers along v, curl toward w, thumb points along v x w).\n2. Its **length** equals the area of the parallelogram spanned by v and w, i.e. |v| |w| sin(theta).\n3. Order matters: w x v = -(v x w). And v x v = 0 (a flat parallelogram has no area).\n\nSo the first example: x-hat x y-hat = z-hat, length 1 (the unit square); y-hat x x-hat = -z-hat.\n\n**The formula.** For v = (v1, v2, v3), w = (w1, w2, w3):\n\nv x w = (v2 w3 - v3 w2,  v3 w1 - v1 w3,  v1 w2 - v2 w1)\n\nA way to remember it is the \"fake determinant\" of a 3 x 3 matrix whose first row is the basis vectors i, j, k and whose other rows are v and w, expanded along the first row (note the minus sign on the middle term).\n\n**Worked example.** v = (2, 0, 1), w = (1, 3, 0).\n\n- x: 0*0 - 1*3 = -3\n- y: 1*1 - 2*0 = 1\n- z: 2*3 - 0*1 = 6\n\nv x w = (-3, 1, 6). Check perpendicularity with dot products: (-3, 1, 6)·(2, 0, 1) = -6 + 0 + 6 = 0, and (-3, 1, 6)·(1, 3, 0) = -3 + 3 + 0 = 0. Length: sqrt(9 + 1 + 36) = sqrt(46) ≈ 6.78, which is the area of the parallelogram; the triangle with those two sides has half that, ≈ 3.39.\n\n```python\nimport numpy as np\n\nv = np.array([2, 0, 1])\nw = np.array([1, 3, 0])\nc = np.cross(v, w)\nprint(c, c @ v, c @ w, np.linalg.norm(c))   # [-3  1  6] 0 0 6.78...\nprint(np.cross(w, v))                         # [ 3 -1 -6]\n# 2D: the sign of the determinant says left or right\nheading, to_point = np.array([1, 0]), np.array([1, 1])\nprint(np.linalg.det(np.column_stack([heading, to_point])))  # 1.0 > 0: point is to the left\n```\n\n**Why the formula is what it is (chapter 11).** Fix v and w and look at the function f(p) = det[p, v, w], the signed volume of the box spanned by p, v, w. It's linear in p, so by last week's duality there is exactly one vector c with f(p) = c · p for every p. That c is v x w. Read it geometrically: the volume of the box is (area of the base parallelogram) times (the height of p perpendicular to that base). A dot product with a vector perpendicular to the base, whose length is the base area, computes exactly that. This is why the cross product's length is the area and its direction is perpendicular: it is the dual vector of \"volume with v and w\".\n\n**Where you'll meet it.** Normals of surfaces and triangles (3D graphics, point clouds), torque τ = r x F, angular velocity in robot kinematics (Modern Robotics uses it constantly), and the left/right test in 2D path planning."
     },
     {
      "kind": "practice",
@@ -802,11 +813,13 @@
      "questions": [
       {
        "q": "This morning: what is (2, 0, 1) x (1, 3, 0)?",
-       "a": "(-3, 1, 6)."
+       "a": "(-3, 1, 6).",
+       "from": "math-w01-2"
       },
       {
        "q": "Week 4: how do you compute the angle between two vectors with NumPy?",
-       "a": "np.arccos(a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))."
+       "a": "np.arccos(a @ b / (np.linalg.norm(a) * np.linalg.norm(b))).",
+       "from": "math-w04-3"
       }
      ]
     },
@@ -1201,29 +1214,32 @@
      "questions": [
       {
        "q": "Monday: what does an explicit stack replace when you rewrite recursion as a loop?",
-       "a": "The call stack: each pushed item stands for a call that still has work to do."
+       "a": "The call stack: each pushed item stands for a call that still has work to do.",
+       "from": "python-w05-1"
       },
       {
        "q": "Week 4: which dunder method makes `len(obj)` work, and which makes `obj[i]` work?",
-       "a": "`__len__` and `__getitem__`."
+       "a": "`__len__` and `__getitem__`.",
+       "from": "python-w04-3"
       },
       {
        "q": "Week 2: what is the difference between `[x * x for x in nums]` and `(x * x for x in nums)`?",
-       "a": "The first builds a whole list now; the second is a generator expression that produces values one at a time when asked."
+       "a": "The first builds a whole list now; the second is a generator expression that produces values one at a time when asked.",
+       "from": "build-w02-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict both printed lines before running:\n\n```python\nsquares = (n * n for n in range(4))\nprint(sum(squares))\nprint(sum(squares))\n```\n\nThen: if you replaced the parentheses with square brackets, would the second line change? Why?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nsquares = (n * n for n in range(4))\nprint(sum(squares))\nprint(sum(squares))\n```\n\n**It prints `6`, then `0`.** A generator is single-use: the first `sum` used it up, so the second gets nothing. With square brackets you'd have a list, which can be read again, and both lines would print `6`. Learn explains iterators and generators."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "The iterator protocol, then generators",
-     "body": "**Iterable vs iterator.** An *iterable* is anything you can loop over: lists, strings, dicts, files, ranges. An *iterator* is the object that does the walking and remembers where it is. The protocol is two calls:\n\n- `iter(obj)` asks an iterable for a fresh iterator (it calls `obj.__iter__()`).\n- `next(it)` returns the next item (`it.__next__()`), or raises `StopIteration` when there is nothing left.\n\nA `for` loop is just that, written for you:\n\n```python\nnums = [10, 20, 30]\nit = iter(nums)\nwhile True:\n    try:\n        x = next(it)\n    except StopIteration:\n        break\n    print(x)\n```\n\nAn iterator is single-use: once it raised `StopIteration` it stays empty. That's the pretest: the generator expression was used up by the first `sum`, so the second `sum` gets nothing and prints 0. A list is an iterable, not an iterator, so `iter()` hands out a new walker each time and both sums would be 14.\n\n**Writing an iterator as a class.** You need `__next__` to produce items and `__iter__` returning `self` (an iterator is also iterable, so it works in `for`):\n\n```python\nclass Countdown:\n    def __init__(self, start):\n        self.current = start\n    def __iter__(self):\n        return self\n    def __next__(self):\n        if self.current <= 0:\n            raise StopIteration\n        value = self.current\n        self.current -= 1\n        return value\n\nprint(list(Countdown(3)))   # [3, 2, 1]\n```\n\n**The same thing as a generator.** A function containing `yield` is a generator function. Calling it runs nothing; it returns a generator object (an iterator). Each `next()` runs the body until the next `yield`, hands that value out, and *freezes* the function, locals and all, until the next `next()`. Returning (or falling off the end) raises `StopIteration` for you.\n\n```python\ndef countdown(start):\n    while start > 0:\n        yield start\n        start -= 1\n\ngen = countdown(3)\nprint(next(gen), next(gen), list(gen))   # 3 2 [1]\n```\n\nTen lines of class became four. Use a class when the iterator needs extra methods or state you'll inspect; otherwise write a generator.\n\n**Why lazy matters: pipelines.** Generators let you chain stages where each item flows through all stages before the next item is read. Memory stays flat no matter how big the input is: you could stream a 5 GB log file this way. Worked example, a CSV-like feed of quiz scores with junk lines:\n\n```python\nimport io\nfrom itertools import islice\n\nraw = io.StringIO(\"S001,78\\nS002,abc\\n\\nS003,91\\nS004,55\\nS005,88\\n\")\n\ndef lines(f):\n    for line in f:\n        line = line.strip()\n        if line:\n            yield line\n\ndef parse(rows):\n    for row in rows:\n        sid, score = row.split(\",\")\n        if score.isdigit():\n            yield sid, int(score)\n\ndef passing(records, cutoff=60):\n    return ((sid, s) for sid, s in records if s >= cutoff)\n\npipeline = passing(parse(lines(raw)))\nprint(list(islice(pipeline, 2)))   # [('S001', 78), ('S003', 91)]\nprint(next(pipeline))              # ('S005', 88): it carries on where it stopped\n```\n\nNothing was read until `islice` asked for items, and only as many lines as needed were consumed. `itertools.islice(it, n)` takes the first n items of any iterator; `itertools.count()` is an endless counter that only makes sense *because* iteration is lazy.\n\n`yield from other` hands out every item of another iterable, which is handy for recursive generators: a lazy `flatten` is `for item in data: yield from flatten(item) if isinstance(item, list) else [item]`."
+     "body": "**Iterable vs iterator.** An *iterable* is anything you can loop over: lists, strings, dicts, files, ranges. An *iterator* is the object that does the walking and remembers where it is. The protocol is two calls:\n\n- `iter(obj)` asks an iterable for a fresh iterator (it calls `obj.__iter__()`).\n- `next(it)` returns the next item (`it.__next__()`), or raises `StopIteration` when there is nothing left.\n\nA `for` loop is just that, written for you:\n\n```python\nnums = [10, 20, 30]\nit = iter(nums)\nwhile True:\n    try:\n        x = next(it)\n    except StopIteration:\n        break\n    print(x)\n```\n\nAn iterator is single-use: once it raised `StopIteration` it stays empty. That's the first example: the generator expression was used up by the first `sum`, so the second `sum` gets nothing and prints 0. A list is an iterable, not an iterator, so `iter()` hands out a new walker each time and both sums would be 14.\n\n**Writing an iterator as a class.** You need `__next__` to produce items and `__iter__` returning `self` (an iterator is also iterable, so it works in `for`):\n\n```python\nclass Countdown:\n    def __init__(self, start):\n        self.current = start\n    def __iter__(self):\n        return self\n    def __next__(self):\n        if self.current <= 0:\n            raise StopIteration\n        value = self.current\n        self.current -= 1\n        return value\n\nprint(list(Countdown(3)))   # [3, 2, 1]\n```\n\n**The same thing as a generator.** A function containing `yield` is a generator function. Calling it runs nothing; it returns a generator object (an iterator). Each `next()` runs the body until the next `yield`, hands that value out, and *freezes* the function, locals and all, until the next `next()`. Returning (or falling off the end) raises `StopIteration` for you.\n\n```python\ndef countdown(start):\n    while start > 0:\n        yield start\n        start -= 1\n\ngen = countdown(3)\nprint(next(gen), next(gen), list(gen))   # 3 2 [1]\n```\n\nTen lines of class became four. Use a class when the iterator needs extra methods or state you'll inspect; otherwise write a generator.\n\n**Why lazy matters: pipelines.** Generators let you chain stages where each item flows through all stages before the next item is read. Memory stays flat no matter how big the input is: you could stream a 5 GB log file this way. Worked example, a CSV-like feed of quiz scores with junk lines:\n\n```python\nimport io\nfrom itertools import islice\n\nraw = io.StringIO(\"S001,78\\nS002,abc\\n\\nS003,91\\nS004,55\\nS005,88\\n\")\n\ndef lines(f):\n    for line in f:\n        line = line.strip()\n        if line:\n            yield line\n\ndef parse(rows):\n    for row in rows:\n        sid, score = row.split(\",\")\n        if score.isdigit():\n            yield sid, int(score)\n\ndef passing(records, cutoff=60):\n    return ((sid, s) for sid, s in records if s >= cutoff)\n\npipeline = passing(parse(lines(raw)))\nprint(list(islice(pipeline, 2)))   # [('S001', 78), ('S003', 91)]\nprint(next(pipeline))              # ('S005', 88): it carries on where it stopped\n```\n\nNothing was read until `islice` asked for items, and only as many lines as needed were consumed. `itertools.islice(it, n)` takes the first n items of any iterator; `itertools.count()` is an endless counter that only makes sense *because* iteration is lazy.\n\n`yield from other` hands out every item of another iterable, which is handy for recursive generators: a lazy `flatten` is `for item in data: yield from flatten(item) if isinstance(item, list) else [item]`."
     },
     {
      "kind": "practice",
@@ -1375,11 +1391,13 @@
      "questions": [
       {
        "q": "Monday: write the core BFS loop in four lines (queue, visited).",
-       "a": "while queue: node = queue.popleft(); for nb in graph[node]: if nb not in seen: seen.add(nb); queue.append(nb)"
+       "a": "while queue: node = queue.popleft(); for nb in graph[node]: if nb not in seen: seen.add(nb); queue.append(nb)",
+       "from": "algo-w05-1"
       },
       {
        "q": "Monday Python: what happens to recursion depth on a 100 x 100 grid if you recurse into every neighbour?",
-       "a": "It can reach 10 000 frames, far beyond the ~1000 limit: RecursionError. Use an explicit stack (or raise the limit carefully)."
+       "a": "It can reach 10 000 frames, far beyond the ~1000 limit: RecursionError. Use an explicit stack (or raise the limit carefully).",
+       "from": "algo-w02-2"
       }
      ]
     },
@@ -1492,7 +1510,15 @@
      "back": "Recursion depth can reach rows x cols and exceed Python's ~1000-frame limit."
     }
    ],
-   "deliverable": "dfs.py in learning-log/algo/week05 with dfs_iter, has_path, count_regions and largest_region, with tests; both NeetCode problems accepted."
+   "deliverable": "dfs.py in learning-log/algo/week05 with dfs_iter, has_path, count_regions and largest_region, with tests; both NeetCode problems accepted.",
+   "leetcode": [
+    {
+     "title": "Flood Fill",
+     "url": "https://leetcode.com/problems/flood-fill/",
+     "level": "easy",
+     "uses": "depth-first search on a grid (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w05-3",
@@ -1794,29 +1820,32 @@
      "questions": [
       {
        "q": "Week 3: the inverse of [[2, -1], [1, 1]]?",
-       "a": "det = 3, inverse = (1/3)[[1, 1], [-1, 2]]."
+       "a": "det = 3, inverse = (1/3)[[1, 1], [-1, 2]].",
+       "from": "math-w03-1"
       },
       {
        "q": "Week 2: the matrix product M A applied to a vector means which transformation first?",
-       "a": "A first, then M (read right to left)."
+       "a": "A first, then M (read right to left).",
+       "from": "math-w02-1"
       },
       {
        "q": "Tuesday: what is (1, 0, 0) x (0, 1, 0)?",
-       "a": "(0, 0, 1)."
+       "a": "(0, 0, 1).",
+       "from": "robo-w05-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Someone uses basis vectors b1 = (2, 1) and b2 = (-1, 1) (written in our usual coordinates). They describe a vector as \"(-1, 2)\" in their language. Guess, then compute: what is that vector in our coordinates? And if we say \"(3, 2)\", what does it mean in theirs?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nSomeone uses basis vectors b1 = (2, 1) and b2 = (−1, 1), written in our usual coordinates.\n\n- Their \"(−1, 2)\" means −1·b1 + 2·b2 = (−2, −1) + (−2, 2) = **(−4, 1)** in our coordinates.\n- Our (3, 2) is a·b1 + b·b2 with 2a − b = 3 and a + b = 2, so a = 5/3 and b = 1/3: **(5/3, 1/3)** in theirs.\n\nLearn shows the matrix that does the first conversion, and its inverse for the second."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Two coordinate languages and the translator matrix",
-     "body": "**Coordinates are a language, not a property of the arrow.** The numbers (3, 2) mean \"3 of the first basis vector plus 2 of the second\". Change the basis vectors and the same arrow gets different numbers. In robotics this is the daily reality: the same obstacle has one set of coordinates in the lidar's frame, another in the robot's frame, another on the map.\n\n**Their language → ours.** Put their basis vectors, written in our coordinates, as the columns of a matrix:\n\nA = [[2, -1], [1, 1]]   (columns b1 = (2, 1) and b2 = (-1, 1))\n\nA vector they call (x', y') is x' b1 + y' b2, which is exactly A @ (x', y'). For the pretest:\n\nA @ (-1, 2) = -1*(2, 1) + 2*(-1, 1) = (-2 - 2, -1 + 2) = (-4, 1).\n\nThe trap: A looks like it should translate *our* numbers into *theirs*, because its columns are \"their\" basis. It does the opposite. A takes their coordinates and produces ours.\n\n**Ours → theirs** uses the inverse. det A = 2*1 - (-1)*1 = 3, so A^-1 = (1/3)[[1, 1], [-1, 2]]. Our (3, 2) in their language is\n\nA^-1 @ (3, 2) = (1/3)(3 + 2, -3 + 4) = (5/3, 1/3).\n\nCheck: (5/3)(2, 1) + (1/3)(-1, 1) = (10/3 - 1/3, 5/3 + 1/3) = (3, 2). Correct.\n\n**Translating a transformation.** Suppose we know a transformation in our coordinates, say a 90° counter-clockwise rotation M = [[0, -1], [1, 0]]. How would they write the same rotation in their coordinates? Follow a vector they give us, written in their language:\n\n1. A: translate it into our language.\n2. M: rotate it, in our language.\n3. A^-1: translate the result back into theirs.\n\nSo the rotation in their language is **A^-1 M A** (read right to left). Compute:\n\nM A = [[0, -1], [1, 0]] @ [[2, -1], [1, 1]] = [[-1, -1], [2, -1]]\n\nA^-1 (M A) = (1/3)[[1, 1], [-1, 2]] @ [[-1, -1], [2, -1]] = (1/3)[[1, -2], [5, -1]]\n\nso their rotation matrix is [[1/3, -2/3], [5/3, -1/3]]. Strange-looking numbers for a plain rotation, because their grid is skewed.\n\n```python\nimport numpy as np\n\nA = np.array([[2., -1], [1, 1]])\nM = np.array([[0., -1], [1, 0]])\nA_inv = np.linalg.inv(A)\n\nprint(A @ [-1, 2])                    # [-4.  1.]\nprint(A_inv @ [3, 2])                 # [1.6667 0.3333]\nM_theirs = A_inv @ M @ A\nprint(M_theirs * 3)                   # [[ 1. -2.] [ 5. -1.]]\n\n# Sanity check: rotating in their language agrees with rotating in ours\nv_theirs = np.array([-1., 2])\nprint(A @ (M_theirs @ v_theirs), M @ (A @ v_theirs))   # both [-1. -4.]\n```\n\nThe expression A^-1 M A is called a *similarity transform*: same transformation, different coordinates. Whenever you see a matrix sandwiched like that, read it as \"change language, act, change back\". It is the key to eigenvectors (Week 7): picking a basis where M becomes diagonal.\n\n**The robotics link (Thursday practice).** For a rotated frame, the basis vectors are the columns of a rotation matrix R, so \"frame coordinates → world\" is R @ p, and \"world → frame\" is R^-1 = R^T (rotations are orthonormal, so the inverse is the transpose: cheap and numerically safe). Add a translation for the frame's origin and you have coordinate frames."
+     "body": "**Coordinates are a language, not a property of the arrow.** The numbers (3, 2) mean \"3 of the first basis vector plus 2 of the second\". Change the basis vectors and the same arrow gets different numbers. In robotics this is the daily reality: the same obstacle has one set of coordinates in the lidar's frame, another in the robot's frame, another on the map.\n\n**Their language → ours.** Put their basis vectors, written in our coordinates, as the columns of a matrix:\n\nA = [[2, -1], [1, 1]]   (columns b1 = (2, 1) and b2 = (-1, 1))\n\nA vector they call (x', y') is x' b1 + y' b2, which is exactly A @ (x', y'). For the first example:\n\nA @ (-1, 2) = -1*(2, 1) + 2*(-1, 1) = (-2 - 2, -1 + 2) = (-4, 1).\n\nThe trap: A looks like it should translate *our* numbers into *theirs*, because its columns are \"their\" basis. It does the opposite. A takes their coordinates and produces ours.\n\n**Ours → theirs** uses the inverse. det A = 2*1 - (-1)*1 = 3, so A^-1 = (1/3)[[1, 1], [-1, 2]]. Our (3, 2) in their language is\n\nA^-1 @ (3, 2) = (1/3)(3 + 2, -3 + 4) = (5/3, 1/3).\n\nCheck: (5/3)(2, 1) + (1/3)(-1, 1) = (10/3 - 1/3, 5/3 + 1/3) = (3, 2). Correct.\n\n**Translating a transformation.** Suppose we know a transformation in our coordinates, say a 90° counter-clockwise rotation M = [[0, -1], [1, 0]]. How would they write the same rotation in their coordinates? Follow a vector they give us, written in their language:\n\n1. A: translate it into our language.\n2. M: rotate it, in our language.\n3. A^-1: translate the result back into theirs.\n\nSo the rotation in their language is **A^-1 M A** (read right to left). Compute:\n\nM A = [[0, -1], [1, 0]] @ [[2, -1], [1, 1]] = [[-1, -1], [2, -1]]\n\nA^-1 (M A) = (1/3)[[1, 1], [-1, 2]] @ [[-1, -1], [2, -1]] = (1/3)[[1, -2], [5, -1]]\n\nso their rotation matrix is [[1/3, -2/3], [5/3, -1/3]]. Strange-looking numbers for a plain rotation, because their grid is skewed.\n\n```python\nimport numpy as np\n\nA = np.array([[2., -1], [1, 1]])\nM = np.array([[0., -1], [1, 0]])\nA_inv = np.linalg.inv(A)\n\nprint(A @ [-1, 2])                    # [-4.  1.]\nprint(A_inv @ [3, 2])                 # [1.6667 0.3333]\nM_theirs = A_inv @ M @ A\nprint(M_theirs * 3)                   # [[ 1. -2.] [ 5. -1.]]\n\n# Sanity check: rotating in their language agrees with rotating in ours\nv_theirs = np.array([-1., 2])\nprint(A @ (M_theirs @ v_theirs), M @ (A @ v_theirs))   # both [-1. -4.]\n```\n\nThe expression A^-1 M A is called a *similarity transform*: same transformation, different coordinates. Whenever you see a matrix sandwiched like that, read it as \"change language, act, change back\". It is the key to eigenvectors (Week 7): picking a basis where M becomes diagonal.\n\n**The robotics link (Thursday practice).** For a rotated frame, the basis vectors are the columns of a rotation matrix R, so \"frame coordinates → world\" is R @ p, and \"world → frame\" is R^-1 = R^T (rotations are orthonormal, so the inverse is the transpose: cheap and numerically safe). Add a translation for the frame's origin and you have coordinate frames."
     },
     {
      "kind": "practice",
@@ -1939,11 +1968,13 @@
      "questions": [
       {
        "q": "This morning: why is inv(R) = R.T for a rotation?",
-       "a": "The columns are orthonormal, so R^T R = I."
+       "a": "The columns are orthonormal, so R^T R = I.",
+       "from": "math-w05-3"
       },
       {
        "q": "Week 2: you rotate by 30° and then by 45°. What single rotation is that, and in which order do you multiply?",
-       "a": "A 75° rotation; R45 @ R30 (the first applied sits on the right). For 2D rotations the order doesn't matter, but write it that way."
+       "a": "A 75° rotation; R45 @ R30 (the first applied sits on the right). For 2D rotations the order doesn't matter, but write it that way.",
+       "from": "math-w02-1"
       }
      ]
     },
@@ -2334,29 +2365,32 @@
      "questions": [
       {
        "q": "Wednesday: what is the output of `g = (n for n in [1, 2]); next(g); list(g)`?",
-       "a": "`[2]`: next() already consumed 1."
+       "a": "`[2]`: next() already consumed 1.",
+       "from": "python-w05-2"
       },
       {
        "q": "Week 4: what is `__repr__` for, compared with `__str__`?",
-       "a": "`__repr__` is the unambiguous developer representation (shown in the REPL and in lists); `__str__` is the friendly one used by print and str()."
+       "a": "`__repr__` is the unambiguous developer representation (shown in the REPL and in lists); `__str__` is the friendly one used by print and str().",
+       "from": "python-w04-3"
       },
       {
        "q": "Week 3: how does pytest find tests?",
-       "a": "It collects files named test_*.py (or *_test.py) and runs functions whose names start with test_."
+       "a": "It collects files named test_*.py (or *_test.py) and runs functions whose names start with test_.",
+       "from": "python-w03-1"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict, then run:\n\n```python\ndef f(a, *rest, sep=\"-\", **opts):\n    return a, rest, sep, opts\n\nprint(f(1, 2, 3, sep=\"+\", color=\"red\"))\nprint(f(*[4, 5], **{\"size\": 9}))\n\ndef area(w: int, h: int) -> int:\n    return w * h\n\nprint(area(\"ab\", 3))\n```\n\nThe last line: will Python complain about the type hints?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\ndef f(a, *rest, sep=\"-\", **opts):\n    return a, rest, sep, opts\n\nprint(f(1, 2, 3, sep=\"+\", color=\"red\"))\nprint(f(*[4, 5], **{\"size\": 9}))\n\ndef area(w: int, h: int) -> int:\n    return w * h\n\nprint(area(\"ab\", 3))\n```\n\n**It prints** `(1, (2, 3), '+', {'color': 'red'})`, then `(4, (5,), '-', {'size': 9})`, then `ababab`.\n\nPython doesn't check type hints when the program runs: `\"ab\" * 3` is valid, so `area(\"ab\", 3)` works. A checker such as mypy would flag it. Learn explains `*args`, `**kwargs` and hints."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Small tools that make code clearer",
-     "body": "CS50P's last lecture is a grab bag. The pieces that matter most for the code you're about to write (algorithms, the tracker, data work) are below; watch the lecture for the rest (sets, globals, constants, docstrings, `argparse`).\n\n**Type hints.** `def area(w: int, h: int) -> int:` documents what goes in and out. Python stores the hints (`area.__annotations__`) but does **not** check them at runtime, which is why `area(\"ab\", 3)` happily returns `'ababab'`. A separate tool, `mypy`, reads the hints and reports mismatches before you run anything; you'll use it properly in Phase B. Useful forms: `list[int]`, `dict[str, float]`, `tuple[int, int]`, `int | None` for \"may be None\", and `Iterator[int]` (from `collections.abc`) for generators.\n\n**`*args` and `**kwargs`.** In a `def`, `*rest` packs extra positional arguments into a tuple and `**opts` packs extra keyword arguments into a dict. Parameters after `*rest` can only be passed by keyword (`sep` in the pretest). In a *call*, the same stars do the opposite: `f(*[4, 5])` unpacks a list into positional arguments and `f(**{\"size\": 9})` unpacks a dict into keyword arguments. So the pretest prints `(1, (2, 3), '+', {'color': 'red'})` and `(4, (5,), '-', {'size': 9})`.\n\n**lambda, map, filter.** `lambda x: x * 2` is a one-expression anonymous function. Its natural home is a `key=` argument:\n\n```python\nfrom collections.abc import Iterator\n\nstudents = [\n    {\"id\": \"S003\", \"done\": 7, \"total\": 10},\n    {\"id\": \"S001\", \"done\": 9, \"total\": 10},\n    {\"id\": \"S002\", \"done\": 7, \"total\": 12},\n]\n\ndef completion(s: dict) -> float:\n    return s[\"done\"] / s[\"total\"]\n\nranked = sorted(students, key=lambda s: (-completion(s), s[\"id\"]))\nprint([s[\"id\"] for s in ranked])        # ['S001', 'S003', 'S002']\n\nrates = list(map(completion, students))\nbehind = list(filter(lambda s: completion(s) < 0.75, students))\nprint([round(r, 2) for r in rates], [s[\"id\"] for s in behind])\n\n# The same with comprehensions -- usually easier to read:\nrates2 = [completion(s) for s in students]\nbehind2 = [s for s in students if completion(s) < 0.75]\nassert rates == rates2 and behind == behind2\n\ndef ids(items: list[dict]) -> Iterator[str]:\n    for item in items:\n        yield item[\"id\"]\n\nprint(*ids(students), sep=\", \")         # S003, S001, S002\n```\n\nNotice the sort key returns a tuple: Python compares tuples item by item, so `(-rate, id)` means \"highest rate first, then id alphabetically\". Negating a number is the standard trick for \"descending on this field, ascending on that one\".\n\n`map` and `filter` return lazy iterators (Wednesday's lesson), so wrap them in `list()` when you need a list. Rule of thumb: if you already have a named function, `map(func, items)` is fine; if you'd need a lambda, write a comprehension instead.\n\n**Functions are values.** You can store functions in lists, pass them in and return them. That's how `key=` works, and it lets you build small tools such as a function that composes others:\n\n```python\ndef compose(*funcs):\n    def run(x):\n        for f in funcs:\n            x = f(x)\n        return x\n    return run\n\nclean = compose(str.strip, str.lower, lambda s: s.replace(\" \", \"_\"))\nprint(clean(\"  Ohm's Law  \"))   # ohm's_law\n```"
+     "body": "CS50P's last lecture is a grab bag. The pieces that matter most for the code you're about to write (algorithms, the tracker, data work) are below; watch the lecture for the rest (sets, globals, constants, docstrings, `argparse`).\n\n**Type hints.** `def area(w: int, h: int) -> int:` documents what goes in and out. Python stores the hints (`area.__annotations__`) but does **not** check them at runtime, which is why `area(\"ab\", 3)` happily returns `'ababab'`. A separate tool, `mypy`, reads the hints and reports mismatches before you run anything; you'll use it properly in Phase B. Useful forms: `list[int]`, `dict[str, float]`, `tuple[int, int]`, `int | None` for \"may be None\", and `Iterator[int]` (from `collections.abc`) for generators.\n\n**`*args` and `**kwargs`.** In a `def`, `*rest` packs extra positional arguments into a tuple and `**opts` packs extra keyword arguments into a dict. Parameters after `*rest` can only be passed by keyword (`sep` in the first example). In a *call*, the same stars do the opposite: `f(*[4, 5])` unpacks a list into positional arguments and `f(**{\"size\": 9})` unpacks a dict into keyword arguments. So the first example prints `(1, (2, 3), '+', {'color': 'red'})` and `(4, (5,), '-', {'size': 9})`.\n\n**lambda, map, filter.** `lambda x: x * 2` is a one-expression anonymous function. Its natural home is a `key=` argument:\n\n```python\nfrom collections.abc import Iterator\n\nstudents = [\n    {\"id\": \"S003\", \"done\": 7, \"total\": 10},\n    {\"id\": \"S001\", \"done\": 9, \"total\": 10},\n    {\"id\": \"S002\", \"done\": 7, \"total\": 12},\n]\n\ndef completion(s: dict) -> float:\n    return s[\"done\"] / s[\"total\"]\n\nranked = sorted(students, key=lambda s: (-completion(s), s[\"id\"]))\nprint([s[\"id\"] for s in ranked])        # ['S001', 'S003', 'S002']\n\nrates = list(map(completion, students))\nbehind = list(filter(lambda s: completion(s) < 0.75, students))\nprint([round(r, 2) for r in rates], [s[\"id\"] for s in behind])\n\n# The same with comprehensions -- usually easier to read:\nrates2 = [completion(s) for s in students]\nbehind2 = [s for s in students if completion(s) < 0.75]\nassert rates == rates2 and behind == behind2\n\ndef ids(items: list[dict]) -> Iterator[str]:\n    for item in items:\n        yield item[\"id\"]\n\nprint(*ids(students), sep=\", \")         # S003, S001, S002\n```\n\nNotice the sort key returns a tuple: Python compares tuples item by item, so `(-rate, id)` means \"highest rate first, then id alphabetically\". Negating a number is the standard trick for \"descending on this field, ascending on that one\".\n\n`map` and `filter` return lazy iterators (Wednesday's lesson), so wrap them in `list()` when you need a list. Rule of thumb: if you already have a named function, `map(func, items)` is fine; if you'd need a lambda, write a comprehension instead.\n\n**Functions are values.** You can store functions in lists, pass them in and return them. That's how `key=` works, and it lets you build small tools such as a function that composes others:\n\n```python\ndef compose(*funcs):\n    def run(x):\n        for f in funcs:\n            x = f(x)\n        return x\n    return run\n\nclean = compose(str.strip, str.lower, lambda s: s.replace(\" \", \"_\"))\nprint(clean(\"  Ohm's Law  \"))   # ohm's_law\n```"
     },
     {
      "kind": "practice",
@@ -2509,11 +2543,8 @@
      "questions": [
       {
        "q": "Wednesday: what does DFS do when it reaches a node whose neighbours are all visited?",
-       "a": "It returns (backs up) to the previous node and tries that node's next neighbour."
-      },
-      {
-       "q": "Week 0 diagnostic: how many subsets does a list of n items have, and why?",
-       "a": "2^n: each item is independently in or out."
+       "a": "It returns (backs up) to the previous node and tries that node's next neighbour.",
+       "from": "algo-w05-1"
       }
      ]
     },
@@ -2624,7 +2655,15 @@
      "back": "Only choose numbers greater than the last chosen (a start index)."
     }
    ],
-   "deliverable": "backtracking.py in learning-log/algo/week05 with permutations, combinations and subsets_with_sum, tested; three NeetCode backtracking problems accepted."
+   "deliverable": "backtracking.py in learning-log/algo/week05 with permutations, combinations and subsets_with_sum, tested; three NeetCode backtracking problems accepted.",
+   "leetcode": [
+    {
+     "title": "Letter Case Permutation",
+     "url": "https://leetcode.com/problems/letter-case-permutation/",
+     "level": "medium",
+     "uses": "backtracking: choose, explore, undo (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w05-5",
@@ -2823,29 +2862,32 @@
      "questions": [
       {
        "q": "Tuesday: you merge progress rows with a students table using how=\"left\" on the progress side. Which students can disappear?",
-       "a": "Students with no progress rows at all (they are only in the students table). Make the students table the left side to keep them."
+       "a": "Students with no progress rows at all (they are only in the students table). Make the students table the left side to keep them.",
+       "from": "ai-w05-1"
       },
       {
        "q": "Week 4: how do you find and count missing values per column in a DataFrame?",
-       "a": "df.isna().sum()"
+       "a": "df.isna().sum()",
+       "from": "ai-w03-3"
       },
       {
        "q": "Thursday: which chart type for \"how are scores distributed\"?",
-       "a": "A histogram."
+       "a": "A histogram.",
+       "from": "ai-w05-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Given this frame, predict the output before running:\n\n```python\nimport pandas as pd\n\ndf = pd.DataFrame({\"student_id\": [\"S1\", \"S1\", \"S2\", \"S2\", \"S2\"],\n                   \"done\": [True, False, True, True, False]})\nprint(df.groupby(\"student_id\")[\"done\"].mean())\n```\n\nWhy does the mean of a boolean column give you something useful here?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python\nimport pandas as pd\n\ndf = pd.DataFrame({\"student_id\": [\"S1\", \"S1\", \"S2\", \"S2\", \"S2\"],\n                   \"done\": [True, False, True, True, False]})\nprint(df.groupby(\"student_id\")[\"done\"].mean())\n```\n\n**It prints:**\n\n```text\nstudent_id\nS1    0.500000\nS2    0.666667\nName: done, dtype: float64\n```\n\nThe mean of a True/False column is the fraction of `True`: True counts as 1 and False as 0. So this is each student's completion rate. Learn uses it for the chart."
     },
     {
      "kind": "learn",
      "minutes": 35,
      "title": "Separate the numbers from the picture",
-     "body": "A chart is two steps: **compute a small table**, then **draw it**. Keep them in separate functions. The computing part is plain pandas, easy to test with pytest (Week 3 habits); the drawing part is a few lines of matplotlib you check by eye. When a chart looks wrong, you'll know which half to debug.\n\n**The tracker data.** Your tracker CSV has one row per student per lesson, using the columns from the Week 0 spec: `student_id, module, lesson, completed_at, score`. An empty `completed_at` means not done yet. (If your v4 export has different names, rename the columns once at load time and keep the rest of the code the same.)\n\n**Three chart-ready tables cover most questions:**\n\n1. *Completion per student* (bar chart, sorted): the mean of a boolean \"done\" column per student, times 100. The pretest shows the trick: True counts as 1 and False as 0, so the mean is the fraction done (S1: 0.5, S2: 0.667).\n2. *Completion per module* (bar chart): same idea grouped by module; shows which topic is the bottleneck.\n3. *Completions per week* (line chart): parse `completed_at` as dates, bucket them by week, count. Shows whether activity is dropping.\n\nPlus a distribution: a histogram of scores of completed lessons.\n\n```python\nimport io\nimport pandas as pd\n\nCSV = io.StringIO('''student_id,module,lesson,completed_at,score\nS001,Electronics,Ohm,2026-10-05,92\nS001,Electronics,KVL,2026-10-13,78\nS001,Python,Loops,2026-10-14,85\nS002,Electronics,Ohm,2026-10-06,65\nS002,Electronics,KVL,,\nS002,Python,Loops,2026-10-20,70\nS003,Electronics,Ohm,2026-10-12,88\nS003,Electronics,KVL,,\nS003,Python,Loops,,\n''')\n\ndef load(f):\n    df = pd.read_csv(f, parse_dates=[\"completed_at\"])\n    df[\"done\"] = df[\"completed_at\"].notna()\n    return df\n\ndef completion_by(df, column):\n    pct = df.groupby(column)[\"done\"].mean().mul(100).round(1)\n    return pct.sort_values(ascending=False)\n\ndef completions_per_week(df):\n    done = df[df[\"done\"]]\n    weeks = done[\"completed_at\"].dt.to_period(\"W-SUN\").dt.start_time\n    return weeks.value_counts().sort_index()\n\ndf = load(CSV)\nprint(completion_by(df, \"student_id\"))   # S001 100.0, S002 66.7, S003 33.3\nprint(completion_by(df, \"module\"))       # Electronics 66.7, Python 66.7\nprint(completions_per_week(df))          # 2026-10-05: 2, 2026-10-12: 3, 2026-10-19: 1\n```\n\n`to_period(\"W-SUN\")` buckets dates into Monday-to-Sunday weeks; `.start_time` labels each bucket by its Monday, which reads naturally on an axis. Weeks with zero completions are *missing* from `value_counts`, which would make a line chart quietly skip them. Fix it with `reindex` over the full range of weeks and `fill_value=0` (a practice task).\n\n**Drawing.** Once a function returns a Series, the plot is short. Save, don't show:\n\n```python-snippet\nimport matplotlib\nmatplotlib.use(\"Agg\")              # draw to files, no window\nimport matplotlib.pyplot as plt\n\ndef bar_chart(series, title, ylabel, path):\n    fig, ax = plt.subplots(figsize=(7, 4))\n    ax.bar(series.index.astype(str), series.values)\n    ax.set_ylim(0, 100)\n    ax.set_title(title)\n    ax.set_ylabel(ylabel)\n    fig.savefig(path, dpi=150, bbox_inches=\"tight\")\n    plt.close(fig)                  # free memory when making many charts\n\nbar_chart(completion_by(df, \"student_id\"), \"Completion by student\", \"Lessons done (%)\", \"by_student.png\")\n```\n\nDecisions baked in, which you'll examine in this evening's reading: bars start at zero (`set_ylim(0, 100)`), bars are sorted, the y-axis says what and in which unit, and percentages are rounded for display only.\n\n**Privacy.** Charts leave your laptop more easily than CSVs do. Use the anonymised IDs only; never put student names on a chart you share."
+     "body": "A chart is two steps: **compute a small table**, then **draw it**. Keep them in separate functions. The computing part is plain pandas, easy to test with pytest (Week 3 habits); the drawing part is a few lines of matplotlib you check by eye. When a chart looks wrong, you'll know which half to debug.\n\n**The tracker data.** Your tracker CSV has one row per student per lesson, using the columns from the Week 0 spec: `student_id, module, lesson, completed_at, score`. An empty `completed_at` means not done yet. (If your v4 export has different names, rename the columns once at load time and keep the rest of the code the same.)\n\n**Three chart-ready tables cover most questions:**\n\n1. *Completion per student* (bar chart, sorted): the mean of a boolean \"done\" column per student, times 100. The first example shows the trick: True counts as 1 and False as 0, so the mean is the fraction done (S1: 0.5, S2: 0.667).\n2. *Completion per module* (bar chart): same idea grouped by module; shows which topic is the bottleneck.\n3. *Completions per week* (line chart): parse `completed_at` as dates, bucket them by week, count. Shows whether activity is dropping.\n\nPlus a distribution: a histogram of scores of completed lessons.\n\n```python\nimport io\nimport pandas as pd\n\nCSV = io.StringIO('''student_id,module,lesson,completed_at,score\nS001,Electronics,Ohm,2026-10-05,92\nS001,Electronics,KVL,2026-10-13,78\nS001,Python,Loops,2026-10-14,85\nS002,Electronics,Ohm,2026-10-06,65\nS002,Electronics,KVL,,\nS002,Python,Loops,2026-10-20,70\nS003,Electronics,Ohm,2026-10-12,88\nS003,Electronics,KVL,,\nS003,Python,Loops,,\n''')\n\ndef load(f):\n    df = pd.read_csv(f, parse_dates=[\"completed_at\"])\n    df[\"done\"] = df[\"completed_at\"].notna()\n    return df\n\ndef completion_by(df, column):\n    pct = df.groupby(column)[\"done\"].mean().mul(100).round(1)\n    return pct.sort_values(ascending=False)\n\ndef completions_per_week(df):\n    done = df[df[\"done\"]]\n    weeks = done[\"completed_at\"].dt.to_period(\"W-SUN\").dt.start_time\n    return weeks.value_counts().sort_index()\n\ndf = load(CSV)\nprint(completion_by(df, \"student_id\"))   # S001 100.0, S002 66.7, S003 33.3\nprint(completion_by(df, \"module\"))       # Electronics 66.7, Python 66.7\nprint(completions_per_week(df))          # 2026-10-05: 2, 2026-10-12: 3, 2026-10-19: 1\n```\n\n`to_period(\"W-SUN\")` buckets dates into Monday-to-Sunday weeks; `.start_time` labels each bucket by its Monday, which reads naturally on an axis. Weeks with zero completions are *missing* from `value_counts`, which would make a line chart quietly skip them. Fix it with `reindex` over the full range of weeks and `fill_value=0` (a practice task).\n\n**Drawing.** Once a function returns a Series, the plot is short. Save, don't show:\n\n```python-snippet\nimport matplotlib\nmatplotlib.use(\"Agg\")              # draw to files, no window\nimport matplotlib.pyplot as plt\n\ndef bar_chart(series, title, ylabel, path):\n    fig, ax = plt.subplots(figsize=(7, 4))\n    ax.bar(series.index.astype(str), series.values)\n    ax.set_ylim(0, 100)\n    ax.set_title(title)\n    ax.set_ylabel(ylabel)\n    fig.savefig(path, dpi=150, bbox_inches=\"tight\")\n    plt.close(fig)                  # free memory when making many charts\n\nbar_chart(completion_by(df, \"student_id\"), \"Completion by student\", \"Lessons done (%)\", \"by_student.png\")\n```\n\nDecisions baked in, which you'll examine in this evening's reading: bars start at zero (`set_ylim(0, 100)`), bars are sorted, the y-axis says what and in which unit, and percentages are rounded for display only.\n\n**Privacy.** Charts leave your laptop more easily than CSVs do. Use the anonymised IDs only; never put student names on a chart you share."
     },
     {
      "kind": "practice",

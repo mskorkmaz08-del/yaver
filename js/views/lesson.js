@@ -26,7 +26,7 @@ export function cleanup() {
 export function render(root, go, arg) {
   stop();
   if (!C.ready()) { root.innerHTML = '<p class="muted small">Loading the course…</p>'; return; }
-  if (state.arg !== arg) state = { arg, revealed: {}, marks: {}, hints: {}, answers: {}, i: 0, flipped: false };
+  if (state.arg !== arg) state = { arg, revealed: {}, marks: {}, hints: {}, answers: {}, unknown: {}, i: 0, flipped: false };
   if (arg === 'review') return review(root, go);
   if (arg === 'test') return weeklyTest(root, go);
   if (arg === 'ship') return ship(root, go);
@@ -106,6 +106,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
           ${raw(l.safety ? html`<p class="small safety">${raw(icon('bolt'))} ${l.safety}</p>` : '')}
         </section>
         ${raw(steps.map((s, i) => stepHTML(l, s, i, doneSteps.has(i))).join(''))}
+        ${raw(leetcodeHTML(l))}
         ${raw(l.deliverable ? html`<section class="card"><p class="label">deliverable</p><p class="small">${l.deliverable}</p></section>` : '')}
       </article>
       ${raw(side)}
@@ -163,7 +164,9 @@ function currentStep(l, steps) {
   return steps.find((_, i) => !done.has(i)) || steps[0];
 }
 
-const STEP_ICON = { warmup: 'clock', pretest: 'target', learn: 'book', practice: 'terminal', exit: 'check', reflect: 'edit', read: 'book', summary: 'edit', cards: 'check', plan: 'target', build: 'terminal', test: 'check', log: 'edit', simulate: 'bolt', measure: 'bolt', teachnotes: 'edit', handout: 'edit' };
+const STEP_ICON = { warmup: 'clock', example: 'target', learn: 'book', practice: 'terminal', exit: 'check', reflect: 'edit', read: 'book', summary: 'edit', cards: 'check', plan: 'target', build: 'terminal', test: 'check', log: 'edit', simulate: 'bolt', measure: 'bolt', teachnotes: 'edit', handout: 'edit' };
+
+const STEP_LABEL = { warmup: 'recall', example: 'first example' };
 
 function stepHTML(l, s, i, done) {
   let inner = '';
@@ -175,7 +178,7 @@ function stepHTML(l, s, i, done) {
   return html`
     <section class="card step ${raw(done ? 'done' : '')}" data-stepcard="${i + 1}">
       <div class="card-head">
-        <p class="label">${raw(icon(STEP_ICON[s.kind] || 'book'))} ${s.kind} · ${s.minutes} min</p>
+        <p class="label">${raw(icon(STEP_ICON[s.kind] || 'book'))} ${STEP_LABEL[s.kind] || s.kind} · ${s.minutes} min</p>
         <button class="step-check ${raw(done ? 'on' : '')}" data-step-done="${i}" aria-label="Mark step done">${raw(icon('check'))}</button>
       </div>
       <h3 class="step-title">${s.title}</h3>
@@ -193,20 +196,44 @@ function warmupHTML(l, s, i) {
         ${raw(state.revealed[`card-${c.id}`] ? html`<div class="answer">${raw(mdDoc(c.back))}</div><div class="grades">${raw(['again', 'hard', 'good', 'easy'].map(g => `<button class="chip" data-grade="${g}" data-card="${esc(c.id)}">${g}</button>`).join(''))}</div>` : html`<button class="chip" data-reveal="card-${c.id}">show answer</button>`)}
       </div>`).join('');
   }
-  return s.questions?.length ? questionsHTML(s, i, false) : '';
+  const { qs, skipped } = recallQuestions(l, s);
+  const note = skipped ? `<p class="small dim">${skipped} question${skipped > 1 ? 's' : ''} skipped: ${skipped > 1 ? 'they come' : 'it comes'} from a lesson you haven't done yet.</p>` : '';
+  if (!qs.length) return note + '<p class="small muted">Nothing to recall yet: everything today is new. Go straight to the first example.</p>';
+  return note + questionsHTML({ ...s, questions: qs }, i, false);
 }
 
+// One path, no guessing: a warm-up only asks about lessons you have finished.
+// Questions from a lesson you haven't done are skipped; exit questions from your
+// most recently finished lessons fill in when fewer than two are left.
+function recallQuestions(l, s) {
+  const all = s.questions || [];
+  const qs = all.filter(q => !q.from || C.finished(q.from));
+  if (qs.length < 2) qs.push(...C.recallFromFinished(l.track, 2 - qs.length, new Set(qs.map(q => q.q))));
+  return { qs, skipped: all.filter(q => q.from && !C.finished(q.from)).length };
+}
+
+// "Don't know yet" is always an answer: it shows the answer and offers a lesson on
+// it, and on a scored question it counts as wrong. Nobody has to guess.
 function questionsHTML(s, i, scored) {
   return s.questions.map((q, j) => {
     const k = `${i}-${j}`;
     const mark = state.marks[k];
+    const src = q.from ? C.lesson(q.from) : null;
     return html`
       <div class="qa ${raw(mark === true ? 'right' : mark === false ? 'wrong' : '')}">
         <div class="q">${raw(mdDoc(q.q))}</div>
-        ${raw(scored ? html`<textarea rows="2" data-answer="${k}" placeholder="Your answer (or answer in your head)">${state.answers[k] || ''}</textarea>` : '')}
-        ${raw(state.revealed[k] ? html`<div class="answer">${raw(mdDoc(q.a))}</div>${raw(scored ? html`<div class="grades"><button class="chip ${raw(mark === true ? 'on' : '')}" data-mark="${k}" data-v="1">right</button><button class="chip ${raw(mark === false ? 'on' : '')}" data-mark="${k}" data-v="0">wrong</button></div>` : '')}` : html`<button class="chip" data-reveal="${k}">show answer</button>`)}
+        ${raw(src ? html`<p class="small dim mono">from ${src.title}</p>` : '')}
+        ${raw(scored && !state.unknown[k] ? html`<textarea rows="2" data-answer="${k}" placeholder="Your answer (or answer in your head)">${state.answers[k] || ''}</textarea>` : '')}
+        ${raw(state.revealed[k] ? html`<div class="answer">${raw(mdDoc(q.a))}</div>${raw(scored && !state.unknown[k] ? html`<div class="grades"><button class="chip ${raw(mark === true ? 'on' : '')}" data-mark="${k}" data-v="1">right</button><button class="chip ${raw(mark === false ? 'on' : '')}" data-mark="${k}" data-v="0">wrong</button></div>` : '')}${raw(state.unknown[k] ? html`<div class="grades"><button class="chip" data-teach="${k}">${raw(icon('sparkle'))} teach me this</button></div>` : '')}` : html`<div class="grades"><button class="chip" data-reveal="${k}">show answer</button><button class="chip" data-unknown="${k}">don't know yet</button></div>`)}
       </div>`;
   }).join('') + (scored ? `<p class="small mono muted" data-score>${scoreText(s, i)}</p>` : '');
+}
+
+function teachPrompt(q, src) {
+  return `I didn't know the answer to this${src ? ` (from my lesson "${src.title}")` : ''}:
+${q.q}
+The answer is: ${q.a}
+Teach it to me from the beginning: assume I haven't learned it. Explain with one small concrete example, then ask me one easy question to check, and wait for my answer.`;
 }
 
 function scoreText(s, i) {
@@ -236,6 +263,35 @@ function taskHTML(l, t, k, diag) {
     </div>`;
 }
 
+// ---------- LeetCode (optional) ----------
+const lcSlug = p => p.url.split('/problems/')[1].replace(/\/$/, '');
+
+function leetcodeHTML(l) {
+  if (!l.leetcode?.length) return '';
+  const done = db.setting('leetcode', {}) || {};
+  return html`
+    <section class="card">
+      <p class="label">leetcode · optional</p>
+      <p class="small muted">Extra practice on leetcode.com. Each problem needs only what you've learned so far, and says where. Try it there first, then go through it with Yaver.</p>
+      ${raw(l.leetcode.map((p, j) => { const st = done[lcSlug(p)]?.state; return html`
+        <div class="task-card">
+          <a href="${p.url}" target="_blank" rel="noopener" class="res">${raw(icon('external'))}<span><b>${p.title}</b><small>${p.level} · uses ${p.uses}</small></span></a>
+          <div class="btn-row wrap task-actions">
+            <button class="chip ${raw(st === 'solved' ? 'on' : '')}" data-lc="${lcSlug(p)}" data-v="solved">solved</button>
+            <button class="chip ${raw(st === 'stuck' ? 'on' : '')}" data-lc="${lcSlug(p)}" data-v="stuck">stuck</button>
+            <button class="chip" data-lc-explain="${j}">${raw(icon('sparkle'))} go through it with Yaver</button>
+          </div>
+        </div>`; }).join(''))}
+    </section>`;
+}
+
+function leetcodePrompt(p, st) {
+  const head = `LeetCode problem "${p.title}" (${p.url}, ${p.level}). It uses ${p.uses}.`;
+  if (st === 'solved') return `${head} I solved it. Go through it with me: first ask me to explain my approach in a few sentences and wait. Then show the cleanest Python solution, explain why it works step by step, give its time and space cost, and point out anything my approach missed.`;
+  if (st === 'stuck') return `${head} I got stuck. Restate the problem simply with a small example. Then give me one hint at a time and wait for me after each. Show the full Python solution only when I ask, then explain it step by step with its time and space cost.`;
+  return `${head} I'm about to try it. Make sure I understand the problem: restate it simply and walk through one small example input and its expected output. Don't give me the approach; tell me which idea from my lessons it uses, and wait.`;
+}
+
 function taskAt(l, k) {
   const [i, j] = k.split('-').map(Number);
   return l.steps[i].tasks[j];
@@ -247,6 +303,26 @@ function bindStepContent(root, l) {
   root.querySelectorAll('[data-answer]').forEach(t => (t.oninput = () => { state.answers[t.dataset.answer] = t.value; }));
   root.querySelectorAll('[data-reveal]').forEach(b => (b.onclick = () => { state.revealed[b.dataset.reveal] = true; rerender(); }));
   root.querySelectorAll('[data-mark]').forEach(b => (b.onclick = () => { state.marks[b.dataset.mark] = b.dataset.v === '1'; haptic(); rerender(); }));
+  root.querySelectorAll('[data-unknown]').forEach(b => (b.onclick = () => {
+    const k = b.dataset.unknown, s = l.steps[Number(k.split('-')[0])];
+    state.unknown[k] = state.revealed[k] = true;
+    if (s.kind === 'exit') state.marks[k] = false; // scored: "don't know" counts as wrong
+    rerender();
+  }));
+  root.querySelectorAll('[data-teach]').forEach(b => (b.onclick = () => {
+    const [i, j] = b.dataset.teach.split('-').map(Number), s = l.steps[i];
+    const q = (s.kind === 'warmup' ? recallQuestions(l, s).qs : s.questions)[j];
+    if (q) openAssistant(teachPrompt(q, q.from ? C.lesson(q.from) : null));
+  }));
+  root.querySelectorAll('[data-lc]').forEach(b => (b.onclick = async () => {
+    const all = { ...(db.setting('leetcode', {}) || {}) }, cur = all[b.dataset.lc]?.state;
+    if (cur === b.dataset.v) delete all[b.dataset.lc]; else all[b.dataset.lc] = { state: b.dataset.v, at: new Date().toISOString(), lessonId: l.id };
+    haptic(); await db.setSetting('leetcode', all); rerender();
+  }));
+  root.querySelectorAll('[data-lc-explain]').forEach(b => (b.onclick = () => {
+    const p = l.leetcode[Number(b.dataset.lcExplain)];
+    openAssistant(leetcodePrompt(p, (db.setting('leetcode', {}) || {})[lcSlug(p)]?.state));
+  }));
   root.querySelectorAll('[data-diag]').forEach(b => (b.onclick = () => { state.marks[`d-${b.dataset.diag}`] = b.dataset.v; haptic(); rerender(); }));
   root.querySelectorAll('[data-hint]').forEach(b => (b.onclick = () => { state.hints[b.dataset.hint] = (state.hints[b.dataset.hint] || 0) + 1; state.hintsUsed = (state.hintsUsed || 0) + 1; rerender(); }));
   root.querySelectorAll('[data-sol]').forEach(b => (b.onclick = () => { state.revealed[`sol-${b.dataset.sol}`] = true; state.solutions = (state.solutions || 0) + 1; rerender(); }));
@@ -312,7 +388,7 @@ Lesson: ${l.title} (${l.track === 'mixed' ? 'mixed practice' : C.trackName(l.tra
 Objectives: ${(l.objectives || []).join('; ')}
 Current step: ${step ? `${step.kind}: ${step.title}` : 'start'}
 ${content ? `Step content:\n${content}\n` : ''}
-Rules: (1) start with the warm-up: one recall question at a time, wait, correct briefly. (2) Before explaining, ask me to predict or try first. (3) Explain with a small concrete example, then check my understanding with a question. (4) In practice use a hint ladder: nudge, hint, partial solution; a full solution only if I ask after attempting. Review my code by pointing at the problem, not rewriting it. (5) At the end run the exit ticket one question at a time, then ask for the teach-back, then call complete_lesson with my score. Use get_lesson for the full lesson.`;
+Rules: (1) Start with the warm-up: one recall question at a time, only about lessons I have finished (each question names its lesson; skip any I haven't done), wait, correct briefly. (2) Never ask me to predict or guess something the lesson hasn't taught yet. Teach first: explain each idea with a small concrete example, then ask me to apply it. If I say I don't know, teach it from the start instead of hinting. (3) Keep to one path: today's lesson, in order, without detours into topics I haven't met. (4) In practice use a hint ladder: nudge, hint, partial solution; a full solution only if I ask after attempting. Review my code by pointing at the problem, not rewriting it. (5) At the end run the exit ticket one question at a time, then ask for the teach-back, then call complete_lesson with my score. Use get_lesson for the full lesson.`;
   if (matchMedia('(min-width: 1400px)').matches) document.body.classList.add('lesson-docked');
   openAssistant(prompt);
 }
@@ -378,7 +454,7 @@ function weeklyTest(root, go) {
         <p class="small mono muted"><span class="dot" style="background:${raw(dotColor(q.track))}"></span> ${j + 1}. ${C.trackName(q.track)}</p>
         <div class="q">${raw(mdDoc(q.q))}</div>
         <textarea rows="2" data-answer="${k}" placeholder="Answer">${state.answers[k] || ''}</textarea>
-        ${raw(state.revealed[k] ? html`<div class="answer">${raw(mdDoc(q.a))}</div><div class="grades"><button class="chip ${raw(mark === true ? 'on' : '')}" data-mark="${k}" data-v="1">right</button><button class="chip ${raw(mark === false ? 'on' : '')}" data-mark="${k}" data-v="0">wrong</button></div>` : html`<button class="chip" data-reveal="${k}">show answer</button>`)}
+        ${raw(state.revealed[k] ? html`<div class="answer">${raw(mdDoc(q.a))}</div>${raw(state.unknown[k] ? html`<div class="grades"><button class="chip" data-teach="${j}">${raw(icon('sparkle'))} teach me this</button></div>` : html`<div class="grades"><button class="chip ${raw(mark === true ? 'on' : '')}" data-mark="${k}" data-v="1">right</button><button class="chip ${raw(mark === false ? 'on' : '')}" data-mark="${k}" data-v="0">wrong</button></div>`)}` : html`<div class="grades"><button class="chip" data-reveal="${k}">show answer</button><button class="chip" data-unknown="${k}">don't know yet</button></div>`)}
       </section>`;
     }).join('') : '<section class="card"><p class="small muted">No lessons completed this week yet, so there is nothing to test. Clear your review cards instead.</p></section>')}
     <div class="btn-row wrap">
@@ -389,6 +465,8 @@ function weeklyTest(root, go) {
   root.querySelectorAll('[data-answer]').forEach(t => (t.oninput = () => { state.answers[t.dataset.answer] = t.value; }));
   root.querySelectorAll('[data-reveal]').forEach(b => (b.onclick = () => { state.revealed[b.dataset.reveal] = true; render(root, go, 'test'); }));
   root.querySelectorAll('[data-mark]').forEach(b => (b.onclick = () => { state.marks[b.dataset.mark] = b.dataset.v === '1'; render(root, go, 'test'); }));
+  root.querySelectorAll('[data-unknown]').forEach(b => (b.onclick = () => { const k = b.dataset.unknown; state.unknown[k] = state.revealed[k] = true; state.marks[k] = false; render(root, go, 'test'); }));
+  root.querySelectorAll('[data-teach]').forEach(b => (b.onclick = () => openAssistant(teachPrompt(qs[Number(b.dataset.teach)]))));
   root.querySelector('[data-grade-ai]').onclick = () => openAssistant(`Grade my weekly test (week ${w}). For each question, say right or wrong with a one-line reason, then give per-track totals and call record_test_result with them.\n\n${qs.map((q, j) => `${j + 1}. [${q.track}] Q: ${q.q}\nExpected: ${q.a}\nMy answer: ${state.answers[`t-${j}`] || '(blank)'}`).join('\n\n')}`.slice(0, 12000));
   root.querySelector('[data-save]').onclick = async () => {
     if (!qs.length) return;
@@ -463,6 +541,6 @@ function prepare(root, go, n) {
     openAssistant(`Prepare week ${n} of my course. Here is the brief (outline, lanes with their sessions, the previous lesson in each lane, and the step templates):
 ${JSON.stringify(brief)}
 
-Write every lesson for the week as JSON lesson objects: id "<track>-w${String(n).padStart(2, '0')}-<k>", track, lane, week ${n}, kind and minutes from the lane, title, 2–4 objectives, resources [{title, url (https, a resource home page you are sure of), part}], steps that follow the template exactly (warmup/exit with questions [{q, a}], 3–5 exit questions; practice with 2–5 tasks {prompt, hints, check, solution}; other steps with a Markdown body), 3–6 cards [{front, back}], deliverable; robotics lessons also teachBy null and safety. Original explanations with worked examples, natural voice. Then call save_week_lessons with {week: ${n}, lessons}. If it returns errors, fix exactly those and call it again (at most 3 attempts), then tell me plainly what happened. Do not paste the lessons into the chat.`);
+Write every lesson for the week as JSON lesson objects: id "<track>-w${String(n).padStart(2, '0')}-<k>", track, lane, week ${n}, kind and minutes from the lane, title, 2–4 objectives, resources [{title, url (https, a resource home page you are sure of), part}], steps that follow the template exactly (warmup questions [{q, a, from}] where "from" is the id of an earlier lesson that taught it, so recall never asks about something new; the "example" step shows a worked example with its result, never asking to predict or guess; exit with 3–5 questions [{q, a}] answerable from this lesson; practice with 2–5 tasks {prompt, hints, check, solution}; other steps with a Markdown body), 3–6 cards [{front, back}], deliverable; robotics lessons also teachBy null and safety. Original explanations with worked examples, natural voice. Then call save_week_lessons with {week: ${n}, lessons}. If it returns errors, fix exactly those and call it again (at most 3 attempts), then tell me plainly what happened. Do not paste the lessons into the chat.`);
   };
 }

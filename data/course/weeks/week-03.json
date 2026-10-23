@@ -38,31 +38,30 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall: last week",
+     "title": "Recall",
      "questions": [
       {
-       "q": "What does `int(\"twelve\")` do, and how do you handle it without crashing?",
-       "a": "It raises `ValueError`. Wrap it in `try: ... except ValueError: ...` and decide what to do instead (ask again, skip the row, return None)."
-      },
-      {
        "q": "You ran `python3 -m venv .venv`. What did that create and what do you type to use it?",
-       "a": "A folder with its own Python interpreter and site-packages, so packages installed there don't touch the system Python. Activate it with `source .venv/bin/activate`; `pip install` then installs into it."
+       "a": "A folder with its own Python interpreter and site-packages, so packages installed there don't touch the system Python. Activate it with `source .venv/bin/activate`; `pip install` then installs into it.",
+       "from": "python-w02-2"
       },
       {
        "q": "What does `{w: len(w) for w in [\"ab\", \"c\", \"ab\"]}` evaluate to?",
-       "a": "`{'ab': 2, 'c': 1}`: a dict comprehension; the repeated key just overwrites itself."
+       "a": "`{'ab': 2, 'c': 1}`: a dict comprehension; the repeated key just overwrites itself.",
+       "from": "python-w02-3"
       },
       {
        "q": "Why might `import tracker` print the whole report even though you only wanted one function from it?",
-       "a": "Because the module runs its top-level code on import. If the report-printing code isn't inside `main()` behind `if __name__ == \"__main__\":`, importing triggers it."
+       "a": "Because the module runs its top-level code on import. If the report-printing code isn't inside `main()` behind `if __name__ == \"__main__\":`, importing triggers it.",
+       "from": "python-w02-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Read this and predict, line by line, what happens when it runs. Which line stops the program, and with which exception?\n\n```python-snippet\ndef average(nums):\n    return sum(nums) / len(nums)\n\nassert average([2, 4]) == 3\nassert average([1, 2]) == 1.5\nassert average([]) == 0\nassert 0.1 + 0.2 == 0.3\n```\n\nWrite your prediction down before you read on. Then a second question: if `assert average([]) == 0` is the specification you *want*, what is wrong: the test or the function?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\n```python-snippet\ndef average(nums):\n    return sum(nums) / len(nums)\n\nassert average([2, 4]) == 3\nassert average([1, 2]) == 1.5\nassert average([]) == 0\nassert 0.1 + 0.2 == 0.3\n```\n\n**What happens:** the first two asserts pass (`3.0 == 3` is `True`). The third line calls `average([])`, which divides by `len([]) == 0`, so the program stops there with **`ZeroDivisionError`**. The last line never runs; if it did, it would fail with `AssertionError`, because `0.1 + 0.2` is not exactly `0.3`.\n\nIf `average([]) == 0` is the behaviour you *want*, the function is wrong, not the test: it needs an `if not nums: return 0` guard. Writing the test first is what exposed that. Learn shows how pytest reports this."
     },
     {
      "kind": "learn",
@@ -204,15 +203,18 @@
      "questions": [
       {
        "q": "What two parts must every recursive function have?",
-       "a": "A base case that returns without recursing, and a recursive case that moves toward the base case."
+       "a": "A base case that returns without recursing, and a recursive case that moves toward the base case.",
+       "from": "algo-w02-2"
       },
       {
        "q": "What does the call stack hold while `fact(3)` is computing?",
-       "a": "One frame per pending call: fact(3), fact(2), fact(1), each waiting for the result of the call above it, with its own local variables."
+       "a": "One frame per pending call: fact(3), fact(2), fact(1), each waiting for the result of the call above it, with its own local variables.",
+       "from": "algo-w02-2"
       },
       {
        "q": "Inserting at the head of a singly linked list: what's the cost, and why?",
-       "a": "O(1): make the new node point at the old head and move the head pointer; nothing shifts."
+       "a": "O(1): make the new node point at the old head and move the head pointer; nothing shifts.",
+       "from": "algo-w01-2"
       }
      ]
     },
@@ -323,7 +325,15 @@
    ],
    "deliverable": "learning-log/week03/quicksort.py with dc_max, dc_count, quicksort, partition, quicksort_inplace and count_comparisons, tests green, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Sort an Array",
+     "url": "https://leetcode.com/problems/sort-an-array/",
+     "level": "medium",
+     "uses": "quicksort (this lesson); LeetCode includes inputs that make a naive pivot slow"
+    }
+   ]
   },
   {
    "id": "build-w03-1",
@@ -631,31 +641,35 @@
     {
      "kind": "warmup",
      "minutes": 10,
-     "title": "Recall: transformations and composition",
+     "title": "Recall",
      "questions": [
       {
        "q": "Where does the matrix [[0, −1], [1, 0]] send î and ĵ, and what transformation is that?",
-       "a": "î = (1, 0) goes to (0, 1) and ĵ = (0, 1) goes to (−1, 0): its columns. That's a 90° counter-clockwise rotation."
+       "a": "î = (1, 0) goes to (0, 1) and ĵ = (0, 1) goes to (−1, 0): its columns. That's a 90° counter-clockwise rotation.",
+       "from": "math-w01-3"
       },
       {
        "q": "You apply a shear S first, then a rotation R. Which product is the composed matrix, and why that order?",
-       "a": "R·S. Matrices act on the vector to their right, so S hits the vector first: R(S v) = (RS) v. Read right to left."
+       "a": "R·S. Matrices act on the vector to their right, so S hits the vector first: R(S v) = (RS) v. Read right to left.",
+       "from": "math-w02-1"
       },
       {
        "q": "Is matrix multiplication commutative? Give a reason from the geometry.",
-       "a": "No. Rotating then shearing generally lands î and ĵ somewhere different from shearing then rotating, so RS ≠ SR in general."
+       "a": "No. Rotating then shearing generally lands î and ĵ somewhere different from shearing then rotating, so RS ≠ SR in general.",
+       "from": "math-w02-1"
       },
       {
        "q": "What does a 3×3 matrix's third column tell you?",
-       "a": "Where the third basis vector k̂ = (0, 0, 1) lands after the transformation."
+       "a": "Where the third basis vector k̂ = (0, 0, 1) lands after the transformation.",
+       "from": "math-w02-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "No formulas yet. Sketch the unit square (corners (0,0), (1,0), (1,1), (0,1)) and where it goes under each matrix (columns are where î and ĵ land). Guess its new area, and whether the square got \"flipped over\".\n\n1. [[3, 0], [0, 2]]\n2. [[1, 1], [0, 1]] (a shear)\n3. [[0, 1], [1, 0]]\n4. [[1, 2], [2, 4]]"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nWhere the unit square (corners (0,0), (1,0), (1,1), (0,1)) goes under each matrix. The columns are where î and ĵ land.\n\n1. [[3, 0], [0, 2]]: a 3 × 2 rectangle. Area **6**, not flipped.\n2. [[1, 1], [0, 1]] (a shear): a slanted parallelogram. Area **1**, not flipped.\n3. [[0, 1], [1, 0]]: î and ĵ swap places. Area **1**, **flipped** over.\n4. [[1, 2], [2, 4]]: both columns lie on the line y = 2x, so the square is squashed flat. Area **0**.\n\nThose four numbers (6, 1, −1, 0) are the determinants; Learn shows how to compute them."
     },
     {
      "kind": "learn",
@@ -796,15 +810,18 @@
      "questions": [
       {
        "q": "det([[2, 1], [4, 2]]) and its meaning?",
-       "a": "2·2 − 1·4 = 0: the plane collapses onto a line."
+       "a": "2·2 − 1·4 = 0: the plane collapses onto a line.",
+       "from": "math-w03-1"
       },
       {
        "q": "How do you multiply a matrix A by a vector v in NumPy?",
-       "a": "`A @ v`"
+       "a": "`A @ v`",
+       "from": "math-w02-4"
       },
       {
        "q": "What does det = −1 mean geometrically?",
-       "a": "Areas unchanged, orientation flipped (a reflection)."
+       "a": "Areas unchanged, orientation flipped (a reflection).",
+       "from": "math-w03-1"
       }
      ]
     },
@@ -1234,27 +1251,26 @@
      "questions": [
       {
        "q": "What is the output of `sorted({\"b\": 2, \"a\": 1})`?",
-       "a": "`['a', 'b']`: iterating a dict gives its keys."
+       "a": "`['a', 'b']`: iterating a dict gives its keys.",
+       "from": "python-w01-3"
       },
       {
        "q": "Write a test that checks `half(3)` returns 1.5 without using `==` on floats.",
-       "a": "`assert math.isclose(half(3), 1.5)` (or `pytest.approx` in pytest)."
-      },
-      {
-       "q": "Which exception does `open(\"missing.txt\")` raise, and what's its broader parent class?",
-       "a": "`FileNotFoundError`, a subclass of `OSError`."
+       "a": "`assert math.isclose(half(3), 1.5)` (or `pytest.approx` in pytest).",
+       "from": "python-w03-1"
       },
       {
        "q": "What's the difference between a list and a tuple, in one line?",
-       "a": "Lists are mutable; tuples are immutable (and can be dict keys or set members if their contents are hashable)."
+       "a": "Lists are mutable; tuples are immutable (and can be dict keys or set members if their contents are hashable).",
+       "from": "python-w02-3"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict what `lines` contains, and whether the last line ends with `\\n`:\n\n```python-snippet\nwith open(\"names.txt\", \"w\") as f:\n    f.write(\"Ada\\nAlan\\n\")\n    f.write(\"Grace\")\nwith open(\"names.txt\") as f:\n    lines = f.readlines()\n```\n\nThen: if you open the same file again with mode `\"w\"` and write nothing, what is in it afterwards?"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python-snippet\nwith open(\"names.txt\", \"w\") as f:\n    f.write(\"Ada\\nAlan\\n\")\n    f.write(\"Grace\")\nwith open(\"names.txt\") as f:\n    lines = f.readlines()\n```\n\n**Result:** `lines` is `['Ada\\n', 'Alan\\n', 'Grace']`. Each line keeps its `\\n`, except the last, because nothing wrote one after `Grace`.\n\nAnd opening the same file again with mode `\"w\"` and writing nothing leaves it **empty**: `\"w\"` truncates the file the moment it opens. Learn covers the modes."
     },
     {
      "kind": "learn",
@@ -1395,15 +1411,18 @@
      "questions": [
       {
        "q": "Quicksort: where does the real work happen, before or after the recursive calls?",
-       "a": "Before: partitioning around the pivot. After the calls you only concatenate."
+       "a": "Before: partitioning around the pivot. After the calls you only concatenate.",
+       "from": "algo-w03-1"
       },
       {
        "q": "How many times can you halve 1,000,000 before reaching 1?",
-       "a": "About 20 (2²⁰ ≈ 1,048,576), i.e. log₂ n."
+       "a": "About 20 (2²⁰ ≈ 1,048,576), i.e. log₂ n.",
+       "from": "algo-w01-2"
       },
       {
        "q": "What does recursive binary search need from its input?",
-       "a": "A sorted list; it compares with the middle and recurses into one half."
+       "a": "A sorted list; it compares with the middle and recurses into one half.",
+       "from": "algo-w02-2"
       }
      ]
     },
@@ -1514,7 +1533,15 @@
    ],
    "deliverable": "learning-log/week03/mergesort.py with merge, merge_sort, merge_sort_by and count_inversions, tests green, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Merge Sorted Array",
+     "url": "https://leetcode.com/problems/merge-sorted-array/",
+     "level": "easy",
+     "uses": "the merge step of merge sort (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w03-3",
@@ -1828,27 +1855,31 @@
      "questions": [
       {
        "q": "det([[4, 2], [6, 3]]) and what it means.",
-       "a": "4·3 − 2·6 = 0: the columns are parallel, the plane collapses onto a line."
+       "a": "4·3 − 2·6 = 0: the columns are parallel, the plane collapses onto a line.",
+       "from": "math-w03-1"
       },
       {
        "q": "det(A) = 3, det(B) = 2. What is det(AB)? And det of A applied twice?",
-       "a": "6; and 9."
+       "a": "6; and 9.",
+       "from": "math-w02-1"
       },
       {
        "q": "What does `np.linalg.matrix_rank` count?",
-       "a": "The number of dimensions in the output of the transformation: the number of linearly independent columns."
+       "a": "The number of dimensions in the output of the transformation: the number of linearly independent columns.",
+       "from": "math-w03-1"
       },
       {
        "q": "Write the system 2x + y = 3, x + y = 2 as a matrix equation.",
-       "a": "[[2, 1], [1, 1]] · [x, y] = [3, 2]."
+       "a": "[[2, 1], [1, 1]] · [x, y] = [3, 2].",
+       "from": "robo-w02-4"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "For A = [[1, 2], [2, 4]], decide before reading on:\n\n1. Is there any vector x with A x = (3, 6)? How many?\n2. Is there any x with A x = (3, 5)?\n3. Which non-zero vectors x does A send to (0, 0)?"
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nFor A = [[1, 2], [2, 4]] (rows), A x means (x₁ + 2x₂, 2x₁ + 4x₂). The second row is twice the first.\n\n1. A x = (3, 6) has **infinitely many** solutions: any x with x₁ + 2x₂ = 3, for example (3, 0) or (1, 1).\n2. A x = (3, 5) has **no** solution: the second entry is always twice the first, and 5 isn't 6.\n3. A sends every multiple of **(2, −1)** to (0, 0), for example (2, −1) and (−4, 2).\n\nLearn explains this with the determinant (it's 0 here), the column space and the null space."
     },
     {
      "kind": "learn",
@@ -1985,15 +2016,18 @@
      "questions": [
       {
        "q": "rank([A | b]) > rank(A). What does that say about A x = b?",
-       "a": "No solution: b is outside the column space."
+       "a": "No solution: b is outside the column space.",
+       "from": "math-w03-3"
       },
       {
        "q": "Inverse of [[1, 1], [0, 1]]?",
-       "a": "[[1, −1], [0, 1]] (det 1; undoes the shear)."
+       "a": "[[1, −1], [0, 1]] (det 1; undoes the shear).",
+       "from": "math-w03-2"
       },
       {
        "q": "Which vector spans the null space of [[1, 2], [2, 4]]?",
-       "a": "(−2, 1), or any non-zero multiple of it."
+       "a": "(−2, 1), or any non-zero multiple of it.",
+       "from": "math-w03-3"
       }
      ]
     },
@@ -2412,27 +2446,31 @@
      "questions": [
       {
        "q": "What does `csv.DictReader` give you for each row, and what type are the values?",
-       "a": "A dict keyed by the header names; every value is a string."
+       "a": "A dict keyed by the header names; every value is a string.",
+       "from": "python-w03-2"
       },
       {
        "q": "Write the pytest line that checks `f()` raises `KeyError`.",
-       "a": "`with pytest.raises(KeyError): f()`"
+       "a": "`with pytest.raises(KeyError): f()`",
+       "from": "python-w03-1"
       },
       {
        "q": "What does `[x * 2 for x in range(5) if x % 2]` evaluate to?",
-       "a": "`[2, 6]`: only odd x (1 and 3) are kept, then doubled."
+       "a": "`[2, 6]`: only odd x (1 and 3) are kept, then doubled.",
+       "from": "python-w02-3"
       },
       {
        "q": "What's in a file after `Path(\"a.txt\").write_text(\"hi\")` runs twice?",
-       "a": "Just `hi`: `write_text` opens in write mode, which truncates each time."
+       "a": "Just `hi`: `write_text` opens in write mode, which truncates each time.",
+       "from": "python-w03-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Predict each result before reading on:\n\n```python-snippet\ns = \"Merhaba, Dünya\"\ns[0:7]\ns[-5:]\ns[::-1][:5]\nlen(s), len(s.encode(\"utf-8\"))\nf\"{3.14159:.2f}|{42:>5}|{0.256:.0%}|{1234567:,}\"\n\" a  b \".split(), \" a  b \".split(\" \")\n```"
+     "title": "First example",
+     "body": "Nothing to guess here: run the example and read the result below. The Learn step explains why it behaves this way.\n\n```python-snippet\ns = \"Merhaba, Dünya\"\ns[0:7]\ns[-5:]\ns[::-1][:5]\nlen(s), len(s.encode(\"utf-8\"))\nf\"{3.14159:.2f}|{42:>5}|{0.256:.0%}|{1234567:,}\"\n\" a  b \".split(), \" a  b \".split(\" \")\n```\n\n**Results:**\n\n- `s[0:7]` is `'Merhaba'`, and `s[-5:]` is `'Dünya'`.\n- `s[::-1][:5]` is `'aynüD'`: reversed, then the first five characters.\n- `len(s)` is 14, but `len(s.encode(\"utf-8\"))` is 15, because `ü` takes two bytes in UTF-8.\n- The f-string gives `'3.14|   42|26%|1,234,567'`.\n- `\" a  b \".split()` gives `['a', 'b']`, while `.split(\" \")` gives `['', 'a', '', 'b', '']`.\n\nLearn goes through slicing, encodings and format specs."
     },
     {
      "kind": "learn",
@@ -2532,7 +2570,15 @@
    ],
    "deliverable": "learning-log/week03/strings.py with slugify, format_row and parse_kv plus tests, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Longest Common Prefix",
+     "url": "https://leetcode.com/problems/longest-common-prefix/",
+     "level": "easy",
+     "uses": "string slicing and indexing (this lesson)"
+    }
+   ]
   },
   {
    "id": "algo-w03-3",
@@ -2580,15 +2626,18 @@
      "questions": [
       {
        "q": "Selection sort (week 1): how many comparisons on a list of n elements, and does it depend on the input?",
-       "a": "About n²/2, always: it scans the whole unsorted part every time, even if the list is already sorted."
+       "a": "About n²/2, always: it scans the whole unsorted part every time, even if the list is already sorted.",
+       "from": "algo-w01-2"
       },
       {
        "q": "Merge sort vs quicksort: which needs O(n) extra memory?",
-       "a": "Merge sort. In-place quicksort needs only the recursion stack (O(log n) on average)."
+       "a": "Merge sort. In-place quicksort needs only the recursion stack (O(log n) on average).",
+       "from": "algo-w03-2"
       },
       {
        "q": "What makes a sort stable?",
-       "a": "Equal elements keep their original relative order."
+       "a": "Equal elements keep their original relative order.",
+       "from": "algo-w03-2"
       }
      ]
     },
@@ -2695,7 +2744,15 @@
    ],
    "deliverable": "learning-log/week03/compare_sorts.py (timing table with predictions) and sorts_table.md, committed.",
    "teachBy": null,
-   "safety": null
+   "safety": null,
+   "leetcode": [
+    {
+     "title": "Sort Colors",
+     "url": "https://leetcode.com/problems/sort-colors/",
+     "level": "medium",
+     "uses": "counting, or swapping in place (this lesson)"
+    }
+   ]
   },
   {
    "id": "build-w03-5",
@@ -2925,27 +2982,31 @@
      "questions": [
       {
        "q": "`df.loc[\"S001\":\"S003\"]` vs `df.iloc[0:3]`: which includes the end?",
-       "a": "`loc` includes the end label; `iloc` excludes position 3, like Python slicing."
+       "a": "`loc` includes the end label; `iloc` excludes position 3, like Python slicing.",
+       "from": "ai-w03-2"
       },
       {
        "q": "How does a DataFrame relate to a Series?",
-       "a": "It's a collection of column Series sharing one row index."
+       "a": "It's a collection of column Series sharing one row index.",
+       "from": "ai-w03-1"
       },
       {
        "q": "Vectorised vs loop (week 2): why is `arr * 2` faster than a Python loop over a NumPy array?",
-       "a": "The loop runs in compiled code over a contiguous array, with no per-element Python interpreter overhead."
+       "a": "The loop runs in compiled code over a contiguous array, with no per-element Python interpreter overhead.",
+       "from": "ai-w02-3"
       },
       {
        "q": "What's the safe way to set column `flag` to True for rows where `score < 50`?",
-       "a": "`df.loc[df['score'] < 50, 'flag'] = True`"
+       "a": "`df.loc[df['score'] < 50, 'flag'] = True`",
+       "from": "ai-w03-2"
       }
      ]
     },
     {
-     "kind": "pretest",
+     "kind": "example",
      "minutes": 5,
-     "title": "Predict first",
-     "body": "Your Tracker v2 computed per-student completion with loops over parsed rows. Before reading on, write down: if the export (`student_id,module,lesson,completed_at,score`, with `completed_at` and `score` blank when a lesson isn't done) is loaded into a DataFrame, what pandas expressions would give **(a)** a True/False \"done\" column and **(b)** the fraction of completed lessons per student? Also predict the dtype of `score` and of `completed_at` after `read_csv`."
+     "title": "First example",
+     "body": "Nothing to guess here: read the example and its result. The Learn step explains why it behaves this way.\n\nYour Tracker v2 computed per-student completion with loops over parsed rows. The export has the columns `student_id,module,lesson,completed_at,score`, with `completed_at` and `score` blank when a lesson isn't done. In pandas, the same work is two short lines:\n\n```python-snippet\ndf[\"done\"] = df[\"completed_at\"].notna()           # (a) a True/False column\ndf.groupby(\"student_id\")[\"done\"].mean()           # (b) fraction done per student\n```\n\nAfter `read_csv`, `score` comes in as `float64`, because the blanks become `NaN`, and `completed_at` comes in as text (`object`) unless you ask pandas to parse dates. Learn explains each piece."
     },
     {
      "kind": "learn",
