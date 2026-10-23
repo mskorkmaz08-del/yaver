@@ -12,5 +12,5 @@ Yaver is a no-build PWA: plain ES modules served as-is by GitHub Pages from `mai
 2. **Bump `VERSION` in `sw.js`** whenever app files change, and add new app files to its `FILES` list.
 3. **Run the checks** from the repo root with the site served on port 8765 (`python3 -m http.server 8765`):
    - `node tests/docs-coverage.mjs` (fails if the handbook misses a file, store or section);
-   - the Playwright tests in `tests/` (`smoke.mjs`, `course-smoke.mjs`, `no-guess.mjs`, `sync-test.mjs`, `mac-bridge.mjs`); launch Chromium with `executablePath: '/opt/pw-browsers/chromium'` in the cloud container.
+   - the Playwright tests in `tests/` (`smoke.mjs`, `course-smoke.mjs`, `no-guess.mjs`, `live-recovery.mjs`, `sync-test.mjs`, `mac-bridge.mjs`); launch Chromium with `executablePath: '/opt/pw-browsers/chromium'` in the cloud container.
 4. Never commit API keys or tokens: the repo and site are public. Keys are typed into the app on each device.

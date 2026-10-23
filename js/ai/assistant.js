@@ -156,7 +156,7 @@ function orb(state) {
   const o = el?.querySelector('[data-orb]');
   if (!o) return;
   o.dataset.state = state;
-  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', tap: 'tap once so I can speak', live: 'live · just talk', connecting: 'connecting…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
+  o.querySelector('[data-orb-label]').textContent = { listening: 'listening…', tap: 'tap once so I can speak', live: 'live · just talk', connecting: 'connecting…', reconnecting: 'reconnecting…', claude: 'asking Claude on your Mac…', thinking: 'thinking…', voicing: 'getting the voice…', speaking: 'speaking · tap to interrupt' }[state] || 'tap to talk';
 }
 
 export function closeAssistant() {

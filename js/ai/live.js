@@ -8,6 +8,7 @@ import { runTool, WRITE_TOOLS, describeAction } from './tools.js';
 import { STATIC_SYSTEM, dynamicContext } from './claude.js';
 import { functionDeclarations } from './gemini.js';
 import { audioCtx } from './voice.js';
+import { macConfigured, macOnline, runTurnMac } from './mac.js';
 
 const workletReady = new WeakSet();
 
@@ -57,22 +58,40 @@ function systemText() {
   return `${STATIC_SYSTEM}
 
 This is a live voice conversation: you are heard, not read. Answer in a few short spoken sentences; no lists, markdown or code unless asked. Act on clear requests with your tools straight away and confirm in a few words.${jarvis ? ' Speak like JARVIS: calm, precise and understated, with a British accent and British English, a touch of dry wit; now and then address the user as "sir". No American filler.' : ''}
-Web search is not available here.
+Web search is not available here.${macConfigured() ? ' For hard questions (deep explanations, code, plans, anything needing careful reasoning) call ask_claude: it asks Claude on the user\'s Mac. First say a few words like "Let me ask Claude", then read the answer naturally.' : ''}
 
 ${dynamicContext()}`;
 }
 
 // Faster turn-taking: end the user's turn after a short pause instead of the default.
 const VAD = { automaticActivityDetection: { endOfSpeechSensitivity: 'END_SENSITIVITY_HIGH', silenceDurationMs: 500, prefixPaddingMs: 100 } };
+// If the model hasn't started answering this long after you stopped talking, the
+// session is reconnected and what you said is sent again, instead of staying silent.
+const STALL_MS = 7000;
+const MAX_RECONNECTS = 2;
+
+// Claude on the Mac as a tool of the live voice: Gemini keeps talking, Claude thinks.
+const ASK_CLAUDE = {
+  name: 'ask_claude',
+  description: "Ask Claude on the user's Mac a hard question: deep explanations, code, plans, careful reasoning. Takes several seconds. Pass the full question with any context it needs.",
+  parameters: { type: 'OBJECT', properties: { question: { type: 'STRING', description: 'The question, self-contained.' } }, required: ['question'] },
+};
+async function askClaude(question) {
+  if (!(await macOnline())) return { error: 'Claude on the Mac is offline right now. Answer yourself and say so briefly.' };
+  try {
+    const { text } = await runTurnMac([{ role: 'user', text: `${question}\n\n(This answer will be read aloud in a voice conversation: a few short spoken sentences, no lists or code unless essential.)` }]);
+    return { answer: text || '(no answer)' };
+  } catch (e) { return { error: `Claude on the Mac failed: ${e.message}` }; }
+}
 
 // Starts a session. Callbacks: onState('connecting'|'listening'|'speaking'|'ended'),
 // onUser(text) and onModel(text) with each finished turn's transcript, onAction(label),
 // onError(message, fatal), onIdle() after 90 s of quiet. Returns { stop, interrupt }.
 // For speed, the microphone, the model choice and the connection all start at once,
 // and what you say before the connection is ready is buffered and sent when it is.
-export async function startLive(cb = {}, { tuned = true } = {}) {
+export async function startLive(cb = {}, { tuned = true, handle = null, resend = '', reconnects = 0 } = {}) {
   const { onState, onUser, onModel, onAction, onError, onIdle } = cb;
-  onState?.('connecting');
+  onState?.(reconnects ? 'reconnecting' : 'connecting');
   // Reuse the audio output Yaver unlocked on an earlier tap; resume it inside this tap.
   const ctx = audioCtx();
   const resumed = ctx.resume().catch(() => {});
@@ -90,7 +109,8 @@ export async function startLive(cb = {}, { tuned = true } = {}) {
   const sink = ctx.createGain(); sink.gain.value = 0; // keeps the worklet running without echoing the mic
   src.connect(down); down.connect(sink); sink.connect(ctx.destination);
 
-  let ready = false, closed = false, nextAt = 0, userText = '', modelText = '', speakingTimer, idleTimer;
+  let ready = false, closed = false, nextAt = 0, userText = resend || '', modelText = '', speakingTimer, idleTimer, stallTimer, waiting = false, attempts = reconnects, resumeHandle = handle, lastAsked = resend;
+  // After a reconnect, the repeated question counts as your turn once the answer arrives.
   const early = []; // mic audio from before the session was ready (kept to ~3 s)
   const playing = new Set();
 
@@ -104,8 +124,10 @@ export async function startLive(cb = {}, { tuned = true } = {}) {
       model: `models/${model}`,
       generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: db.setting('ttsVoice', 'Charon') } } } },
       systemInstruction: { parts: [{ text: systemText() }] },
-      tools: [{ functionDeclarations: functionDeclarations() }],
-      ...(tuned ? { realtimeInputConfig: VAD } : {}),
+      tools: [{ functionDeclarations: [...functionDeclarations(), ...(macConfigured() ? [ASK_CLAUDE] : [])] }],
+      // Resumable sessions that don't run out of context: a dropped connection or the
+      // server's periodic goAway reconnects without losing the conversation.
+      ...(tuned ? { realtimeInputConfig: VAD, sessionResumption: resumeHandle ? { handle: resumeHandle } : {}, contextWindowCompression: { slidingWindow: {} } } : {}),
       inputAudioTranscription: {},
       outputAudioTranscription: {},
     },
@@ -137,6 +159,9 @@ export async function startLive(cb = {}, { tuned = true } = {}) {
     speakingTimer = setTimeout(() => !closed && onState?.('listening'), (nextAt - ctx.currentTime) * 1000 + 150);
   };
 
+  const disarm = () => { clearTimeout(stallTimer); waiting = false; };
+  const arm = () => { disarm(); waiting = true; stallTimer = setTimeout(() => !closed && reconnect(lastAsked), STALL_MS); };
+
   ws.onmessage = async e => {
     const text = typeof e.data === 'string' ? e.data : await e.data.text();
     let m; try { m = JSON.parse(text); } catch { return; }
@@ -145,24 +170,37 @@ export async function startLive(cb = {}, { tuned = true } = {}) {
       db.setSetting('liveModel', model); // skip the model lookup next time
       for (const buf of early.splice(0)) send(audioMsg(buf));
       onState?.('listening'); active();
+      // After a reconnect, repeat what you said so the answer still comes.
+      if (resend) { send({ clientContent: { turns: [{ role: 'user', parts: [{ text: resend }] }], turnComplete: true } }); onState?.('thinking'); arm(); }
       return;
     }
+    if (m.sessionResumptionUpdate?.resumable && m.sessionResumptionUpdate.newHandle) resumeHandle = m.sessionResumptionUpdate.newHandle;
+    if (m.goAway) return reconnect('');
     if (m.toolCall) {
+      disarm();
       const functionResponses = [];
       for (const fc of m.toolCall.functionCalls || []) {
+        if (fc.name === 'ask_claude') {
+          onState?.('claude');
+          functionResponses.push({ id: fc.id, name: fc.name, response: await askClaude(fc.args?.question || userText) });
+          continue;
+        }
         const out = await runTool(fc.name, fc.args || {});
         if (WRITE_TOOLS.has(fc.name) && !out?.error) { const label = describeAction(fc.name, fc.args || {}); if (label) onAction?.(label); }
         functionResponses.push({ id: fc.id, name: fc.name, response: out?.error ? { error: out.error } : { result: out ?? { ok: true } } });
       }
       send({ toolResponse: { functionResponses } });
+      arm(); // the spoken answer should follow the tool result
       return;
     }
     const sc = m.serverContent;
-    if (!sc) { if (m.goAway) onError?.('The live session is about to end; tap the wave to start a new one.'); return; }
+    if (!sc) return;
     if (sc.interrupted) { stopPlayback(); onState?.('listening'); }
-    if (sc.inputTranscription?.text) { userText += sc.inputTranscription.text; active(); }
-    if (sc.outputTranscription?.text) modelText += sc.outputTranscription.text;
-    for (const p of sc.modelTurn?.parts || []) if (p.inlineData?.data) play(p.inlineData.data);
+    // While you talk, keep pushing the stall check back; it fires only after you stop.
+    if (sc.inputTranscription?.text) { userText += sc.inputTranscription.text; lastAsked = userText.trim(); active(); if (!playing.size) arm(); }
+    if (sc.outputTranscription?.text) { modelText += sc.outputTranscription.text; disarm(); }
+    for (const p of sc.modelTurn?.parts || []) if (p.inlineData?.data) { disarm(); play(p.inlineData.data); }
+    if (sc.turnComplete) { disarm(); attempts = 0; }
     if (sc.turnComplete || sc.interrupted) {
       if (userText.trim()) onUser?.(userText.trim());
       if (modelText.trim()) onModel?.(modelText.trim());
@@ -170,15 +208,27 @@ export async function startLive(cb = {}, { tuned = true } = {}) {
     }
   };
 
-  const stop = () => {
-    if (closed) return;
+  const teardown = () => {
     closed = true;
-    clearTimeout(speakingTimer); clearTimeout(idleTimer);
+    clearTimeout(speakingTimer); clearTimeout(idleTimer); disarm();
     stopPlayback();
     try { ws.close(); } catch {}
     mic.getTracks().forEach(t => t.stop());
     try { src.disconnect(); down.disconnect(); sink.disconnect(); } catch {}
+  };
+  const stop = () => {
+    if (closed) return;
+    teardown();
     onState?.('ended');
+  };
+  // A fresh connection that resumes this conversation (when Gemini gave a handle)
+  // and, if you were waiting for an answer, asks again.
+  const reconnect = again => {
+    if (closed) return;
+    teardown();
+    if (attempts >= MAX_RECONNECTS) { onState?.('ended'); return onError?.('Gemini is not answering right now. Try again in a moment.', true); }
+    startLive(cb, { tuned, handle: resumeHandle, resend: again, reconnects: attempts + 1 })
+      .then(r => { session.stop = r.stop; session.interrupt = r.interrupt; }, e => { onState?.('ended'); onError?.(e.message, true); });
   };
   ws.onerror = () => {};
   ws.onclose = ev => {
@@ -196,7 +246,8 @@ export async function startLive(cb = {}, { tuned = true } = {}) {
       onState?.('ended');
       return onError?.(`Live voice could not start${ev.reason ? `: ${ev.reason}` : ''}.`, true);
     }
-    if (ev.code !== 1000) onError?.(`Live voice ended${ev.reason ? `: ${ev.reason}` : ''}.`);
+    // An unexpected drop mid-conversation: reconnect quietly instead of ending.
+    if (ev.code !== 1000) return reconnect(waiting ? lastAsked : '');
     stop();
   };
   const session = { stop, interrupt: () => { stopPlayback(); onState?.('listening'); } };
