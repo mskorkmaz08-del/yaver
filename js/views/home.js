@@ -2,7 +2,8 @@ import * as db from '../db.js';
 import * as D from '../data.js';
 import * as CT from '../cetele.js';
 import { html, raw, money, mins, timeHM, today, fmtDay, dayKey, addDays, weekStart, toast } from '../util.js';
-import { ring } from '../ui.js';
+import { ring, stepStrip } from '../ui.js';
+import * as C from '../course.js';
 import { icon } from '../icons.js';
 import { reminders } from '../reminders.js';
 import { expenseForm, meetingForm, studyForm, mealForm, taskForm } from '../forms.js';
@@ -12,6 +13,37 @@ import { hasKey as aiReady, saveKey } from '../ai/provider.js';
 function greeting() {
   const h = new Date().getHours();
   return h < 5 ? 'İyi geceler' : h < 12 ? 'Günaydın' : h < 18 ? 'İyi günler' : 'İyi akşamlar';
+}
+
+// "Friday, the 23rd", as the Clockwork design writes the date.
+export function longDate(d = new Date(), month = false) {
+  const n = d.getDate();
+  const th = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+  return `${d.toLocaleDateString('en-GB', { weekday: 'long' })}, the ${n}${th}${month ? ` of ${d.toLocaleDateString('en-GB', { month: 'long' })}` : ''}`;
+}
+
+const STEP_NAME = { warmup: 'Recall', example: 'Example', exit: 'Exit', teachnotes: 'Notes', reflect: 'Reflect' };
+export const stepName = s => STEP_NAME[s.kind] || (s.kind ? s.kind[0].toUpperCase() + s.kind.slice(1) : s.title);
+
+// The next course block as a printed lecture card: what, when, its steps, and a way in.
+function lecture() {
+  if (!C.ready() || !C.active()) return '';
+  const nb = C.nextBlock();
+  if (!nb) return '';
+  const l = nb.lesson ? C.lesson(nb.lesson.id) : null;
+  const target = l ? `lesson/${l.id}` : nb.type === 'review' || nb.type === 'plan' ? 'lesson/review' : nb.special === 'test' ? 'lesson/test' : nb.special === 'ship' ? 'lesson/ship' : null;
+  const when = nb.date === today() ? nb.start : nb.date === addDays(today(), 1) ? `tomorrow · ${nb.start}` : `${fmtDay(nb.date)} · ${nb.start}`;
+  const p = l ? C.progress(l.id) || {} : {};
+  const done = new Set(p.stepsDone || []);
+  const steps = l?.steps || [];
+  const cur = steps.findIndex((_, i) => !done.has(i));
+  return html`
+    <section class="paper lecture">
+      <p class="label">${l ? 'lecture' : 'next'} <b>·</b> ${when}${l ? ` · ${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)}` : ''}</p>
+      <h2>${l ? l.title : C.slotTitle(nb)}</h2>
+      ${raw(steps.length ? stepStrip(steps.map(stepName), done, { current: cur, names: true }) : '')}
+      ${raw(target ? html`<button class="btn primary" data-go="${target}">${p.stepsDone?.length || p.status === 'in progress' ? 'Resume' : 'Begin'} <span class="arrow">→</span></button>` : '')}
+    </section>`;
 }
 
 export function weekSegments(perDay, goal) {
@@ -25,9 +57,9 @@ export function weekSegments(perDay, goal) {
 }
 
 // Çetele as engraved tally marks: one stroke per minimum, faint dashes for the ones still open.
-function tally(done, total) {
+export function tally(done, total) {
   const n = Math.min(total, 10);
-  return `<svg class="tally" viewBox="0 0 ${n * 9 + 4} 32" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
+  return `<svg class="tally" viewBox="0 0 ${n * 9 + 4} 32" preserveAspectRatio="xMinYMid meet" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
     `<path class="${i < done ? '' : 'off'}" d="M${6 + i * 9} 4 L${i < done ? 5.4 + i * 9 : 6 + i * 9} 28"/>`).join('')}</svg>`;
 }
 
@@ -43,15 +75,17 @@ export function render(root, go) {
   const ct = CT.day();
   const cs = CT.streak();
   const now = new Date();
+  const course = C.ready() && C.active();
+  const next = upcoming.find(e => new Date(e.end || e.start) > now);
 
   root.innerHTML = html`
-    <header class="page-head">
-      <div>
-        <p class="path">Yaver <b>·</b> ${now.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).toLowerCase()}</p>
-        <h1>${greeting()}${name ? `, ${name}` : ''}</h1>
-      </div>
+    <header class="brand-head">
+      <b class="brand">Yaver</b>
+      <span class="brand-date" title="${greeting()}${name ? `, ${name}` : ''}">${longDate(now)}</span>
       <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
     </header>
+
+    ${raw(lecture())}
 
     <section class="mv-hero">
       <img class="movement" src="icons/movement.svg" alt="" width="228" height="228">
@@ -67,6 +101,11 @@ export function render(root, go) {
           <div class="bar"><div style="width:${raw(Math.min(100, s.dailyGoalMin ? (s.weekMin / (s.dailyGoalMin * 7)) * 100 : 0))}%"></div></div>
           <p class="mv-s">this week · ${cs.current} day çetele streak</p>
         </button>
+      </div>
+      <div class="trio">
+        <button data-go="${course ? 'lesson/review' : 'study'}"><p class="label">cards</p><b>${course ? C.dueCount() : '—'}</b></button>
+        <button data-go="calendar"><p class="label">meeting</p><b>${next ? timeHM(next.start) : '—'}</b>${raw(next && dayKey(new Date(next.start)) !== today() ? html`<small>${fmtDay(dayKey(new Date(next.start)))}</small>` : '')}</button>
+        <button data-go="money"><p class="label">spent</p><b>${m.today ? money(m.today) : '—'}</b></button>
       </div>
     </section>
 

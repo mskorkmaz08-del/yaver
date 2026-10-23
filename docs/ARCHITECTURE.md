@@ -145,7 +145,7 @@ yaver/
 ├── index.html              The shell: tab bar, the watch-crown Yaver button, loads js/app.js
 ├── manifest.webmanifest    Name, icons, colours: what makes it installable
 ├── sw.js                   Service worker: offline copy + updates
-├── css/app.css             All styling: the Clockwork look (graphite, hairline brass, ivory paper lessons, teal accent), cards, sheets, chat
+├── css/app.css             All styling: the Clockwork look (graphite, hairline brass, ivory paper lessons, teal accent) and its motion, cards, sheets, chat
 ├── fonts/                  Cormorant Garamond and Cinzel, stored in the app so they work offline
 ├── icons/                  Home Screen icons and movement.svg, the animated watch movement on Home
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
@@ -155,7 +155,7 @@ yaver/
     ├── db.js               IndexedDB storage, settings, backup/restore
     ├── data.js             The "business logic": budgets, streaks, free slots, totals
     ├── util.js             Dates, money formatting, bottom sheets, toasts, Markdown
-    ├── ui.js               Progress rings, bar charts
+    ├── ui.js               Progress rings, bar charts, the lesson step strip, the study subdial
     ├── forms.js            Add/edit sheets for expenses, meetings, study, meals, tasks
     ├── ics.js              Builds .ics calendar files
     ├── reminders.js        Plain "what needs attention today" facts

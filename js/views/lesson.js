@@ -7,6 +7,8 @@ import { html, raw, mdDoc, toast, haptic, sheet, today, addDays, saveFile, mins,
 import { icon } from '../icons.js';
 import { openAssistant } from '../ai/assistant.js';
 import { dotColor, exportWeek } from './course.js';
+import { stepStrip, roman } from '../ui.js';
+import { stepName } from './home.js';
 
 let tick;
 let state = {}; // per-render UI state that isn't worth storing: revealed answers, marks
@@ -99,6 +101,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
     ${raw(head(`wk ${l.week ?? ''}`, l.title, html`<p class="small muted mono lesson-meta"><span class="dot" style="background:${raw(dotColor(l.track))}"></span>${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)} · ${l.minutes} min · ${st}${raw(p.score != null ? ` · ${Math.round(p.score * 100)}%` : '')}${raw(tb ? ` · <span class="${C.deadlines(7).some(d => d.lessonId === l.id) ? 'bad' : ''}">teach by ${esc(tb)}</span>` : '')}</p>`))}
     <div class="lesson-grid">
       <article class="lesson-main">
+        ${raw(steps.length ? stepStrip(steps.map(stepName), doneSteps, { current: steps.findIndex((_, i) => !doneSteps.has(i)), jump: true, names: true }) : '')}
         <section class="card">
           <p class="label">objectives</p>
           <ul class="objectives">${raw((l.objectives || []).map(o => html`<li>${o}</li>`).join(''))}</ul>
@@ -114,6 +117,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
 
   // --- wiring ---
   root.querySelector('[data-back]').onclick = () => go('study');
+  root.querySelectorAll('[data-jump]').forEach(b => (b.onclick = () => root.querySelector(`[data-stepcard="${b.dataset.jump}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })));
   const notes = root.querySelector('[data-notes]');
   notes.onchange = () => db.put('courseProgress', { ...(C.progress(l.id) || { id: l.id, lessonId: l.id, status: 'in progress' }), notes: notes.value });
   const startTimer = async () => { await C.startLesson(l.id); haptic(); askNotify(); };
@@ -178,7 +182,7 @@ function stepHTML(l, s, i, done) {
   return html`
     <section class="card step ${raw(done ? 'done' : '')}" data-stepcard="${i + 1}">
       <div class="card-head">
-        <p class="label">${raw(icon(STEP_ICON[s.kind] || 'book'))} ${STEP_LABEL[s.kind] || s.kind} · ${s.minutes} min</p>
+        <p class="label">${raw(icon(STEP_ICON[s.kind] || 'book'))} ${roman(i + 1)} · ${STEP_LABEL[s.kind] || s.kind} · ${s.minutes} min</p>
         <button class="step-check ${raw(done ? 'on' : '')}" data-step-done="${i}" aria-label="Mark step done">${raw(icon('check'))}</button>
       </div>
       <h3 class="step-title">${s.title}</h3>

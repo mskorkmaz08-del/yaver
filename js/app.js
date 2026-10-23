@@ -22,6 +22,8 @@ import * as C from './course.js';
 import { initShortcuts } from './keys.js';
 import { initSync } from './sync.js';
 import { currencyOptions } from './data.js';
+import * as D from './data.js';
+import { subdial } from './ui.js';
 import { icon } from './icons.js';
 
 const TABS = { home: ['home', 'home'], cetele: ['moon', 'çetele'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'], settings: ['settings', 'settings'] };
@@ -42,16 +44,48 @@ export function go(name, arg = '') {
   if (location.hash.slice(1) !== hash) history.replaceState(null, '', `#${hash}`);
   document.body.dataset.view = name;
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === (PARENT[name] || name)));
+  entering = true;
   draw();
   $('#view').scrollTo?.(0, 0);
   window.scrollTo(0, 0);
 }
 
+let entering = false, enterTimer;
 function draw() {
   const root = $('#view');
   const y = window.scrollY;
+  // Keep the running watch movements across redraws so their gears don't jump back to the start.
+  const movements = [...root.querySelectorAll('img.movement')];
   VIEWS[current].render(root, go, param);
+  root.querySelectorAll('img.movement').forEach((img, i) => movements[i] && img.replaceWith(movements[i]));
   window.scrollTo(0, y);
+  // A new screen rises in; a redraw after a data change doesn't.
+  if (entering) {
+    entering = false;
+    root.classList.remove('enter');
+    void root.offsetWidth;
+    root.classList.add('enter');
+    clearTimeout(enterTimer);
+    enterTimer = setTimeout(() => root.classList.remove('enter'), 1100);
+  }
+  sideGauge();
+}
+
+const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+// Laptop sidebar: the week's study hours on a subdial and today's Çetele as tally marks.
+function sideGauge() {
+  const el = $('[data-gauge]');
+  if (!el || !matchMedia('(min-width: 1100px)').matches) return;
+  const s = D.studySummary();
+  const ct = CT.day();
+  const goal = Math.round(s.dailyGoalMin * 7 / 60) || 15;
+  const h = s.weekMin / 60;
+  const open = ct.rows.filter(r => !r.met).map(r => r.name);
+  const remain = !open.length ? 'All minimums met' : open.length === 1 ? `${open[0]} remains` : `${open.slice(0, -1).join(', ')} and ${open.at(-1)} remain`;
+  el.innerHTML = `
+    <button class="sg-dial" data-to="study">${subdial(h, goal, { label: 'study' })}<span><b>${h.toFixed(1)}</b><small> / ${goal} h</small><em>this week</em></span></button>
+    <button class="sg-ct" data-to="cetele"><span class="label">çetele · ${WORDS[ct.done] ?? ct.done} of ${WORDS[ct.total] ?? ct.total}</span>${home.tally(ct.done, ct.total)}<em>${remain}</em></button>`;
+  el.querySelectorAll('[data-to]').forEach(b => (b.onclick = () => go(b.dataset.to)));
 }
 
 async function onboarding() {
@@ -104,6 +138,7 @@ async function start() {
   // Course content loads in the background; screens that need it redraw when it arrives.
   C.init().catch(() => {});
   window.addEventListener('course-ready', () => { if (current !== 'map') draw(); });
+  matchMedia('(min-width: 1100px)').addEventListener?.('change', sideGauge);
   initShortcuts(go);
   // Chrome/Edge on a computer: keep the install prompt for the button in Settings.
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.yaverInstall = e; });

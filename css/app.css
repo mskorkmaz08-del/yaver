@@ -47,8 +47,8 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { background: var(--bg); }
-/* Cormorant defaults to old-style figures; the `font` shorthand resets numeric variants, so force lining figures everywhere. */
-*, *::before, *::after { font-variant-numeric: lining-nums tabular-nums !important; }
+/* Cormorant's old-style figures are part of the look (as in design K); fields, clocks and timetables use lining figures. */
+input, textarea, select, .focus-clock, .slot-t, .when, .code, .stat-row b { font-variant-numeric: lining-nums tabular-nums; }
 body {
   margin: 0; min-height: 100vh;
   font: 500 17px/1.45 var(--sans); color: var(--text);
@@ -769,7 +769,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brass); }
 .mv-stats { display: grid; grid-template-columns: 1fr 1fr; }
 .mv-stat { display: flex; flex-direction: column; gap: 5px; text-align: left; padding: 2px 16px 2px 0; min-width: 0; }
 .mv-stat + .mv-stat { padding: 2px 0 2px 16px; border-left: 1px solid var(--line-2); }
-.mv-v { display: flex; align-items: center; gap: 12px; font: 600 30px/1 var(--mono); font-variant-numeric: lining-nums; }
+.mv-v { display: flex; align-items: center; gap: 12px; font: 600 30px/1 var(--mono); font-variant-numeric: oldstyle-nums proportional-nums; }
 .mv-v small { font-size: 17px; color: var(--muted); font-weight: 500; }
 .mv-s { font: italic 500 14px/1.25 var(--sans); color: var(--muted); }
 .tally { width: 62px; height: 20px; }
@@ -777,7 +777,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brass); }
 .tally path.off { stroke-opacity: .22; stroke-dasharray: 2 3; }
 
 /* Ivory paper: lessons, review cards and the course start card read like printed pages. */
-.paper, .lesson-main > .card, .lesson-main > section.card, .flash, .course-start {
+.paper, .lesson-main, .flash, .course-start {
   --text: var(--ink); --muted: #4c5262; --dim: #7a7466; --line: rgba(29,36,51,.14); --line-2: rgba(29,36,51,.3);
   --surface: rgba(255,255,255,.4); --surface-2: rgba(29,36,51,.06); --track: rgba(29,36,51,.12); --accent: var(--teal); --accent-soft: rgba(63,182,201,.12);
   color: var(--ink);
@@ -785,7 +785,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brass); }
   border: 0 !important; border-radius: 1px;
   box-shadow: 0 0 0 1px rgba(201,173,116,.55), 0 0 0 4px #15130f, 0 0 0 5px rgba(201,173,116,.32), 0 18px 40px rgba(0,0,0,.5);
 }
-.paper .label, .lesson-main > .card .label, .flash .label, .course-start .label { color: #8a7346; }
+.paper .label, .lesson-main .label, .flash .label, .course-start .label { color: #8a7346; }
 .paper .btn.primary, .lesson-main .btn.primary, .flash .btn.primary, .course-start .btn.primary { background: #14120e; color: var(--brass-hi); }
 .paper .btn.ghost, .lesson-main .btn.ghost, .flash .btn.ghost { color: var(--ink); border-color: rgba(29,36,51,.4); }
 .lesson-main .code, .flash .code { background: rgba(255,255,255,.5); border-color: rgba(29,36,51,.18); border-left: 2px solid var(--teal); }
@@ -869,3 +869,113 @@ input:focus, select:focus, textarea:focus { border-color: var(--brass); }
 }
 @media (prefers-reduced-motion: reduce) { .mark::before, .fab svg * { animation: none !important; } }
 .stat-row small { font: italic 500 14px/1.2 var(--sans); letter-spacing: 0; text-transform: none; }
+
+/* ---------- Clockwork polish (v24): the remaining design-K details, and motion ---------- */
+/* Home: brand line, printed lecture card, three small readouts. */
+.brand-head { display: flex; align-items: center; gap: 12px; padding: 6px 0 14px; position: relative; }
+.brand-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, rgba(201,173,116,.55), rgba(201,173,116,.55) 70%, transparent); }
+.brand-head .brand { font: 600 19px var(--caps); letter-spacing: .42em; text-transform: uppercase; color: var(--brass); margin-right: auto; }
+.brand-date { font: italic 500 17px var(--sans); color: var(--muted); white-space: nowrap; }
+.brand-head .icon-btn { width: 34px; height: 34px; border-color: transparent; color: var(--dim); }
+.brand-head .icon-btn:hover { color: var(--brass-hi); }
+.lecture { display: flex; flex-direction: column; gap: 16px; padding: 22px 22px 24px; margin: 8px 5px 10px; }
+.lecture .label b { color: #b39a68; font-weight: 500; }
+.lecture h2 { font: 600 31px/1.06 var(--head); color: var(--ink); letter-spacing: -.005em; text-wrap: balance; margin: -4px 0 2px; }
+.lecture .btn { align-self: flex-start; padding: 13px 24px; font: 500 11px var(--caps); letter-spacing: .3em; border: 1px solid #8a6d3f; }
+.arrow { display: inline-block; margin-left: 10px; transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+.btn:hover .arrow, .btn:active .arrow { transform: translateX(4px); }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); padding-top: 18px; margin-top: 6px; position: relative; }
+.trio::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(201,173,116,.5) 20%, rgba(201,173,116,.5) 80%, transparent); }
+.trio button { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 4px 0 6px; min-width: 0; }
+.trio button + button { border-left: 1px solid var(--line-2); }
+.trio .label { margin: 0; }
+.trio b { font: 600 23px/1 var(--mono); color: var(--text); font-variant-numeric: oldstyle-nums; white-space: nowrap; }
+.trio small { font: italic 500 12.5px/1 var(--sans); color: var(--muted); }
+
+/* A lesson's steps as thin bars with roman numerals. */
+.step-strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; }
+.step-strip > * { display: flex; flex-direction: column; gap: 8px; text-align: center; font: 500 11px var(--caps); letter-spacing: .12em; color: #8f8778; padding: 0; min-width: 0; }
+.step-strip i { display: block; height: 2px; background: rgba(29,36,51,.18); position: relative; overflow: hidden; }
+.step-strip i::after { content: ""; position: absolute; inset: 0; background: var(--teal); transform: scaleX(0); transform-origin: left; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+.step-strip .on i::after { transform: scaleX(1); }
+.step-strip .cur { color: var(--ink); }
+.step-strip .cur i { background: rgba(63,182,201,.3); }
+.step-strip em { font: 500 13.5px var(--sans); font-style: normal; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-strip button:hover { color: var(--ink); }
+.lesson-main .step-strip > * { text-align: left; flex-direction: column; }
+.lesson-main .step-strip span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 699px) { .step-strip em { display: none; } .lesson-main .step-strip > * { text-align: center; } }
+
+/* The lesson is one printed sheet; steps are sections on it, divided by hairlines. */
+.lesson-main { padding: 24px 24px 30px; gap: 0; }
+.lesson-main > .card { background: none !important; box-shadow: none !important; border: 0 !important; border-top: 1px solid rgba(29,36,51,.14) !important; border-radius: 0; padding: 24px 0; }
+.lesson-main > .step-strip { padding-bottom: 8px; }
+.lesson-main > .step-strip + .card { border-top: 0 !important; }
+.lesson-main > .card:last-child { padding-bottom: 0; }
+.lesson-main .step-title { font-size: 26px; }
+.lesson-main .step.done .step-title { color: #4c5262; }
+@media (max-width: 699px) { .lesson-main { padding: 20px 18px 24px; margin: 0 4px; } }
+
+/* Laptop sidebar: study subdial and Çetele tally under the sections. */
+.side-gauge { flex-direction: column !important; align-items: stretch; gap: 22px; padding: 28px 0 4px; }
+.side-gauge button { display: flex; padding: 0 !important; border: 0 !important; font: inherit; color: var(--text); text-align: left; width: 100%; }
+.side-gauge button::before, .side-gauge button::after { content: none !important; }
+.sg-dial { flex-direction: row !important; align-items: center; gap: 16px; justify-content: flex-start !important; }
+.sg-dial b { font: 600 27px/1 var(--mono); font-variant-numeric: oldstyle-nums; }
+.sg-dial small { font: 500 15px var(--sans); color: var(--muted); }
+.sg-dial em, .sg-ct em { display: block; font: italic 500 14px/1.3 var(--sans); color: var(--muted); margin-top: 4px; }
+.sg-ct { flex-direction: column !important; align-items: flex-start !important; gap: 8px; justify-content: flex-start !important; }
+.sg-ct .tally { width: 84px; height: 28px; }
+.subdial { flex: none; filter: drop-shadow(0 6px 12px rgba(0,0,0,.5)); }
+.sd-bezel { fill: #b89a5e; stroke: #e4cf9c; stroke-width: .6; }
+.sd-face { fill: #efe6d2; stroke: #8a6d3f; stroke-width: .5; }
+.sd-ticks line { stroke: #3b3f4a; }
+.sd-ticks text { font: 500 6.5px "Cormorant Garamond", serif; fill: #3b3f4a; text-anchor: middle; dominant-baseline: central; }
+.sd-label { font: 500 4.6px Cinzel, serif; letter-spacing: .2em; fill: #6b6455; text-anchor: middle; text-transform: uppercase; }
+.sd-hand { stroke: var(--blued); stroke-width: 1.7; stroke-linecap: round; transform: rotate(var(--a)); transform-origin: 50px 50px; transform-box: view-box; animation: sweep 1.2s cubic-bezier(.3,1.4,.5,1) both; }
+.sd-pin { fill: var(--blued); stroke: #e4cf9c; stroke-width: .5; }
+@keyframes sweep { from { transform: rotate(-135deg); } }
+@media (min-width: 1100px) {
+  .tabbar button[data-tab] span { text-transform: capitalize; }
+  /* The sidebar already carries the name, so Home's line reads like the design's running head. */
+  .brand-head .brand { font: 500 10px var(--caps); letter-spacing: .32em; color: #b39a68; }
+  .brand-head .brand::after { content: " · today"; color: var(--dim); }
+  .lecture { padding: 28px 32px 30px; }
+  .lecture h2 { font-size: 40px; }
+  .lecture .step-strip > * { text-align: left; }
+}
+
+/* ---------- Motion: calm and mechanical, never bouncy for its own sake ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes wind { from { opacity: 0; transform: scale(.92) rotate(-14deg); } to { opacity: 1; transform: none; } }
+@keyframes draw { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
+@keyframes grow { from { transform: scaleX(0); } }
+#view.enter > * { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+#view.enter > :nth-child(2) { animation-delay: .05s; }
+#view.enter > :nth-child(3) { animation-delay: .1s; }
+#view.enter > :nth-child(4) { animation-delay: .15s; }
+#view.enter > :nth-child(5) { animation-delay: .2s; }
+#view.enter > :nth-child(6) { animation-delay: .25s; }
+#view.enter > :nth-child(n+7) { animation-delay: .3s; }
+#view.enter .movement { animation: wind 1.1s cubic-bezier(.2,.8,.2,1) both .1s; }
+#view.enter .tally path:not(.off) { stroke-dasharray: 30; animation: draw .45s ease-out both; }
+#view.enter .tally path:nth-child(2) { animation-delay: .5s; } #view.enter .tally path:nth-child(1) { animation-delay: .42s; }
+#view.enter .tally path:nth-child(3) { animation-delay: .58s; } #view.enter .tally path:nth-child(4) { animation-delay: .66s; }
+#view.enter .tally path:nth-child(5) { animation-delay: .74s; } #view.enter .tally path:nth-child(n+6) { animation-delay: .82s; }
+#view.enter .bar > div, #view.enter .step-strip .on i::after { transform-origin: left; animation: grow 1s cubic-bezier(.2,.8,.2,1) both .3s; }
+/* Presses and hovers ease instead of snapping. */
+button, .btn, a.res, .chip, .tile, .card, .icon-btn, .agenda-row, .slot, .task { transition: background-color .22s ease, border-color .22s ease, color .22s ease, opacity .3s ease, box-shadow .22s ease, transform .16s ease; }
+button:not(:disabled):not(.fab):active, a.res:active { transform: scale(.985); }
+.tabbar button:active { transform: none; }
+.icon-btn:not(:disabled):active, .chip:active { transform: scale(.94); }
+/* The crown winds when pressed. */
+.fab { transition: transform .3s cubic-bezier(.2,.8,.2,1), filter .3s; }
+.fab svg { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+.fab:hover svg { transform: rotate(18deg); }
+.fab:active svg { transform: rotate(48deg); transition-duration: .2s; }
+/* Tab bar: the brass dot fades and grows into place. */
+.tabbar button::before { content: ""; position: absolute; top: 8px; left: calc(50% - 2px); width: 4px; height: 4px; border-radius: 50%; background: var(--brass); opacity: 0; transform: scale(0); transition: opacity .25s, transform .35s cubic-bezier(.2,.8,.2,1); }
+.tabbar button.active::before { opacity: 1; transform: none; }
+@media (min-width: 1100px) { .tabbar button::before { display: none; } }
+.step-strip button, .tabbar button, .trio button, .mv-stat { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: reduce) { #view.enter *, .sd-hand { animation: none !important; } }
