@@ -73,3 +73,23 @@ export function subdial(value, max, { size = 112, label = '' } = {}) {
     <circle cx="50" cy="50" r="2.6" class="sd-pin"/>
   </svg>`;
 }
+
+// A brass stopwatch for the lesson timer. The lesson's steps sit around the dial as brass
+// segments; elapsed time fills them with teal light; the hand sweeps the seconds.
+export function stopwatch(steps, planned) {
+  const R = 45, C2 = 2 * Math.PI * R;
+  const arc = (from, to) => { const a = (from / planned) * 360, b = (to / planned) * 360; return { off: f2(C2 * (1 - a / 360) + C2 * 0.25), len: f2(Math.max(0, (b - a - 2.2) / 360) * C2) }; };
+  const segs = steps.map((s, i) => { const { off, len } = arc(s.from, s.to); return `<circle class="sw-seg" data-seg="${i}" r="${R}" stroke-dasharray="${len} ${f2(C2)}" stroke-dashoffset="${off}"/>`; }).join('');
+  const ticks = Array.from({ length: 60 }, (_, i) => `<line class="${i % 5 ? 'sw-t' : 'sw-t5'}" x1="0" y1="${i % 5 ? -37 : -35}" x2="0" y2="-40" transform="rotate(${i * 6})"/>`).join('');
+  return `<svg class="stopwatch" viewBox="-60 -66 120 126" aria-hidden="true">
+    <rect class="sw-crown" x="-6" y="-66" width="12" height="7" rx="1.5"/><rect class="sw-stem" x="-3" y="-60" width="6" height="5"/>
+    <circle r="55" class="sw-bezel"/><circle r="50.5" class="sw-face"/>
+    <circle r="${R}" class="sw-track"/>${segs}
+    <circle r="${R}" class="sw-fill" stroke-dasharray="0 ${f2(C2)}" stroke-dashoffset="${f2(C2 * 0.25)}" data-fill/>
+    ${ticks}
+    <text class="sw-time" y="24" text-anchor="middle" data-clock>00:00</text>
+    <g class="sw-hand" data-hand><line y1="9" y2="-38"/><circle cy="-38" r="1.6" class="sw-tip"/></g>
+    <circle r="3.4" class="sw-hub"/>
+  </svg>`;
+}
+const f2 = v => Math.round(v * 100) / 100;

@@ -70,6 +70,7 @@ export function render(root, go) {
       <p class="muted small">Works while Yaver is on screen (iPhones don't let web apps listen in the background). From anywhere: say <b>“Hey Siri, open Yaver”</b>, then “Yaver”.</p>
       <label class="field check"><span>Voice chat listens again by itself</span><input type="checkbox" name="voiceAuto" ${raw(s('voiceAuto', true) ? 'checked' : '')}></label>
       <label class="field check"><span>Read replies out loud</span><input type="checkbox" name="speak" ${raw(s('speak', false) ? 'checked' : '')}></label>
+      <label class="field check"><span>Sounds: soft clicks and chimes (the silent switch mutes them)</span><input type="checkbox" name="sounds" ${raw(s('sounds', true) ? 'checked' : '')}></label>
       <label class="field"><span>Voice input language</span><select name="voiceLang">${raw([['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']].map(([v, l]) => `<option value="${v}" ${v === s('voiceLang', navigator.language) ? 'selected' : ''}>${l}</option>`).join(''))}</select></label>
 
       <p class="label">you</p>
@@ -123,6 +124,7 @@ export function render(root, go) {
     if (String(fd.get('macCode') || '').trim()) await useCode(fd.get('macCode'));
     await db.setSetting('webSearch', fd.has('webSearch'));
     await db.setSetting('speak', fd.has('speak'));
+    await db.setSetting('sounds', fd.has('sounds'));
     await db.setSetting('voiceAuto', fd.has('voiceAuto'));
     await db.setSetting('jarvis', fd.has('jarvis'));
     await db.setSetting('voiceMac', fd.has('voiceMac'));

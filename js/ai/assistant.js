@@ -11,6 +11,7 @@ import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying,
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 import * as mech from '../mech.js';
+import * as sound from '../sound.js';
 
 const CHAT_ID = 'main';
 let chat;          // { id, api: [Claude], gapi: [Gemini], mapi: [Claude on Mac], view: [what the user sees] }
@@ -100,6 +101,7 @@ export function openAssistant(prompt) {
   const fab = document.getElementById('fab');
   const r = fab?.getBoundingClientRect();
   if (r?.width) { el.style.setProperty('--ox', `${r.left + r.width / 2}px`); el.style.setProperty('--oy', `${r.top + r.height / 2}px`); }
+  if (!el.classList.contains('open')) sound.open();
   mech.kick(480);
   el.classList.add('open');
   document.body.classList.add('chat-open');
@@ -169,7 +171,7 @@ function orb(state) {
 
 export function closeAssistant() {
   if (voice) setVoice(false);
-  if (el.classList.contains('open')) mech.kick(-420);
+  if (el.classList.contains('open')) { mech.kick(-420); sound.close(); }
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
   hush();

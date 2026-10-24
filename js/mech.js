@@ -35,18 +35,41 @@ const DEFS = `
   <linearGradient id="mx-gold2" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#8d6a2e"/><stop offset=".5" stop-color="#d8b469"/><stop offset="1" stop-color="#fff0c4"/></linearGradient>
   <linearGradient id="mx-steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9dde2"/><stop offset=".5" stop-color="#7f8790"/><stop offset="1" stop-color="#3a4048"/></linearGradient>
   <radialGradient id="mx-glow"><stop offset="0" stop-color="#e9feff" stop-opacity=".95"/><stop offset=".25" stop-color="#7fe6f7" stop-opacity=".7"/><stop offset=".6" stop-color="#2aa6c4" stop-opacity=".22"/><stop offset="1" stop-color="#2aa6c4" stop-opacity="0"/></radialGradient>
-  <linearGradient id="mx-gem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8fdff"/><stop offset=".35" stop-color="#6fdcf2"/><stop offset=".7" stop-color="#1d8fb3"/><stop offset="1" stop-color="#0c4a66"/></linearGradient>
+  <linearGradient id="mx-gemA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2feff"/><stop offset=".4" stop-color="#8eeaff"/><stop offset="1" stop-color="#2a9fd0"/></linearGradient>
+  <linearGradient id="mx-gemB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ee3ff"/><stop offset=".5" stop-color="#2f9fe0"/><stop offset="1" stop-color="#1557a8"/></linearGradient>
+  <linearGradient id="mx-gemC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a7fc8"/><stop offset="1" stop-color="#0b2f6b"/></linearGradient>
+  <linearGradient id="mx-gemD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f6bb8"/><stop offset="1" stop-color="#0a2457"/></linearGradient>
+  <radialGradient id="mx-core"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".45" stop-color="#bff6ff" stop-opacity=".6"/><stop offset="1" stop-color="#5fd8ff" stop-opacity="0"/></radialGradient>
   <radialGradient id="mx-plate" cx=".5" cy=".35" r=".75"><stop offset="0" stop-color="#2a241b"/><stop offset=".7" stop-color="#15120d"/><stop offset="1" stop-color="#0b0a08"/></radialGradient>`;
 
-// The hextech gemstone: a faceted blue crystal with a pulsing glow.
+// The hextech gemstone: a tall six-sided crystal with pointed ends, its facets shaded from
+// ice-white to deep sapphire, a living white-blue light inside, held by four brass claws.
 function gem(s, cls = '') {
-  const p = [[0, -1], [0.62, -0.42], [0.62, 0.42], [0, 1], [-0.62, 0.42], [-0.62, -0.42]].map(([x, y]) => `${f(x * s)} ${f(y * s)}`);
+  const P = (x, y) => `${f(x * s)} ${f(y * s)}`;
+  const W = 0.5, T = 1.45, B = 0.82, R = 0.1; // half width, tip height, shoulder height, ridge offset
+  // Seen slightly turned: a left face, a broad front face and a narrow right face.
+  const faces = [
+    ['url(#mx-gemA)', [[-W, -B], [-0.18, -B - 0.06], [R - 0.05, T * -1], [-W, -B]]],
+    ['url(#mx-gemB)', [[-0.18, -B - 0.06], [0.3, -B + 0.02], [R - 0.05, -T]]],
+    ['url(#mx-gemC)', [[0.3, -B + 0.02], [W, -B], [R - 0.05, -T]]],
+    ['url(#mx-gemA)', [[-W, -B], [-0.18, -B - 0.06], [-0.18, B + 0.06], [-W, B]]],
+    ['url(#mx-gemB)', [[-0.18, -B - 0.06], [0.3, -B + 0.02], [0.3, B - 0.02], [-0.18, B + 0.06]]],
+    ['url(#mx-gemC)', [[0.3, -B + 0.02], [W, -B], [W, B], [0.3, B - 0.02]]],
+    ['url(#mx-gemC)', [[-W, B], [-0.18, B + 0.06], [R - 0.05, T]]],
+    ['url(#mx-gemD)', [[-0.18, B + 0.06], [0.3, B - 0.02], [R - 0.05, T]]],
+    ['url(#mx-gemA)', [[0.3, B - 0.02], [W, B], [R - 0.05, T]]],
+  ].map(([fill, pts]) => `<path d="M${pts.map(([x, y]) => P(x, y)).join(' L')} Z" fill="${fill}"/>`).join('');
+  const claw = (sx, sy) => `<path d="M${P(sx * 0.9, sy * 0.02)} Q${P(sx * 0.78, sy * 0.52)} ${P(sx * 0.44, sy * 0.74)} L${P(sx * 0.38, sy * 0.56)} Q${P(sx * 0.58, sy * 0.4)} ${P(sx * 0.62, sy * 0.02)} Z" fill="url(#mx-gold)" stroke="#2b1d0b" stroke-width="${f(s * 0.03)}"/>`;
   return `<g class="mx-gem ${cls}">
     <circle class="mx-halo" r="${f(s * 2.6)}" fill="url(#mx-glow)"/>
-    <path d="M${p.join(' L')} Z" fill="url(#mx-gem)" stroke="#dffbff" stroke-width="${f(s * 0.04)}"/>
-    <path d="M0 ${f(-s)} L${f(s * 0.62)} ${f(-s * 0.42)} L0 ${f(-s * 0.1)} L${f(-s * 0.62)} ${f(-s * 0.42)} Z" fill="#f2feff" opacity=".55"/>
-    <path d="M0 ${f(-s * 0.1)} L0 ${f(s)} M${f(-s * 0.62)} ${f(-s * 0.42)} L0 ${f(-s * 0.1)} L${f(s * 0.62)} ${f(-s * 0.42)}" stroke="#bff4ff" stroke-width="${f(s * 0.03)}" fill="none" opacity=".8"/>
-    <circle class="mx-spark" r="${f(s * 0.16)}" cx="${f(-s * 0.2)}" cy="${f(-s * 0.45)}" fill="#fff"/>
+    <g class="mx-crystal">
+      ${faces}
+      <ellipse class="mx-core" rx="${f(s * 0.26)}" ry="${f(s * 0.62)}" cx="${f(s * 0.04)}" fill="url(#mx-core)"/>
+      <path d="M${P(R - 0.05, -T)} L${P(-0.18, -B - 0.06)} L${P(-0.18, B + 0.06)} L${P(R - 0.05, T)} M${P(R - 0.05, -T)} L${P(0.3, -B + 0.02)} L${P(0.3, B - 0.02)} L${P(R - 0.05, T)}" fill="none" stroke="#e9fdff" stroke-opacity=".55" stroke-width="${f(s * 0.025)}"/>
+      <path d="M${P(R - 0.05, -T)} L${P(-W, -B)} L${P(-W, B)} L${P(R - 0.05, T)} L${P(W, B)} L${P(W, -B)} Z" fill="none" stroke="#bdf6ff" stroke-width="${f(s * 0.035)}"/>
+      <path class="mx-spark" d="M${P(-0.1, -1.05)} L${P(-0.02, -0.55)} L${P(-0.12, -0.5)} Z" fill="#fff" opacity=".85"/>
+    </g>
+    ${claw(-1, -1)}${claw(1, -1)}${claw(-1, 1)}${claw(1, 1)}
   </g>`;
 }
 
@@ -212,10 +235,10 @@ function mountEngine(host) {
     return { a, x: E.cx * Math.cos(rad(a)), y: E.cx * Math.sin(rad(a)), rot: g.querySelector('.mx-rot'), rod: g.querySelector('.mx-rod'), link: g.querySelector('.mx-link line'), charge: g.querySelector('.mx-charge') };
   });
   const g1 = svg.querySelector('.mx-g1'), g2 = svg.querySelector('.mx-g2');
-  const gemEl = svg.querySelector('.mx-gem'), halo = svg.querySelector('.mx-halo');
+  const gemEl = svg.querySelector('.mx-gem'), halo = svg.querySelector('.mx-halo'), core = svg.querySelector('.mx-core'), crystal = svg.querySelector('.mx-crystal');
   const arcs = svg.querySelector('.mx-arcs');
   let flare = 0;
-  host.addEventListener('pointerdown', () => { kick(260); flare = 1; navigator.vibrate?.(8); });
+  host.addEventListener('pointerdown', () => { kick(260); flare = 1; navigator.vibrate?.(8); onSpin?.(); });
   register(host, (th, t, v) => {
     const aR = th;
     rot(ringA, aR);
@@ -245,6 +268,9 @@ function mountEngine(host) {
       const pulse = 0.82 + 0.12 * Math.sin(t * 2.4) + Math.min(0.5, v / 900) + flare * 0.6;
       halo.setAttribute('transform', `scale(${f(pulse)})`);
       gemEl.setAttribute('transform', `scale(${f(1 + flare * 0.15)})`);
+      // the light inside breathes and shivers; the crystal floats a little in its claws
+      core?.setAttribute('opacity', f(Math.min(1, 0.55 + 0.25 * Math.sin(t * 3.1) + 0.12 * Math.sin(t * 11.7) + flare * 0.5 + Math.min(0.3, v / 800))));
+      crystal?.setAttribute('transform', `translate(0 ${f(Math.sin(t * 1.3) * 0.8)})`);
     }
     // Energy arcs flicker between the gem and the sun's inner rim, more when the engine runs fast.
     if (arcs && Math.random() < 0.18 + Math.min(0.6, v / 300) + flare) {
@@ -296,6 +322,10 @@ export function scan(root = document) {
     mountSimple(h, h.dataset.gear === 'button' ? '.mx-bgear' : '.mx-sg', Number(h.dataset.ratio) || (h.dataset.gear === 'button' ? -6 : 7));
   });
 }
+
+// Set by the app: what to play when the engine is tapped (keeps this file free of audio).
+let onSpin = null;
+export const onEngineTap = fn => { onSpin = fn; };
 
 // Scrolling winds the shaft; taps and saves kick it.
 let lastY = 0;

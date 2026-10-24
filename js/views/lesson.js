@@ -7,9 +7,10 @@ import { html, raw, mdDoc, toast, haptic, sheet, today, addDays, saveFile, mins,
 import { icon } from '../icons.js';
 import { openAssistant } from '../ai/assistant.js';
 import { dotColor, exportWeek } from './course.js';
-import { stepStrip, roman } from '../ui.js';
+import { stepStrip, roman, stopwatch } from '../ui.js';
 import { stepName } from './home.js';
 import { simHTML, mountSim } from '../sims.js';
+import * as sound from '../sound.js';
 
 let tick;
 let state = {}; // per-render UI state that isn't worth storing: revealed answers, marks
@@ -79,7 +80,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
     <aside class="lesson-side">
       <section class="card timer ${raw(t ? 'running' : '')}">
         <div class="card-head"><p class="label">timer</p><span class="small mono muted">${l.minutes} min planned</span></div>
-        <div class="focus-clock sm" data-clock>${t ? '' : '00:00'}</div>
+        ${raw(stopwatch(steps, l.minutes))}
         <div class="focus-sub" data-now>${t ? '' : st === 'done' ? 'completed' : 'not started'}</div>
         <div class="btn-row">${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}</div>
       </section>
@@ -157,10 +158,16 @@ function lessonView(root, go, l, { retake = false } = {}) {
   if (t) {
     const clock = root.querySelector('[data-clock]');
     const now = root.querySelector('[data-now]');
+    const hand = root.querySelector('[data-hand]'), fill = root.querySelector('[data-fill]');
     const update = () => {
       const sec = Math.floor((Date.now() - t.start) / 1000);
       clock.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       const m = sec / 60;
+      // the hand sweeps (its angle only grows, so the transition never spins backwards)
+      hand.style.transform = `rotate(${sec * 6}deg)`;
+      const C2 = 2 * Math.PI * 45;
+      fill.setAttribute('stroke-dasharray', `${Math.min(1, m / l.minutes) * C2} ${C2}`);
+      root.querySelectorAll('[data-seg]').forEach(g => g.classList.toggle('on', steps[g.dataset.seg] && m >= steps[g.dataset.seg].from && m < steps[g.dataset.seg].to));
       const cur = steps.find(s => m >= s.from && m < s.to);
       now.textContent = cur ? `${cur.title} · ${Math.ceil(cur.to - m)} min left in step` : `${l.minutes} min done · complete when ready`;
       if (Math.abs(sec - l.minutes * 60) < 1) notify(`${l.title}: ${l.minutes} minutes done.`);
@@ -390,6 +397,7 @@ async function complete(l, root, go, { retake, diag }) {
   const notes = root.querySelector('[data-notes]')?.value || p.notes || '';
   const r = await C.completeLesson({ lessonId: l.id, minutes, score, notes, hintsUsed: state.hintsUsed || 0, solutionsRevealed: state.solutions || 0 });
   haptic();
+  if (r.mastered) sound.done();
   toast(r.mastered ? `Done${score != null ? ` · ${Math.round(score * 100)}%` : ''}. ${mins(minutes)} logged.` : `Flagged at ${Math.round(score * 100)}%: cards come back tomorrow and it returns in the next buffer slot.`, 4500);
   go('study');
 }

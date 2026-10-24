@@ -3,6 +3,8 @@
 // and gives it a blueprint stage, a timeline and controls. Everything animates on a canvas
 // with easing between states, so scrubbing and stepping stay smooth.
 
+import * as sound from './sound.js';
+
 // ---------- Which simulator for which lesson ----------
 const RULES = [
   // [track regex, title regex, sim, mode]
@@ -319,7 +321,7 @@ function timeline(host, st, { frames, draw, speed = 1.4, autoplay = true, label 
   ]);
   const scrub = document.createElement('input');
   scrub.type = 'range'; scrub.className = 'sim-scrub'; scrub.min = 0; scrub.step = 0.001;
-  scrub.addEventListener('input', () => { playing = false; target = null; pos = Number(scrub.value); sync(); kick(); });
+  scrub.addEventListener('input', () => { playing = false; target = null; const was = Math.round(pos); pos = Number(scrub.value); if (Math.round(pos) !== was) sound.step(); sync(); kick(); });
   ui.play.el.parentElement.after(scrub);
   const sync = () => {
     scrub.max = Math.max(0, list.length - 1);

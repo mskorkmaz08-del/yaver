@@ -1017,40 +1017,31 @@ button:not(:disabled):not(.fab):active, a.res:active { transform: scale(.985); }
 @media (prefers-reduced-motion: reduce) { .chat, .chat-wrap.open .chat { transition: none !important; } #view > .later { opacity: 1; transform: none; } }
 
 /* ---------- The course as notes on paper ---------- */
-/* A lesson is a sheet of ruled notebook paper: blue rules, a red margin, punched holes, a strip of tape,
-   and the annotations written by hand in blue ink. */
+/* A lesson is a clean sheet of good paper: warm and plain, with soft light falling across it and
+   a grain you only notice up close. Annotations are written by hand in blue ink. */
 .lesson-main, .note-sheet, body[data-view="course"] #view {
-  --rule: rgba(64, 104, 158, .2);
   background:
-    linear-gradient(90deg, transparent var(--margin, 54px), rgba(196, 70, 70, .5) var(--margin, 54px), rgba(196, 70, 70, .5) calc(var(--margin, 54px) + 1.5px), transparent calc(var(--margin, 54px) + 1.5px), transparent calc(var(--margin, 54px) + 4px), rgba(196, 70, 70, .28) calc(var(--margin, 54px) + 4px), rgba(196, 70, 70, .28) calc(var(--margin, 54px) + 5px), transparent calc(var(--margin, 54px) + 5px)),
-    repeating-linear-gradient(180deg, transparent 0 29px, var(--rule) 29px 30px),
-    radial-gradient(120% 90% at 30% 10%, rgba(255,255,255,.5), rgba(255,255,255,0) 60%),
-    linear-gradient(180deg, rgba(120,95,50,.03), rgba(120,95,50,.08)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .25 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(130% 80% at 25% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
+    radial-gradient(140% 120% at 50% 50%, rgba(0,0,0,0) 60%, rgba(110,85,45,.1) 100%),
     var(--paper) !important;
-  background-position: 0 0, 0 52px, 0 0, 0 0, 0 0 !important;
   position: relative;
 }
-.lesson-main { padding-left: calc(var(--margin, 54px) + 20px); padding-top: 36px; }
-.lesson-main::before, .note-sheet::before, body[data-view="course"] #view::before {
-  content: ""; position: absolute; left: calc(var(--margin, 54px) / 2 - 8px); top: 30px; bottom: 30px; width: 16px; pointer-events: none;
-  background: radial-gradient(circle at 8px 8px, #0d0c0a 0 5.5px, rgba(0,0,0,.28) 6.5px, transparent 7.5px) 0 0 / 16px 150px repeat-y;
-}
-.lesson-main::after { content: ""; position: absolute; top: -10px; left: 50%; width: 104px; height: 26px; transform: translateX(-50%) rotate(-2.5deg); background: rgba(236, 226, 196, .72); box-shadow: 0 1px 3px rgba(0,0,0,.2); pointer-events: none; }
+.lesson-main { padding-top: 26px; }
 .lesson-main .label, .note-sheet .label { font: 600 21px/1 var(--hand); letter-spacing: 0; text-transform: none; color: #2c4a7a; }
 .lesson-main .step > .card-head .label { transform: rotate(-1.2deg); transform-origin: left center; }
 .lesson-main .label .i { color: #2c4a7a; }
-.lesson-main .step-title { display: inline-block; padding-bottom: 6px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='8' viewBox='0 0 60 8'%3E%3Cpath d='M0 5 Q 7.5 1 15 5 T 30 5 T 45 5 T 60 5' fill='none' stroke='%232c4a7a' stroke-opacity='.45' stroke-width='1.4'/%3E%3C/svg%3E") left bottom / 60px 8px repeat-x; }
 .lesson-main .step-strip em { font: 600 19px var(--hand); color: inherit; }
 .lesson-main .step-strip .cur em { color: #2c4a7a; }
 .lesson-main .md blockquote, .lesson-main .hint, .note-sheet .md blockquote { font: 600 20px/1.35 var(--hand); color: #a33a3a; border-left-color: rgba(163,58,58,.5); }
 .lesson-main .objectives li::marker { color: #2c4a7a; }
-@media (max-width: 699px) { .lesson-main, .note-sheet { --margin: 30px; } .lesson-main { padding-left: 42px; padding-right: 16px; } .lesson-main::before, .note-sheet::before, body[data-view="course"] #view::before { display: none; } }
+@media (max-width: 699px) { .lesson-main { padding-left: 18px; padding-right: 16px; } }
 
-/* The course overview is one big notebook page: everything on it is written in ink. */
+/* The course overview is one big sheet of paper: everything on it is written in ink. */
 body[data-view="course"] #view {
   --text: var(--ink); --muted: #4c5262; --dim: #7a7466; --line: rgba(29,36,51,.16); --line-2: rgba(29,36,51,.32);
   --surface: rgba(255,255,255,.32); --surface-2: rgba(29,36,51,.06); --track: rgba(29,36,51,.12); --accent: var(--teal); --accent-soft: rgba(63,182,201,.12);
-  --margin: 40px; color: var(--ink); padding-left: 56px; padding-right: 18px; padding-top: 26px; padding-bottom: 40px;
+  color: var(--ink); padding-left: 26px; padding-right: 18px; padding-top: 26px; padding-bottom: 40px;
   box-shadow: 0 0 0 1px rgba(201,173,116,.5), 0 18px 40px rgba(0,0,0,.5); margin-top: 10px; margin-bottom: 120px;
 }
 body[data-view="course"] #view .card, body[data-view="course"] #view .tile, body[data-view="course"] #view .stat-row, body[data-view="course"] #view .stat-row > div { background: rgba(255,255,255,.3) !important; border-color: rgba(29,36,51,.18) !important; }
@@ -1060,7 +1051,7 @@ body[data-view="course"] #view .page-head h1 { color: var(--ink); }
 body[data-view="course"] #view .path { color: #8a7346; }
 body[data-view="course"] #view .icon-btn { color: var(--ink); border-color: rgba(29,36,51,.35); }
 body[data-view="course"] #view .stat-row small { color: #4c5262; }
-@media (max-width: 699px) { body[data-view="course"] #view { --margin: 24px; padding-left: 36px; padding-right: 12px; } }
+@media (max-width: 699px) { body[data-view="course"] #view { padding-left: 16px; padding-right: 12px; } }
 
 /* ---------- The workshop: lesson simulators on a blueprint plate ---------- */
 .sim-card .card-head { align-items: center; }
@@ -1090,3 +1081,28 @@ body[data-view="course"] #view .stat-row small { color: #4c5262; }
 .sim-code { width: 100%; min-height: 160px; font: 13px/1.45 var(--code); color: #1d2433; background: rgba(255,255,255,.55); border: 1px solid rgba(29,36,51,.35); border-radius: 2px; padding: 10px; tab-size: 4; resize: vertical; }
 .sim-inputs { width: 100%; font: 13px var(--code); padding: 8px 10px; border: 1px solid rgba(29,36,51,.35); background: rgba(255,255,255,.45); color: var(--ink); border-radius: 2px; }
 .sim-code[hidden], .sim-inputs[hidden] { display: none; }
+/* The crystal's inner light breathes on the Yaver button too. */
+.mx-button .mx-core { animation: core-breathe 3.2s ease-in-out infinite; }
+@keyframes core-breathe { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mx-button .mx-core { animation: none; } }
+
+/* The lesson timer: a brass stopwatch. Steps are segments around the dial; elapsed time glows teal. */
+.timer .stopwatch { display: block; width: min(190px, 62%); margin: 4px auto 2px; overflow: visible; }
+.sw-crown { fill: url(#mx-gold); stroke: #2b1d0b; stroke-width: .5; }
+.sw-stem { fill: #8d6a2e; }
+.sw-bezel { fill: none; stroke: url(#mx-gold); stroke-width: 6; filter: drop-shadow(0 1.5px 2px rgba(0,0,0,.6)); }
+.sw-face { fill: #0e1114; stroke: #2b1d0b; stroke-width: .6; }
+.sw-track { fill: none; stroke: rgba(201,173,116,.12); stroke-width: 4; }
+.sw-seg { fill: none; stroke: rgba(201,173,116,.55); stroke-width: 4; transition: stroke .4s; }
+.sw-seg.on { stroke: #e7c27a; }
+.sw-fill { fill: none; stroke: #7fe6f7; stroke-width: 4; opacity: .85; filter: drop-shadow(0 0 2.5px rgba(127,230,247,.8)); transition: stroke-dasharray 1s linear; }
+.sw-t { stroke: rgba(216,226,230,.28); stroke-width: .6; }
+.sw-t5 { stroke: #c9ad74; stroke-width: 1.1; }
+.sw-time { font: 500 14px var(--serif, "Cormorant Garamond", serif); fill: #f3e7c8; letter-spacing: .04em; font-variant-numeric: lining-nums tabular-nums; }
+.sw-hand { transition: transform 1s linear; transform-origin: 0 0; }
+.sw-hand line { stroke: #e7c27a; stroke-width: 1.3; stroke-linecap: round; }
+.sw-tip { fill: #7fe6f7; filter: drop-shadow(0 0 2px #7fe6f7); }
+.sw-hub { fill: url(#mx-gold); stroke: #2b1d0b; stroke-width: .5; }
+.timer.running { border-color: rgba(127,230,247,.45); box-shadow: 0 0 0 1px rgba(127,230,247,.12), 0 0 28px rgba(63,182,201,.08); }
+.timer .focus-sub { font: italic 15px var(--sans); color: var(--muted); margin-bottom: 6px; }
+@media (prefers-reduced-motion: reduce) { .sw-hand, .sw-fill { transition: none; } }

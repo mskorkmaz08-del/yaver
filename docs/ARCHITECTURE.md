@@ -153,6 +153,7 @@ yaver/
 └── js/
     ├── app.js              Starts everything; switches screens; redraws on data change
     ├── mech.js             The moving gears: hextech engine, gear button, gear pairs, one shared drive shaft
+    ├── sound.js            Soft synthesized sounds (Web Audio), with an off switch in Settings
     ├── sims.js             The workshop: picks a simulator for each lesson and gives it canvas, controls, timeline
     ├── sims/               13 simulators: circuit, sort, search, graph, structures, vectors, calculus,
     │                       probability, data (tables), trace (Python), memory (C++), git, shell
@@ -223,13 +224,17 @@ The Study tab can run a full day-by-day course: Python, C++, algorithms, math, A
 
 New files: `js/course.js` (all course logic), `js/views/course.js` (overview, today card, block alerts), `js/views/lesson.js` (lesson runner, review, test, ship, prepare), `js/keys.js` (keyboard shortcuts). New database tables: `courseProgress`, `cards`, `courseLessons`, `courseTests`, and `tombstones`.
 
-## 9c. The look and the workshop (v25)
+## 9c. The look, sounds and the workshop (v25, v26)
 
 **Mechanisms.** The look borrows the mood of the Piltover workshops in the show *Arcane*: brass machines with a glowing blue gemstone at the core. Nothing is copied from the show; the machines are drawn by `js/mech.js` as SVG. The gears are real: tooth counts and starting angles are worked out so teeth interlock (a planetary train on Home: a ring with 60 inner teeth, 12-tooth planets, a 36-tooth sun). One "drive shaft" angle turns every gear on screen. It idles slowly; scrolling, tapping, saving and entering a screen add speed that winds down again. Offscreen gears stop to save battery.
 
 **The Yaver button** is a brass gear with a gemstone. Tapping it spins the gears and the chat irises open from the button. On the phone you close the chat by swiping it down; it follows your finger and closes past a third of the way or on a quick flick.
 
-**Notebook course.** The course screen and every lesson are drawn as a ruled notebook page: blue lines, a red margin, punched holes, a strip of tape, and labels in handwriting (Caveat).
+**Paper course.** The course screen and every lesson sit on a clean sheet of paper (no lines or marks, just soft light and a faint grain), with labels in handwriting (Caveat). The lesson timer is a brass stopwatch: the lesson's steps are segments around the dial, elapsed time glows teal, and a hand sweeps the seconds.
+
+**Sounds (v26).** `js/sound.js` makes every sound on the fly with Web Audio, so there are no audio files: a soft click on buttons, a latch when a screen opens, a ratchet and hum when you tap the engine, a breath and rising tone when the chat opens, a little chime when something is saved, three notes when a lesson is finished. They are quiet and low-pitched, vary slightly each time, and get softer when they come quickly, so they don't wear on you. On the iPhone they use the ambient audio session: the silent switch mutes them and music keeps playing. Settings → Sounds turns them off.
+
+**The crystal.** The gem at the heart of the engine and the Yaver button is a tall six-sided crystal with pointed ends, shaded from ice-white to deep sapphire, with a light inside that breathes, held in four brass claws.
 
 **A workshop in every lesson.** `js/sims.js` reads each lesson's track and title and chooses one of 13 simulators and a setting (for example a robotics lesson on transistors gets the circuit bench with a motor and flyback diode; a lesson on Dijkstra gets the graph explorer). Python lessons with an example get the code tracer, which runs the example on the phone with Pyodide (Python compiled to WebAssembly, downloaded on the first tap) and steps through it line by line with the variables and output. Simulators are loaded only when a lesson opens, draw on a canvas, and pause when scrolled offscreen. Most have a timeline: play, step back and forward, scrub, and change speed; the in-between moments are eased so movement stays smooth.
 
