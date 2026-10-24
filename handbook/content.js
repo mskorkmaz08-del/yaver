@@ -5,18 +5,17 @@
 // the repo has no entry in FILES, so the handbook can't silently fall behind.
 
 export const FILES = {
-  'index.html': 'App shell: the empty screen area, the tab bar and the Yaver button (a knurled watch crown). Loads js/app.js.',
+  'index.html': 'App shell: the empty screen area, the tab bar and the Yaver knob (a knurled steel knob with an amber lume centre). Loads js/app.js.',
   'manifest.webmanifest': 'Makes the site installable: name, icons, colours, full-screen portrait.',
   'sw.js': 'Service worker: caches every app file on first launch, then network-first with a 3 s timeout and cache fallback. VERSION names the cache.',
-  'css/app.css': 'All app styling. Hextech look (v25, refined in v26, inspired by the mood of Piltover workshops in the show Arcane): warm graphite and brass, Cormorant Garamond text with Cinzel small capitals, one teal gemstone glow, the gear Yaver button, a hextech engine of real meshing gears on Home, small gear pairs under each screen title, the course and lessons on clean plain paper (soft light and a faint grain, Caveat handwriting for labels), the lesson timer as a brass stopwatch, the workshop simulator frame and its brass controls, the chat that irises open from the gear and follows your finger when swiped down, and mechanical motion (screens rise with a latch overshoot, cards below the fold rise as they scroll in; all off under Reduce Motion). Also cards, sheets, chat, course screens, laptop layout.',
-  'js/app.js': 'Entry point: opens the database, sorts AI keys, starts the assistant, routes between screens, redraws on data change (keeping running engines in place), adds the gear pairs under screen titles, turns the mechanisms when you enter a screen or data changes, reveals cards as they scroll in, fills the laptop sidebar gauge, first-run sheet.',
+  'css/app.css': 'All app styling. Chronograph look (v28, built from scratch): a machined instrument panel of graphite plates with a fine brushed grain, hairline steel lines, amber lume for what matters now (met minimums, the running timer, primary buttons) and steel for progress still underway. Archivo, a variable-width grotesque, set expanded for the wordmark and labels and condensed for headings; IBM Plex Mono for every number. Home is an instrument panel: the Çetele dial, the next-lesson plate, four arc gauges and the Ask bar. Also the floating tab bar with the Yaver knob, the laptop sidebar with key numbers, lessons on a dark reading plate, the chronograph lesson stopwatch, simulator frames and controls, the chat that irises open from the knob, focus mode and quick precise motion (screens rise in, gauges and bars draw themselves; all off under Reduce Motion).',
+  'js/app.js': 'Entry point: opens the database, sorts AI keys, starts the assistant, routes between screens, redraws on data change, plays the screen and save sounds, reveals cards as they scroll in, fills the laptop sidebar (key numbers, study subdial, Çetele marks), first-run sheet.',
   'js/db.js': 'IndexedDB wrapper. Loads every store into memory at start; writes go to memory and disk together, stamped with updatedAt and deviceId; deletes leave tombstones for sync.',
   'js/cetele.js': 'Çetele logic: default items, daily and weekly progress, streak (a day counts when every daily minimum is met), item matching for the AI tools.',
   'js/data.js': 'Business logic for money, meetings, study, roadmap, diet and tasks (plus the çetele summary in the overview). Screens and AI tools both call these functions, so numbers always match.',
   'js/util.js': 'Dates, money formatting, HTML escaping, bottom-sheet forms, toasts, haptics, photo shrinking, Markdown.',
-  'js/ui.js': 'Small SVG drawing helpers: progress rings, bar lists, columns, empty states, roman numerals, the lesson step strip, the enamel study subdial and the brass lesson stopwatch (steps as segments round the dial, elapsed time in teal, a sweeping hand).',
-  'js/sound.js': 'Sounds and music. Interface sounds are short recorded mechanical clicks, detents and relays (CC0, sounds/), played quietly through a soft low-pass at a slightly different pitch each time and softer when they come quickly: a click for buttons, a latch on entering a screen, a ratchet when the engine is tapped, a switch for toggles, a check on saving, a chime when a lesson is mastered, a bell when focus time is up. Background music: a slow D-minor piece looped with a 4-second crossfade on its own gain, lowered while the chat or focus mode is open, stopped during voice chat and while the app is hidden. Ambient audio session on iPhone, so the silent switch mutes it and other music keeps playing. Separate switches in Settings.',
-  'js/mech.js': 'Mechanisms: draws real meshing gears as SVG (correct tooth counts and phase so teeth interlock), the hextech engine (planetary gear train, pistons on crank-sliders, gimbal rings, energy arcs and a hextech crystal: a tall faceted blue gem in brass claws with a breathing light inside), the gear Yaver button and small gear pairs. One drive shaft angle turns them all: it idles slowly, scrolling, taps and saves add speed, and it pauses offscreen.',
+  'js/ui.js': 'Small SVG drawing helpers: progress rings, bar lists, columns, empty states, roman numerals, the lesson step rail, the Çetele dial (a segment per minimum, minute ticks, a sweeping second hand), small arc gauges, the study subdial and the chronograph lesson stopwatch (steps as segments round the dial, elapsed time in amber lume, a sweeping hand).',
+  'js/sound.js': 'Sounds and music. Interface sounds are small mechanisms made for Yaver by modal synthesis (sounds/): a detent clicking for buttons, a rotary selector turning on entering a screen, a toggle lever for switches, a stamp on saving, a latch opening and closing the chat, a counter wheel and small clock bell when a lesson is mastered, two bell strikes when focus time is up. Played at a slightly different pitch each time and softer when they come quickly. Background music: a slow D-minor piece for violin, cello, double bass and harp, rendered to loop seamlessly and joined with a short crossfade on its own gain, lowered while the chat or focus mode is open, stopped during voice chat and while the app is hidden. Ambient audio session on iPhone, so the silent switch mutes it and other music keeps playing. Separate switches in Settings.',
   'js/sims.js': 'The workshop: picks a simulator and setting for each lesson from its track and title (every lesson gets one), loads it on demand, and gives it a kit: a blueprint canvas at the screen\'s pixel ratio, brass controls, an animation loop that pauses offscreen, and a timeline with play, step and a scrubber that eases between precomputed states.',
   'js/focus.js': 'Focus mode: a full-screen study screen. From a Study block the screen goes dark with only the subject; from a lesson only the lesson paper stays. A small stopwatch chip shows the time (tap it to fade it to a faint dot), the tab bar and Yaver button hide, the screen stays awake (Wake Lock), the laptop goes full screen, the music steps back, and a soft bell rings when the planned time is up. Esc or × leaves; changing screens leaves too.',
   'js/sims/circuit.js': 'Circuit bench: Ohm\'s law, series, parallel, divider, LED (burns out over its current), RC charging, transistor switching a motor with a flyback diode, power ratings, and an Arduino board running blink, button or potentiometer code. Charge dots flow at the current\'s speed past brass meters.',
@@ -38,7 +37,7 @@ export const FILES = {
   'js/reminders.js': 'Plain, computed reminders for Home and the AI: study left today, streak risk, pace, next topic, meetings soon, overdue tasks, budget pace.',
   'js/places.js': 'OpenStreetMap search (Nominatim) and nearby places (Overpass), distances, Apple Maps directions links.',
   'js/course.js': 'Course engine: loads course data, calendar maths (weeks, slots), lesson progress, pace, teaching deadlines, spaced-repetition cards, mixed practice, weekly tests.',
-  'js/keys.js': 'Keyboard shortcuts for laptop use (g t, g c, /, ?), plus the shortcuts sheet.',
+  'js/keys.js': 'Keyboard shortcuts for laptop use (1 … 7 and , for the sections, g t, g c, /, ?), plus the shortcuts sheet.',
   'js/sync.js': 'Laptop ⇄ iPhone sync through one secret GitHub Gist: pull, merge record by record (newest updatedAt wins), push. Encrypted before upload.',
   'js/crypto.js': 'AES-GCM 256 encryption with a PBKDF2-SHA-256 key from the sync passphrase; gzip before encrypting; fresh IV per upload.',
   'js/ai/assistant.js': 'Chat sheet: on the phone it irises open from the gear button and closes with a swipe down (it follows your finger). Messages, photos, voice in/out and hands-free voice chat (listen → answer read aloud → listen again). Picks the route per message (Mac first when reachable, else Gemini or Claude) and keeps one history per route.',
@@ -49,7 +48,7 @@ export const FILES = {
   'js/ai/voice.js': 'Reply voice. Default: the iPhone\'s own voice (instant, offline), preferring a British male Premium/Enhanced voice for the Jarvis feel. Optional: Gemini text-to-speech (free tier, same key), voiced sentence by sentence while the reply streams, with leading silence and the static burst after the last word cut out; picks a TTS model the key can use, plays the 24 kHz PCM through Web Audio (optional Jarvis style: British delivery prompt plus a light filter and short echo), and falls back to the iPhone voice for 10 minutes when it fails.',
   'js/ai/mac.js': 'Client for the bridge on the Mac: on the laptop it finds a bridge running on the same Mac at 127.0.0.1 and takes its address and token by itself (nothing to paste); on the phone the connection code, health check (cached 30 s), finding the new link after a restart via ntfy, and an agent loop where the Mac thinks and the phone runs the tools.',
   'js/ai/provider.js': 'Chooses Gemini or Claude, sorts keys into the right slot by prefix, saves and tests keys.',
-  'js/views/home.js': 'Home: YAVER line with the date, the next course block as a printed lecture card with its steps, the hextech engine (tap it to spin it up) with Çetele and study readouts, cards due / next meeting / spent today, AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
+  'js/views/home.js': 'Home: the YAVER line with date and a ticking clock, the Çetele dial (one segment per minimum, a sweeping second hand) beside the list of minimums, the next course block with its steps and Begin / Focus, four arc gauges (study this week, cards due, next meeting, spent today), AI setup card, Ask bar with Brief me, reminders, quick log keys, month and diet tiles, next meetings, to-dos, water.',
   'js/views/study.js': 'Study: streak and week stats, roadmap plan, practice counters, focus timer, heatmap, subjects, sessions; the course Today card.',
   'js/views/course.js': 'Course overview: phases, tracks, progress per lane, deadlines, tests, settings.',
   'js/views/lesson.js': 'Lesson runner: step-by-step lesson on one notebook page with a roman-numeral step strip that jumps to each step, the lesson\'s workshop simulator (kept running across redraws), a stopwatch timer, hints, solutions, tutor, review cards and grading. Recall shows only questions from finished lessons; every question has "don\'t know yet"; optional LeetCode problems with solved/stuck and a tutor walk-through.',
@@ -95,9 +94,10 @@ export const FILES = {
 export const FOLDERS = {
   'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps (recall questions name the earlier lesson that taught them), questions, review cards and optional LeetCode problems.',
   'vendor/': 'Third-party code shipped with the app: the Anthropic SDK bundled with esbuild, and Leaflet for the map.',
-  'icons/': 'Home Screen and app icons: the brass Yaver gear with its teal gemstone (v25).',
-  'sounds/': 'Audio: the interface sounds (recorded mechanical switches and detents from the uisfx pack, CC0) and hextech-ambience.mp3, the 128-second background loop made for Yaver. CREDITS.md lists the sources.',
-  'fonts/': 'Self-hosted fonts (Cormorant Garamond, Cinzel, and Caveat for the notebook handwriting; SIL Open Font License), cached by the service worker so they work offline.',
+  'icons/': 'Home Screen and app icons: the Yaver knob, knurled steel with an amber lume centre over chronograph ticks (v28).',
+  'sounds/': 'Audio: thirteen interface sounds made for Yaver by modal synthesis (tools/mech_sfx.py) and strings.mp3, the 2-minute violin, cello, double bass and harp loop (tools/strings.py, from the MIT-licensed tonejs-instruments samples). CREDITS.md lists the sources.',
+  'fonts/': 'Self-hosted fonts (SIL Open Font License, licence texts included): Archivo variable (weight and width axes) and IBM Plex Mono 400/500/600, Latin and Latin Extended so Turkish and ₸ render, cached by the service worker so they work offline.',
+  'tools/': 'Generators for the audio in sounds/: mech_sfx.py (the interface sounds) and strings.py (the music). Run on a computer, not part of the app.',
 };
 
 // Layers of the 3D system map, bottom to top. `mods` are file paths.
@@ -113,7 +113,7 @@ export const LAYERS = [
     mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/live.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
   { id: 'ui', name: 'Screens', tag: 'views · router', color: '#ffb547',
     text: 'One file per screen, each with a render function that draws from memory. app.js routes between them and redraws the current one whenever data changes.',
-    mods: ['js/app.js', 'js/mech.js', 'js/sims.js', 'js/views/home.js', 'js/views/cetele.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
+    mods: ['js/app.js', 'js/sims.js', 'js/views/home.js', 'js/views/cetele.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
 ];
 
 // Services outside the device, placed around the 3D map.
@@ -194,12 +194,12 @@ export const STACK = [
   ['Storage', 'IndexedDB, fully mirrored in memory'],
   ['Offline', 'Service worker, network-first with cache fallback'],
   ['AI', 'Gemini REST, Anthropic SDK (bundled with esbuild), Claude Code via the Mac bridge'],
-  ['Look', 'Hextech (v25): CSS tokens in css/app.css, live SVG gear mechanisms in js/mech.js, notebook-paper course, self-hosted fonts in fonts/ (Cormorant Garamond, Cinzel, Caveat)'],
+  ['Look', 'Chronograph (v28): CSS tokens in css/app.css, SVG dials and gauges drawn in js/ui.js, self-hosted fonts in fonts/ (Archivo variable, IBM Plex Mono)'],
   ['Simulators', '13 canvas simulators in js/sims/, loaded per lesson; Pyodide 0.27 for the Python tracer'],
   ['Map', 'Leaflet 1.9.4 + OpenStreetMap, Nominatim, Overpass'],
   ['Sync', 'GitHub Gist, AES-GCM 256 + PBKDF2-SHA-256 (WebCrypto)'],
   ['Remote access to Mac', 'Cloudflare quick tunnel (cloudflared), link rediscovered via ntfy.sh'],
-  ['Sound', 'Recorded mechanical UI sounds (uisfx, CC0) and a 128 s background loop rendered with an OfflineAudioContext, all played through Web Audio'],
+  ['Sound', 'Interface sounds by modal synthesis (resonator banks tuned like spring steel, brass and bakelite; Python + SciPy) and a strings loop rendered from recorded violin, cello, bass and harp samples, all played through Web Audio'],
   ['Tests', 'Playwright on Chromium (iPhone 13 and 1440×900), mocked network'],
 ];
 
@@ -230,7 +230,7 @@ export const RECIPES = [
   ['Add a screen', 'Create js/views/name.js with render(root, go), register it in VIEWS in js/app.js, add it to FILES in sw.js, and describe it in handbook/content.js.'],
   ['Change Yaver\'s tone', 'Edit STATIC_SYSTEM in js/ai/claude.js (Gemini and the Mac use the same prompt).'],
   ['Add a simulator', 'Create js/sims/name.js exporting default (host, { mode, code, lesson, kit }); use kit.stage, kit.controls and kit.timeline. Add rules to RULES in js/sims.js, a name to SIM_NAMES, the file to FILES in sw.js, and a line here.'],
-  ['Add a sound', 'Put a short mp3 in sounds/, add it to FILES and LEVEL in js/sound.js and to the precache list in sw.js, credit it in sounds/CREDITS.md.'],
+  ['Add a sound', 'Describe it as a few impacts in tools/mech_sfx.py (a new @sound), render it and encode sounds/<name>.mp3, add <name> to LEVEL and an export in js/sound.js and to the precache list in sw.js, and mention it in sounds/CREDITS.md.'],
   ['Publish a change', 'Bump VERSION in sw.js, update the handbook, run the tests, push to main. GitHub Pages deploys in about a minute.'],
 ];
 

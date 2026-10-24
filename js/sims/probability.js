@@ -14,7 +14,7 @@ export default function probability(host, { mode, kit }) {
   function drawHist(ctx, H, box, { color = C.brass, expect, curve, shade } = {}) {
     const max = Math.max(1, ...H.c, ...(expect ? expect.map(e => e * H.total) : []));
     const bw = (box.r - box.l) / H.n;
-    if (shade) { ctx.fillStyle = 'rgba(127,230,247,.08)'; ctx.fillRect(box.l + ((shade[0] - H.lo) / (H.hi - H.lo)) * (box.r - box.l), box.t, ((shade[1] - shade[0]) / (H.hi - H.lo)) * (box.r - box.l), box.b - box.t); }
+    if (shade) { ctx.fillStyle = 'rgba(127,178,217,.08)'; ctx.fillRect(box.l + ((shade[0] - H.lo) / (H.hi - H.lo)) * (box.r - box.l), box.t, ((shade[1] - shade[0]) / (H.hi - H.lo)) * (box.r - box.l), box.b - box.t); }
     H.c.forEach((c, i) => {
       const h = H.shown ? H.shown[i] : c;
       const y = box.b - (h / max) * (box.b - box.t);
@@ -130,7 +130,7 @@ export default function probability(host, { mode, kit }) {
   function die(ctx, x, y, size, f, spin) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(spin * 6);
     const g = ctx.createLinearGradient(-size / 2, -size / 2, size / 2, size / 2);
-    g.addColorStop(0, '#f6eedb'); g.addColorStop(1, '#d6c7a5');
+    g.addColorStop(0, '#eef1f4'); g.addColorStop(1, '#c4ccd4');
     ctx.fillStyle = g; roundRect(ctx, -size / 2, -size / 2, size, size, size * 0.18); ctx.fill();
     ctx.strokeStyle = C.brass; ctx.lineWidth = 2; ctx.stroke();
     const P = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] }[spin > 0.15 ? 1 + Math.floor(Math.random() * 6) : f];
@@ -154,8 +154,8 @@ export default function probability(host, { mode, kit }) {
       if (kind === 'clt') {
         const P = POPS[s.pop];
         text(ctx, 'population', 14, 22, { size: 13, color: C.dim, italic: true });
-        drawHist(ctx, s.P, u, { color: 'rgba(217,181,108,.55)' });
-        s.picks.forEach(p => { const x = u.l + ((p.x - P.lo) / (P.hi - P.lo)) * (u.r - u.l); ctx.fillStyle = `rgba(231,176,75,${p.life})`; ctx.beginPath(); ctx.arc(x, u.b - 6 - (1 - p.life) * 30, 5, 0, Math.PI * 2); ctx.fill(); });
+        drawHist(ctx, s.P, u, { color: 'rgba(255,181,71,.55)' });
+        s.picks.forEach(p => { const x = u.l + ((p.x - P.lo) / (P.hi - P.lo)) * (u.r - u.l); ctx.fillStyle = `rgba(255,181,71,${p.life})`; ctx.beginPath(); ctx.arc(x, u.b - 6 - (1 - p.life) * 30, 5, 0, Math.PI * 2); ctx.fill(); });
         text(ctx, `means of ${s.n} draws: ${s.M.total}`, 14, lb.t - 10, { size: 13, color: C.ink, mono: true });
         const sd = P.sd / Math.sqrt(s.n);
         drawHist(ctx, s.M, lb, { color: C.teal, curve: s.M.total > 30 ? normal(P.mean, sd) : null });
@@ -167,7 +167,7 @@ export default function probability(host, { mode, kit }) {
           const row = Math.floor(i / 6), col = i % 6, top = u.t + 4 + row * 40;
           const hits = s.picks.filter(p => p.i === i);
           const lit = hits.length ? hits[0].life : 0;
-          ctx.fillStyle = lit ? `rgba(231,176,75,${0.25 + 0.6 * lit})` : 'rgba(217,181,108,.12)';
+          ctx.fillStyle = lit ? `rgba(255,181,71,${0.25 + 0.6 * lit})` : 'rgba(255,181,71,.12)';
           roundRect(ctx, u.l + col * cw + 3, top, cw - 6, 30, 4); ctx.fill();
           ctx.strokeStyle = C.brass; ctx.lineWidth = 1; ctx.stroke();
           text(ctx, String(v), u.l + (col + 0.5) * cw, top + 20, { size: 12, color: C.ink, align: 'center', mono: true });
@@ -191,7 +191,7 @@ export default function probability(host, { mode, kit }) {
         if (shown && pos) sick ? tp++ : fp++;
         const x = ox + (p.i % n) * side + side / 2, y = top + Math.floor(p.i / n) * side + side / 2;
         ctx.beginPath(); ctx.arc(x, y, side * 0.34, 0, Math.PI * 2);
-        ctx.fillStyle = sick ? C.red : 'rgba(216,246,251,.22)'; ctx.fill();
+        ctx.fillStyle = sick ? C.red : 'rgba(233,237,241,.22)'; ctx.fill();
         if (shown && pos) { ctx.strokeStyle = C.glow; ctx.lineWidth = 2; ctx.shadowColor = C.glow; ctx.shadowBlur = 6; ctx.stroke(); ctx.shadowBlur = 0; }
       });
       text(ctx, '● sick   ○ ringed = tested positive', 14, 22, { size: 12, color: C.dim, mono: true });

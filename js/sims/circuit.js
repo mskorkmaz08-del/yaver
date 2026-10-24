@@ -157,7 +157,7 @@ export default function circuit(host, { mode, kit }) {
       s.angle += r.I * 3000 * dt;
       ctx.save(); ctx.translate(mx, my); ctx.rotate(s.angle);
       ctx.strokeStyle = C.brass; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.stroke();
-      for (let i = 0; i < 3; i++) { ctx.rotate((Math.PI * 2) / 3); ctx.beginPath(); ctx.ellipse(0, -9, 4, 9, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(217,181,108,.6)'; ctx.fill(); }
+      for (let i = 0; i < 3; i++) { ctx.rotate((Math.PI * 2) / 3); ctx.beginPath(); ctx.ellipse(0, -9, 4, 9, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,181,71,.6)'; ctx.fill(); }
       ctx.restore();
       text(ctx, 'M', mx + 24, my + 5, { size: 14, color: C.brassHi });
       // the transistor symbol on the bottom wire
@@ -220,7 +220,7 @@ export default function circuit(host, { mode, kit }) {
     const cx = Math.min(w - 10, lx + 70), cy = by + 4;
     code.forEach((ln, i) => {
       if (cx > w - 60) return;
-      if (i === line) { ctx.fillStyle = 'rgba(127,230,247,.14)'; ctx.fillRect(cx - 6, cy + i * 19 - 13, w - cx - 4, 18); }
+      if (i === line) { ctx.fillStyle = 'rgba(127,178,217,.14)'; ctx.fillRect(cx - 6, cy + i * 19 - 13, w - cx - 4, 18); }
       text(ctx, ln, cx, cy + i * 19, { size: 11.5, color: i === line ? C.glow : C.dim, mono: true });
     });
     if (cx > w - 60) code.forEach((ln, i) => { if (i === line) text(ctx, ln.trim(), w - 12, h - 14, { size: 11.5, color: C.glow, align: 'right', mono: true }); });

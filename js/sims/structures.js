@@ -24,7 +24,7 @@ export default function structures(host, { mode, kit }) {
   const box = (ctx, b, w = 46, h = 30) => {
     ctx.globalAlpha = clamp(b.a, 0, 1);
     roundRect(ctx, b.x - w / 2, b.y - h / 2, w, h, 4);
-    ctx.fillStyle = b.hi > 0 ? `rgba(231,176,75,${0.25 + b.hi * 0.4})` : 'rgba(217,181,108,.16)'; ctx.fill();
+    ctx.fillStyle = b.hi > 0 ? `rgba(255,181,71,${0.25 + b.hi * 0.4})` : 'rgba(255,181,71,.16)'; ctx.fill();
     ctx.strokeStyle = b.hi > 0 ? C.amber : C.brass; ctx.lineWidth = 1.5; ctx.stroke();
     text(ctx, b.label, b.x, b.y + 5, { size: 14, color: C.ink, align: 'center', mono: true });
     ctx.globalAlpha = 1;
@@ -163,7 +163,7 @@ export default function structures(host, { mode, kit }) {
         const y = h - 34 - i * 36 - (1 - a) * 18;
         ctx.globalAlpha = a;
         roundRect(ctx, 20, y - 15, w - 40, 30, 4);
-        ctx.fillStyle = i === rows - 1 ? 'rgba(63,182,201,.22)' : 'rgba(217,181,108,.12)'; ctx.fill();
+        ctx.fillStyle = i === rows - 1 ? 'rgba(127,178,217,.22)' : 'rgba(255,181,71,.12)'; ctx.fill();
         ctx.strokeStyle = i === rows - 1 ? C.glow : C.brass; ctx.lineWidth = 1.4; ctx.stroke();
         text(ctx, f.call, 32, y + 5, { size: 13.5, color: C.ink, mono: true });
         text(ctx, f.local, w - 32, y + 5, { size: 12.5, color: C.amber, align: 'right', mono: true });

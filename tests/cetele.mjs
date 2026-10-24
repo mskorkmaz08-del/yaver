@@ -47,8 +47,10 @@ ok('weekly fasting counts', streak.fast === 1);
 await page.evaluate(async () => { const CT = await import('./js/cetele.js'); await CT.setValue('quran', 1); });
 await page.goto('http://localhost:8765/#home'); await page.waitForTimeout(400);
 const home = await page.textContent('#view');
-ok('home çetele card', /çetele/.test(home) && /6\/6 today|5\/6 today/.test(home));
-ok('reminder names the open item', /Çetele: Kur'an 4 pages left/.test(home));
+const dial = await page.getAttribute('.cetdial', 'aria-label');
+ok('home çetele dial and list', /Çetele/.test(home) && /[56] of 6/.test(dial) && /Kur'an1\/5/.test(home));
+const rem = await page.evaluate(async () => (await import('./js/reminders.js')).reminders().map(r => r.text).join(' | '));
+ok('reminder names the open item', /Çetele: Kur'an 4 pages left/.test(rem));
 await page.screenshot({ path: 'shots/cetele-home.png' });
 // AI logs Quran pages
 await page.click('#fab');

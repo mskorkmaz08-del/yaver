@@ -4,7 +4,7 @@ import { html, raw } from './util.js';
 import { openAssistant } from './ai/assistant.js';
 
 const LIST = [
-  ['Anywhere', [['g then t', 'Today (Study)'], ['g then c', 'Course'], ['/', 'Ask Yaver'], ['?', 'This list']]],
+  ['Anywhere', [['1 … 7', 'Home, Çetele, Study, Meet, Money, Diet, Map'], [',', 'Settings'], ['g then t', 'Today (Study)'], ['g then c', 'Course'], ['/', 'Ask Yaver'], ['?', 'This list']]],
   ['Lesson', [['s', 'Start or pause the timer'], ['n', 'Finish this step, go to the next'], ['h', 'Next hint'], ['t', 'Tutor me'], ['Esc', 'Back']]],
   ['Review cards', [['Space', 'Show answer'], ['1', 'Again'], ['2', 'Hard'], ['3', 'Good'], ['4', 'Easy']]],
 ];
@@ -20,6 +20,9 @@ export function initShortcuts(go) {
     if (e.key === '?') { e.preventDefault(); showKeys(); return; }
     if (e.key === '/') { e.preventDefault(); openAssistant(); return; }
     if (e.key === 'g') { pendingG = Date.now(); return; }
+    // Number keys open the sections in sidebar order; screens with their own number keys (review cards) take them first.
+    const tab = { 1: 'home', 2: 'cetele', 3: 'study', 4: 'calendar', 5: 'money', 6: 'diet', 7: 'map', ',': 'settings' }[e.key];
+    if (tab && !(e.key >= '1' && e.key <= '4' && document.body.dataset.view === 'lesson')) { e.preventDefault(); go(tab); return; }
     if (Date.now() - pendingG < 1200) {
       if (e.key === 't') { e.preventDefault(); e.stopImmediatePropagation(); go('study'); }
       else if (e.key === 'c') { e.preventDefault(); e.stopImmediatePropagation(); go('course'); }

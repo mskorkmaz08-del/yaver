@@ -40,10 +40,10 @@ export function columns(items, { color = 'var(--accent)', fmt = v => v } = {}) {
 
 export const empty = (text, hint = '') => html`<div class="empty"><p>${text}</p>${raw(hint ? html`<p class="small" style="margin-top:6px">try <code>${hint}</code></p>` : '')}</div>`;
 
-// Roman numerals for step and section counters (the Clockwork look numbers things this way).
+// Roman numerals for step counters.
 export const roman = n => ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'][n] || String(n);
 
-// A lesson's steps as a row of thin bars with roman numerals: teal when done, brighter for the current one.
+// A lesson's steps as a rail of index marks with roman numerals: amber when done, lit for the current one.
 // With jump, each step is a button carrying data-jump="<step number>".
 export function stepStrip(steps, done, { current = -1, jump = false, names = false } = {}) {
   const tag = jump ? 'button' : 'span';
@@ -51,7 +51,7 @@ export function stepStrip(steps, done, { current = -1, jump = false, names = fal
     <${raw(tag)} class="${raw(done.has(i) ? 'on' : '')} ${raw(i === current ? 'cur' : '')}" ${raw(jump ? `data-jump="${i + 1}"` : '')}><i></i><span>${roman(i + 1)}${raw(names ? html`<em> · ${s}</em>` : '')}</span></${raw(tag)}>`).join('')}</nav>`;
 }
 
-// A small enamel subdial with a blued hand: value out of max over a 270° sweep.
+// A small chronograph subdial: value out of max over a 270° sweep, amber hand.
 export function subdial(value, max, { size = 112, label = '' } = {}) {
   const c = 50, sweep = 270, start = -135;
   const top = Math.max(1, Math.ceil(max));
@@ -74,8 +74,8 @@ export function subdial(value, max, { size = 112, label = '' } = {}) {
   </svg>`;
 }
 
-// A brass stopwatch for the lesson timer. The lesson's steps sit around the dial as brass
-// segments; elapsed time fills them with teal light; the hand sweeps the seconds.
+// The lesson timer as a chronograph: the lesson's steps sit around the dial as segments,
+// elapsed time fills them with amber lume, and the hand sweeps the seconds.
 export function stopwatch(steps, planned) {
   const R = 45, C2 = 2 * Math.PI * R;
   const arc = (from, to) => { const a = (from / planned) * 360, b = (to / planned) * 360; return { off: f2(C2 * (1 - a / 360) + C2 * 0.25), len: f2(Math.max(0, (b - a - 2.2) / 360) * C2) }; };
@@ -93,3 +93,32 @@ export function stopwatch(steps, planned) {
   </svg>`;
 }
 const f2 = v => Math.round(v * 100) / 100;
+
+// Çetele as a chronograph dial: one segment per minimum around the bezel (amber when met,
+// steel while in progress), sixty minute ticks, the count in the middle, and a second hand
+// that sweeps once a minute.
+export function cetDial(rows, { done = rows.filter(r => r.met).length, label = 'minimums' } = {}) {
+  const n = Math.max(1, rows.length), r = 54, C = 2 * Math.PI * r, gap = n > 1 ? 5 : 0, seg = C / n;
+  const segs = rows.map((row, i) => {
+    const f = row.met ? 1 : Math.max(0, Math.min(1, row.target ? row.progress / row.target : 0));
+    const rot = -90 + (i * 360) / n + (gap / C) * 180;
+    return `<circle class="cd-track" r="${r}" stroke-dasharray="${f2(seg - gap)} ${f2(C)}" transform="rotate(${f2(rot)})"/>`
+      + (f ? `<circle class="cd-seg ${row.met ? 'met' : ''}" r="${r}" stroke-dasharray="${f2((seg - gap) * f)} ${f2(C)}" transform="rotate(${f2(rot)})"/>` : '');
+  }).join('');
+  let ticks = '';
+  for (let k = 0; k < 60; k++) ticks += `<line class="${k % 5 ? 'cd-t' : 'cd-t5'}" y1="-44" y2="${k % 5 ? -41 : -38}" transform="rotate(${k * 6})"/>`;
+  const s = new Date().getSeconds();
+  return `<svg class="cetdial" viewBox="-66 -66 132 132" role="img" aria-label="Çetele: ${done} of ${rows.length} ${esc(label)} met">
+    ${segs}${ticks}
+    <g class="cd-hand" style="animation-delay:-${s}s"><line y1="8" y2="-40"/><circle r="2.2"/></g>
+    <circle class="cd-cap" r="24"/>
+    <text class="cd-num" y="5" text-anchor="middle">${done}<tspan class="cd-of">/${rows.length}</tspan></text>
+    <text class="cd-sub" y="18" text-anchor="middle">${esc(label.toUpperCase())}</text>
+  </svg>`;
+}
+
+// A small arc gauge for readouts: fraction f (0..1) of a half circle, in a tone (lume, steel, ok, warn, over).
+export function arc(f, tone = 'lume') {
+  const L = 59.7;
+  return `<svg class="arc ${tone}" viewBox="0 0 46 26" aria-hidden="true"><path class="arc-t" d="M4 23a19 19 0 0 1 38 0"/>${f > 0 ? `<path class="arc-v" d="M4 23a19 19 0 0 1 38 0" stroke-dasharray="${f2(L * Math.min(1, f))} ${L}"/>` : ''}</svg>`;
+}

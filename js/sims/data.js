@@ -33,7 +33,7 @@ export default function data(host, { mode, kit }) {
       const q = ['SELECT * FROM study'];
       F.push(frame([header(), ...DATA.map(row)], q.join('\n'), 'The whole table: one strip per row'));
       q.push('WHERE min >= 30');
-      F.push(frame([header(), ...DATA.map((r, i) => row(r, i, r.min < 30 ? { ring: C.red, fill: 'rgba(236,106,94,.18)' } : { ring: C.green }))], q.join('\n'), 'WHERE checks each row: Erlan and Zhan studied under 30 minutes'));
+      F.push(frame([header(), ...DATA.map((r, i) => row(r, i, r.min < 30 ? { ring: C.red, fill: 'rgba(239,122,109,.18)' } : { ring: C.green }))], q.join('\n'), 'WHERE checks each row: Erlan and Zhan studied under 30 minutes'));
       const kept = DATA.filter(r => r.min >= 30);
       F.push(frame([header(), ...kept.map(row), ...DATA.filter(r => r.min < 30).map(r => row(r, DATA.indexOf(r), { x: VW + 20, a: 0 }))], q.join('\n'), 'Rows that fail the test leave; the rest close up'));
       q.push('ORDER BY score DESC');
@@ -143,7 +143,7 @@ export default function data(host, { mode, kit }) {
       ctx.globalAlpha = alpha;
       const isBar = a.bar && b.bar, toBar = !a.bar && b.bar, fromBar = a.bar && !b.bar;
       const barness = isBar ? 1 : toBar ? t : fromBar ? 1 - t : 0;
-      ctx.fillStyle = S.head ? 'rgba(217,181,108,.16)' : barness > 0 ? (b.fill || a.fill || C.brass) : S.fill || 'rgba(216,246,251,.05)';
+      ctx.fillStyle = S.head ? 'rgba(255,181,71,.16)' : barness > 0 ? (b.fill || a.fill || C.brass) : S.fill || 'rgba(233,237,241,.05)';
       if (barness > 0) ctx.globalAlpha = alpha * (0.35 + 0.5 * barness);
       roundRect(ctx, x, y, Math.max(2, wd), Math.max(2, ht), 3); ctx.fill();
       ctx.globalAlpha = alpha;

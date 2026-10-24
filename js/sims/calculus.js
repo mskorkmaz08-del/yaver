@@ -24,7 +24,7 @@ export default function calculus(host, { mode, kit }) {
   const curve = (g, color, width = 2.2, r) => { const { ctx } = st; const [a, c] = fn().xr; ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath(); for (let i = 0; i <= 160; i++) { const x = a + ((c - a) * i) / 160; const y = g(x); i ? ctx.lineTo(X(x), Y(y, r)) : ctx.moveTo(X(x), Y(y, r)); } ctx.stroke(); };
   const line = (x0, y0, m, color, w = 2) => { const { ctx } = st; const [a, c] = fn().xr; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(X(a), Y(y0 + m * (a - x0))); ctx.lineTo(X(c), Y(y0 + m * (c - x0))); ctx.stroke(); };
   const dot = (x, y, color, r = 6) => { const { ctx } = st; ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; };
-  const axes = () => { const { ctx } = st; const b = box(); ctx.strokeStyle = 'rgba(216,246,251,.3)'; ctx.lineWidth = 1; ctx.beginPath(); const y0 = Y(0), x0 = X(0); if (y0 > b.t && y0 < b.b) { ctx.moveTo(b.l, y0); ctx.lineTo(b.r, y0); } if (x0 > b.l && x0 < b.r) { ctx.moveTo(x0, b.t); ctx.lineTo(x0, b.b); } ctx.stroke(); };
+  const axes = () => { const { ctx } = st; const b = box(); ctx.strokeStyle = 'rgba(233,237,241,.3)'; ctx.lineWidth = 1; ctx.beginPath(); const y0 = Y(0), x0 = X(0); if (y0 > b.t && y0 < b.b) { ctx.moveTo(b.l, y0); ctx.lineTo(b.r, y0); } if (x0 > b.l && x0 < b.r) { ctx.moveTo(x0, b.t); ctx.lineTo(x0, b.b); } ctx.stroke(); };
 
   // ---------- gradient descent ----------
   const loss1 = x => 0.25 * (x - 1.2) ** 2 * (1 + 0.4 * Math.sin(2.4 * x)) + 0.4;
@@ -47,16 +47,16 @@ export default function calculus(host, { mode, kit }) {
     if (s.sub === 'curve') {
       const save = fk; FN.loss = { f: loss1, d: x => (loss1(x + 1e-4) - loss1(x - 1e-4)) / 2e-4, label: 'loss', xr: [-3, 3] }; fk = 'loss';
       axes(); curve(loss1, C.brass, 2.4);
-      g.path.forEach((x, i) => { if (i) arrow(ctx, X(g.path[i - 1]), Y(loss1(g.path[i - 1])), X(x), Y(loss1(x)), { color: 'rgba(127,230,247,.5)', width: 1.2, head: 5 }); });
+      g.path.forEach((x, i) => { if (i) arrow(ctx, X(g.path[i - 1]), Y(loss1(g.path[i - 1])), X(x), Y(loss1(x)), { color: 'rgba(127,178,217,.5)', width: 1.2, head: 5 }); });
       dot(X(g.x), Y(loss1(g.x)), C.glow, 8);
       const d = FN.loss.d(g.x);
-      line(g.x, loss1(g.x), d, 'rgba(231,176,75,.6)', 1.4);
+      line(g.x, loss1(g.x), d, 'rgba(255,181,71,.6)', 1.4);
       text(ctx, `step ${g.path.length - 1}   x = ${fmt(g.x)}`, 14, 22, { size: 12.5, color: C.ink, mono: true });
       text(ctx, `slope = ${fmt(d)}   loss = ${fmt(loss1(g.x))}`, 14, 40, { size: 12.5, color: C.amber, mono: true });
       fk = save;
     } else if (s.sub === 'bowl') {
       const cx = w / 2, cy = h / 2 + 6, k = Math.min(w, h) / 6.4;
-      for (let r = 8; r >= 1; r--) { ctx.strokeStyle = `rgba(217,181,108,${0.08 + (8 - r) * 0.04})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, cy, Math.sqrt(r) * k * 0.9, Math.sqrt(r / 2) * k * 0.9, 0, 0, Math.PI * 2); ctx.stroke(); }
+      for (let r = 8; r >= 1; r--) { ctx.strokeStyle = `rgba(255,181,71,${0.08 + (8 - r) * 0.04})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, cy, Math.sqrt(r) * k * 0.9, Math.sqrt(r / 2) * k * 0.9, 0, 0, Math.PI * 2); ctx.stroke(); }
       ctx.strokeStyle = C.glow; ctx.lineWidth = 2; ctx.beginPath(); g.path.forEach(([x, y], i) => (i ? ctx.lineTo(cx + x * k, cy - y * k) : ctx.moveTo(cx + x * k, cy - y * k))); ctx.stroke();
       dot(cx + g.p[0] * k, cy - g.p[1] * k, C.glow, 7);
       text(ctx, `loss = x² + 2y²   step ${g.path.length - 1}`, 14, 22, { size: 12.5, color: C.ink, mono: true });
@@ -64,12 +64,12 @@ export default function calculus(host, { mode, kit }) {
       if (s.lr > 0.5) text(ctx, 'Learning rate too big: it overshoots and zig-zags', 14, h - 12, { size: 13, color: C.red, italic: true });
     } else {
       const L = 30, R = w - 140, T = 40, B = h - 24, sx = x => L + ((x + 2.4) / 4.8) * (R - L), sy = y => B - ((y + 1.6) / 5) * (B - T);
-      ctx.strokeStyle = 'rgba(216,246,251,.2)'; ctx.strokeRect(L, T, R - L, B - T);
-      pts.forEach(([x, y]) => { const e = g.m * x + g.b - y; ctx.strokeStyle = 'rgba(236,106,94,.5)'; ctx.beginPath(); ctx.moveTo(sx(x), sy(y)); ctx.lineTo(sx(x), sy(y + e)); ctx.stroke(); dot(sx(x), sy(y), C.amber, 4); });
+      ctx.strokeStyle = 'rgba(233,237,241,.2)'; ctx.strokeRect(L, T, R - L, B - T);
+      pts.forEach(([x, y]) => { const e = g.m * x + g.b - y; ctx.strokeStyle = 'rgba(239,122,109,.5)'; ctx.beginPath(); ctx.moveTo(sx(x), sy(y)); ctx.lineTo(sx(x), sy(y + e)); ctx.stroke(); dot(sx(x), sy(y), C.amber, 4); });
       ctx.strokeStyle = C.glow; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(sx(-2.4), sy(g.m * -2.4 + g.b)); ctx.lineTo(sx(2.4), sy(g.m * 2.4 + g.b)); ctx.stroke();
       // loss chart
       const lx = R + 16, lw = w - lx - 12, lh = 70, ly = T + 20;
-      ctx.strokeStyle = 'rgba(216,246,251,.2)'; ctx.strokeRect(lx, ly, lw, lh);
+      ctx.strokeStyle = 'rgba(233,237,241,.2)'; ctx.strokeRect(lx, ly, lw, lh);
       const ls = g.losses, mx = Math.max(...ls, 1e-9);
       ctx.strokeStyle = C.green; ctx.lineWidth = 1.6; ctx.beginPath(); ls.forEach((v, i) => { const x = lx + (i / Math.max(1, ls.length - 1)) * lw, y = ly + lh - (v / mx) * lh; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
       text(ctx, 'loss', lx, ly - 6, { size: 12, color: C.green });
@@ -108,7 +108,7 @@ export default function calculus(host, { mode, kit }) {
     let lo = Infinity, hi = -Infinity; const [a, c] = fn().xr;
     for (let i = 0; i <= 80; i++) { const v = d(a + ((c - a) * i) / 80); lo = Math.min(lo, v); hi = Math.max(hi, v); }
     const DY = v => bot - ((v - lo) / (hi - lo || 1)) * (bot - top);
-    ctx.strokeStyle = 'rgba(216,246,251,.15)'; ctx.strokeRect(b.l, top, b.r - b.l, bot - top);
+    ctx.strokeStyle = 'rgba(233,237,241,.15)'; ctx.strokeRect(b.l, top, b.r - b.l, bot - top);
     if (lo < 0 && hi > 0) { ctx.beginPath(); ctx.moveTo(b.l, DY(0)); ctx.lineTo(b.r, DY(0)); ctx.stroke(); }
     ctx.strokeStyle = C.green; ctx.lineWidth = 2; ctx.beginPath();
     s.trail.forEach((x, i) => (i ? ctx.lineTo(X(x), DY(d(x))) : ctx.moveTo(X(x), DY(d(x))))); ctx.stroke();

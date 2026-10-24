@@ -14,7 +14,7 @@ export default function vectors(host, { mode, kit }) {
   const M = () => { const t = ease(s.t); return [lerp(1, v.i[0], t), lerp(0, v.i[1], t), lerp(0, v.j[0], t), lerp(1, v.j[1], t)]; }; // [a b c d]: i=(a,b), j=(c,d)
   const apply = (m, [x, y]) => [m[0] * x + m[2] * y, m[1] * x + m[3] * y];
   const vec = (from, to, color, label, width = 2.4) => { const [x1, y1] = toPx(from), [x2, y2] = toPx(to); arrow(st.ctx, x1, y1, x2, y2, { color, width, head: 9 }); if (label) text(st.ctx, label, x2 + 6, y2 - 6, { size: 15, color, weight: 600, italic: true }); };
-  const grid = (m, color = 'rgba(127,230,247,.22)', range = 8) => {
+  const grid = (m, color = 'rgba(127,178,217,.22)', range = 8) => {
     const { ctx } = st;
     ctx.strokeStyle = color; ctx.lineWidth = 1;
     ctx.beginPath();
@@ -24,7 +24,7 @@ export default function vectors(host, { mode, kit }) {
     }
     ctx.stroke();
   };
-  const axes = () => { const { ctx, w, h } = st; const [ox, oy] = O(); ctx.strokeStyle = 'rgba(216,246,251,.35)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(w, oy); ctx.moveTo(ox, 0); ctx.lineTo(ox, h); ctx.stroke(); };
+  const axes = () => { const { ctx, w, h } = st; const [ox, oy] = O(); ctx.strokeStyle = 'rgba(233,237,241,.35)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, oy); ctx.lineTo(w, oy); ctx.moveTo(ox, 0); ctx.lineTo(ox, h); ctx.stroke(); };
   const handles = {
     span: ['a', 'b'], transform: ['i', 'j', 'x'], det: ['i', 'j'], eigen: ['i', 'j'], dot: ['a', 'b'], basis: ['i', 'j', 'p'], '3d': [],
   };
@@ -36,16 +36,16 @@ export default function vectors(host, { mode, kit }) {
     const moving = Math.abs(s.tt - s.t) > 0.002;
     if (kind === '3d') return draw3d(dt) || moving;
     if (kind === 'span') {
-      grid([1, 0, 0, 1], 'rgba(127,230,247,.1)'); axes();
+      grid([1, 0, 0, 1], 'rgba(127,178,217,.1)'); axes();
       const ra = [v.a[0] * s.ca, v.a[1] * s.ca], r = [ra[0] + v.b[0] * s.cb, ra[1] + v.b[1] * s.cb];
       const det = v.a[0] * v.b[1] - v.a[1] * v.b[0];
       if (Math.abs(det) < 1e-6) { const [x1, y1] = toPx([-v.a[0] * 9, -v.a[1] * 9]), [x2, y2] = toPx([v.a[0] * 9, v.a[1] * 9]); ctx.strokeStyle = C.amber; ctx.lineWidth = 6; ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.globalAlpha = 1; }
-      vec([0, 0], ra, 'rgba(231,176,75,.7)', '', 2); vec(ra, r, 'rgba(169,155,240,.8)', '', 2);
+      vec([0, 0], ra, 'rgba(255,181,71,.7)', '', 2); vec(ra, r, 'rgba(169,155,240,.8)', '', 2);
       vec([0, 0], v.a, C.amber, 'a'); vec([0, 0], v.b, C.violet, 'b'); vec([0, 0], r, C.glow, '', 3);
       text(ctx, `${fmt(s.ca)}·a + ${fmt(s.cb)}·b = (${fmt(r[0])}, ${fmt(r[1])})`, 14, 22, { size: 14, color: C.ink, mono: true });
       text(ctx, Math.abs(det) < 1e-6 ? 'a and b line up: their span is only a line' : 'a and b point different ways: they span the whole plane', 14, h - 12, { size: 13, color: Math.abs(det) < 1e-6 ? C.amber : C.dim, italic: true });
     } else if (kind === 'dot') {
-      grid([1, 0, 0, 1], 'rgba(127,230,247,.1)'); axes();
+      grid([1, 0, 0, 1], 'rgba(127,178,217,.1)'); axes();
       const d = v.a[0] * v.b[0] + v.a[1] * v.b[1], la = Math.hypot(...v.a) || 1, lb = Math.hypot(...v.b) || 1;
       const proj = [(d / (la * la)) * v.a[0], (d / (la * la)) * v.a[1]];
       const [px1, py1] = toPx(v.b), [px2, py2] = toPx(proj);
@@ -55,7 +55,7 @@ export default function vectors(host, { mode, kit }) {
       text(ctx, `a·b = ${fmt(d)}   cos θ = ${fmt(d / (la * lb))}   θ = ${Math.round((Math.acos(clamp(d / (la * lb), -1, 1)) * 180) / Math.PI)}°`, 14, 22, { size: 13.5, color: C.ink, mono: true });
       text(ctx, d > 0 ? 'Positive: they point the same general way' : d < 0 ? 'Negative: they point apart' : 'Zero: perpendicular', 14, h - 12, { size: 13, color: C.dim, italic: true });
     } else if (kind === 'basis') {
-      grid([1, 0, 0, 1], 'rgba(216,246,251,.08)'); grid([v.i[0], v.i[1], v.j[0], v.j[1]], 'rgba(231,176,75,.3)'); axes();
+      grid([1, 0, 0, 1], 'rgba(233,237,241,.08)'); grid([v.i[0], v.i[1], v.j[0], v.j[1]], 'rgba(255,181,71,.3)'); axes();
       const det = v.i[0] * v.j[1] - v.i[1] * v.j[0];
       const c = Math.abs(det) > 1e-6 ? [(v.p[0] * v.j[1] - v.p[1] * v.j[0]) / det, (v.i[0] * v.p[1] - v.i[1] * v.p[0]) / det] : [NaN, NaN];
       vec([0, 0], v.i, C.amber, 'b₁'); vec([0, 0], v.j, C.violet, 'b₂');
@@ -64,13 +64,13 @@ export default function vectors(host, { mode, kit }) {
       text(ctx, `in b₁,b₂: (${isNaN(c[0]) ? '—' : fmt(c[0])}, ${isNaN(c[1]) ? '—' : fmt(c[1])})`, 14, 42, { size: 13.5, color: C.amber, mono: true });
     } else {
       const m = M();
-      grid([1, 0, 0, 1], 'rgba(216,246,251,.06)');
+      grid([1, 0, 0, 1], 'rgba(233,237,241,.06)');
       grid(m);
       axes();
       const det = m[0] * m[3] - m[1] * m[2];
       if (kind === 'det' || kind === 'transform') {
         const pts = [[0, 0], [1, 0], [1, 1], [0, 1]].map(p => toPx(apply(m, p)));
-        ctx.fillStyle = det >= 0 ? 'rgba(127,210,138,.22)' : 'rgba(236,106,94,.25)'; ctx.beginPath(); pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = det >= 0 ? 'rgba(125,211,168,.22)' : 'rgba(239,122,109,.25)'; ctx.beginPath(); pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill();
       }
       if (kind === 'eigen') {
         // eigenvectors of the full matrix: directions that only stretch
@@ -87,7 +87,7 @@ export default function vectors(host, { mode, kit }) {
           }
         } else text(ctx, 'No real eigenvectors: this matrix rotates every direction', 14, h - 12, { size: 13, color: C.amber, italic: true });
         // a ring of sample vectors and where they go
-        for (let k = 0; k < 16; k++) { const a0 = (k / 16) * Math.PI * 2; vec([0, 0], apply(m, [Math.cos(a0), Math.sin(a0)]), 'rgba(216,246,251,.35)', '', 1.2); }
+        for (let k = 0; k < 16; k++) { const a0 = (k / 16) * Math.PI * 2; vec([0, 0], apply(m, [Math.cos(a0), Math.sin(a0)]), 'rgba(233,237,241,.35)', '', 1.2); }
       }
       vec([0, 0], apply(m, [1, 0]), C.amber, 'î'); vec([0, 0], apply(m, [0, 1]), C.violet, 'ĵ');
       if (kind === 'transform') { vec([0, 0], apply(m, v.x), C.glow, 'x', 2.6); }
@@ -129,12 +129,12 @@ export default function vectors(host, { mode, kit }) {
       const ra = rot(a), rb = rot(b);
       const c = [ra[1] * rb[2] - ra[2] * rb[1], ra[2] * rb[0] - ra[0] * rb[2], ra[0] * rb[1] - ra[1] * rb[0]];
       const P = [[0, 0, 0], ra, [ra[0] + rb[0], ra[1] + rb[1], ra[2] + rb[2]], rb].map(proj);
-      ctx.fillStyle = 'rgba(231,176,75,.18)'; ctx.beginPath(); P.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,181,71,.18)'; ctx.beginPath(); P.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill();
       for (const [p, col, l] of [[ra, C.amber, 'a'], [rb, C.violet, 'b'], [c, C.glow, 'a×b']]) { const [x1, y1] = proj([0, 0, 0]), [x2, y2] = proj(p); arrow(ctx, x1, y1, x2, y2, { color: col, width: 2.6, head: 9 }); text(ctx, l, x2 + 5, y2 - 5, { size: 14, color: col, weight: 600, italic: true }); }
       text(ctx, `|a×b| = ${fmt(Math.hypot(...c))} = the shaded area`, 14, 22, { size: 13.5, color: C.ink, mono: true });
     } else {
       const P = cube.map(p => proj(rot(p.map(q => q * 0.9))));
-      edges.forEach(([a, b]) => { const z = (P[a][2] + P[b][2]) / 2; ctx.strokeStyle = z > 0 ? 'rgba(217,181,108,.45)' : C.brassHi; ctx.lineWidth = z > 0 ? 1.2 : 2.2; ctx.beginPath(); ctx.moveTo(P[a][0], P[a][1]); ctx.lineTo(P[b][0], P[b][1]); ctx.stroke(); });
+      edges.forEach(([a, b]) => { const z = (P[a][2] + P[b][2]) / 2; ctx.strokeStyle = z > 0 ? 'rgba(255,181,71,.45)' : C.brassHi; ctx.lineWidth = z > 0 ? 1.2 : 2.2; ctx.beginPath(); ctx.moveTo(P[a][0], P[a][1]); ctx.lineTo(P[b][0], P[b][1]); ctx.stroke(); });
       P.forEach(([x, y]) => { ctx.fillStyle = C.glow; ctx.beginPath(); ctx.arc(x, y, 2.6, 0, Math.PI * 2); ctx.fill(); });
       const r = rot([1, 0, 0]), u = rot([0, 1, 0]), f = rot([0, 0, 1]);
       [0, 1, 2].forEach(row => text(ctx, `[ ${[r, u, f].map(c => fmt(c[row]).padStart(5)).join(' ')} ]`, 14, 22 + row * 17, { size: 12.5, color: C.ink, mono: true }));

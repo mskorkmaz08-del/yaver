@@ -24,11 +24,10 @@ import { initSync } from './sync.js';
 import { currencyOptions } from './data.js';
 import * as D from './data.js';
 import { subdial } from './ui.js';
-import * as mech from './mech.js';
 import * as sound from './sound.js';
 import { icon } from './icons.js';
 
-const TABS = { home: ['home', 'home'], cetele: ['moon', 'çetele'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'], settings: ['settings', 'settings'] };
+const TABS = { home: ['home', 'Home', '1'], cetele: ['tally', 'Çetele', '2'], study: ['book', 'Study', '3'], calendar: ['calendar', 'Meet', '4'], money: ['wallet', 'Money', '5'], diet: ['leaf', 'Diet', '6'], map: ['map', 'Map', '7'], settings: ['settings', 'Settings', ','] };
 
 const VIEWS = { home, cetele, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView };
 // Screens that belong to a tab for highlighting.
@@ -59,18 +58,11 @@ const PREV_VIEW = { name: null, arg: null };
 function draw() {
   const root = $('#view');
   const y = window.scrollY;
-  // Keep running mechanisms across redraws so their gears don't jump back to the start.
-  const engines = [...root.querySelectorAll('[data-engine]')];
   VIEWS[current].render(root, go, param);
-  root.querySelectorAll('[data-engine]').forEach((el, i) => engines[i] && el.replaceWith(engines[i]));
-  // A meshing pair of small gears sits on the rule under each screen title.
-  root.querySelectorAll('.page-head, .brand-head').forEach(h => h.querySelector('.head-gears') || h.insertAdjacentHTML('beforeend', '<span class="head-gears" data-gear="pair" aria-hidden="true"></span>'));
-  mech.scan(root);
   window.scrollTo(0, y);
   // A new screen rises in; a redraw after a data change doesn't.
   if (entering) {
     entering = false;
-    mech.kick(220);
     revealLater(root);
     root.classList.remove('enter');
     void root.offsetWidth;
@@ -94,8 +86,7 @@ function revealLater(root) {
   for (const el of root.children) if (el.getBoundingClientRect().top > innerHeight) { el.classList.add('later'); laterObs.observe(el); }
 }
 
-const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-// Laptop sidebar: the week's study hours on a subdial and today's Çetele as tally marks.
+// Laptop sidebar: the week's study hours on a subdial and today's Çetele as a row of index marks.
 function sideGauge() {
   const el = $('[data-gauge]');
   if (!el || !matchMedia('(min-width: 1100px)').matches) return;
@@ -106,8 +97,8 @@ function sideGauge() {
   const open = ct.rows.filter(r => !r.met).map(r => r.name);
   const remain = !open.length ? 'All minimums met' : open.length === 1 ? `${open[0]} remains` : `${open.slice(0, -1).join(', ')} and ${open.at(-1)} remain`;
   el.innerHTML = `
-    <button class="sg-dial" data-to="study">${subdial(h, goal, { label: 'study' })}<span><b>${h.toFixed(1)}</b><small> / ${goal} h</small><em>this week</em></span></button>
-    <button class="sg-ct" data-to="cetele"><span class="label">çetele · ${WORDS[ct.done] ?? ct.done} of ${WORDS[ct.total] ?? ct.total}</span>${home.tally(ct.done, ct.total)}<em>${remain}</em></button>`;
+    <button class="sg-dial" data-to="study">${subdial(h, goal, { label: 'study', size: 76 })}<span><b>${h.toFixed(1)}</b><small> / ${goal} h</small><em>this week</em></span></button>
+    <button class="sg-ct" data-to="cetele"><span class="eyebrow">Çetele · ${ct.done} of ${ct.total}</span><span class="sg-marks">${ct.rows.filter(r => r.per !== 'week').map(r => `<i class="${r.met ? 'on' : ''}"></i>`).join('')}</span><em>${remain}</em></button>`;
   el.querySelectorAll('[data-to]').forEach(b => (b.onclick = () => go(b.dataset.to)));
 }
 
@@ -149,25 +140,22 @@ async function start() {
   initAssistant();
 
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => {
-    const [ic, label] = TABS[b.dataset.tab];
-    b.innerHTML = `${icon(ic)}<span>${label}</span>`;
+    const [ic, label, key] = TABS[b.dataset.tab];
+    b.innerHTML = `${icon(ic)}<span>${label}</span><kbd class="side-only">${key}</kbd>`;
     b.onclick = () => go(b.dataset.tab);
   });
-  mech.initDrive();
   sound.init();
-  mech.onEngineTap(sound.spin);
-  // A soft click for every button; the Yaver gear and the engine make their own sounds.
+  // A soft click for every button; the Yaver knob makes its own sound.
   document.addEventListener('pointerdown', e => {
     const b = e.target.closest('button, a, label, .chip, select');
-    if (b && !b.closest('#fab') && !e.target.closest('[data-engine]') && !b.querySelector('input[type=checkbox]') && !e.target.matches('input[type=checkbox]')) sound.tap();
+    if (b && !b.closest('#fab') && !b.querySelector('input[type=checkbox]') && !e.target.matches('input[type=checkbox]')) sound.tap();
   }, { capture: true, passive: true });
   // Switches and checkboxes click on and off.
   document.addEventListener('change', e => { if (e.target.matches?.('input[type=checkbox]')) sound.toggle(e.target.checked); }, true);
-  mech.scan(document);
   $('#fab').onclick = () => openAssistant();
   // On a laptop the assistant button lives in the sidebar.
   const ask = $('.tabbar [data-ask]');
-  ask.innerHTML = `${icon('sparkle')}<span>ask yaver</span><kbd>/</kbd>`;
+  ask.innerHTML = `${icon('sparkle')}<span>Ask Yaver</span><kbd>/</kbd>`;
   ask.onclick = () => openAssistant();
   // Course content loads in the background; screens that need it redraw when it arrives.
   C.init().catch(() => {});
@@ -186,7 +174,7 @@ async function start() {
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
   // (The map keeps its own state, so data changes don't redraw it.)
-  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') { mech.kick(90); sound.save(); } clearTimeout(pending); pending = setTimeout(draw, 30); });
+  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') sound.save(); clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
   window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });

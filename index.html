@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Yaver</title>
   <meta name="description" content="Yaver, your personal assistant for money, meetings, studies and diet.">
-  <meta name="theme-color" content="#0d0c0a">
+  <meta name="theme-color" content="#0f1215">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,18 +13,19 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preload" href="fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
   <link rel="modulepreload" href="vendor/anthropic-sdk.js">
 </head>
 <body>
   <main id="view" class="view"></main>
 
-  <button id="fab" class="fab" aria-label="Ask Yaver"><span class="mark">Y</span><span class="fab-gear" data-gear="button"></span></button>
+  <button id="fab" class="fab" aria-label="Ask Yaver"><span class="knob" aria-hidden="true"></span></button>
 
   <span id="sync-dot" class="sync-dot" hidden></span>
 
   <nav class="tabbar" aria-label="Sections">
-    <div class="side-brand side-only"><span class="mark sm">Y</span><b>yaver</b></div>
+    <div class="side-brand side-only"><b class="wordmark">Yaver</b></div>
     <button data-tab="home"></button>
     <button data-tab="cetele"></button>
     <button data-tab="study"></button>

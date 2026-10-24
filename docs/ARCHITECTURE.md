@@ -144,18 +144,19 @@ The study focus timer stores *when it started*, not a running counter, so it sta
 
 ```
 yaver/
-├── index.html              The shell: tab bar, the gear Yaver button, loads js/app.js
+├── index.html              The shell: tab bar, the Yaver knob, loads js/app.js
 ├── manifest.webmanifest    Name, icons, colours: what makes it installable
 ├── sw.js                   Service worker: offline copy + updates
-├── css/app.css             All styling: the Hextech look (graphite, brass, teal gemstone glow, notebook-paper course) and its motion, cards, sheets, chat
-├── fonts/                  Cormorant Garamond, Cinzel and Caveat (handwriting), stored in the app so they work offline
-├── icons/                  Home Screen icons: the brass Yaver gear
+├── css/app.css             All styling: the Chronograph look (graphite plates, steel, amber lume, dials) and its motion, cards, sheets, chat
+├── fonts/                  Archivo (variable width) and IBM Plex Mono, stored in the app so they work offline
+├── icons/                  Home Screen icons: the Yaver knob with its amber lume
+├── sounds/                 Interface sounds and the strings music (see CREDITS.md)
+├── tools/                  Scripts that made the sounds and the music (run on a computer)
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
 ├── vendor/                 Anthropic SDK (one file) and Leaflet (map)
 └── js/
     ├── app.js              Starts everything; switches screens; redraws on data change
-    ├── mech.js             The moving gears: hextech engine, gear button, gear pairs, one shared drive shaft
-    ├── sound.js            Mechanical sounds and background music (files in sounds/), switches in Settings
+    ├── sound.js            Mechanism sounds and violin music (files in sounds/), switches in Settings
     ├── focus.js            Full-screen focus mode with a small timer
     ├── sims.js             The workshop: picks a simulator for each lesson and gives it canvas, controls, timeline
     ├── sims/               13 simulators: circuit, sort, search, graph, structures, vectors, calculus,
@@ -227,21 +228,19 @@ The Study tab can run a full day-by-day course: Python, C++, algorithms, math, A
 
 New files: `js/course.js` (all course logic), `js/views/course.js` (overview, today card, block alerts), `js/views/lesson.js` (lesson runner, review, test, ship, prepare), `js/keys.js` (keyboard shortcuts). New database tables: `courseProgress`, `cards`, `courseLessons`, `courseTests`, and `tombstones`.
 
-## 9c. The look, sounds and the workshop (v25 to v27)
+## 9c. The look, sounds and the workshop (v25 to v28)
 
-**Mechanisms.** The look borrows the mood of the Piltover workshops in the show *Arcane*: brass machines with a glowing blue gemstone at the core. Nothing is copied from the show; the machines are drawn by `js/mech.js` as SVG. The gears are real: tooth counts and starting angles are worked out so teeth interlock (a planetary train on Home: a ring with 60 inner teeth, 12-tooth planets, a 36-tooth sun). One "drive shaft" angle turns every gear on screen. It idles slowly; scrolling, tapping, saving and entering a screen add speed that winds down again. Offscreen gears stop to save battery.
+**The look: Chronograph (v28).** Rebuilt from scratch in v28; nothing of the older look is left. Yaver looks like a machined instrument panel: graphite plates with a fine brushed grain, hairline steel lines, amber lume for what matters now (minimums met, the running timer, the main button on each screen) and steel blue for progress still underway. Type is Archivo, a variable-width grotesque set wide for the YAVER wordmark and labels and narrow for headings, with IBM Plex Mono for every number. Home is the panel: the Çetele dial (one segment per minimum around the bezel, minute ticks and a second hand that sweeps once a minute), the next lesson with its steps and Begin / Focus, four small arc gauges (study this week, cards due, next meeting, spent today) and the Ask bar. The dials and gauges are SVG drawn by `js/ui.js`; motion is quick and precise (screens rise in, gauges and bars draw themselves) and turns off under Reduce Motion.
 
-**The Yaver button** is a brass gear with a gemstone. Tapping it spins the gears and the chat irises open from the button. On the phone you close the chat by swiping it down; it follows your finger and closes past a third of the way or on a quick flick.
+**The Yaver knob.** On the phone the tab bar floats above the bottom edge with a knurled steel knob in the middle; its knurling turns slowly and its amber centre glows. Tapping it opens the chat, which irises open from the knob. You close the chat by swiping it down; it follows your finger and closes past a third of the way or on a quick flick. On the laptop a sidebar holds the sections with their key numbers (1 to 7, comma for Settings), a study subdial, today's Çetele marks and Ask Yaver; the chat opens as a panel on the right.
 
-**Paper course.** The course screen and every lesson sit on a clean sheet of paper (no lines or marks, just soft light and a faint grain), with labels in handwriting (Caveat). The lesson timer is a brass stopwatch: the lesson's steps are segments around the dial, elapsed time glows teal, and a hand sweeps the seconds.
+**Lessons.** The course and lessons use the same plates. A lesson is one dark reading plate set for long reading (larger text, generous line height, amber-ruled notes, dark code blocks); the lesson timer is a chronograph stopwatch: the lesson's steps are segments around the dial, elapsed time fills them with amber, and a hand sweeps the seconds.
 
-**Sounds and music (v27).** `js/sound.js` plays short recorded mechanical sounds from `sounds/` (switches, detents and relays from the free uisfx pack, CC0): a click on buttons, a latch when a screen opens, a ratchet when you tap the engine, a switch for toggles, a check when something is saved, a chime when a lesson is mastered and a bell when focus time is up. Each plays quietly through a soft low-pass filter, at a slightly different pitch every time, and softer when they come quickly, so they don't wear on you. The background music (`sounds/hextech-ambience.mp3`) is a slow D-minor piece made for Yaver (a cello drone, string pads, a sparse music box and a distant chime in a large hall); it loops with a four-second crossfade, gets quieter while the chat or focus mode is open, and stops during voice chat and while Yaver is in the background. On the iPhone the audio session is "ambient", so the silent switch mutes Yaver and music from other apps keeps playing. Settings → Sound and music has a switch for each.
+**Sounds and music (v28).** Every interface sound is a small mechanism made for Yaver by modal synthesis (`tools/mech_sfx.py`): each sound is a few physical events, such as a spring-steel detent snapping into its notch or a pawl striking ratchet teeth, that excite banks of resonators tuned like spring steel, brass, a bakelite switch body and the instrument case, then a small room. Buttons click a detent, entering a screen turns a rotary selector one position, switches throw a toggle lever, saving presses a stamp, the chat opens and closes a latch, mastering a lesson indexes a counter wheel and strikes a small clock bell, and focus time ends with two bell strikes. `js/sound.js` plays them at a slightly different pitch each time and softer when they come quickly. The music (`sounds/strings.mp3`, `tools/strings.py`) is a slow D-minor piece for solo violin over cello, double bass and harp, rendered from recorded instrument samples (the MIT-licensed tonejs-instruments packages) in a large hall; it lasts two minutes and loops seamlessly, gets quieter while the chat or focus mode is open, and stops during voice chat and while Yaver is in the background. On the iPhone the audio session is "ambient", so the silent switch mutes Yaver and music from other apps keeps playing. Settings → Sound and music has a switch for each.
 
-**Focus mode (v27).** `js/focus.js` turns the screen into a quiet study space. Starting a block on the Study tab opens it: a dark, empty screen with only the subject and a small stopwatch chip. In a lesson, the Focus button keeps only the lesson paper. Tap the chip to fade it to a faint dot. The tab bar and the Yaver button hide, the screen stays awake, the laptop goes full screen, the music steps back, and a soft bell rings when the planned time is up. Press Esc or × to leave.
+**Focus mode (v27).** `js/focus.js` turns the screen into a quiet study space. Starting a block on the Study tab opens it: a dark, empty screen with only the subject and a small stopwatch chip. In a lesson, the Focus button (also on Home's next-lesson plate) keeps only the lesson itself. Tap the chip to fade it to a faint dot. The tab bar and the Yaver button hide, the screen stays awake, the laptop goes full screen, the music steps back, and a soft bell rings when the planned time is up. Press Esc or × to leave.
 
 **Review fixes (v27).** Larger, brighter small text and labels; buttons never break mid-word; a real cog for Settings; Home shows each thing once (the Today list skips what the cards above already show and folds after three items); Study drops the second week strip and the empty roadmap card while the course runs; the course week shows light, readable day cards; lessons on the phone have a slim timer bar at the top; meals typed in lowercase land under the right meal; the chat closes when you change screens on the phone. Settings is a list of groups (Assistant, Claude on your Mac, Voice, Sound and music, You and goals, Sync, Your data, Install, Handbook) that save each change as you make it.
-
-**The crystal.** The gem at the heart of the engine and the Yaver button is a tall six-sided crystal with pointed ends, shaded from ice-white to deep sapphire, with a light inside that breathes, held in four brass claws.
 
 **A workshop in every lesson.** `js/sims.js` reads each lesson's track and title and chooses one of 13 simulators and a setting (for example a robotics lesson on transistors gets the circuit bench with a motor and flyback diode; a lesson on Dijkstra gets the graph explorer). Python lessons with an example get the code tracer, which runs the example on the phone with Pyodide (Python compiled to WebAssembly, downloaded on the first tap) and steps through it line by line with the variables and output. Simulators are loaded only when a lesson opens, draw on a canvas, and pause when scrolled offscreen. Most have a timeline: play, step back and forward, scrub, and change speed; the in-between moments are eased so movement stays smooth.
 

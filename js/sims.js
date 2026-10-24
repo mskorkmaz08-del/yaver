@@ -124,10 +124,10 @@ export async function mountSim(card, l) {
 
 // ---------- The kit every simulator uses ----------
 export const C = {
-  bg: '#0c1820', bg2: '#10222c', grid: 'rgba(127,230,247,.07)', ink: '#d8f6fb', dim: 'rgba(216,246,251,.5)', faint: 'rgba(216,246,251,.18)',
-  brass: '#d9b56c', brassHi: '#f3dfa4', teal: '#3fb6c9', glow: '#7fe6f7', red: '#ec6a5e', green: '#7fd28a', amber: '#e7b04b', violet: '#a99bf0',
+  bg: '#111519', bg2: '#181d23', grid: 'rgba(159,180,200,.07)', ink: '#e9edf1', dim: 'rgba(233,237,241,.55)', faint: 'rgba(233,237,241,.18)',
+  brass: '#ffb547', brassHi: '#ffd89a', teal: '#7fb2d9', glow: '#cfe3f3', red: '#ef7a6d', green: '#7dd3a8', amber: '#ffb547', violet: '#b4a6f2',
 };
-const FONT = '"Cormorant Garamond", Georgia, serif';
+const FONT = '"Archivo", "Helvetica Neue", Arial, sans-serif';
 const MONO = 'ui-monospace, "SF Mono", Menlo, monospace';
 
 export const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -170,7 +170,7 @@ function stage(host, { height = 260, aspect } = {}) {
   return st;
 }
 
-// Blueprint background: deep teal plate, fine grid, brass frame corners.
+// Instrument plate: graphite, a fine grid, amber corner marks.
 function plate(ctx, w, h) {
   const g = ctx.createLinearGradient(0, 0, w, h);
   g.addColorStop(0, C.bg2); g.addColorStop(1, C.bg);
@@ -180,7 +180,7 @@ function plate(ctx, w, h) {
   for (let x = 0.5; x < w; x += 20) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
   for (let y = 0.5; y < h; y += 20) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
   ctx.stroke();
-  ctx.strokeStyle = 'rgba(217,181,108,.55)'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(255,181,71,.5)'; ctx.lineWidth = 1.5;
   for (const [x, y, sx, sy] of [[6, 6, 1, 1], [w - 6, 6, -1, 1], [6, h - 6, 1, -1], [w - 6, h - 6, -1, -1]]) {
     ctx.beginPath(); ctx.moveTo(x, y + 14 * sy); ctx.lineTo(x, y); ctx.lineTo(x + 14 * sx, y); ctx.stroke();
   }
@@ -220,7 +220,7 @@ function gauge(ctx, x, y, r, value, max, label, unit, color = C.glow) {
   ctx.save();
   ctx.translate(x, y);
   const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r);
-  g.addColorStop(0, '#f3ead6'); g.addColorStop(1, '#d6c7a5');
+  g.addColorStop(0, '#eef1f4'); g.addColorStop(1, '#c4ccd4');
   ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = C.brass; ctx.lineWidth = 3; ctx.stroke();
   ctx.strokeStyle = '#3b3f4a'; ctx.lineWidth = 1;
@@ -230,9 +230,9 @@ function gauge(ctx, x, y, r, value, max, label, unit, color = C.glow) {
     ctx.beginPath(); ctx.moveTo(r1 * Math.cos(a), r1 * Math.sin(a)); ctx.lineTo(r * 0.88 * Math.cos(a), r * 0.88 * Math.sin(a)); ctx.stroke();
   }
   const a = Math.PI * (0.75 + 1.5 * clamp(value / max, 0, 1.04));
-  ctx.strokeStyle = '#2c4a7a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.strokeStyle = '#1a1f25'; ctx.lineWidth = 2; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(-r * 0.12 * Math.cos(a), -r * 0.12 * Math.sin(a)); ctx.lineTo(r * 0.8 * Math.cos(a), r * 0.8 * Math.sin(a)); ctx.stroke();
-  ctx.fillStyle = '#2c4a7a'; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1a1f25'; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
   text(ctx, label, 0, r * 0.42, { size: Math.max(8, r * 0.26), color: '#4c5262', align: 'center', weight: 600 });
   ctx.restore();
   text(ctx, `${fmt(value)} ${unit}`, x, y + r + 15, { size: 13, color, align: 'center', mono: true });

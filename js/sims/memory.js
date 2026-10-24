@@ -45,13 +45,13 @@ export default function memory(host, { mode, kit }) {
 
   function drawRegions(ctx, w, h, L) {
     for (const [x, label] of [[L.sx, 'stack'], [L.hx, 'heap']]) {
-      ctx.strokeStyle = 'rgba(217,181,108,.3)'; ctx.setLineDash([4, 4]); roundRect(ctx, x - 4, L.top, L.colW + 8, h - L.top - 10, 6); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(255,181,71,.3)'; ctx.setLineDash([4, 4]); roundRect(ctx, x - 4, L.top, L.colW + 8, h - L.top - 10, 6); ctx.stroke(); ctx.setLineDash([]);
       text(ctx, label, x + 2, L.top + 14, { size: 12, color: C.brass, italic: true });
     }
   }
   function drawBox(ctx, L, b, x, y, a) {
     ctx.globalAlpha = a;
-    ctx.fillStyle = b.dead ? 'rgba(236,106,94,.12)' : b.hot ? 'rgba(127,230,247,.2)' : 'rgba(216,246,251,.07)';
+    ctx.fillStyle = b.dead ? 'rgba(239,122,109,.12)' : b.hot ? 'rgba(127,178,217,.2)' : 'rgba(233,237,241,.07)';
     roundRect(ctx, x, y, L.colW, L.bh, 4); ctx.fill();
     ctx.strokeStyle = b.dead ? C.red : b.hot ? C.glow : C.brass; ctx.lineWidth = 1.4;
     if (b.dead) ctx.setLineDash([3, 3]);
@@ -66,7 +66,7 @@ export default function memory(host, { mode, kit }) {
     const L = layout(w, h, prog.code);
     // code with sliding bar
     const ln = lerp(A.line, B.line, t);
-    if (ln > 0) { ctx.fillStyle = 'rgba(231,176,75,.18)'; roundRect(ctx, 8, 16 + (ln - 1) * CODE_LH - 2, w - 16, CODE_LH, 3); ctx.fill(); ctx.fillStyle = C.amber; ctx.fillRect(8, 16 + (ln - 1) * CODE_LH - 2, 3, CODE_LH); }
+    if (ln > 0) { ctx.fillStyle = 'rgba(255,181,71,.18)'; roundRect(ctx, 8, 16 + (ln - 1) * CODE_LH - 2, w - 16, CODE_LH, 3); ctx.fill(); ctx.fillStyle = C.amber; ctx.fillRect(8, 16 + (ln - 1) * CODE_LH - 2, 3, CODE_LH); }
     prog.code.forEach((c, i) => text(ctx, c, 18, 16 + i * CODE_LH + 9, { size: 11.5, color: Math.round(ln) === i + 1 ? C.brassHi : C.ink, mono: true }));
     drawRegions(ctx, w, h, L);
     const S = t < 0.5 ? A : B;
@@ -140,7 +140,7 @@ export default function memory(host, { mode, kit }) {
     text(ctx, `copies so far: ${V.copies || 0}  (≈ 1 per element on average)`, 14, h - 20, { size: 12, color: C.amber, mono: true });
   }
   function drawCell(ctx, x, y, cell, v, hot) {
-    ctx.fillStyle = hot ? 'rgba(127,230,247,.35)' : 'rgba(231,176,75,.3)';
+    ctx.fillStyle = hot ? 'rgba(127,178,217,.35)' : 'rgba(255,181,71,.3)';
     roundRect(ctx, x, y, cell - 4, cell - 4, 3); ctx.fill();
     text(ctx, String(v), x + (cell - 4) / 2, y + cell / 2 + 2, { size: Math.min(12, cell * 0.36), color: C.ink, align: 'center', mono: true });
   }

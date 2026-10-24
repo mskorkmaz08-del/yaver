@@ -1,19 +1,19 @@
 // Service worker: keeps a copy of the app on the phone so Yaver opens
 // instantly and works offline. Bump VERSION whenever app files change.
-const VERSION = 'yaver-v27';
+const VERSION = 'yaver-v28';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js',
   'js/ai/claude.js', 'js/ai/tools.js', 'js/ai/assistant.js', 'js/ai/gemini.js', 'js/ai/provider.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/live.js', 'js/cetele.js', 'js/views/cetele.js',
-  'js/course.js', 'js/keys.js', 'js/sync.js', 'js/crypto.js', 'js/views/course.js', 'js/views/lesson.js', 'js/mech.js', 'js/sims.js', 'js/sound.js', 'js/focus.js',
-  // interface sounds are tiny; the 1.8 MB music is cached the first time it plays
-  ...['select', 'toggle-on', 'toggle-off', 'seek', 'start', 'open', 'close', 'check', 'complete', 'progress-step', 'swipe', 'stop', 'achievement'].map(f => `sounds/${f}.mp3`),
+  'js/course.js', 'js/keys.js', 'js/sync.js', 'js/crypto.js', 'js/views/course.js', 'js/views/lesson.js', 'js/sims.js', 'js/sound.js', 'js/focus.js',
+  // interface sounds are tiny; the 1.7 MB music is cached the first time it plays
+  ...['tap', 'on', 'off', 'enter', 'spin', 'open', 'close', 'save', 'done', 'step', 'swipe', 'stop', 'bell'].map(f => `sounds/${f}.mp3`),
   ...['circuit', 'sort', 'search', 'graph', 'structures', 'vectors', 'calculus', 'probability', 'data', 'trace', 'memory', 'git', 'shell'].map(f => `js/sims/${f}.js`),
   'data/course/course.json', 'data/course/urls.json', // Weeks 6 and 11 are consolidation weeks and have no lesson file.
   ...[0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15].map(i => `data/course/weeks/week-${String(i).padStart(2, '0')}.json`),
   'js/icons.js', 'js/reminders.js', 'js/places.js', 'js/views/map.js', 'js/views/home.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/study.js', 'js/views/diet.js', 'js/views/settings.js',
   'vendor/anthropic-sdk.js', 'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css', 'data/ml-roadmap.json', 'icons/icon-192.png', 'icons/apple-touch-icon.png',
-  ...['cinzel-latin.woff2', 'cinzel-latin-ext.woff2', 'cormorant-garamond-latin.woff2', 'cormorant-garamond-latin-ext.woff2', 'cormorant-garamond-italic-latin.woff', 'cormorant-garamond-italic-latin-ext.woff', 'caveat-latin.woff', 'caveat-latin-ext.woff'].map(f => `fonts/${f}`),
+  ...['archivo-latin-wdth-normal', 'archivo-latin-ext-wdth-normal', ...[400, 500, 600].flatMap(w => [`ibm-plex-mono-latin-${w}-normal`, `ibm-plex-mono-latin-ext-${w}-normal`])].map(f => `fonts/${f}.woff2`),
 ];
 
 self.addEventListener('install', e => {

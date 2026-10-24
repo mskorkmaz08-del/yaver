@@ -1,6 +1,10 @@
 # Sounds
 
-- `select`, `toggle-on`, `toggle-off`, `seek`, `start`, `open`, `close`, `check`, `complete`,
-  `progress-step`, `swipe`, `stop`, `achievement` (.mp3): the "mechanical" pack of
-  [uisfx](https://github.com/romainsimon/uisfx) 0.4.0, dedicated to the public domain (CC0 1.0).
-- `hextech-ambience.mp3`: made for Yaver (Web Audio, rendered offline). Same licence as the app.
+- `tap`, `on`, `off`, `enter`, `spin`, `open`, `close`, `save`, `done`, `step`, `swipe`, `stop`, `bell` (.mp3):
+  made for Yaver by modal synthesis (each sound is a sequence of small impacts, such as a detent
+  snapping into its notch or a pawl striking a ratchet tooth, exciting resonators tuned like spring
+  steel, brass, a bakelite switch body and an instrument case, then a small room). Same licence as the app.
+- `strings.mp3`: a slow D-minor piece for violin, cello, double bass and harp, composed and rendered
+  for Yaver from the recorded instrument samples of the
+  [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments) npm packages (MIT licence).
+  Same licence as the app.

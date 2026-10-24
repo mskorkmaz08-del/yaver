@@ -1,16 +1,13 @@
-// Sounds and music. Interface sounds are short mechanical recordings (switches, detents, relays;
-// CC0, see sounds/CREDITS.md) played quietly through a soft low-pass, at a slightly different
-// pitch each time, and softer when they come quickly, so they don't wear on you. The background
-// music is a slow D-minor piece made for Yaver (sounds/hextech-ambience.mp3), looped with a
-// long crossfade. On the iPhone the audio session is "ambient": music from other apps keeps
+// Sounds and music. Interface sounds are small mechanisms made for Yaver by modal synthesis
+// (a detent snapping into its notch, a pawl on a ratchet, a latch, a stamp, a small clock bell;
+// see sounds/CREDITS.md), played at a slightly different pitch each time and softer when they
+// come quickly, so they don't wear on you. The background music is a slow D-minor piece for
+// violin, cello, double bass and harp (sounds/strings.mp3), rendered from recorded samples; it
+// loops seamlessly. On the iPhone the audio session is "ambient": music from other apps keeps
 // playing and the silent switch mutes Yaver.
 import * as db from './db.js';
 
-const FILES = {
-  tap: 'select', on: 'toggle-on', off: 'toggle-off', enter: 'seek', spin: 'start', open: 'open', close: 'close',
-  save: 'check', done: 'complete', step: 'progress-step', swipe: 'swipe', stop: 'stop', bell: 'achievement',
-};
-const LEVEL = { tap: 0.32, on: 0.35, off: 0.32, enter: 0.26, spin: 0.42, open: 0.45, close: 0.4, save: 0.38, done: 0.5, step: 0.2, swipe: 0.35, stop: 0.38, bell: 0.45 };
+const LEVEL = { tap: 0.34, on: 0.38, off: 0.36, enter: 0.3, spin: 0.42, open: 0.42, close: 0.4, save: 0.4, done: 0.45, step: 0.28, swipe: 0.34, stop: 0.38, bell: 0.4 };
 
 let ctx = null, sfx = null, musicBus = null, buffers = {}, loading = {}, last = {}, recent = 0, recentAt = 0;
 const fxOn = () => db.setting('sounds', true);
@@ -22,7 +19,7 @@ function audio() {
   if (!AC) return null;
   try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch { /* older iOS */ }
   ctx = new AC();
-  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6500; lp.Q.value = 0.5;
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 10000; lp.Q.value = 0.5;
   sfx = ctx.createGain(); sfx.gain.value = 1;
   sfx.connect(lp); lp.connect(ctx.destination);
   musicBus = ctx.createGain(); musicBus.gain.value = 0;
@@ -52,7 +49,7 @@ async function play(kind, { gap = 70, rate = 1, when = 0, gain = 1 } = {}) {
   last[kind] = now;
   const a = audio();
   if (!a) return;
-  const buf = await load(`${FILES[kind]}.mp3`);
+  const buf = await load(`${kind}.mp3`);
   if (!buf) return;
   const src = a.createBufferSource(); src.buffer = buf;
   src.playbackRate.value = rate * (0.96 + Math.random() * 0.08);
@@ -65,8 +62,8 @@ async function play(kind, { gap = 70, rate = 1, when = 0, gain = 1 } = {}) {
 export const tap = () => play('tap');
 export const toggle = on => play(on ? 'on' : 'off');
 export const enter = () => play('enter', { gap: 250 });
-// The engine winding up: a start, then detents running down like a ratchet.
-export const spin = () => { play('spin', { gap: 500 }); [0.12, 0.2, 0.27, 0.33].forEach((w, i) => { last.step = 0; play('step', { gap: 0, when: w, rate: 1.1 - i * 0.05, gain: 1.3 - i * 0.2 }); }); };
+// Winding a crown: a pawl clicking over the ratchet, then the spring takes it.
+export const spin = () => play('spin', { gap: 500 });
 export const open = () => { play('open', { gap: 300 }); duck(true); };
 export const close = () => { play('close', { gap: 300 }); duck(false); };
 export const save = () => play('save', { gap: 700 });
@@ -77,7 +74,8 @@ export const stop = () => play('stop', { gap: 300 });
 export const bell = () => play('bell', { gap: 1500 });
 
 // ---------- music ----------
-const MUSIC = 'hextech-ambience.mp3', FADE = 4, VOL = 0.22;
+// The piece is rendered to loop seamlessly, so copies only overlap by a short crossfade.
+const MUSIC = 'strings.mp3', FADE = 0.3, VOL = 0.24;
 let playing = false, nextAt = 0, timer = 0, ducked = false, sources = [];
 
 function schedule() {

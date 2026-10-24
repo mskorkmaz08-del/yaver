@@ -39,7 +39,7 @@ export default function shell(host, { mode, kit }) {
     const my = lerp(ya, yb, t);
     const da = A.tree.find(n => n.p === A.cwd).d, db = B.tree.find(n => n.p === B.cwd).d;
     const mx = 14 + lerp(da, db, t) * 18;
-    ctx.fillStyle = 'rgba(127,230,247,.12)'; roundRect(ctx, mx - 6, my - 15, w - mx - 4, rowH - 2, 4); ctx.fill();
+    ctx.fillStyle = 'rgba(127,178,217,.12)'; roundRect(ctx, mx - 6, my - 15, w - mx - 4, rowH - 2, 4); ctx.fill();
     ctx.strokeStyle = C.glow; ctx.lineWidth = 1; ctx.stroke();
     ids.forEach((p, i) => {
       const n = S.tree[i];
@@ -86,7 +86,7 @@ export default function shell(host, { mode, kit }) {
     ctx.strokeStyle = C.brass; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(lx + colW + 4, top + 60); ctx.lineTo(rx - 4, top + 60); ctx.stroke();
     text(ctx, '|', (lx + colW + rx) / 2, top + 52, { size: 16, color: C.brassHi, align: 'center', mono: true, weight: 700 });
-    const line = (x, y, s, a, col) => { ctx.globalAlpha = a; ctx.fillStyle = 'rgba(216,246,251,.06)'; roundRect(ctx, x, y - 14, colW, rowH - 3, 3); ctx.fill(); ctx.save(); ctx.beginPath(); ctx.rect(x, y - 14, colW, rowH); ctx.clip(); text(ctx, s, x + 5, y, { size: 11.5, color: col, mono: true }); ctx.restore(); ctx.globalAlpha = 1; };
+    const line = (x, y, s, a, col) => { ctx.globalAlpha = a; ctx.fillStyle = 'rgba(233,237,241,.06)'; roundRect(ctx, x, y - 14, colW, rowH - 3, 3); ctx.fill(); ctx.save(); ctx.beginPath(); ctx.rect(x, y - 14, colW, rowH); ctx.clip(); text(ctx, s, x + 5, y, { size: 11.5, color: col, mono: true }); ctx.restore(); ctx.globalAlpha = 1; };
     // Going from A to B: first A's output slides over to become the input, then B's output
     // comes out of the pipe. Lines the command drops stay behind, faded.
     const yAt = i => top + i * rowH;

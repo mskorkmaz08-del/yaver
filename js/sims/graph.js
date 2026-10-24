@@ -105,7 +105,7 @@ export default function graph(host, { mode, kit }) {
       const queued = F.box?.includes(i);
       const cur = F.cur === i;
       const pulse = cur ? 1 + 0.12 * Math.sin(t * Math.PI) : 1;
-      node(ctx, x, y, 15 * pulse, visited ? 'rgba(63,182,201,.45)' : queued ? 'rgba(231,176,75,.3)' : C.bg, cur ? C.amber : visited ? C.glow : C.brass, label(i), kind === 'dijkstra' ? (F.dist[i] === Infinity ? '∞' : String(F.dist[i])) : undefined);
+      node(ctx, x, y, 15 * pulse, visited ? 'rgba(127,178,217,.45)' : queued ? 'rgba(255,181,71,.3)' : C.bg, cur ? C.amber : visited ? C.glow : C.brass, label(i), kind === 'dijkstra' ? (F.dist[i] === Infinity ? '∞' : String(F.dist[i])) : undefined);
     });
     if (F.box) text(ctx, `${kind === 'bfs' ? 'queue' : 'stack'}: [ ${F.box.map(label).join(', ')} ]`, 14, h - 14, { size: 13, color: C.amber, mono: true });
     text(ctx, { bfs: 'Breadth-first search', dfs: 'Depth-first search', dijkstra: 'Dijkstra from A' }[kind], 14, 22, { size: 15, color: C.brassHi, weight: 600 });
@@ -115,12 +115,12 @@ export default function graph(host, { mode, kit }) {
     const F = t < 0.5 ? A : B, T = F.tree;
     const xy = n => ({ x: 20 + n.x * (w - 40), y: 50 + n.d * ((h - 80) / 4) });
     T.forEach(n => { if (n.parent >= 0) { const a = xy(T[n.parent]), b = xy(n); ctx.strokeStyle = C.brass; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } });
-    T.forEach((n, i) => { const p = xy(n); const on = F.path?.includes(i); node(ctx, p.x, p.y, 15, on ? 'rgba(63,182,201,.45)' : C.bg, on ? C.glow : C.brass, String(n.v)); });
+    T.forEach((n, i) => { const p = xy(n); const on = F.path?.includes(i); node(ctx, p.x, p.y, 15, on ? 'rgba(127,178,217,.45)' : C.bg, on ? C.glow : C.brass, String(n.v)); });
     if (F.ins !== undefined && F.path?.length) {
       const last = T[F.path.at(-1)] ? xy(T[F.path.at(-1)]) : { x: w / 2, y: 50 };
       const prevP = A.path?.length && A.tree[A.path.at(-1)] ? xy(A.tree[A.path.at(-1)]) : last;
       const x = lerp(prevP.x, last.x, t) + 22, y = lerp(prevP.y, last.y, t) - 18;
-      ctx.fillStyle = 'rgba(231,176,75,.9)'; ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,181,71,.9)'; ctx.beginPath(); ctx.arc(x, y, 11, 0, Math.PI * 2); ctx.fill();
       text(ctx, String(F.ins), x, y + 4, { size: 11, color: '#14120e', align: 'center', weight: 700 });
     }
     text(ctx, 'Binary search tree', 14, 22, { size: 15, color: C.brassHi, weight: 600 });

@@ -54,7 +54,7 @@ export default function search(host, { mode, kit }) {
       const inRange = i >= F.range[0] && i <= F.range[1];
       const hit = F.found !== undefined && (F.found === i || (Array.isArray(F.found) && F.found.includes(i)) || (F.found === true && inRange));
       roundRect(ctx, x0 + i * cw + 2, y, cw - 4, ch, 3);
-      ctx.fillStyle = hit ? 'rgba(127,210,138,.35)' : inRange ? 'rgba(217,181,108,.22)' : 'rgba(216,246,251,.04)';
+      ctx.fillStyle = hit ? 'rgba(125,211,168,.35)' : inRange ? 'rgba(255,181,71,.22)' : 'rgba(233,237,241,.04)';
       ctx.fill();
       ctx.strokeStyle = hit ? C.green : inRange ? C.brass : C.faint; ctx.lineWidth = 1.2; ctx.stroke();
       text(ctx, String(arr[i]), x0 + i * cw + cw / 2, y + ch / 2 + 5, { size: Math.min(16, cw * 0.42), color: inRange ? C.ink : C.dim, align: 'center', mono: true });

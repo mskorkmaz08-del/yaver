@@ -96,7 +96,7 @@ export default function trace(host, { code, kit }) {
     // brass bar on the current line
     if (A) {
       const y = TOPC + (cur - 1 - first) * LH;
-      ctx.fillStyle = 'rgba(231,176,75,.18)'; roundRect(ctx, 8, y - 1, w - 16, LH, 3); ctx.fill();
+      ctx.fillStyle = 'rgba(255,181,71,.18)'; roundRect(ctx, 8, y - 1, w - 16, LH, 3); ctx.fill();
       ctx.fillStyle = C.amber; ctx.fillRect(8, y - 1, 3, LH);
     }
     ctx.save(); ctx.beginPath(); ctx.rect(0, TOPC - 2, w, codeH + 4); ctx.clip();
@@ -111,7 +111,7 @@ export default function trace(host, { code, kit }) {
 
   function drawState(ctx, w, h, y0, A, B, t) {
     const S = t < 0.5 ? A : B;
-    ctx.strokeStyle = 'rgba(217,181,108,.35)'; ctx.beginPath(); ctx.moveTo(10, y0); ctx.lineTo(w - 10, y0); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,181,71,.35)'; ctx.beginPath(); ctx.moveTo(10, y0); ctx.lineTo(w - 10, y0); ctx.stroke();
     // variables
     let x = 12, y = y0 + 10;
     const prev = A && B && t >= 0.5 ? A.vars : null;
@@ -126,9 +126,9 @@ export default function trace(host, { code, kit }) {
       if (y > h - 70) break;
       const changed = prev && prev[k] !== v;
       const glow = changed ? 1 - Math.min(1, (t - 0.5) * 2) * 0.6 : 0;
-      ctx.fillStyle = changed ? `rgba(127,230,247,${0.12 + 0.3 * glow})` : 'rgba(216,246,251,.06)';
+      ctx.fillStyle = changed ? `rgba(127,178,217,${0.12 + 0.3 * glow})` : 'rgba(233,237,241,.06)';
       roundRect(ctx, x, y, wd, 21, 4); ctx.fill();
-      ctx.strokeStyle = changed ? C.glow : 'rgba(217,181,108,.4)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = changed ? C.glow : 'rgba(255,181,71,.4)'; ctx.lineWidth = 1; ctx.stroke();
       ctx.save(); ctx.beginPath(); ctx.rect(x, y, wd, 21); ctx.clip();
       text(ctx, label, x + 8, y + 15, { size: 11.5, color: changed ? C.glow : C.ink, mono: true });
       ctx.restore();
@@ -142,14 +142,14 @@ export default function trace(host, { code, kit }) {
     ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let px = 18; px < w - 16; px += 14) { ctx.beginPath(); ctx.arc(px, ty + 4, 1.4, 0, Math.PI * 2); ctx.fill(); }
     const last = out.slice(-2);
     if (!last.length) text(ctx, 'output appears here', 18, ty + 30, { size: 12, color: '#8a7f68', italic: true });
-    last.forEach((l, i) => text(ctx, l, 18, ty + 22 + i * 16, { size: 12, color: '#2c4a7a', mono: true }));
+    last.forEach((l, i) => text(ctx, l, 18, ty + 22 + i * 16, { size: 12, color: '#1a1f25', mono: true }));
   }
 
   function idle() {
     const { ctx, w, h } = st;
     plate(ctx, w, h);
     const y = drawCode(ctx, w, h, null, null, 0);
-    ctx.strokeStyle = 'rgba(217,181,108,.35)'; ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(w - 10, y); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,181,71,.35)'; ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(w - 10, y); ctx.stroke();
     const msg = status === 'loading' ? 'Starting Python… (a one-time download)' : status === 'error' ? message : 'Tap Trace to run it line by line';
     text(ctx, msg, 14, y + 26, { size: 13, color: status === 'error' ? C.red : C.dim, italic: true });
   }
