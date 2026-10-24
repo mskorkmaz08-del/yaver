@@ -31,11 +31,31 @@ export async function useCode(raw) {
   return c;
 }
 
+// On the Mac itself (a computer, not the phone) Yaver finds a running bridge at
+// 127.0.0.1 and takes its address and token from it: nothing to paste or set up.
+const LOCAL = 'http://127.0.0.1:8787';
+export const onComputer = () => matchMedia('(pointer: fine)').matches;
+let pairedAt = 0;
+export async function pairLocal(force = false) {
+  if (!onComputer() || (!force && Date.now() - pairedAt < 60000)) return false;
+  pairedAt = Date.now();
+  try {
+    const res = await fetch(`${LOCAL}/pair`, { signal: AbortSignal.timeout(900) });
+    if (!res.ok) return false;
+    const { url, token } = await res.json();
+    if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(url || '') || !token) return false;
+    if (url !== base()) await db.setSetting('macUrl', url);
+    if (token !== db.setting('macToken', '')) await db.setSetting('macToken', token);
+    last = { at: Date.now(), ok: true };
+    return true;
+  } catch { return false; }
+}
+
 // Quick check before each message; remembered for 30 seconds so a chat stays snappy.
 export async function macOnline(force = false) {
-  if (!macConfigured()) return false;
+  if (!macConfigured()) return pairLocal(force);
   if (!force && Date.now() - last.at < (last.ok ? 30000 : 60000)) return last.ok;
-  const ok = await healthy();
+  const ok = (await healthy()) || (await pairLocal(force));
   last = { at: Date.now(), ok };
   // The bridge's link changes when it restarts; look up the new one in the background
   // so this message isn't held up, and check again right away if it moved.
@@ -71,7 +91,8 @@ export async function rediscover() {
 }
 
 export async function testMac() {
-  if (!macConfigured()) throw new Error('Add the bridge address and token first.');
+  if (await pairLocal(true)) return 'Connected to Claude on this Mac.';
+  if (!macConfigured()) throw new Error(onComputer() ? 'No bridge running on this Mac. Run the one-line setup below once.' : 'Add the bridge address and token first.');
   if (location.protocol === 'https:' && /^http:\/\/(?!localhost|127\.)/.test(base())) throw new Error('The iPhone blocks plain http:// addresses from Yaver. The bridge address must start with https://.');
   let res;
   if (!(await healthy())) await rediscover();

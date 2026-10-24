@@ -15,9 +15,10 @@ export const FILES = {
   'js/data.js': 'Business logic for money, meetings, study, roadmap, diet and tasks (plus the çetele summary in the overview). Screens and AI tools both call these functions, so numbers always match.',
   'js/util.js': 'Dates, money formatting, HTML escaping, bottom-sheet forms, toasts, haptics, photo shrinking, Markdown.',
   'js/ui.js': 'Small SVG drawing helpers: progress rings, bar lists, columns, empty states, roman numerals, the lesson step strip, the enamel study subdial and the brass lesson stopwatch (steps as segments round the dial, elapsed time in teal, a sweeping hand).',
-  'js/sound.js': 'Sounds, synthesized with Web Audio (no audio files): a soft click for buttons, a latch on entering a screen, a ratchet and hum when the engine is tapped, a breath and rising tone when the chat opens (falling when it closes), a small chime on saving and a three-note one on finishing a lesson, a faint tick when scrubbing a simulator. Quiet, low-passed, slightly varied each time, and softer when they come quickly. Ambient audio session on iPhone, so the silent switch mutes it and music keeps playing. Off switch in Settings.',
+  'js/sound.js': 'Sounds and music. Interface sounds are short recorded mechanical clicks, detents and relays (CC0, sounds/), played quietly through a soft low-pass at a slightly different pitch each time and softer when they come quickly: a click for buttons, a latch on entering a screen, a ratchet when the engine is tapped, a switch for toggles, a check on saving, a chime when a lesson is mastered, a bell when focus time is up. Background music: a slow D-minor piece looped with a 4-second crossfade on its own gain, lowered while the chat or focus mode is open, stopped during voice chat and while the app is hidden. Ambient audio session on iPhone, so the silent switch mutes it and other music keeps playing. Separate switches in Settings.',
   'js/mech.js': 'Mechanisms: draws real meshing gears as SVG (correct tooth counts and phase so teeth interlock), the hextech engine (planetary gear train, pistons on crank-sliders, gimbal rings, energy arcs and a hextech crystal: a tall faceted blue gem in brass claws with a breathing light inside), the gear Yaver button and small gear pairs. One drive shaft angle turns them all: it idles slowly, scrolling, taps and saves add speed, and it pauses offscreen.',
   'js/sims.js': 'The workshop: picks a simulator and setting for each lesson from its track and title (every lesson gets one), loads it on demand, and gives it a kit: a blueprint canvas at the screen\'s pixel ratio, brass controls, an animation loop that pauses offscreen, and a timeline with play, step and a scrubber that eases between precomputed states.',
+  'js/focus.js': 'Focus mode: a full-screen study screen. From a Study block the screen goes dark with only the subject; from a lesson only the lesson paper stays. A small stopwatch chip shows the time (tap it to fade it to a faint dot), the tab bar and Yaver button hide, the screen stays awake (Wake Lock), the laptop goes full screen, the music steps back, and a soft bell rings when the planned time is up. Esc or × leaves; changing screens leaves too.',
   'js/sims/circuit.js': 'Circuit bench: Ohm\'s law, series, parallel, divider, LED (burns out over its current), RC charging, transistor switching a motor with a flyback diode, power ratings, and an Arduino board running blink, button or potentiometer code. Charge dots flow at the current\'s speed past brass meters.',
   'js/sims/sort.js': 'Sorting engine: selection, insertion, quick and merge sort with bars that glide to their new places, comparison and swap counters.',
   'js/sims/search.js': 'Search rig: binary search, two pointers and a sliding window with pointers that glide over the array.',
@@ -45,9 +46,8 @@ export const FILES = {
   'js/ai/claude.js': 'Anthropic API client (official SDK): system prompt, agent loop with streaming, web search, prompt caching, fallbacks, error messages.',
   'js/ai/gemini.js': 'Google Gemini client over REST: same agent loop, tools translated to function declarations, auto-picks a stable free Flash model.',
   'js/ai/live.js': 'Live voice chat (mic, model choice and connection start together; speech before the session is ready is buffered; quick end-of-turn detection; ends after 90 s of quiet; resumable sessions with context compression; if no answer starts 7 s after you stop talking, or the connection drops, it reconnects with the resumption handle and asks again; ask_claude tool sends hard questions to Claude on the Mac): streams the mic (16 kHz PCM from an AudioWorklet) to the Gemini Live API over a WebSocket and plays its 24 kHz voice back, with barge-in, transcripts into the chat, and Yaver\'s tools.',
-  'js/ai/wake.js': 'Wake word: while the app is on screen, phone speech recognition listens in short rounds for "Yaver" and starts voice chat; pauses in the background and during voice chat.',
   'js/ai/voice.js': 'Reply voice. Default: the iPhone\'s own voice (instant, offline), preferring a British male Premium/Enhanced voice for the Jarvis feel. Optional: Gemini text-to-speech (free tier, same key), voiced sentence by sentence while the reply streams, with leading silence and the static burst after the last word cut out; picks a TTS model the key can use, plays the 24 kHz PCM through Web Audio (optional Jarvis style: British delivery prompt plus a light filter and short echo), and falls back to the iPhone voice for 10 minutes when it fails.',
-  'js/ai/mac.js': 'Client for the bridge on the Mac: connection code, health check (cached 30 s), finding the new link after a restart via ntfy, and an agent loop where the Mac thinks and the phone runs the tools.',
+  'js/ai/mac.js': 'Client for the bridge on the Mac: on the laptop it finds a bridge running on the same Mac at 127.0.0.1 and takes its address and token by itself (nothing to paste); on the phone the connection code, health check (cached 30 s), finding the new link after a restart via ntfy, and an agent loop where the Mac thinks and the phone runs the tools.',
   'js/ai/provider.js': 'Chooses Gemini or Claude, sorts keys into the right slot by prefix, saves and tests keys.',
   'js/views/home.js': 'Home: YAVER line with the date, the next course block as a printed lecture card with its steps, the hextech engine (tap it to spin it up) with Çetele and study readouts, cards due / next meeting / spent today, AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
   'js/views/study.js': 'Study: streak and week stats, roadmap plan, practice counters, focus timer, heatmap, subjects, sessions; the course Today card.',
@@ -58,9 +58,9 @@ export const FILES = {
   'js/views/cetele.js': 'Çetele: daily spiritual minimums with +/− counters and done checks, day switcher, streak, and the edit-list sheet.',
   'js/views/diet.js': 'Diet: calories and macro rings, meals by type, water.',
   'js/views/map.js': 'Map: Leaflet map, search, category chips, results with distance, locate button.',
-  'js/views/settings.js': 'Settings: AI (Gemini, Claude, Mac bridge), voice, sounds on/off, you, goals, sync, data export/import/erase, install help.',
-  'bridge/yaver-bridge.mjs': 'Runs on the Mac. Small HTTP server (token-protected) that runs `claude -p` with no built-in tools and structured JSON output, under the Claude subscription. Starts a Cloudflare quick tunnel, prints the connection code and posts each new link to ntfy.',
-  'bridge/README.md': 'Setup guide for the Mac bridge: one install, one command, one pasted code.',
+  'js/views/settings.js': 'Settings as collapsible groups that save each change as you make it: Assistant (Gemini, Claude), Claude on your Mac (auto-connect on the laptop, connection code on the phone), Voice, Sound and music, You and goals, Sync, Your data, Install, Handbook. Shows the running version.',
+  'bridge/yaver-bridge.mjs': 'Runs on the Mac. Small HTTP server (token-protected) that runs `claude -p` with no built-in tools and structured JSON output, under the Claude subscription. Starts a Cloudflare quick tunnel, prints the connection code and posts each new link to ntfy. `/pair` hands the token to Yaver open on the same Mac (local requests from Yaver\'s page only). `--install` makes it a login item (LaunchAgent) that starts with the Mac and restarts itself; `--uninstall` removes it.',
+  'bridge/README.md': 'Setup guide for the Mac bridge: one pasted line installs it as a login item; the laptop connects by itself, the phone pastes one code.',
   'data/ml-roadmap.json': 'Bundled copy of the 52-week ML engineer roadmap (phases, topics, projects, checkpoints).',
   'data/course/course.json': 'Course metadata: start date, sleep window, thresholds, card intervals, tracks, lanes, phases, weeks.',
   'data/course/urls.json': 'Verified resource links used by lessons.',
@@ -96,6 +96,7 @@ export const FOLDERS = {
   'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps (recall questions name the earlier lesson that taught them), questions, review cards and optional LeetCode problems.',
   'vendor/': 'Third-party code shipped with the app: the Anthropic SDK bundled with esbuild, and Leaflet for the map.',
   'icons/': 'Home Screen and app icons: the brass Yaver gear with its teal gemstone (v25).',
+  'sounds/': 'Audio: the interface sounds (recorded mechanical switches and detents from the uisfx pack, CC0) and hextech-ambience.mp3, the 128-second background loop made for Yaver. CREDITS.md lists the sources.',
   'fonts/': 'Self-hosted fonts (Cormorant Garamond, Cinzel, and Caveat for the notebook handwriting; SIL Open Font License), cached by the service worker so they work offline.',
 };
 
@@ -109,7 +110,7 @@ export const LAYERS = [
     mods: ['js/data.js', 'js/cetele.js', 'js/course.js', 'js/reminders.js', 'js/places.js', 'js/sync.js', 'js/crypto.js'] },
   { id: 'ai', name: 'AI agent', tag: 'tools · routing · providers', color: '#b8f34a',
     text: 'The chat runs an agent loop: send the conversation and tool list to a model, run the tool calls it asks for on the phone, send results back, repeat until it answers in text.',
-    mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/live.js', 'js/ai/wake.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
+    mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/live.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
   { id: 'ui', name: 'Screens', tag: 'views · router', color: '#ffb547',
     text: 'One file per screen, each with a render function that draws from memory. app.js routes between them and redraws the current one whenever data changes.',
     mods: ['js/app.js', 'js/mech.js', 'js/sims.js', 'js/views/home.js', 'js/views/cetele.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
@@ -120,7 +121,7 @@ export const SERVICES = [
   { id: 'pages', name: 'GitHub Pages', role: 'Serves the app files. Never sees your data.', proto: 'HTTPS GET, static files', layer: 'store' },
   { id: 'gemini', name: 'Google Gemini', role: 'Free AI, the live voice chat (Live API over a WebSocket) and an optional reply voice. Called with your key from the phone.', proto: 'REST streamGenerateContent (SSE)', layer: 'ai' },
   { id: 'anthropic', name: 'Anthropic API', role: 'Paid Claude with web search and caching.', proto: 'Messages API via official SDK (SSE)', layer: 'ai' },
-  { id: 'mac', name: 'Mac bridge', role: 'Claude Code on your Mac, under your subscription.', proto: 'HTTPS JSON /health, /chat', layer: 'ai' },
+  { id: 'mac', name: 'Mac bridge', role: 'Claude Code on your Mac, under your subscription. Yaver on the laptop reaches it directly at 127.0.0.1; the phone through the tunnel.', proto: 'JSON /pair (local only), /health, /chat', layer: 'ai' },
   { id: 'cloudflare', name: 'Cloudflare Tunnel', role: 'Free quick tunnel the bridge opens, giving the Mac a public HTTPS link (changes on each restart).', proto: 'cloudflared, https://*.trycloudflare.com', layer: 'ai' },
   { id: 'ntfy', name: 'ntfy.sh', role: 'Mailbox where the bridge posts its current link so the phone finds it after a restart.', proto: 'HTTPS POST/GET on a topic named by a hash of the token', layer: 'ai' },
   { id: 'gist', name: 'GitHub Gist', role: 'Encrypted sync blob shared by your devices.', proto: 'GitHub REST, AES-GCM ciphertext', layer: 'logic' },
@@ -153,7 +154,7 @@ export const LANES = ['You', 'Chat', 'Router', 'Model', 'Tools', 'Logic', 'Stora
 export const FLOWS = {
   mac: { label: 'Claude on your Mac', steps: [
     [0, 1, 'You type "spent 120 on lunch"', 'assistant.js adds your message to the Mac history (chat.mapi) and shows a typing bubble.'],
-    [1, 2, 'Is the Mac reachable?', 'mac.js calls GET /health with the bridge token (2.5 s timeout, remembered for 30 s).'],
+    [1, 2, 'Is the Mac reachable?', 'mac.js calls GET /health with the bridge token (remembered for 30 s). On the laptop, if nothing is set up, it asks http://127.0.0.1:8787/pair first and takes the address and token from the bridge running on the same Mac.'],
     [2, 3, 'POST /chat to the bridge', 'System prompt + today\'s context + transcript + tool list go to the Mac, where the bridge runs `claude -p` with structured JSON output.'],
     [3, 4, 'tool_calls: add_expense', 'Claude answers {reply, tool_calls}. The phone, not the Mac, runs each tool.'],
     [4, 5, 'D.addExpense(120, Food)', 'tools.js validates and calls the same function the Money screen uses.'],
@@ -198,6 +199,7 @@ export const STACK = [
   ['Map', 'Leaflet 1.9.4 + OpenStreetMap, Nominatim, Overpass'],
   ['Sync', 'GitHub Gist, AES-GCM 256 + PBKDF2-SHA-256 (WebCrypto)'],
   ['Remote access to Mac', 'Cloudflare quick tunnel (cloudflared), link rediscovered via ntfy.sh'],
+  ['Sound', 'Recorded mechanical UI sounds (uisfx, CC0) and a 128 s background loop rendered with an OfflineAudioContext, all played through Web Audio'],
   ['Tests', 'Playwright on Chromium (iPhone 13 and 1440×900), mocked network'],
 ];
 
@@ -206,6 +208,7 @@ export const BROWSER_APIS = [
   ['Web Crypto (subtle)', 'sync encryption'], ['CompressionStream', 'gzip before encryption'], ['Geolocation', 'nearby places'],
   ['Web Speech (recognition, synthesis)', 'voice in, read aloud, voice chat loop'], ['Web Audio', 'live voice (AudioWorklet mic capture, scheduled playback), Gemini reply voice'], ['getUserMedia', 'microphone for live voice'], ['WebSocket', 'Gemini Live session'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'], ['Canvas 2D', 'lesson simulators'], ['Web Audio', 'synthesized interface sounds'], ['Audio Session API', 'ambient sounds that respect the silent switch'], ['IntersectionObserver', 'pausing mechanisms and simulators offscreen, revealing cards'], ['WebAssembly', 'Python in the code tracer'],
   ['StorageManager.persist()', 'ask iOS not to evict data'],
+  ['Web Audio (decoded buffers)', 'interface sounds and the crossfaded music loop'], ['Screen Wake Lock', 'focus mode keeps the screen on'], ['Fullscreen API', 'focus mode on the laptop'],
 ];
 
 export const SECURITY = [
@@ -214,6 +217,8 @@ export const SECURITY = [
   'Sync data is encrypted on the device (AES-GCM 256, PBKDF2-SHA-256 with 310,000 iterations); GitHub only stores ciphertext.',
   'The Mac bridge listens only on 127.0.0.1; the Cloudflare tunnel forwards to it. Every request needs the random 144-bit token, CORS allows only the Yaver origin, and Claude Code runs with all built-in tools disabled, so a caller can only get text and tool suggestions back.',
   'The tunnel link is public while the bridge runs; the token is what guards it. The connection code holds the token, so treat it like a password. The phone sends the token only to trycloudflare.com links (or the address you typed).',
+  'Yaver on the same Mac gets the token from /pair, which answers only requests made on that Mac (loopback address, local host name, no Cloudflare header) from the Yaver origin; other web pages cannot read the answer, and the tunnel cannot reach it.',
+  'Yaver listens to the microphone only after you tap the mic or start voice chat; there is no always-on wake word (removed in v27).',
   'The ntfy topic name is a hash of the token, and the message is only the link, never the token.',
   'The code tracer runs lesson code inside Pyodide in the page (WebAssembly), with input() and print() replaced; it has no access to your files and the run stops after 400 steps.',
   'Risk to know: anyone with your unlocked phone can read stored keys, like any saved password. Use spend limits for paid APIs.',
@@ -225,6 +230,7 @@ export const RECIPES = [
   ['Add a screen', 'Create js/views/name.js with render(root, go), register it in VIEWS in js/app.js, add it to FILES in sw.js, and describe it in handbook/content.js.'],
   ['Change Yaver\'s tone', 'Edit STATIC_SYSTEM in js/ai/claude.js (Gemini and the Mac use the same prompt).'],
   ['Add a simulator', 'Create js/sims/name.js exporting default (host, { mode, code, lesson, kit }); use kit.stage, kit.controls and kit.timeline. Add rules to RULES in js/sims.js, a name to SIM_NAMES, the file to FILES in sw.js, and a line here.'],
+  ['Add a sound', 'Put a short mp3 in sounds/, add it to FILES and LEVEL in js/sound.js and to the precache list in sw.js, credit it in sounds/CREDITS.md.'],
   ['Publish a change', 'Bump VERSION in sw.js, update the handbook, run the tests, push to main. GitHub Pages deploys in about a minute.'],
 ];
 

@@ -9,6 +9,7 @@ import { studyForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
 import * as C from '../course.js';
 import { todayCard, startCard, bindToday } from './course.js';
+import { enterFocus } from '../focus.js';
 
 let tick;
 
@@ -38,7 +39,7 @@ export function render(root, go) {
       <div><b>${mins(w.thisWeek)}</b><small>${delta >= 0 ? '+' : '−'}${mins(Math.abs(delta))} vs last wk</small></div>
       <div><b>${(w.totalMin / 60).toFixed(w.totalMin < 600 ? 1 : 0)}h</b><small>total · best ${s.streak.best}d</small></div>
     </div>
-    ${raw(weekSegments(s.streak.perDay, s.dailyGoalMin))}
+    ${raw(course ? '' : weekSegments(s.streak.perDay, s.dailyGoalMin))}
 
     ${raw(course ? todayCard() + html`<div class="btn-row"><button class="btn ghost" data-course>${raw(icon('book'))} Open course</button><button class="btn ghost" data-cards>${raw(icon('check'))} ${C.dueCount()} cards due</button></div>` : C.ready() ? startCard() : '')}
 
@@ -66,13 +67,14 @@ export function render(root, go) {
       ${raw(t ? html`
         <div class="focus-clock" data-clock>00:00</div>
         <div class="focus-sub" data-left></div>
-        <div class="btn-row"><button class="btn ghost" data-cancel>Discard</button><button class="btn primary" data-stop>Stop & log</button></div>` : html`
+        <div class="btn-row"><button class="btn ghost" data-cancel>Discard</button><button class="btn ghost" data-focus>${raw(icon('target'))} Focus mode</button><button class="btn primary" data-stop>Stop & log</button></div>` : html`
         <input list="subj" data-subject placeholder="Subject, e.g. Algorithms" value="${subjects[0]?.name || ''}" aria-label="Subject">
         <datalist id="subj">${raw(subjects.map(x => html`<option value="${x.name}">`).join(''))}</datalist>
-        <div class="presets">${raw([25, 45, 60, 90].map(m => `<button class="chip" data-start="${m}">${m}m</button>`).join(''))}</div>`)}
+        <div class="presets">${raw([25, 45, 60, 90].map(m => `<button class="chip" data-start="${m}">${m}m</button>`).join(''))}</div>
+        <p class="small muted">Starting a block opens focus mode: the screen goes quiet with only a small timer.</p>`)}
     </section>
 
-    <section class="card">
+    ${raw(course && !rm.length ? '' : html`<section class="card">
       <div class="card-head"><p class="label">roadmap</p><button class="link" data-add-ms>+ milestones</button></div>
       ${raw(plan || course ? '' : html`<button class="btn primary" data-load-plan>${raw(icon('download'))} Load the ML Engineer roadmap (52 weeks)</button>`)}
       ${raw(plan && rm.length ? rm.map(r => html`
@@ -88,7 +90,7 @@ export function render(root, go) {
             ${raw(next.map(m => html`<label class="task"><input type="checkbox" data-ms="${m.id}"><span>${m.title}</span></label>`).join('') || '<p class="small accent mono">complete</p>')}
           </div>`;
       }).join('<div style="height:6px"></div>') : '<p class="small muted">No roadmap yet. Add milestones (topics, chapters, projects) per subject and tick them off here, or ask Yaver to build one.</p>')}
-    </section>
+    </section>`)}
 
     <div class="btn-row">
       <button class="btn ghost" data-quiz>${raw(icon('terminal'))} Quiz me</button>
@@ -120,7 +122,7 @@ export function render(root, go) {
   root.querySelector('[data-cards]')?.addEventListener('click', () => go('lesson/review'));
   root.querySelector('[data-plan]').onclick = () => openAssistant('Using my roadmap, study stats and calendar, plan concrete study blocks for the next 7 days. Keep it realistic around my meetings.');
   root.querySelector('[data-quiz]').onclick = () => openAssistant('Quiz me: 5 short questions on what I have studied recently (check my sessions and roadmap first). One question at a time; wait for my answer, then correct me briefly.');
-  root.querySelector('[data-add-ms]').onclick = async () => {
+  root.querySelector('[data-add-ms]')?.addEventListener('click', async () => {
     const v = await sheet({
       title: 'Add milestones',
       body: '<p class="small muted">One per line, in the order you want to do them.</p>',
@@ -131,7 +133,7 @@ export function render(root, go) {
     });
     const items = (v?.items || '').split('\n').map(x => x.trim()).filter(Boolean);
     if (v?.subject && items.length) { await D.addMilestones(v.subject, items); toast(`${items.length} milestones added`); }
-  };
+  });
   root.querySelector('[data-load-plan]')?.addEventListener('click', async () => {
     try {
       const plan = await (await fetch('data/ml-roadmap.json')).json();
@@ -154,7 +156,9 @@ export function render(root, go) {
   root.querySelectorAll('[data-start]').forEach(b => (b.onclick = () => {
     const subject = root.querySelector('[data-subject]').value.trim() || 'General';
     haptic();
-    db.setSetting('timer', { subject, start: Date.now(), plannedMin: Number(b.dataset.start) });
+    const plannedMin = Number(b.dataset.start);
+    db.setSetting('timer', { subject, start: Date.now(), plannedMin });
+    focusOn(subject, plannedMin);
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
   }));
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = async () => {
@@ -185,7 +189,13 @@ export function render(root, go) {
       toast(`Logged ${m} min · ${t.subject}`);
     };
     root.querySelector('[data-cancel]').onclick = () => { clearInterval(tick); db.setSetting('timer', null); };
+    root.querySelector('[data-focus]').onclick = () => focusOn(t.subject, t.plannedMin);
   }
+}
+
+// Full-screen focus: a dark, empty screen with the subject and a small timer.
+function focusOn(subject, planned) {
+  enterFocus({ mode: 'blank', title: subject, planned, start: () => timer()?.start ?? null });
 }
 
 function heatmap(perDay, goal) {

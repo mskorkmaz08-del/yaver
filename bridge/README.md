@@ -6,6 +6,18 @@ Your data stays on the phone. The Mac only receives the conversation and the lis
 
 Note: the subscription is meant for Anthropic's own apps, including Claude Code. Heavy use through the bridge counts against your normal Claude usage limits.
 
+## The quick way (v27): Yaver on your MacBook
+
+1. Claude Code signed in once: run `claude`, type `/login`, then `/exit`.
+2. Paste this line into Terminal once (Yaver → Settings → Claude on your Mac has it with a Copy button):
+   ```
+   mkdir -p ~/yaver-bridge && curl -fsSL -o ~/yaver-bridge/yaver-bridge.mjs https://raw.githubusercontent.com/mskorkmaz08-del/yaver/main/bridge/yaver-bridge.mjs && node ~/yaver-bridge/yaver-bridge.mjs --install
+   ```
+
+That's all. The bridge now runs in the background and starts with the Mac. Yaver open in a browser on the same Mac finds it by itself (it asks `http://127.0.0.1:8787/pair`, which only answers Yaver on this Mac) and uses Claude for chat. Remove it with `node ~/yaver-bridge/yaver-bridge.mjs --uninstall`. Its log is `~/yaver-bridge/bridge.log`; the connection code for the iPhone is printed there too.
+
+The rest of this page is for using it from the iPhone.
+
 ## One-time setup on the Mac
 
 1. **Claude Code, signed in with your subscription.** Run `claude`. If it's missing, install it from claude.com/claude-code. Inside it, type `/login`, choose your Claude account (Pro or Max), then `/exit`. Make sure `echo $ANTHROPIC_API_KEY` prints nothing; if a key is set, Claude Code bills the API instead of your subscription.

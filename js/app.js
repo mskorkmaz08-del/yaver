@@ -2,10 +2,10 @@
 // re-draws it whenever data changes (from a form or from Claude).
 import * as db from './db.js';
 import { $, sheet, toast } from './util.js';
-import { initAssistant, openAssistant, startVoiceChat } from './ai/assistant.js';
+import { initAssistant, openAssistant, routeChanged } from './ai/assistant.js';
+import { exitFocus } from './focus.js';
 import { saveKey, sortKeys } from './ai/provider.js';
-import { useCode } from './ai/mac.js';
-import { initWake } from './ai/wake.js';
+import { useCode, pairLocal } from './ai/mac.js';
 import { unlockAudio } from './ai/voice.js';
 import * as home from './views/home.js';
 import * as money from './views/money.js';
@@ -39,7 +39,7 @@ let param = '';
 export function go(name, arg = '') {
   if (name.includes('/')) [name, arg] = [name.slice(0, name.indexOf('/')), decodeURIComponent(name.slice(name.indexOf('/') + 1))];
   if (!VIEWS[name]) name = 'home';
-  if (current !== name || param !== arg) VIEWS[current].cleanup?.();
+  if (current !== name || param !== arg) { VIEWS[current].cleanup?.(); exitFocus(); routeChanged(); }
   current = name;
   param = arg;
   const hash = arg ? `${name}/${encodeURIComponent(arg)}` : name;
@@ -159,8 +159,10 @@ async function start() {
   // A soft click for every button; the Yaver gear and the engine make their own sounds.
   document.addEventListener('pointerdown', e => {
     const b = e.target.closest('button, a, label, .chip, select');
-    if (b && !b.closest('#fab') && !e.target.closest('[data-engine]')) sound.tap();
+    if (b && !b.closest('#fab') && !e.target.closest('[data-engine]') && !b.querySelector('input[type=checkbox]') && !e.target.matches('input[type=checkbox]')) sound.tap();
   }, { capture: true, passive: true });
+  // Switches and checkboxes click on and off.
+  document.addEventListener('change', e => { if (e.target.matches?.('input[type=checkbox]')) sound.toggle(e.target.checked); }, true);
   mech.scan(document);
   $('#fab').onclick = () => openAssistant();
   // On a laptop the assistant button lives in the sidebar.
@@ -175,16 +177,16 @@ async function start() {
   // Chrome/Edge on a computer: keep the install prompt for the button in Settings.
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.yaverInstall = e; });
   initSync();
-  // Say "Yaver" while the app is open to start voice chat. The first tap anywhere
-  // also unlocks sound, so a wake-word session can speak straight away.
-  initWake(startVoiceChat);
+  // Yaver on the Mac: connect to Claude through the bridge running on this Mac, if there is one.
+  pairLocal();
+  // The first tap anywhere unlocks sound, so voice chat can speak straight away.
   document.addEventListener('pointerdown', () => { try { unlockAudio(); } catch {} }, { once: true, capture: true });
   courseView.initSlotAlerts();
 
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
   // (The map keeps its own state, so data changes don't redraw it.)
-  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && /^sync/.test(String(id)))) return; if (store !== 'kv') { mech.kick(90); sound.save(); } clearTimeout(pending); pending = setTimeout(draw, 30); });
+  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') { mech.kick(90); sound.save(); } clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
   window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });

@@ -26,13 +26,16 @@ const STEP_NAME = { warmup: 'Recall', example: 'Example', exit: 'Exit', teachnot
 export const stepName = s => STEP_NAME[s.kind] || (s.kind ? s.kind[0].toUpperCase() + s.kind.slice(1) : s.title);
 
 // The next course block as a printed lecture card: what, when, its steps, and a way in.
+let lectureTarget = null;
 function lecture() {
+  lectureTarget = null;
   if (!C.ready() || !C.active()) return '';
   const nb = C.nextBlock();
   if (!nb) return '';
   const l = nb.lesson ? C.lesson(nb.lesson.id) : null;
   const target = l ? `lesson/${l.id}` : nb.type === 'review' || nb.type === 'plan' ? 'lesson/review' : nb.special === 'test' ? 'lesson/test' : nb.special === 'ship' ? 'lesson/ship' : null;
   const when = nb.date === today() ? nb.start : nb.date === addDays(today(), 1) ? `tomorrow · ${nb.start}` : `${fmtDay(nb.date)} · ${nb.start}`;
+  lectureTarget = target;
   const p = l ? C.progress(l.id) || {} : {};
   const done = new Set(p.stepsDone || []);
   const steps = l?.steps || [];
@@ -71,7 +74,10 @@ export function render(root, go) {
   const d = D.dietDay();
   const upcoming = D.upcomingEvents(4);
   const tasks = D.openTasks().slice(0, 6);
-  const notes = reminders();
+  const lec = lecture();
+  // Today lists only what the cards above don't already show (Çetele, the lecture, the next meeting).
+  const notes = reminders().filter(n => n.kind !== 'cetele' && n.kind !== 'meeting' && !(lectureTarget && n.kind === 'course' && n.open === lectureTarget));
+  const SHOW = 3;
   const ct = CT.day();
   const cs = CT.streak();
   const now = new Date();
@@ -85,7 +91,7 @@ export function render(root, go) {
       <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
     </header>
 
-    ${raw(lecture())}
+    ${raw(lec)}
 
     <section class="mv-hero">
       <div class="engine" data-engine></div>
@@ -135,7 +141,8 @@ export function render(root, go) {
     ${raw(notes.length ? html`
       <section class="card">
         <p class="label">today</p>
-        ${raw(notes.map(n => html`<${raw(n.open ? 'button' : 'div')} class="agenda-row" ${raw(n.open ? `data-open="${n.open}"` : '')}><span class="dot" style="background:${n.kind === 'money' ? 'var(--amber)' : n.kind === 'task' ? 'var(--red)' : n.kind === 'cetele' ? 'var(--violet)' : 'var(--accent)'}"></span><span class="what"><span>${n.text}</span></span></${raw(n.open ? 'button' : 'div')}>`).join(''))}
+        ${raw(notes.map((n, i) => html`<${raw(n.open ? 'button' : 'div')} class="agenda-row ${raw(i >= SHOW ? 'more-row' : '')}" ${raw(n.open ? `data-open="${n.open}"` : '')}><span class="dot" style="background:${n.kind === 'money' ? 'var(--amber)' : n.kind === 'task' ? 'var(--red)' : n.kind === 'cetele' ? 'var(--violet)' : 'var(--accent)'}"></span><span class="what"><span>${n.text}</span></span></${raw(n.open ? 'button' : 'div')}>`).join(''))}
+        ${raw(notes.length > SHOW ? html`<button class="link more-toggle" data-more>${notes.length - SHOW} more</button>` : '')}
       </section>` : '')}
 
     <div class="quick">
@@ -146,21 +153,12 @@ export function render(root, go) {
       <button data-go="map">${raw(icon('map'))}map</button>
     </div>
 
-    <button class="card" data-go="study">
-      <div class="card-head"><p class="label">study</p><span class="small muted mono">${mins(s.todayMin)} / ${mins(s.dailyGoalMin)}</span></div>
-      <div class="card-head">
-        <span class="tile-v ${raw(s.streak.studiedToday ? 'lit' : '')}">${s.streak.current}<small> day streak</small></span>
-        <span class="small muted mono">${mins(s.weekMin)} this week</span>
-      </div>
-      ${raw(weekSegments(s.streak.perDay, s.dailyGoalMin))}
-    </button>
-
     <div class="tiles">
       <button class="tile" data-go="money">
-        <p class="tile-k">${raw(icon('wallet'))}spent today</p>
-        <p class="tile-v">${money(m.today)}</p>
+        <p class="tile-k">${raw(icon('wallet'))}this month</p>
+        <p class="tile-v">${money(m.month)}</p>
         ${raw(m.budget ? `<div class="bar ${m.month > m.budget ? 'over' : m.month / m.budget > .85 ? 'warn' : ''}"><div style="width:${Math.min(100, (m.month / m.budget) * 100)}%"></div></div>` : '')}
-        <p class="tile-s">${m.budget ? `${money(Math.max(0, m.budgetLeft))} left in month` : `${money(m.month)} this month`}</p>
+        <p class="tile-s">${m.budget ? `${money(Math.max(0, m.budgetLeft))} left of the budget` : `${money(m.today)} today`}</p>
       </button>
       <button class="tile" data-go="diet">
         <p class="tile-k">${raw(icon('leaf'))}diet</p>
@@ -198,6 +196,7 @@ export function render(root, go) {
     else openAssistant();
   };
   root.querySelectorAll('[data-go]').forEach(b => (b.onclick = () => go(b.dataset.go)));
+  root.querySelector('[data-more]')?.addEventListener('click', e => { e.target.closest('.card').classList.add('show-all'); e.target.remove(); });
   root.querySelectorAll('[data-open]').forEach(b => (b.onclick = () => go(b.dataset.open)));
   const q = { expense: () => expenseForm(), meeting: () => meetingForm(), study: () => studyForm(), meal: () => mealForm() };
   root.querySelectorAll('[data-q]').forEach(b => (b.onclick = q[b.dataset.q]));

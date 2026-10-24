@@ -44,7 +44,9 @@ export function render(root) {
     </div>
 
     ${raw(D.MEAL_TYPES.map(type => {
-      const items = d.meals.filter(m => m.meal === type);
+      // Any spelling of the meal type counts (the assistant may write "lunch"); unknown types land in Snack.
+      const kind = m => D.MEAL_TYPES.find(t => t.toLowerCase() === String(m.meal || '').trim().toLowerCase()) || 'Snack';
+      const items = d.meals.filter(m => kind(m) === type);
       return html`<section class="list">
         <h4 class="list-day">${type} <span>${items.reduce((a, m) => a + m.calories, 0)} kcal</span></h4>
         ${raw(items.map(m => html`<button class="row" data-id="${m.id}"><span class="row-main"><b>${m.name}</b><small class="mono">P${m.protein} C${m.carbs} F${m.fat}</small></span><span class="row-amt">${m.calories}</span></button>`).join('') || `<button class="row add-row" data-type="${type}">+ ${type.toLowerCase()}</button>`)}

@@ -9,10 +9,16 @@
 // own free HTTPS link and prints a connection code to paste into Yaver once.
 // Each new link is also posted to a private ntfy.sh topic named after the
 // token, so the phone finds the bridge again after a restart by itself.
+//
+// Yaver open in a browser on this same Mac connects by itself: it asks
+// http://127.0.0.1:8787/pair, which answers only local requests from Yaver.
+//
+// Install:   node yaver-bridge.mjs --install    (starts at login and keeps running)
+// Remove:    node yaver-bridge.mjs --uninstall
 import http from 'node:http';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes, createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, existsSync, mkdtempSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, unlinkSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -108,6 +114,15 @@ const server = http.createServer(async (req, res) => {
   };
   const send = (status, obj) => { res.writeHead(status, { ...cors, 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
   if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end(); }
+  // Yaver in a browser on this Mac picks up the token here. Only a request made on this
+  // Mac (not through the secure link, which adds cf-connecting-ip and its own host name)
+  // from Yaver's own page gets it; other web pages can't read the answer.
+  if (req.method === 'GET' && req.url === '/pair') {
+    const local = /^(127\.0\.0\.1|localhost)(:\d+)?$/.test(req.headers.host || '') && !req.headers['cf-connecting-ip']
+      && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+    if (!local || !ORIGINS.includes(origin)) return send(403, { error: 'Pairing works only from Yaver on this Mac.' });
+    return send(200, { url: `http://127.0.0.1:${PORT}`, token: TOKEN });
+  }
   if (req.headers.authorization !== `Bearer ${TOKEN}`) return send(401, { error: 'Wrong bridge token. Copy it again from the Mac.' });
   if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true, name: 'yaver-bridge' });
   if (req.method === 'POST' && req.url === '/chat') {
@@ -141,7 +156,7 @@ function showCode(url) {
   const code = codeFor(url);
   console.log(`\nBridge link: ${url}`);
   console.log(`\nConnection code (Yaver → Settings → Claude on your Mac → Paste connection code):\n\n  ${code}\n`);
-  if (process.platform === 'darwin') {
+  if (process.platform === 'darwin' && !SERVICE) {
     const p = spawn('pbcopy');
     p.on('error', () => {});
     p.stdin.end(code);
@@ -180,6 +195,45 @@ let tunnel, stopping = false;
 const stop = () => { stopping = true; tunnel?.kill(); process.exit(0); };
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);
+
+// --install: a login item (LaunchAgent) that starts the bridge with the Mac and restarts it if it stops.
+const SERVICE = process.env.YAVER_SERVICE === '1';
+const LABEL = 'com.yaver.bridge';
+const PLIST = join(homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
+function service(install) {
+  if (process.platform !== 'darwin') { console.log('--install works on a Mac only.'); process.exit(1); }
+  const domain = `gui/${process.getuid()}`;
+  spawnSync('launchctl', ['bootout', domain, PLIST], { stdio: 'ignore' });
+  if (!install) {
+    if (existsSync(PLIST)) unlinkSync(PLIST);
+    console.log('Removed. The bridge no longer starts by itself.');
+    process.exit(0);
+  }
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const log = join(dirname(fileURLToPath(import.meta.url)), 'bridge.log');
+  mkdirSync(dirname(PLIST), { recursive: true });
+  writeFileSync(PLIST, `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>${LABEL}</string>
+  <key>ProgramArguments</key><array><string>${esc(process.execPath)}</string><string>${esc(fileURLToPath(import.meta.url))}</string></array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>${esc(process.env.PATH)}</string><key>YAVER_SERVICE</key><string>1</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>${esc(log)}</string>
+  <key>StandardErrorPath</key><string>${esc(log)}</string>
+</dict></plist>
+`);
+  const r = spawnSync('launchctl', ['bootstrap', domain, PLIST], { encoding: 'utf8' });
+  if (r.status !== 0) { console.log(`launchctl could not start it: ${(r.stderr || '').trim()}`); process.exit(1); }
+  console.log(`Done. The bridge now runs in the background and starts with your Mac.
+Open Yaver on this Mac: it connects to Claude by itself. (If an older bridge window is open, close it.)
+Log: ${log}`);
+  spawnSync('open', ['https://mskorkmaz08-del.github.io/yaver/']);
+  process.exit(0);
+}
+if (process.argv.includes('--install')) service(true);
+if (process.argv.includes('--uninstall')) service(false);
 
 server.listen(PORT, HOST, () => {
   console.log(`Yaver bridge running on http://${HOST}:${PORT}`);

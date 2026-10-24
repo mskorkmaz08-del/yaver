@@ -11,6 +11,7 @@ import { stepStrip, roman, stopwatch } from '../ui.js';
 import { stepName } from './home.js';
 import { simHTML, mountSim } from '../sims.js';
 import * as sound from '../sound.js';
+import { enterFocus, exitFocus, inFocus } from '../focus.js';
 
 let tick;
 let state = {}; // per-render UI state that isn't worth storing: revealed answers, marks
@@ -82,7 +83,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
         <div class="card-head"><p class="label">timer</p><span class="small mono muted">${l.minutes} min planned</span></div>
         ${raw(stopwatch(steps, l.minutes))}
         <div class="focus-sub" data-now>${t ? '' : st === 'done' ? 'completed' : 'not started'}</div>
-        <div class="btn-row">${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}</div>
+        <div class="btn-row">${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}<button class="btn ghost" data-focus>${raw(icon('target'))} Focus</button></div>
       </section>
       <section class="card desk-only">
         <p class="label">steps</p>
@@ -96,13 +97,18 @@ function lessonView(root, go, l, { retake = false } = {}) {
         <button class="btn ghost" data-tutor>${raw(icon('sparkle'))} Tutor me</button>
         <button class="btn primary" data-complete>${raw(icon('check'))} ${retake ? 'Save retake' : st === 'done' ? 'Complete again' : 'Complete'}</button>
       </div>
-      <p class="small dim mono desk-only">keys: s timer · n next step · h hint · t tutor · esc back · ? all</p>
+      <p class="small dim mono desk-only">keys: s timer · f focus · n next step · h hint · t tutor · esc back · ? all</p>
     </aside>`;
 
   // A running simulator survives redraws of the same lesson (a data change redraws the screen).
   const oldSim = root.querySelector(`.sim-card[data-lesson="${CSS.escape(l.id)}"]`);
   root.innerHTML = html`
     ${raw(head(`wk ${l.week ?? ''}`, l.title, html`<p class="small muted mono lesson-meta"><span class="dot" style="background:${raw(dotColor(l.track))}"></span>${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)} · ${l.minutes} min · ${st}${raw(p.score != null ? ` · ${Math.round(p.score * 100)}%` : '')}${raw(tb ? ` · <span class="${C.deadlines(7).some(d => d.lessonId === l.id) ? 'bad' : ''}">teach by ${esc(tb)}</span>` : '')}</p>`))}
+    <div class="lesson-bar ${raw(t ? 'running' : '')}">
+      <span class="lb-clock"><svg viewBox="-12 -13 24 25" aria-hidden="true"><rect x="-2" y="-13" width="4" height="3" rx=".8"/><circle r="9.5"/><path d="M0 0V-6.5" data-hand2/></svg><b data-clock2>${t ? '' : '00:00'}</b><small>/ ${l.minutes} min</small></span>
+      ${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}
+      <button class="btn ghost" data-focus aria-label="Focus mode">${raw(icon('target'))}</button>
+    </div>
     <div class="lesson-grid">
       <article class="lesson-main">
         ${raw(steps.length ? stepStrip(steps.map(stepName), doneSteps, { current: steps.findIndex((_, i) => !doneSteps.has(i)), jump: true, names: true }) : '')}
@@ -131,8 +137,17 @@ function lessonView(root, go, l, { retake = false } = {}) {
   const notes = root.querySelector('[data-notes]');
   notes.onchange = () => db.put('courseProgress', { ...(C.progress(l.id) || { id: l.id, lessonId: l.id, status: 'in progress' }), notes: notes.value });
   const startTimer = async () => { await C.startLesson(l.id); haptic(); askNotify(); };
-  root.querySelector('[data-start]')?.addEventListener('click', startTimer);
-  root.querySelector('[data-stop-timer]')?.addEventListener('click', () => db.setSetting('lessonTimer', null));
+  root.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', startTimer));
+  root.querySelectorAll('[data-stop-timer]').forEach(b => b.addEventListener('click', () => db.setSetting('lessonTimer', null)));
+  // Focus: only the lesson paper and a small timer stay on screen.
+  const focus = async () => {
+    if (!timerFor(l.id)) await startTimer();
+    enterFocus({ mode: 'lesson', title: l.title, planned: l.minutes, start: () => timerFor(l.id)?.start ?? null });
+    // open at the step you're on, not wherever the timer card was
+    const i = Math.max(0, steps.findIndex((_, k) => !doneSteps.has(k)));
+    requestAnimationFrame(() => document.querySelector(`[data-stepcard="${i + 1}"]`)?.scrollIntoView({ block: 'start' }));
+  };
+  root.querySelectorAll('[data-focus]').forEach(b => (b.onclick = focus));
   const markStep = async (i, on = true) => {
     const cur = C.progress(l.id) || { id: l.id, lessonId: l.id, status: 'in progress' };
     const set = new Set(cur.stepsDone || []);
@@ -152,16 +167,19 @@ function lessonView(root, go, l, { retake = false } = {}) {
     n: () => { const i = steps.findIndex((_, k) => !doneSteps.has(k)); if (i >= 0) { markStep(i); setTimeout(() => document.querySelector(`[data-stepcard="${i + 1}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); } },
     h: () => root.querySelector('[data-hint]:not([disabled])')?.click(),
     t: tutor,
-    Escape: () => go('study'),
+    f: focus,
+    Escape: () => (inFocus() ? exitFocus() : go('study')),
   });
 
   if (t) {
     const clock = root.querySelector('[data-clock]');
     const now = root.querySelector('[data-now]');
     const hand = root.querySelector('[data-hand]'), fill = root.querySelector('[data-fill]');
+    const clock2 = root.querySelector('[data-clock2]'), hand2 = root.querySelector('[data-hand2]');
     const update = () => {
       const sec = Math.floor((Date.now() - t.start) / 1000);
-      clock.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+      clock.textContent = clock2.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+      hand2?.setAttribute('transform', `rotate(${(sec % 60) * 6})`);
       const m = sec / 60;
       // the hand sweeps (its angle only grows, so the transition never spins backwards)
       hand.style.transform = `rotate(${sec * 6}deg)`;

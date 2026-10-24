@@ -3,9 +3,8 @@ import * as db from '../db.js';
 import { runTurn } from './claude.js';
 import { runTurnGemini, userMessage } from './gemini.js';
 import { provider } from './provider.js';
-import { macConfigured, macOnline, runTurnMac } from './mac.js';
+import { macConfigured, macOnline, runTurnMac, onComputer } from './mac.js';
 import { startLive, liveAvailable } from './live.js';
-import { pauseWake, resumeWake } from './wake.js';
 import { audioCtx } from './voice.js';
 import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
@@ -112,7 +111,6 @@ export function openAssistant(prompt) {
 }
 
 // Voice chat: one big button; each reply is read out and then Yaver listens again.
-// Called by the wake word: open the chat straight into voice.
 export function startVoiceChat() {
   if (!el.classList.contains('open')) openAssistant();
   if (!voice) setVoice(true);
@@ -120,16 +118,17 @@ export function startVoiceChat() {
 
 function setVoice(on) {
   voice = on;
+  // the music steps aside while you talk
+  if (on) sound.stopMusic(0.4); else sound.startMusic();
   el.classList.toggle('voice', on);
   el.querySelector('[data-orb]').hidden = !on;
   el.querySelector('[data-voice]').setAttribute('aria-pressed', String(on));
   haptic();
   if (on) {
-    pauseWake();
     unlockSpeech();
     if (db.setting('voiceEngine', 'live') === 'live' && liveAvailable()) startLiveChat();
     else listen();
-  } else { live?.stop(); live = null; hush(); listen.stop?.(); orb(''); resumeWake(); }
+  } else { live?.stop(); live = null; hush(); listen.stop?.(); orb(''); }
 }
 
 // Live engine: the model hears and speaks directly; each finished turn is added to the chat.
@@ -155,7 +154,7 @@ async function startLiveChat() {
     if (voice) listen();
     return;
   }
-  // Started by the wake word before any tap: iOS keeps sound off until one tap.
+  // iOS keeps sound off until a tap.
   if (audioCtx().state !== 'running') {
     orb('tap');
     document.addEventListener('pointerdown', () => { audioCtx().resume(); orb('live'); }, { once: true });
@@ -175,6 +174,12 @@ export function closeAssistant() {
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
   hush();
+}
+
+// A new screen on the phone closes the chat sheet (it covers the screen); voice chat and the
+// laptop's side panel stay open.
+export function routeChanged() {
+  if (!voice && el?.classList.contains('open') && !matchMedia('(min-width: 1100px)').matches) closeAssistant();
 }
 
 // Pull the chat down to close it: from the header, or from the conversation when it's scrolled to the top.
@@ -320,7 +325,7 @@ async function send(textIn) {
   // Route: Claude on the Mac when it's reachable (text only), otherwise the chosen AI.
   const routes = [];
   // Voice chat skips the Mac unless asked: Claude Code takes several seconds to start each reply.
-  if (!img && macConfigured() && (!voice || db.setting('voiceMac', false))) { setStatus('Checking your Mac…'); if (await macOnline()) routes.push('mac'); }
+  if (!img && (macConfigured() || onComputer()) && (!voice || db.setting('voiceMac', false))) { setStatus('Checking your Mac…'); if (await macOnline()) routes.push('mac'); }
   routes.push(provider());
 
   let history;
@@ -424,7 +429,6 @@ function setupVoice(btn, input) {
   const start = () => {
     if (rec || busy) return;
     hush();
-    pauseWake();
     suspendAudio();
     rec = new SR();
     rec.lang = db.setting('voiceLang', navigator.language || 'en-US');
@@ -449,7 +453,6 @@ function setupVoice(btn, input) {
     };
     rec.onend = () => {
       clearTimeout(quiet);
-      if (!voice) resumeWake();
       if (!finalText.trim()) finalText = input.value; // stopped early: use what was heard so far
       btn.classList.remove('listening');
       rec = null;

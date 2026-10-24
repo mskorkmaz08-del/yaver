@@ -5,7 +5,7 @@ const ctx = await browser.newContext({ ...devices['iPhone 13'], serviceWorkers: 
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+page.on('console', m => { if (m.type() === 'error' && !m.location().url.includes('127.0.0.1:8787')) errors.push('console: ' + m.text()); });
 
 const sse = evs => evs.map(e => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join('');
 const start = { type: 'message_start', message: { id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-opus-5-5', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } } };
@@ -124,6 +124,11 @@ await page.waitForTimeout(300);
 await page.click('[data-start="25"]');
 await page.waitForTimeout(1200);
 await page.screenshot({ path: 'tests/shots/3-timer.png' });
+// starting a block opens focus mode: only a small timer on a dark screen
+console.log('FOCUS opens', await page.evaluate(() => document.body.classList.contains('focus-blank') && !!document.querySelector('.focus-chip')));
+await page.click('.focus-exit');
+await page.waitForTimeout(400);
+console.log('FOCUS closes', await page.evaluate(() => !document.body.classList.contains('focus-mode')));
 await page.click('[data-cancel]');
 
 await page.goto(base + '#settings');
