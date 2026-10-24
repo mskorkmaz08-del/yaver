@@ -24,6 +24,7 @@ import { initSync } from './sync.js';
 import { currencyOptions } from './data.js';
 import * as D from './data.js';
 import { subdial } from './ui.js';
+import * as mech from './mech.js';
 import { icon } from './icons.js';
 
 const TABS = { home: ['home', 'home'], cetele: ['moon', 'çetele'], study: ['book', 'study'], calendar: ['calendar', 'meet'], money: ['wallet', 'money'], diet: ['leaf', 'diet'], map: ['map', 'map'], settings: ['settings', 'settings'] };
@@ -54,14 +55,19 @@ let entering = false, enterTimer;
 function draw() {
   const root = $('#view');
   const y = window.scrollY;
-  // Keep the running watch movements across redraws so their gears don't jump back to the start.
-  const movements = [...root.querySelectorAll('img.movement')];
+  // Keep running mechanisms across redraws so their gears don't jump back to the start.
+  const engines = [...root.querySelectorAll('[data-engine]')];
   VIEWS[current].render(root, go, param);
-  root.querySelectorAll('img.movement').forEach((img, i) => movements[i] && img.replaceWith(movements[i]));
+  root.querySelectorAll('[data-engine]').forEach((el, i) => engines[i] && el.replaceWith(engines[i]));
+  // A meshing pair of small gears sits on the rule under each screen title.
+  root.querySelectorAll('.page-head, .brand-head').forEach(h => h.querySelector('.head-gears') || h.insertAdjacentHTML('beforeend', '<span class="head-gears" data-gear="pair" aria-hidden="true"></span>'));
+  mech.scan(root);
   window.scrollTo(0, y);
   // A new screen rises in; a redraw after a data change doesn't.
   if (entering) {
     entering = false;
+    mech.kick(220);
+    revealLater(root);
     root.classList.remove('enter');
     void root.offsetWidth;
     root.classList.add('enter');
@@ -69,6 +75,19 @@ function draw() {
     enterTimer = setTimeout(() => root.classList.remove('enter'), 1100);
   }
   sideGauge();
+}
+
+// Parts of a new screen that start below the fold latch into place as they scroll in.
+let laterObs;
+function revealLater(root) {
+  laterObs?.disconnect();
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  laterObs = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('in');
+    laterObs.unobserve(e.target);
+  }), { rootMargin: '0px 0px -40px 0px' });
+  for (const el of root.children) if (el.getBoundingClientRect().top > innerHeight) { el.classList.add('later'); laterObs.observe(el); }
 }
 
 const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
@@ -130,6 +149,8 @@ async function start() {
     b.innerHTML = `${icon(ic)}<span>${label}</span>`;
     b.onclick = () => go(b.dataset.tab);
   });
+  mech.initDrive();
+  mech.scan(document);
   $('#fab').onclick = () => openAssistant();
   // On a laptop the assistant button lives in the sidebar.
   const ask = $('.tabbar [data-ask]');
@@ -152,7 +173,7 @@ async function start() {
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
   // (The map keeps its own state, so data changes don't redraw it.)
-  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && /^sync/.test(String(id)))) return; clearTimeout(pending); pending = setTimeout(draw, 30); });
+  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && /^sync/.test(String(id)))) return; if (store !== 'kv') mech.kick(90); clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
   window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });

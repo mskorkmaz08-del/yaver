@@ -88,7 +88,7 @@ export function render(root, go) {
     ${raw(lecture())}
 
     <section class="mv-hero">
-      <img class="movement" src="icons/movement.svg" alt="" width="228" height="228">
+      <div class="engine" data-engine></div>
       <div class="mv-stats">
         <button class="mv-stat" data-go="cetele">
           <p class="label">çetele</p>

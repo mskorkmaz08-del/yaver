@@ -10,6 +10,7 @@ import { audioCtx } from './voice.js';
 import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying, suspendAudio, jarvisOn } from './voice.js';
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
+import * as mech from '../mech.js';
 
 const CHAT_ID = 'main';
 let chat;          // { id, api: [Claude], gapi: [Gemini], mapi: [Claude on Mac], view: [what the user sees] }
@@ -42,6 +43,7 @@ export function initAssistant() {
   el.innerHTML = `
     <div class="chat" role="dialog" aria-label="Yaver assistant">
       <header class="chat-head">
+        <span class="grip" aria-hidden="true"></span>
         <button class="icon-btn" data-close aria-label="Close">${icon('chevronDown')}</button>
         <div class="chat-title"><span class="mark sm">Y</span><div><b>Yaver</b><small data-status>ready</small></div></div>
         <div class="chat-tools"><button class="icon-btn" data-voice aria-label="Voice chat" aria-pressed="false">${icon('wave')}</button><button class="icon-btn" data-new aria-label="New chat">${icon('edit')}</button></div>
@@ -62,6 +64,7 @@ export function initAssistant() {
 
   const input = el.querySelector('[data-input]');
   el.querySelector('[data-close]').onclick = closeAssistant;
+  swipeToClose(el.querySelector('.chat'));
   el.querySelector('[data-new]').onclick = () => { if (busy) return; chat = { id: CHAT_ID, api: [], gapi: [], mapi: [], view: [] }; save(); render(); };
   el.querySelector('[data-send]').onclick = () => (busy ? abort?.abort() : send(input.value));
   input.addEventListener('input', () => autosize(input));
@@ -93,6 +96,11 @@ export function initAssistant() {
 }
 
 export function openAssistant(prompt) {
+  // The chat opens out of the gear button like an iris; the gear spins it open.
+  const fab = document.getElementById('fab');
+  const r = fab?.getBoundingClientRect();
+  if (r?.width) { el.style.setProperty('--ox', `${r.left + r.width / 2}px`); el.style.setProperty('--oy', `${r.top + r.height / 2}px`); }
+  mech.kick(480);
   el.classList.add('open');
   document.body.classList.add('chat-open');
   haptic();
@@ -161,9 +169,56 @@ function orb(state) {
 
 export function closeAssistant() {
   if (voice) setVoice(false);
+  if (el.classList.contains('open')) mech.kick(-420);
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
   hush();
+}
+
+// Pull the chat down to close it: from the header, or from the conversation when it's scrolled to the top.
+// The chat follows the finger; let go past a third of the way (or with a flick) and it closes.
+function swipeToClose(chatEl) {
+  const log = chatEl.querySelector('[data-log]');
+  let y0 = null, dy = 0, t0 = 0, dragging = false;
+  chatEl.addEventListener('touchstart', e => {
+    if (matchMedia('(min-width: 1100px)').matches || e.touches.length !== 1) return;
+    const inHead = e.target.closest('.chat-head');
+    if (!inHead && (!e.target.closest('[data-log]') || log.scrollTop > 0)) return;
+    if (e.target.closest('textarea, input')) return;
+    y0 = e.touches[0].clientY; dy = 0; t0 = performance.now(); dragging = false;
+  }, { passive: true });
+  chatEl.addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    dy = e.touches[0].clientY - y0;
+    if (!dragging) {
+      if (dy < 8) { if (dy < -4) y0 = null; return; }
+      dragging = true;
+      chatEl.classList.add('dragging');
+    }
+    e.preventDefault();
+    const pull = dy < 0 ? 0 : dy;
+    chatEl.style.transform = `translateY(${pull}px)`;
+    chatEl.style.setProperty('--pull', Math.min(1, pull / 320).toFixed(3));
+    mech.kick(-Math.min(40, pull / 12));
+  }, { passive: false });
+  const end = () => {
+    if (y0 == null) return;
+    y0 = null;
+    if (!dragging) return;
+    dragging = false;
+    const speed = dy / Math.max(1, performance.now() - t0);
+    chatEl.classList.remove('dragging');
+    if (dy > chatEl.clientHeight / 3 || (speed > 0.6 && dy > 40)) {
+      chatEl.classList.add('dismiss');
+      chatEl.style.transform = 'translateY(100%)';
+      setTimeout(() => { chatEl.classList.add('snap'); closeAssistant(); chatEl.style.transform = ''; chatEl.style.removeProperty('--pull'); requestAnimationFrame(() => requestAnimationFrame(() => chatEl.classList.remove('snap', 'dismiss'))); }, 320);
+    } else {
+      chatEl.style.transform = '';
+      chatEl.style.removeProperty('--pull');
+    }
+  };
+  chatEl.addEventListener('touchend', end);
+  chatEl.addEventListener('touchcancel', end);
 }
 
 function autosize(t) {
@@ -177,11 +232,12 @@ function render() {
     const name = db.setting('userName', '');
     log.innerHTML = html`
       <div class="chat-empty">
-        <img class="movement" src="icons/movement.svg" alt="" width="200" height="200">
+        <div class="engine" data-engine data-core="on"></div>
         <h2>${name ? `What's next, ${name}?` : "What's next?"}</h2>
         <p class="muted small">Ask anything, or tell me what you did: I log study, practice, expenses, meetings and meals, explain concepts, quiz you, and find places nearby.</p>
         <div class="chips">${raw(SUGGESTIONS.map(s => html`<button class="chip" data-suggest="${s}">${s}</button>`).join(''))}</div>
       </div>`;
+    mech.scan(log);
     return;
   }
   log.innerHTML = chat.view.map(bubble).join('');

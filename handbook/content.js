@@ -8,13 +8,28 @@ export const FILES = {
   'index.html': 'App shell: the empty screen area, the tab bar and the Yaver button (a knurled watch crown). Loads js/app.js.',
   'manifest.webmanifest': 'Makes the site installable: name, icons, colours, full-screen portrait.',
   'sw.js': 'Service worker: caches every app file on first launch, then network-first with a 3 s timeout and cache fallback. VERSION names the cache.',
-  'css/app.css': 'All app styling. Clockwork look (v23, polished in v24): warm graphite like a watch case-back, hairline brass rules, Cormorant Garamond text with Cinzel small capitals, ivory paper for lessons and review cards, one teal hextech accent, a knurled crown as the Yaver button, the animated watch movement on Home with Çetele and study readouts, lessons as one printed sheet with a roman-numeral step strip, a study subdial and Çetele tally in the laptop sidebar, and calm motion (screens rise in, the movement winds in, tally marks draw, bars fill, the crown turns when pressed; all off under Reduce Motion). Also cards, sheets, chat, course screens, laptop layout.',
-  'js/app.js': 'Entry point: opens the database, sorts AI keys, starts the assistant, routes between screens, redraws on data change (keeping the running watch movement and playing the entry animation only on a new screen), fills the laptop sidebar gauge, first-run sheet.',
+  'css/app.css': 'All app styling. Hextech look (v25, inspired by the mood of Piltover workshops in the show Arcane): warm graphite and brass, Cormorant Garamond text with Cinzel small capitals, one teal gemstone glow, the gear Yaver button, a hextech engine of real meshing gears on Home, small gear pairs under each screen title, the course and lessons as ruled notebook paper (blue rules, red margin, punched holes, tape, Caveat handwriting for labels), the workshop simulator frame and its brass controls, the chat that irises open from the gear and follows your finger when swiped down, and mechanical motion (screens rise with a latch overshoot, cards below the fold rise as they scroll in; all off under Reduce Motion). Also cards, sheets, chat, course screens, laptop layout.',
+  'js/app.js': 'Entry point: opens the database, sorts AI keys, starts the assistant, routes between screens, redraws on data change (keeping running engines in place), adds the gear pairs under screen titles, turns the mechanisms when you enter a screen or data changes, reveals cards as they scroll in, fills the laptop sidebar gauge, first-run sheet.',
   'js/db.js': 'IndexedDB wrapper. Loads every store into memory at start; writes go to memory and disk together, stamped with updatedAt and deviceId; deletes leave tombstones for sync.',
   'js/cetele.js': 'Çetele logic: default items, daily and weekly progress, streak (a day counts when every daily minimum is met), item matching for the AI tools.',
   'js/data.js': 'Business logic for money, meetings, study, roadmap, diet and tasks (plus the çetele summary in the overview). Screens and AI tools both call these functions, so numbers always match.',
   'js/util.js': 'Dates, money formatting, HTML escaping, bottom-sheet forms, toasts, haptics, photo shrinking, Markdown.',
   'js/ui.js': 'Small SVG drawing helpers: progress rings, bar lists, columns, empty states, roman numerals, the lesson step strip and the enamel study subdial.',
+  'js/mech.js': 'Mechanisms: draws real meshing gears as SVG (correct tooth counts and phase so teeth interlock), the hextech engine (planetary gear train, pistons on crank-sliders, gimbal rings, energy arcs and a gemstone core), the gear Yaver button and small gear pairs. One drive shaft angle turns them all: it idles slowly, scrolling, taps and saves add speed, and it pauses offscreen.',
+  'js/sims.js': 'The workshop: picks a simulator and setting for each lesson from its track and title (every lesson gets one), loads it on demand, and gives it a kit: a blueprint canvas at the screen\'s pixel ratio, brass controls, an animation loop that pauses offscreen, and a timeline with play, step and a scrubber that eases between precomputed states.',
+  'js/sims/circuit.js': 'Circuit bench: Ohm\'s law, series, parallel, divider, LED (burns out over its current), RC charging, transistor switching a motor with a flyback diode, power ratings, and an Arduino board running blink, button or potentiometer code. Charge dots flow at the current\'s speed past brass meters.',
+  'js/sims/sort.js': 'Sorting engine: selection, insertion, quick and merge sort with bars that glide to their new places, comparison and swap counters.',
+  'js/sims/search.js': 'Search rig: binary search, two pointers and a sliding window with pointers that glide over the array.',
+  'js/sims/graph.js': 'Graph explorer: breadth-first and depth-first search on a graph you can drag, Dijkstra settling distances, and a binary search tree growing and walked in order.',
+  'js/sims/structures.js': 'Data structures you operate by hand: stack, queue, linked list, hash table with chaining, min-heap with sift up and down, and the call stack of recursive functions.',
+  'js/sims/vectors.js': 'Vector loom: span, matrices as transformations (drag î and ĵ), determinant as area, eigenvectors that stay on their line, dot product and projection, change of basis, and 3D rotation with the cross product.',
+  'js/sims/calculus.js': 'Slope machine: a secant shrinking into the tangent, the derivative drawn as you sweep along a curve (including the chain rule), and gradient descent on a curve, a bowl and a line fit, with a learning rate slider.',
+  'js/sims/probability.js': 'Probability mill: dice sums settling onto the expected shape, sample means forming a bell curve (central limit theorem), bootstrap resampling with a 95% interval, and a Bayes grid for a positive test.',
+  'js/sims/data.js': 'Table press: rows of a small study table slide, fade, regroup and fold through WHERE / ORDER BY / LIMIT, group-by, a join, cleaning messy data, and turning a table into an honest chart. Shows the SQL or pandas line for each move.',
+  'js/sims/trace.js': 'Code tracer: runs the lesson\'s Python example on the phone with Pyodide (downloaded on the first tap) and records every line with its variables and printed output, then steps through the run. The code can be edited and traced again.',
+  'js/sims/memory.js': 'Memory map for C++: stack and heap boxes with pointer arrows, references, delete and dangling pointers, unique_ptr freeing itself, and a vector doubling its capacity.',
+  'js/sims/git.js': 'Branch loom: commit, branch, switch and merge with buttons and watch the commit graph grow, including fast-forwards and merge commits.',
+  'js/sims/shell.js': 'Shell workshop: a folder tree with a you-are-here marker that moves as cd, ls, mkdir and touch run, and lines flowing through cat | grep | sort | uniq -c.',
   'js/forms.js': 'Add/edit sheets for expenses, meetings, study sessions, meals and tasks.',
   'js/ics.js': 'Builds .ics calendar files (with alarms) and hands them to iOS Calendar.',
   'js/icons.js': 'Line icon set as inline SVG.',
@@ -24,7 +39,7 @@ export const FILES = {
   'js/keys.js': 'Keyboard shortcuts for laptop use (g t, g c, /, ?), plus the shortcuts sheet.',
   'js/sync.js': 'Laptop ⇄ iPhone sync through one secret GitHub Gist: pull, merge record by record (newest updatedAt wins), push. Encrypted before upload.',
   'js/crypto.js': 'AES-GCM 256 encryption with a PBKDF2-SHA-256 key from the sync passphrase; gzip before encrypting; fresh IV per upload.',
-  'js/ai/assistant.js': 'Chat sheet: messages, photos, voice in/out and hands-free voice chat (listen → answer read aloud → listen again). Picks the route per message (Mac first when reachable, else Gemini or Claude) and keeps one history per route.',
+  'js/ai/assistant.js': 'Chat sheet: on the phone it irises open from the gear button and closes with a swipe down (it follows your finger). Messages, photos, voice in/out and hands-free voice chat (listen → answer read aloud → listen again). Picks the route per message (Mac first when reachable, else Gemini or Claude) and keeps one history per route.',
   'js/ai/tools.js': 'Every tool the AI can call: name, description, JSON schema and the function that runs it on the phone.',
   'js/ai/claude.js': 'Anthropic API client (official SDK): system prompt, agent loop with streaming, web search, prompt caching, fallbacks, error messages.',
   'js/ai/gemini.js': 'Google Gemini client over REST: same agent loop, tools translated to function declarations, auto-picks a stable free Flash model.',
@@ -33,10 +48,10 @@ export const FILES = {
   'js/ai/voice.js': 'Reply voice. Default: the iPhone\'s own voice (instant, offline), preferring a British male Premium/Enhanced voice for the Jarvis feel. Optional: Gemini text-to-speech (free tier, same key), voiced sentence by sentence while the reply streams, with leading silence and the static burst after the last word cut out; picks a TTS model the key can use, plays the 24 kHz PCM through Web Audio (optional Jarvis style: British delivery prompt plus a light filter and short echo), and falls back to the iPhone voice for 10 minutes when it fails.',
   'js/ai/mac.js': 'Client for the bridge on the Mac: connection code, health check (cached 30 s), finding the new link after a restart via ntfy, and an agent loop where the Mac thinks and the phone runs the tools.',
   'js/ai/provider.js': 'Chooses Gemini or Claude, sorts keys into the right slot by prefix, saves and tests keys.',
-  'js/views/home.js': 'Home: YAVER line with the date, the next course block as a printed lecture card with its steps, the watch movement with Çetele and study readouts, cards due / next meeting / spent today, AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
+  'js/views/home.js': 'Home: YAVER line with the date, the next course block as a printed lecture card with its steps, the hextech engine (tap it to spin it up) with Çetele and study readouts, cards due / next meeting / spent today, AI setup card, Ask bar, reminders, quick actions, study week, tiles, next meetings, to-dos, water.',
   'js/views/study.js': 'Study: streak and week stats, roadmap plan, practice counters, focus timer, heatmap, subjects, sessions; the course Today card.',
   'js/views/course.js': 'Course overview: phases, tracks, progress per lane, deadlines, tests, settings.',
-  'js/views/lesson.js': 'Lesson runner: step-by-step lesson on one paper sheet with a roman-numeral step strip that jumps to each step, with timer, hints, solutions, tutor, review cards and grading. Recall shows only questions from finished lessons; every question has "don\'t know yet"; optional LeetCode problems with solved/stuck and a tutor walk-through.',
+  'js/views/lesson.js': 'Lesson runner: step-by-step lesson on one notebook page with a roman-numeral step strip that jumps to each step, the lesson\'s workshop simulator (kept running across redraws), timer, hints, solutions, tutor, review cards and grading. Recall shows only questions from finished lessons; every question has "don\'t know yet"; optional LeetCode problems with solved/stuck and a tutor walk-through.',
   'js/views/calendar.js': 'Meetings: week strip, day agenda, free slots, send to iPhone Calendar.',
   'js/views/money.js': 'Money: month total, budget pace, categories, recent expenses.',
   'js/views/cetele.js': 'Çetele: daily spiritual minimums with +/− counters and done checks, day switcher, streak, and the edit-list sheet.',
@@ -79,8 +94,8 @@ export const FILES = {
 export const FOLDERS = {
   'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps (recall questions name the earlier lesson that taught them), questions, review cards and optional LeetCode problems.',
   'vendor/': 'Third-party code shipped with the app: the Anthropic SDK bundled with esbuild, and Leaflet for the map.',
-  'icons/': 'Home Screen and app icons (the watch movement on graphite, v23), plus movement.svg: the animated movement (meshing gears, balance wheel, escape wheel) shown on Home and in the empty chat.',
-  'fonts/': 'Self-hosted fonts for the Clockwork look (Cormorant Garamond and Cinzel; SIL Open Font License), cached by the service worker so they work offline.',
+  'icons/': 'Home Screen and app icons: the brass Yaver gear with its teal gemstone (v25).',
+  'fonts/': 'Self-hosted fonts (Cormorant Garamond, Cinzel, and Caveat for the notebook handwriting; SIL Open Font License), cached by the service worker so they work offline.',
 };
 
 // Layers of the 3D system map, bottom to top. `mods` are file paths.
@@ -96,7 +111,7 @@ export const LAYERS = [
     mods: ['js/ai/assistant.js', 'js/ai/tools.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/live.js', 'js/ai/wake.js', 'js/ai/gemini.js', 'js/ai/claude.js', 'js/ai/provider.js'] },
   { id: 'ui', name: 'Screens', tag: 'views · router', color: '#ffb547',
     text: 'One file per screen, each with a render function that draws from memory. app.js routes between them and redraws the current one whenever data changes.',
-    mods: ['js/app.js', 'js/views/home.js', 'js/views/cetele.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
+    mods: ['js/app.js', 'js/mech.js', 'js/sims.js', 'js/views/home.js', 'js/views/cetele.js', 'js/views/study.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/money.js', 'js/views/calendar.js', 'js/views/diet.js', 'js/views/map.js', 'js/views/settings.js'] },
 ];
 
 // Services outside the device, placed around the 3D map.
@@ -108,6 +123,7 @@ export const SERVICES = [
   { id: 'cloudflare', name: 'Cloudflare Tunnel', role: 'Free quick tunnel the bridge opens, giving the Mac a public HTTPS link (changes on each restart).', proto: 'cloudflared, https://*.trycloudflare.com', layer: 'ai' },
   { id: 'ntfy', name: 'ntfy.sh', role: 'Mailbox where the bridge posts its current link so the phone finds it after a restart.', proto: 'HTTPS POST/GET on a topic named by a hash of the token', layer: 'ai' },
   { id: 'gist', name: 'GitHub Gist', role: 'Encrypted sync blob shared by your devices.', proto: 'GitHub REST, AES-GCM ciphertext', layer: 'logic' },
+  { id: 'pyodide', name: 'Pyodide (jsDelivr)', role: 'Python compiled to WebAssembly for the code tracer, downloaded on the first Trace tap and cached by the browser. Code runs on the phone; nothing is sent back.', proto: 'HTTPS GET, static files', layer: 'ui' },
   { id: 'osm', name: 'OpenStreetMap', role: 'Map tiles, Nominatim search, Overpass nearby.', proto: 'HTTPS GET, no key', layer: 'ui' },
 ];
 
@@ -176,7 +192,8 @@ export const STACK = [
   ['Storage', 'IndexedDB, fully mirrored in memory'],
   ['Offline', 'Service worker, network-first with cache fallback'],
   ['AI', 'Gemini REST, Anthropic SDK (bundled with esbuild), Claude Code via the Mac bridge'],
-  ['Look', 'Clockwork (v23, polished v24): CSS tokens in css/app.css, animated SVG movement in icons/movement.svg, self-hosted fonts in fonts/ (Cormorant Garamond, Cinzel)'],
+  ['Look', 'Hextech (v25): CSS tokens in css/app.css, live SVG gear mechanisms in js/mech.js, notebook-paper course, self-hosted fonts in fonts/ (Cormorant Garamond, Cinzel, Caveat)'],
+  ['Simulators', '13 canvas simulators in js/sims/, loaded per lesson; Pyodide 0.27 for the Python tracer'],
   ['Map', 'Leaflet 1.9.4 + OpenStreetMap, Nominatim, Overpass'],
   ['Sync', 'GitHub Gist, AES-GCM 256 + PBKDF2-SHA-256 (WebCrypto)'],
   ['Remote access to Mac', 'Cloudflare quick tunnel (cloudflared), link rediscovered via ntfy.sh'],
@@ -186,7 +203,7 @@ export const STACK = [
 export const BROWSER_APIS = [
   ['IndexedDB', 'all data'], ['Service Worker + Cache Storage', 'offline'], ['Fetch + ReadableStream', 'streaming AI replies (SSE)'],
   ['Web Crypto (subtle)', 'sync encryption'], ['CompressionStream', 'gzip before encryption'], ['Geolocation', 'nearby places'],
-  ['Web Speech (recognition, synthesis)', 'voice in, read aloud, voice chat loop'], ['Web Audio', 'live voice (AudioWorklet mic capture, scheduled playback), Gemini reply voice'], ['getUserMedia', 'microphone for live voice'], ['WebSocket', 'Gemini Live session'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'],
+  ['Web Speech (recognition, synthesis)', 'voice in, read aloud, voice chat loop'], ['Web Audio', 'live voice (AudioWorklet mic capture, scheduled playback), Gemini reply voice'], ['getUserMedia', 'microphone for live voice'], ['WebSocket', 'Gemini Live session'], ['Web Share', 'backups and .ics files'], ['Vibration', 'haptics'], ['Canvas 2D', 'lesson simulators'], ['IntersectionObserver', 'pausing mechanisms and simulators offscreen, revealing cards'], ['WebAssembly', 'Python in the code tracer'],
   ['StorageManager.persist()', 'ask iOS not to evict data'],
 ];
 
@@ -197,6 +214,7 @@ export const SECURITY = [
   'The Mac bridge listens only on 127.0.0.1; the Cloudflare tunnel forwards to it. Every request needs the random 144-bit token, CORS allows only the Yaver origin, and Claude Code runs with all built-in tools disabled, so a caller can only get text and tool suggestions back.',
   'The tunnel link is public while the bridge runs; the token is what guards it. The connection code holds the token, so treat it like a password. The phone sends the token only to trycloudflare.com links (or the address you typed).',
   'The ntfy topic name is a hash of the token, and the message is only the link, never the token.',
+  'The code tracer runs lesson code inside Pyodide in the page (WebAssembly), with input() and print() replaced; it has no access to your files and the run stops after 400 steps.',
   'Risk to know: anyone with your unlocked phone can read stored keys, like any saved password. Use spend limits for paid APIs.',
 ];
 
@@ -205,6 +223,7 @@ export const RECIPES = [
   ['Add a store', 'Add it to STORES in js/db.js and bump DB_VERSION. Describe its fields in STORE_FIELDS in handbook/content.js.'],
   ['Add a screen', 'Create js/views/name.js with render(root, go), register it in VIEWS in js/app.js, add it to FILES in sw.js, and describe it in handbook/content.js.'],
   ['Change Yaver\'s tone', 'Edit STATIC_SYSTEM in js/ai/claude.js (Gemini and the Mac use the same prompt).'],
+  ['Add a simulator', 'Create js/sims/name.js exporting default (host, { mode, code, lesson, kit }); use kit.stage, kit.controls and kit.timeline. Add rules to RULES in js/sims.js, a name to SIM_NAMES, the file to FILES in sw.js, and a line here.'],
   ['Publish a change', 'Bump VERSION in sw.js, update the handbook, run the tests, push to main. GitHub Pages deploys in about a minute.'],
 ];
 

@@ -9,6 +9,7 @@ import { openAssistant } from '../ai/assistant.js';
 import { dotColor, exportWeek } from './course.js';
 import { stepStrip, roman } from '../ui.js';
 import { stepName } from './home.js';
+import { simHTML, mountSim } from '../sims.js';
 
 let tick;
 let state = {}; // per-render UI state that isn't worth storing: revealed answers, marks
@@ -97,6 +98,8 @@ function lessonView(root, go, l, { retake = false } = {}) {
       <p class="small dim mono desk-only">keys: s timer · n next step · h hint · t tutor · esc back · ? all</p>
     </aside>`;
 
+  // A running simulator survives redraws of the same lesson (a data change redraws the screen).
+  const oldSim = root.querySelector(`.sim-card[data-lesson="${CSS.escape(l.id)}"]`);
   root.innerHTML = html`
     ${raw(head(`wk ${l.week ?? ''}`, l.title, html`<p class="small muted mono lesson-meta"><span class="dot" style="background:${raw(dotColor(l.track))}"></span>${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)} · ${l.minutes} min · ${st}${raw(p.score != null ? ` · ${Math.round(p.score * 100)}%` : '')}${raw(tb ? ` · <span class="${C.deadlines(7).some(d => d.lessonId === l.id) ? 'bad' : ''}">teach by ${esc(tb)}</span>` : '')}</p>`))}
     <div class="lesson-grid">
@@ -108,6 +111,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
           ${raw(l.resources?.length ? html`<p class="label">resources</p><div class="resources">${raw(l.resources.map(r => html`<a href="${r.url}" target="_blank" rel="noopener" class="res">${raw(icon('external'))}<span><b>${r.title}</b>${raw(r.part ? html`<small>${r.part}</small>` : '')}</span></a>`).join(''))}</div>` : '')}
           ${raw(l.safety ? html`<p class="small safety">${raw(icon('bolt'))} ${l.safety}</p>` : '')}
         </section>
+        ${raw(simHTML(l))}
         ${raw(steps.map((s, i) => stepHTML(l, s, i, doneSteps.has(i))).join(''))}
         ${raw(leetcodeHTML(l))}
         ${raw(l.deliverable ? html`<section class="card"><p class="label">deliverable</p><p class="small">${l.deliverable}</p></section>` : '')}
@@ -116,6 +120,11 @@ function lessonView(root, go, l, { retake = false } = {}) {
     </div>`;
 
   // --- wiring ---
+  const simCard = root.querySelector('.sim-card');
+  if (simCard) {
+    simCard.dataset.lesson = l.id;
+    if (oldSim) simCard.replaceWith(oldSim); else mountSim(simCard, l);
+  }
   root.querySelector('[data-back]').onclick = () => go('study');
   root.querySelectorAll('[data-jump]').forEach(b => (b.onclick = () => root.querySelector(`[data-stepcard="${b.dataset.jump}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })));
   const notes = root.querySelector('[data-notes]');

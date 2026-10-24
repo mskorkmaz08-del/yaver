@@ -142,16 +142,20 @@ The study focus timer stores *when it started*, not a running counter, so it sta
 
 ```
 yaver/
-├── index.html              The shell: tab bar, the watch-crown Yaver button, loads js/app.js
+├── index.html              The shell: tab bar, the gear Yaver button, loads js/app.js
 ├── manifest.webmanifest    Name, icons, colours: what makes it installable
 ├── sw.js                   Service worker: offline copy + updates
-├── css/app.css             All styling: the Clockwork look (graphite, hairline brass, ivory paper lessons, teal accent) and its motion, cards, sheets, chat
-├── fonts/                  Cormorant Garamond and Cinzel, stored in the app so they work offline
-├── icons/                  Home Screen icons and movement.svg, the animated watch movement on Home
+├── css/app.css             All styling: the Hextech look (graphite, brass, teal gemstone glow, notebook-paper course) and its motion, cards, sheets, chat
+├── fonts/                  Cormorant Garamond, Cinzel and Caveat (handwriting), stored in the app so they work offline
+├── icons/                  Home Screen icons: the brass Yaver gear
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
 ├── vendor/                 Anthropic SDK (one file) and Leaflet (map)
 └── js/
     ├── app.js              Starts everything; switches screens; redraws on data change
+    ├── mech.js             The moving gears: hextech engine, gear button, gear pairs, one shared drive shaft
+    ├── sims.js             The workshop: picks a simulator for each lesson and gives it canvas, controls, timeline
+    ├── sims/               13 simulators: circuit, sort, search, graph, structures, vectors, calculus,
+    │                       probability, data (tables), trace (Python), memory (C++), git, shell
     ├── db.js               IndexedDB storage, settings, backup/restore
     ├── data.js             The "business logic": budgets, streaks, free slots, totals
     ├── util.js             Dates, money formatting, bottom sheets, toasts, Markdown
@@ -218,6 +222,16 @@ The Study tab can run a full day-by-day course: Python, C++, algorithms, math, A
 **Calendar.** "Add this week to Calendar" makes an `.ics` file with every block of the week and a 5-minute alert, so the iPhone (or the Mac's Calendar app) reminds you even when Yaver is closed.
 
 New files: `js/course.js` (all course logic), `js/views/course.js` (overview, today card, block alerts), `js/views/lesson.js` (lesson runner, review, test, ship, prepare), `js/keys.js` (keyboard shortcuts). New database tables: `courseProgress`, `cards`, `courseLessons`, `courseTests`, and `tombstones`.
+
+## 9c. The look and the workshop (v25)
+
+**Mechanisms.** The look borrows the mood of the Piltover workshops in the show *Arcane*: brass machines with a glowing blue gemstone at the core. Nothing is copied from the show; the machines are drawn by `js/mech.js` as SVG. The gears are real: tooth counts and starting angles are worked out so teeth interlock (a planetary train on Home: a ring with 60 inner teeth, 12-tooth planets, a 36-tooth sun). One "drive shaft" angle turns every gear on screen. It idles slowly; scrolling, tapping, saving and entering a screen add speed that winds down again. Offscreen gears stop to save battery.
+
+**The Yaver button** is a brass gear with a gemstone. Tapping it spins the gears and the chat irises open from the button. On the phone you close the chat by swiping it down; it follows your finger and closes past a third of the way or on a quick flick.
+
+**Notebook course.** The course screen and every lesson are drawn as a ruled notebook page: blue lines, a red margin, punched holes, a strip of tape, and labels in handwriting (Caveat).
+
+**A workshop in every lesson.** `js/sims.js` reads each lesson's track and title and chooses one of 13 simulators and a setting (for example a robotics lesson on transistors gets the circuit bench with a motor and flyback diode; a lesson on Dijkstra gets the graph explorer). Python lessons with an example get the code tracer, which runs the example on the phone with Pyodide (Python compiled to WebAssembly, downloaded on the first tap) and steps through it line by line with the variables and output. Simulators are loaded only when a lesson opens, draw on a canvas, and pause when scrolled offscreen. Most have a timeline: play, step back and forward, scrub, and change speed; the in-between moments are eased so movement stays smooth.
 
 ## 9b. Using Yaver on a laptop, and sync
 

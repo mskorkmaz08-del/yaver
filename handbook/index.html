@@ -101,6 +101,8 @@
     <div class="stats small" id="course-stats"></div>
     <h3>One path, no guessing</h3>
     <p class="muted">Every lesson runs in the same order, and nothing asks about something you haven't been taught. <b>Recall</b> only asks about lessons you've finished: each question names the lesson it comes from, questions from lessons you haven't done are skipped, and exit questions from your latest finished lessons fill in. The <b>first example</b> shows a worked example with its result, then <b>Learn</b> explains it, then <b>practice</b> and the <b>exit ticket</b>. Every question has a <b>don't know yet</b> button: it shows the answer and offers a lesson from the tutor, and on a scored question it counts as wrong. <code>tests/validate-course.mjs</code> enforces the rules: each recall question must name an earlier lesson, and no first example may ask you to predict or guess. Algorithm lessons in weeks 1–7 also list optional <b>LeetCode</b> problems that only need what's been taught.</p>
+    <h3>A workshop in every lesson</h3>
+    <p class="muted">Each lesson page is a ruled notebook sheet with a <b>workshop</b>: one of 13 simulators chosen from the lesson's track and title by <code>js/sims.js</code>. Circuits with flowing charge, sorting and search, graphs, data structures, vectors and matrices, slopes and gradient descent, probability, tables moving through SQL and pandas, C++ memory, git branches, the shell, and a <b>code tracer</b> that runs the lesson's Python on the phone (Pyodide) and steps through it line by line. Each one loads only when its lesson opens and pauses offscreen; timelines ease between states so stepping and scrubbing stay smooth.</p>
     <h3>Phases</h3>
     <div class="timeline" id="phases"></div>
     <h3>Tracks</h3>

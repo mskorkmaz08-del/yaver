@@ -3,6 +3,8 @@
    Layout rules below were written for v2; the look is the token set in :root plus the
    "Clockwork" block at the end of this file. */
 /* Fonts (SIL Open Font License), self-hosted so Yaver works offline. */
+@font-face { font-family: 'Caveat'; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/caveat-latin-ext.woff) format('woff'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Caveat'; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/caveat-latin.woff) format('woff'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Cormorant Garamond'; font-style: italic; font-weight: 500; font-display: swap; src: url(../fonts/cormorant-garamond-italic-latin-ext.woff) format('woff'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Cormorant Garamond'; font-style: italic; font-weight: 500; font-display: swap; src: url(../fonts/cormorant-garamond-italic-latin.woff) format('woff'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Cormorant Garamond'; font-style: normal; font-weight: 500 700; font-display: swap; src: url(../fonts/cormorant-garamond-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
@@ -40,6 +42,7 @@
   --sans: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --head: "Cormorant Garamond", Georgia, serif;
   --caps: "Cinzel", "Cormorant Garamond", Georgia, serif;
+  --hand: "Caveat", "Bradley Hand", cursive;
   --code: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
@@ -957,7 +960,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brass); }
 #view.enter > :nth-child(5) { animation-delay: .2s; }
 #view.enter > :nth-child(6) { animation-delay: .25s; }
 #view.enter > :nth-child(n+7) { animation-delay: .3s; }
-#view.enter .movement { animation: wind 1.1s cubic-bezier(.2,.8,.2,1) both .1s; }
+#view.enter .engine { animation: wind 1.1s cubic-bezier(.2,.8,.2,1) both .1s; }
 #view.enter .tally path:not(.off) { stroke-dasharray: 30; animation: draw .45s ease-out both; }
 #view.enter .tally path:nth-child(2) { animation-delay: .5s; } #view.enter .tally path:nth-child(1) { animation-delay: .42s; }
 #view.enter .tally path:nth-child(3) { animation-delay: .58s; } #view.enter .tally path:nth-child(4) { animation-delay: .66s; }
@@ -969,13 +972,121 @@ button:not(:disabled):not(.fab):active, a.res:active { transform: scale(.985); }
 .tabbar button:active { transform: none; }
 .icon-btn:not(:disabled):active, .chip:active { transform: scale(.94); }
 /* The crown winds when pressed. */
-.fab { transition: transform .3s cubic-bezier(.2,.8,.2,1), filter .3s; }
-.fab svg { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-.fab:hover svg { transform: rotate(18deg); }
-.fab:active svg { transform: rotate(48deg); transition-duration: .2s; }
 /* Tab bar: the brass dot fades and grows into place. */
 .tabbar button::before { content: ""; position: absolute; top: 8px; left: calc(50% - 2px); width: 4px; height: 4px; border-radius: 50%; background: var(--brass); opacity: 0; transform: scale(0); transition: opacity .25s, transform .35s cubic-bezier(.2,.8,.2,1); }
 .tabbar button.active::before { opacity: 1; transform: none; }
 @media (min-width: 1100px) { .tabbar button::before { display: none; } }
 .step-strip button, .tabbar button, .trio button, .mv-stat { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) { #view.enter *, .sd-hand { animation: none !important; } }
+
+/* ---------- Hextech (v25): working mechanisms after the Arcane show's Piltover ---------- */
+.engine { display: block; width: 100%; max-width: 360px; aspect-ratio: 344 / 300; margin: 0 auto; touch-action: manipulation; cursor: pointer; filter: drop-shadow(0 20px 34px rgba(0,0,0,.6)); }
+.engine svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.chat-empty .engine { width: 260px; margin: 0 0 6px; }
+.mx-runes path { stroke: #8fe9f8; stroke-opacity: .75; }
+.mx-arcs path { filter: drop-shadow(0 0 2px #7fe6f7); }
+
+/* The Yaver button is a gear with the gemstone at its hub. */
+.fab { width: 70px; height: 70px; background: radial-gradient(circle, rgba(63,182,201,.28), rgba(63,182,201,0) 62%); filter: drop-shadow(0 6px 12px rgba(0,0,0,.65)); transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.fab .fab-gear, .fab .fab-gear svg { display: block; width: 70px; height: 70px; }
+.fab:active { transform: translateX(-50%) scale(.92); }
+
+/* Gears on the rule under every screen title, turned by the same shaft. */
+.page-head::after, .brand-head::after { background: linear-gradient(90deg, rgba(201,173,116,.55) calc(100% - 46px), transparent calc(100% - 46px)); }
+.head-gears { position: absolute; right: 0; bottom: -12px; width: 44px; height: 24px; pointer-events: none; }
+.head-gears svg { display: block; width: 100%; height: 100%; }
+
+/* Screens latch into place; parts below the fold rise as they scroll in. */
+@keyframes rise { 0% { opacity: 0; transform: translateY(14px); } 70% { opacity: 1; transform: translateY(-2px); } 100% { opacity: 1; transform: none; } }
+#view > .later { opacity: 0; transform: translateY(24px); }
+#view > .later.in { opacity: 1; transform: none; transition: opacity .5s ease, transform .7s cubic-bezier(.2,1.25,.4,1); }
+#view.enter > .later { animation: none; }
+
+/* Phone: the chat irises open out of the gear button and pulls down to close. */
+@media (max-width: 1099px) {
+  .chat { transform: none; clip-path: circle(0px at var(--ox, 50%) var(--oy, 100%)); transition: clip-path .5s cubic-bezier(.7,0,.25,1), visibility 0s .5s; }
+  .chat-wrap.open .chat { clip-path: circle(150vmax at var(--ox, 50%) var(--oy, 100%)); transition: clip-path .62s cubic-bezier(.55,0,.15,1); }
+  .chat.dragging { transition: none !important; }
+  .chat.dismiss { transition: transform .32s cubic-bezier(.4,0,.7,1) !important; }
+  .chat.snap { transition: none !important; }
+  .chat-wrap.open .chat.dragging, .chat-wrap.open .chat.dismiss { box-shadow: 0 -10px 40px rgba(0,0,0,.6); opacity: calc(1 - var(--pull, 0) * .25); }
+  .chat-head { position: relative; padding-top: calc(var(--safe-t) + 16px); touch-action: none; }
+  .grip { position: absolute; top: calc(var(--safe-t) + 5px); left: 50%; width: 40px; height: 4px; border-radius: 2px; background: rgba(201,173,116,.45); transform: translateX(-50%); }
+}
+@media (min-width: 1100px) { .grip { display: none; } }
+@media (prefers-reduced-motion: reduce) { .chat, .chat-wrap.open .chat { transition: none !important; } #view > .later { opacity: 1; transform: none; } }
+
+/* ---------- The course as notes on paper ---------- */
+/* A lesson is a sheet of ruled notebook paper: blue rules, a red margin, punched holes, a strip of tape,
+   and the annotations written by hand in blue ink. */
+.lesson-main, .note-sheet, body[data-view="course"] #view {
+  --rule: rgba(64, 104, 158, .2);
+  background:
+    linear-gradient(90deg, transparent var(--margin, 54px), rgba(196, 70, 70, .5) var(--margin, 54px), rgba(196, 70, 70, .5) calc(var(--margin, 54px) + 1.5px), transparent calc(var(--margin, 54px) + 1.5px), transparent calc(var(--margin, 54px) + 4px), rgba(196, 70, 70, .28) calc(var(--margin, 54px) + 4px), rgba(196, 70, 70, .28) calc(var(--margin, 54px) + 5px), transparent calc(var(--margin, 54px) + 5px)),
+    repeating-linear-gradient(180deg, transparent 0 29px, var(--rule) 29px 30px),
+    radial-gradient(120% 90% at 30% 10%, rgba(255,255,255,.5), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, rgba(120,95,50,.03), rgba(120,95,50,.08)),
+    var(--paper) !important;
+  background-position: 0 0, 0 52px, 0 0, 0 0, 0 0 !important;
+  position: relative;
+}
+.lesson-main { padding-left: calc(var(--margin, 54px) + 20px); padding-top: 36px; }
+.lesson-main::before, .note-sheet::before, body[data-view="course"] #view::before {
+  content: ""; position: absolute; left: calc(var(--margin, 54px) / 2 - 8px); top: 30px; bottom: 30px; width: 16px; pointer-events: none;
+  background: radial-gradient(circle at 8px 8px, #0d0c0a 0 5.5px, rgba(0,0,0,.28) 6.5px, transparent 7.5px) 0 0 / 16px 150px repeat-y;
+}
+.lesson-main::after { content: ""; position: absolute; top: -10px; left: 50%; width: 104px; height: 26px; transform: translateX(-50%) rotate(-2.5deg); background: rgba(236, 226, 196, .72); box-shadow: 0 1px 3px rgba(0,0,0,.2); pointer-events: none; }
+.lesson-main .label, .note-sheet .label { font: 600 21px/1 var(--hand); letter-spacing: 0; text-transform: none; color: #2c4a7a; }
+.lesson-main .step > .card-head .label { transform: rotate(-1.2deg); transform-origin: left center; }
+.lesson-main .label .i { color: #2c4a7a; }
+.lesson-main .step-title { display: inline-block; padding-bottom: 6px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='8' viewBox='0 0 60 8'%3E%3Cpath d='M0 5 Q 7.5 1 15 5 T 30 5 T 45 5 T 60 5' fill='none' stroke='%232c4a7a' stroke-opacity='.45' stroke-width='1.4'/%3E%3C/svg%3E") left bottom / 60px 8px repeat-x; }
+.lesson-main .step-strip em { font: 600 19px var(--hand); color: inherit; }
+.lesson-main .step-strip .cur em { color: #2c4a7a; }
+.lesson-main .md blockquote, .lesson-main .hint, .note-sheet .md blockquote { font: 600 20px/1.35 var(--hand); color: #a33a3a; border-left-color: rgba(163,58,58,.5); }
+.lesson-main .objectives li::marker { color: #2c4a7a; }
+@media (max-width: 699px) { .lesson-main, .note-sheet { --margin: 30px; } .lesson-main { padding-left: 42px; padding-right: 16px; } .lesson-main::before, .note-sheet::before, body[data-view="course"] #view::before { display: none; } }
+
+/* The course overview is one big notebook page: everything on it is written in ink. */
+body[data-view="course"] #view {
+  --text: var(--ink); --muted: #4c5262; --dim: #7a7466; --line: rgba(29,36,51,.16); --line-2: rgba(29,36,51,.32);
+  --surface: rgba(255,255,255,.32); --surface-2: rgba(29,36,51,.06); --track: rgba(29,36,51,.12); --accent: var(--teal); --accent-soft: rgba(63,182,201,.12);
+  --margin: 40px; color: var(--ink); padding-left: 56px; padding-right: 18px; padding-top: 26px; padding-bottom: 40px;
+  box-shadow: 0 0 0 1px rgba(201,173,116,.5), 0 18px 40px rgba(0,0,0,.5); margin-top: 10px; margin-bottom: 120px;
+}
+body[data-view="course"] #view .card, body[data-view="course"] #view .tile, body[data-view="course"] #view .stat-row, body[data-view="course"] #view .stat-row > div { background: rgba(255,255,255,.3) !important; border-color: rgba(29,36,51,.18) !important; }
+body[data-view="course"] #view .btn.ghost { color: var(--ink); border-color: rgba(29,36,51,.4); }
+body[data-view="course"] #view .label, body[data-view="course"] #view .tile-k { font: 600 21px/1 var(--hand); letter-spacing: 0; text-transform: none; color: #2c4a7a; }
+body[data-view="course"] #view .page-head h1 { color: var(--ink); }
+body[data-view="course"] #view .path { color: #8a7346; }
+body[data-view="course"] #view .icon-btn { color: var(--ink); border-color: rgba(29,36,51,.35); }
+body[data-view="course"] #view .stat-row small { color: #4c5262; }
+@media (max-width: 699px) { body[data-view="course"] #view { --margin: 24px; padding-left: 36px; padding-right: 12px; } }
+
+/* ---------- The workshop: lesson simulators on a blueprint plate ---------- */
+.sim-card .card-head { align-items: center; }
+.sim-full { font-size: 20px; color: #2c4a7a; padding: 2px 8px; }
+.sim { display: flex; flex-direction: column; gap: 10px; }
+.sim-stage { position: relative; border-radius: 3px; overflow: hidden; box-shadow: 0 0 0 1px rgba(217,181,108,.7), 0 0 0 4px #14120e, 0 0 0 5px rgba(217,181,108,.35), 0 14px 28px rgba(0,0,0,.35); background: #0c1820; }
+.sim-stage canvas { display: block; touch-action: pan-y; }
+.sim-loading { font: italic 500 16px var(--sans); color: #4c5262; padding: 30px 0; text-align: center; }
+.sim-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.sim-btn { font: 500 10.5px var(--caps); letter-spacing: .18em; text-transform: uppercase; padding: 9px 12px; border: 1px solid rgba(29,36,51,.45); color: var(--ink); background: rgba(255,255,255,.35); border-radius: 2px; min-width: 40px; }
+.sim-btn.primary { background: #14120e; color: var(--brass-hi); border-color: #8a6d3f; min-width: 82px; }
+.sim-btn[hidden] { display: none; }
+.sim-slider { display: flex; align-items: center; gap: 8px; flex: 1 1 150px; min-width: 140px; font: 600 19px/1 var(--hand); color: #2c4a7a; }
+.sim-slider b { font: 500 13px var(--code); color: var(--ink); min-width: 54px; text-align: right; }
+.sim-slider input, .sim-scrub { -webkit-appearance: none; appearance: none; flex: 1; height: 22px; background: transparent; padding: 0; border: 0 !important; margin: 0; }
+.sim-scrub { width: 100%; flex-basis: 100%; }
+.sim-slider input::-webkit-slider-runnable-track, .sim-scrub::-webkit-slider-runnable-track { height: 3px; background: linear-gradient(90deg, #8a6d3f, #d9b56c); border-radius: 2px; }
+.sim-slider input::-webkit-slider-thumb, .sim-scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8.5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff2c8, #c79a4a 50%, #6b4c1e); box-shadow: 0 2px 4px rgba(0,0,0,.4); border: 0; }
+.sim-slider input::-moz-range-track, .sim-scrub::-moz-range-track { height: 3px; background: #c79a4a; }
+.sim-slider input::-moz-range-thumb, .sim-scrub::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #c79a4a; border: 0; }
+.sim-select { font: 500 15px var(--sans); padding: 7px 10px; border: 1px solid rgba(29,36,51,.45); background: rgba(255,255,255,.45); color: var(--ink); border-radius: 2px; }
+.sim-caption { font: italic 500 16px/1.35 var(--sans); color: #4c5262; margin: 0; }
+.sim-caption b { font: 600 12px var(--code); font-style: normal; color: #2c4a7a; margin-right: 6px; }
+.sim-card.full { position: fixed; inset: 0; z-index: 70; margin: 0; padding: calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 16px) !important; overflow-y: auto; background: var(--paper) !important; border-top: 0 !important; }
+.sim-card.full .sim-full { font-size: 26px; }
+.sim-slider[hidden] { display: none; }
+.sim-code { width: 100%; min-height: 160px; font: 13px/1.45 var(--code); color: #1d2433; background: rgba(255,255,255,.55); border: 1px solid rgba(29,36,51,.35); border-radius: 2px; padding: 10px; tab-size: 4; resize: vertical; }
+.sim-inputs { width: 100%; font: 13px var(--code); padding: 8px 10px; border: 1px solid rgba(29,36,51,.35); background: rgba(255,255,255,.45); color: var(--ink); border-radius: 2px; }
+.sim-code[hidden], .sim-inputs[hidden] { display: none; }
