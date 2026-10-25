@@ -116,6 +116,8 @@ Yaver can use either brain. **Gemini** (Google) has a free tier: get a key at ai
 
 **On the MacBook itself (v27)** nothing needs pasting. Yaver open in a browser on the Mac asks `http://127.0.0.1:8787/pair`; the bridge answers only requests made on that Mac from Yaver's own page, and hands over its address and token. To have the bridge always ready, paste one line into Terminal once (Settings → Claude on your Mac shows it with a Copy button): it downloads the latest bridge and runs `node ~/yaver-bridge/yaver-bridge.mjs --install`, which makes it a login item (a LaunchAgent) that starts with the Mac and restarts itself. `--uninstall` removes it. The iPhone keeps using Gemini unless you also paste the connection code there.
 
+**Laptop setup card (v33).** On a computer where no bridge answers, Home shows the same Terminal line with Copy, Check again and Not now (hidden for a week). Run it once in Terminal: it needs Claude Code installed and signed in to the subscription, and no ANTHROPIC_API_KEY set (the installer warns about both). Chrome may ask to allow access to the local network once; allow it. Yaver tries 127.0.0.1 and then localhost. After that the bridge starts at every login.
+
 ## 3d. Çetele (added in v13)
 
 Çetele is the daily list of spiritual minimums (namaz, Quran and book pages, salawat, Jawshan, tahajjud, weekly fasting), and it comes first in the app: it has its own tab, the top card on Home, and the first reminder of the day. `js/cetele.js` holds the logic. Items live in the `ceteleItems` store, and each day's count is one `ceteleLog` row named `<item>:<day>`. A day counts toward the streak when every daily minimum is met; weekly items (fasting) add up from Monday. The AI can read it (`get_cetele`), log to it (`log_cetele`, e.g. "read 4 pages of Quran") and change the list (`set_cetele_item`). It syncs between devices like every other record.
@@ -164,6 +166,7 @@ yaver/
     ├── db.js               IndexedDB storage, settings, backup/restore
     ├── data.js             The "business logic": budgets, streaks, free slots, totals
     ├── util.js             Dates, money formatting, bottom sheets, toasts with Undo, haptics, timers, Markdown
+    ├── skills.js           Skill levels: XP from everything, ratings, levels, form, the hexagon
     ├── command.js          The command bar (hold the gear, or ⌘K): do, find or ask
     ├── ui.js               Progress rings, bar charts, the lesson step strip, the study subdial
     ├── forms.js            Add/edit sheets for expenses, meetings, study, meals, tasks
@@ -171,7 +174,7 @@ yaver/
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
     ├── icons.js            Line icons
-    ├── views/              One file per screen: home, çetele, study, calendar, money, diet, map, settings
+    ├── views/              One file per screen: home, çetele, study, calendar, money, diet, map, skills, settings
     └── ai/
         ├── provider.js     Picks Gemini (free) or Claude; saves and tests keys
         ├── gemini.js       Talks to Google's Gemini API; same agent loop
@@ -269,6 +272,14 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 **Review fixes (v27).** Larger, brighter small text and labels; buttons never break mid-word; a real cog for Settings; Home shows each thing once (the Today list skips what the cards above already show and folds after three items); Study drops the second week strip and the empty roadmap card while the course runs; the course week shows light, readable day cards; lessons on the phone have a slim timer bar at the top; meals typed in lowercase land under the right meal; the chat closes when you change screens on the phone. Settings is a list of groups (Assistant, Claude on your Mac, Voice, Sound and music, You and goals, Sync, Your data, Install, Handbook) that save each change as you make it.
 
 **A workshop in every lesson.** `js/sims.js` reads each lesson's track and title and chooses one of 13 simulators and a setting (for example a robotics lesson on transistors gets the circuit bench with a motor and flyback diode; a lesson on Dijkstra gets the graph explorer). Python lessons with an example get the code tracer, which runs the example on the phone with Pyodide (Python compiled to WebAssembly, downloaded on the first tap) and steps through it line by line with the variables and output. Simulators are loaded only when a lesson opens, draw on a canvas, and pause when scrolled offscreen. Most have a timeline: play, step back and forward, scrub, and change speed; the in-between moments are eased so movement stays smooth.
+
+## 9d. Skill levels: the player card (v33)
+
+A footballer-style attribute card for Mustafa's progress (Skills tab, key 8, and a card on Home). `js/skills.js` turns everything already recorded into experience points (XP) in six areas, placed so related ones sit side by side around a hexagon: Python; Algorithms & math; C++ & tools; Robotics & AI; Discipline; Çetele & reading.
+
+- **Where XP comes from.** A mastered lesson 60 + 40 × exit score (one to redo 30), to its track's area; a weekly test up to 150 per subject; a solved problem 25 (Algorithms); a reviewed card 2, study time 1 per 4 minutes, a task 10, a milestone 30 and a day with every Çetele minimum met 40 (Discipline); Çetele counts 50 per daily target met (150 weekly), capped at 120 a day so a long list of counts can't outgrow the lessons.
+- **Rating and level.** Each area rates 1–99 on a square-root curve (`1 + 98·√(xp/(xp+k))`), so the first lessons show clearly and the top takes about a year. Levels need 100, 300, 600, 1,000 … XP. The overall rating is the average; the page title is the level of the average area.
+- **Built to motivate (the research applied).** Radar charts read best with 5–8 axes on one scale and a baseline to compare against, so the shape from four weeks ago is drawn underneath as a dashed outline. XP only grows, so levels never drop (loss of earned progress hurts more than gains help); a quiet week shows only as form, an arrow comparing this week with last. Bars show the distance to the next level (people speed up as a goal gets close). Streaks show the current run and the best; after a missed day the copy says levels stay and today is a fresh start.
 
 ## 9b. Using Yaver on a laptop, and sync
 

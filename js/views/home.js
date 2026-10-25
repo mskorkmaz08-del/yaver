@@ -10,6 +10,20 @@ import { expenseForm, meetingForm, studyForm, mealForm, taskForm } from '../form
 import { openAssistant } from '../ai/assistant.js';
 import { hasKey as aiReady, saveKey } from '../ai/provider.js';
 import { openCommand, logCetele } from '../command.js';
+import { onComputer, macOnline, BRIDGE_CMD } from '../ai/mac.js';
+import * as SK from '../skills.js';
+
+// The player card in small: the hexagon, the overall rating and what moved lately.
+function skillCard() {
+  const s = SK.summary();
+  const gain = s.overall - s.overallThen;
+  const up = s.areas.filter(a => a.form === 'up').map(a => a.name);
+  return html`<button class="plate sk-home" data-go="skills">
+    ${raw(SK.radar(s, { size: 150, labels: false }))}
+    <span class="sk-home-t"><span class="eyebrow">Skills · level ${s.level}</span><b><span class="mono">${s.overall}</span> overall</b><small>${gain > 0 ? `+${gain} in 4 weeks` : 'Every lesson and count adds up'}${up.length ? ` · rising: ${up.slice(0, 2).join(', ')}` : ''}</small></span>
+    ${raw(icon('chevronRight'))}
+  </button>`;
+}
 
 const greeting = h => (h >= 4 && h < 12 ? 'Good morning' : h < 18 && h >= 12 ? 'Good afternoon' : 'Good evening');
 // One line under the greeting: what's open today, in plain words.
@@ -140,6 +154,10 @@ export function render(root, go) {
         <p class="small muted">Stored only on this device. A Claude key also works here if you have one.</p>
       </section>`)}
 
+    ${raw(skillCard())}
+
+    <section class="plate card mac-card" data-mac-card hidden></section>
+
     <div class="plate ask" data-ask role="button" tabindex="0">
       <span class="ask-gem" data-gem aria-hidden="true"></span>
       <span class="ask-text"><b>Ask Yaver…</b><small>${hasKey ? '"log 45 min of algorithms" · "pharmacy near me"' : 'add your key above to start'}</small></span>
@@ -213,6 +231,21 @@ export function render(root, go) {
   root.querySelector('[data-cmd]')?.addEventListener('click', () => openCommand());
   root.querySelector('[data-save-key]')?.addEventListener('click', async () => {
     try { toast(await saveKey(root.querySelector('[data-key]').value)); } catch (e) { toast(e.message, 4000); }
+  });
+  // On the Mac: if Claude isn't reachable here yet, offer the one-line setup (until it works,
+  // or until "Not now" hides it for a week).
+  const mc = root.querySelector('[data-mac-card]');
+  let snooze = 0; try { snooze = Number(localStorage.getItem('yaverMacSnooze') || 0); } catch { /* private mode */ }
+  if (mc && onComputer() && Date.now() > snooze) macOnline().then(ok => {
+    if (ok || !mc.isConnected) return;
+    mc.hidden = false;
+    mc.innerHTML = html`<div class="card-head"><h3>${raw(icon('terminal'))} Use your Claude subscription here</h3><button class="link" data-mac-later>Not now</button></div>
+      <p class="small muted">Paste this into Terminal on this Mac once and press Return. From then on it starts with the Mac and Yaver uses Claude by itself, with no API bill. Claude Code must be signed in (<code>claude</code>, then <code>/login</code>).</p>
+      <div class="cmd"><code>${BRIDGE_CMD}</code></div>
+      <div class="btn-row"><button class="btn primary" data-mac-copy>${raw(icon('copy'))} Copy</button><button class="btn ghost" data-mac-check>Check again</button></div>`;
+    mc.querySelector('[data-mac-copy]').onclick = async () => { try { await navigator.clipboard.writeText(BRIDGE_CMD); toast('Copied. Paste it into Terminal and press Return.'); } catch { toast('Select the command and copy it.', 4000); } };
+    mc.querySelector('[data-mac-check]').onclick = async () => { if (await macOnline(true)) { mc.hidden = true; haptic('success'); toast('Connected to Claude on this Mac.'); } else toast('Not found yet. Run the line in Terminal, then check again.', 4000); };
+    mc.querySelector('[data-mac-later]').onclick = () => { try { localStorage.setItem('yaverMacSnooze', String(Date.now() + 7 * 864e5)); } catch { /* private mode */ } mc.hidden = true; };
   });
   // The clock in the head line keeps time while Home is open.
   clearInterval(clockTimer);

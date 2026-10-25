@@ -231,7 +231,7 @@ button.card, button.plate { width: 100%; text-align: left; }
 .ask-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ask-text b { font-weight: 500; font-size: 15px; color: var(--text); }
 .ask-text small { font: 12px var(--mono); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ask-cta { flex: none; height: 42px; padding: 0 14px; border-radius: 11px; border: 1px solid var(--line-2); background: var(--plate-2); font: 600 12px var(--sans); font-stretch: 110%; letter-spacing: .1em; text-transform: uppercase; color: var(--hex); }
+.ask-cta { flex: none; height: 42px; padding: 0 14px; border-radius: 11px; border: 1px solid var(--line-2); background: var(--plate-2); font: 600 14px var(--sans); letter-spacing: -.005em; color: var(--text); }
 
 .setup { padding: 16px; display: flex; flex-direction: column; gap: 10px; border-color: rgba(226, 182, 96, .45); }
 .setup h3 { font-size: 18px; display: flex; gap: 8px; align-items: center; }
@@ -1026,6 +1026,11 @@ input, select, textarea { border-radius: var(--r-sm); }
 .quick button { flex: none; flex-direction: row; gap: 8px; padding: 0 16px; min-height: 44px; border-radius: 999px; font: 600 14px var(--sans); letter-spacing: 0; text-transform: none; color: var(--text); background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .09); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); transition: transform .35s var(--spring); }
 .quick button .i { width: 18px; height: 18px; color: var(--lume); }
 
+body[data-view="home"] .mac-card { grid-column: 1 / -1; }
+.mac-card h3 { display: flex; align-items: center; gap: 8px; font: 700 17px var(--sans); letter-spacing: -.015em; }
+.mac-card h3 .i { color: var(--lume); }
+.mac-card[hidden] { display: none; }
+
 /* the slim bar that keeps a screen's title once it scrolls away; tap it to go back to the top */
 .topbar {
   position: fixed; z-index: 34; top: 0; left: 0; right: 0; height: calc(var(--safe-t) + 46px); padding-top: var(--safe-t);
@@ -1052,10 +1057,12 @@ body.focus-mode .topbar, body[data-view="lesson"] .topbar, body[data-view="map"]
 .tabbar button.active .i { color: var(--lume); filter: none; }
 .tab-mark { position: absolute; left: 0; bottom: 6px; width: 28px; height: 3px; border-radius: 2px; background: var(--lume); box-shadow: 0 0 10px rgba(226, 182, 96, .6); transition: transform .5s var(--spring), opacity .2s; pointer-events: none; }
 .fab { transition: transform .5s var(--spring); }
+@media (max-width: 1099px) {
 body.tab-min .tabbar { transform: translateY(10px) scale(.92); height: 54px; }
 body.tab-min .tabbar button span { opacity: 0; max-height: 0; }
 body.tab-min .tab-mark { bottom: 5px; }
 body.tab-min .fab { transform: translateX(-50%) translateY(12px) scale(.84); }
+}
 
 /* messages rise from the bottom, near the thumb, above the tab bar; Undo when it helps */
 .toast {
@@ -1134,6 +1141,64 @@ body.sim-open .nb-spine, body.sim-open .nb-nav, body.sim-open .focus-hud, body.s
 @media (prefers-reduced-motion: reduce) {
   body.tab-min .tabbar, body.tab-min .fab { transform: none; }
 }
+
+
+/* ---------- Skills: the player card (v33) ---------- */
+.sk-radar { display: block; max-width: 100%; height: auto; overflow: visible; }
+.sk-ring { fill: none; stroke: rgba(255, 255, 255, .07); stroke-width: 1; }
+.sk-ring:last-of-type { stroke: rgba(255, 255, 255, .14); }
+.sk-axis { stroke: rgba(255, 255, 255, .06); stroke-width: 1; }
+.sk-then { fill: none; stroke: var(--steel); stroke-width: 1.4; stroke-dasharray: 4 3; opacity: .8; }
+.sk-now { fill: rgba(226, 182, 96, .26); stroke: var(--lume); stroke-width: 2; stroke-linejoin: round; filter: drop-shadow(0 0 10px rgba(226, 182, 96, .35)); }
+.sk-dot { fill: var(--lume-2); stroke: var(--bg); stroke-width: 1.2; }
+.sk-r { font: 700 17px var(--mono); fill: var(--text); letter-spacing: -.03em; }
+.sk-n { font: 600 10px var(--sans); fill: var(--muted); letter-spacing: .08em; }
+#view.enter .sk-now, #view.enter .sk-dot { transform-origin: 0 0; transform-box: view-box; animation: sk-grow .9s var(--spring) both .1s; }
+@keyframes sk-grow { from { transform: scale(.2); opacity: 0; } }
+.sk-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 12px; padding: 16px; overflow: hidden; }
+.sk-card .sk-radar { justify-self: center; }
+.sk-ovr { display: flex; flex-direction: column; gap: 2px; padding-left: 4px; }
+.sk-big { font: 700 64px/0.9 var(--mono); letter-spacing: -.06em; color: var(--lume-2); text-shadow: 0 0 24px rgba(226, 182, 96, .25); }
+.sk-ovr-l { font: 600 13px var(--sans); color: var(--muted); }
+.sk-gain { font: 600 13px var(--sans); color: var(--muted); margin-top: 8px; }
+.sk-gain.up { color: var(--ok); }
+.sk-xp { font-size: 12px; color: var(--dim); }
+.sk-legend { grid-column: 1 / -1; display: flex; gap: 6px 14px; align-items: center; justify-content: center; font-size: 12px; color: var(--dim); }
+.sk-legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid var(--lume); margin-right: -8px; }
+.sk-legend i.then { border-top: 2px dashed var(--steel); }
+.sk-line { font-size: 15px; color: var(--muted); padding: 0 2px; }
+.sk-areas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sk-area { padding: 14px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.sk-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sk-top b { font: 600 15px/1.25 var(--sans); letter-spacing: -.01em; min-width: 0; text-wrap: balance; }
+.sk-rate { font: 700 24px var(--mono); letter-spacing: -.04em; color: var(--lume-2); }
+.sk-meta { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--muted); }
+.sk-form { font-weight: 600; }
+.sk-form.up { color: var(--ok); }
+.sk-form.down { color: var(--dim); }
+.sk-streaks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sk-streaks div { display: flex; flex-direction: column; gap: 2px; }
+.sk-streaks b { font-size: 34px; line-height: 1; letter-spacing: -.05em; color: var(--text); }
+.sk-streaks span { font: 600 13px var(--sans); color: var(--muted); }
+.sk-streaks small { font-size: 12.5px; color: var(--lume); }
+.sk-win { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid rgba(255, 255, 255, .05); font-size: 14.5px; }
+.sk-win:first-of-type { border-top: 0; }
+.sk-win span:nth-child(2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-plus { color: var(--ok); font-weight: 600; }
+.sk-win small { color: var(--dim); font-size: 12px; white-space: nowrap; }
+.sk-how summary { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--muted); }
+.sk-how summary .i { width: 16px; height: 16px; color: var(--lume); }
+.sk-how ul { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.sk-home { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 10px 14px 10px 8px; }
+.sk-home .sk-radar { width: 92px; margin: 4px 0 4px 6px; }
+.sk-home .sk-ring { stroke: rgba(255, 255, 255, .11); }
+.sk-home-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.sk-home-t b { font: 700 20px var(--sans); letter-spacing: -.02em; }
+.sk-home-t b .mono { color: var(--lume-2); font-size: 24px; }
+.sk-home-t small { font-size: 13px; color: var(--muted); }
+.sk-home > .i { color: var(--dim); }
+@media (max-width: 420px) { .sk-card { grid-template-columns: 1fr; } .sk-ovr { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; } .sk-gain { margin-top: 0; } }
+@media (min-width: 1100px) { body[data-view="home"] .sk-home { grid-column: 1 / -1; } .sk-areas { grid-template-columns: repeat(3, 1fr); } body[data-view="skills"] .view { max-width: 980px; } .sk-card { padding: 22px 28px; } .sk-card .sk-radar { width: 440px; } }
 
 /* Çetele as the show's poster clock: gold bezel, ivory face, tall stroke numerals, green and bronze subdials */
 .cetdial .cd-bezel { fill: #6b4a22; stroke: none; }

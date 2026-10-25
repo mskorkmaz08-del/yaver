@@ -1,7 +1,7 @@
 import * as db from '../db.js';
 import { html, raw, esc, toast, confirmSheet } from '../util.js';
 import { MODELS } from '../ai/claude.js';
-import { testMac, useCode, onComputer, macOnline, macConfigured } from '../ai/mac.js';
+import { testMac, useCode, onComputer, macOnline, macConfigured, BRIDGE_CMD } from '../ai/mac.js';
 import { VOICES, speakNatural, unlockAudio, deviceVoices, pickDeviceVoice } from '../ai/voice.js';
 import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/provider.js';
 import { currencyOptions } from '../data.js';
@@ -10,7 +10,6 @@ import * as sync from '../sync.js';
 
 // Which groups are open survives redraws.
 const OPEN = new Set();
-const BRIDGE_CMD = 'mkdir -p ~/yaver-bridge && curl -fsSL -o ~/yaver-bridge/yaver-bridge.mjs https://raw.githubusercontent.com/mskorkmaz08-del/yaver/main/bridge/yaver-bridge.mjs && node ~/yaver-bridge/yaver-bridge.mjs --install';
 
 // A collapsible group: a row with a title and a one-line summary, the fields underneath.
 const group = (id, ic, title, sub, body) => html`

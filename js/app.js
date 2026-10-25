@@ -18,6 +18,7 @@ import * as settings from './views/settings.js';
 import * as mapView from './views/map.js';
 import * as courseView from './views/course.js';
 import * as lessonView from './views/lesson.js';
+import * as skillsView from './views/skills.js';
 import * as C from './course.js';
 import { initShortcuts } from './keys.js';
 import { initCommand, openCommand } from './command.js';
@@ -29,9 +30,9 @@ import * as sound from './sound.js';
 import * as mech from './mech.js';
 import { icon } from './icons.js';
 
-const TABS = { home: ['home', 'Home', '1'], cetele: ['tally', 'Çetele', '2'], study: ['book', 'Study', '3'], calendar: ['calendar', 'Meet', '4'], money: ['wallet', 'Money', '5'], diet: ['leaf', 'Diet', '6'], map: ['map', 'Map', '7'], settings: ['settings', 'Settings', ','] };
+const TABS = { home: ['home', 'Home', '1'], cetele: ['tally', 'Çetele', '2'], study: ['book', 'Study', '3'], calendar: ['calendar', 'Meet', '4'], money: ['wallet', 'Money', '5'], diet: ['leaf', 'Diet', '6'], map: ['map', 'Map', '7'], skills: ['trophy', 'Skills', '8'], settings: ['settings', 'Settings', ','] };
 
-const VIEWS = { home, cetele, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView };
+const VIEWS = { home, cetele, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView, skills: skillsView };
 // Screens that belong to a tab for highlighting.
 const PARENT = { course: 'study', lesson: 'study' };
 let current = 'home';

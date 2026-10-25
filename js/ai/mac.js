@@ -34,23 +34,30 @@ export async function useCode(raw) {
 // On the Mac itself (a computer, not the phone) Yaver finds a running bridge at
 // 127.0.0.1 and takes its address and token from it: nothing to paste or set up.
 const LOCAL = 'http://127.0.0.1:8787';
+// The one line that sets up the bridge on a Mac (runs at login from then on).
+export const BRIDGE_CMD = 'mkdir -p ~/yaver-bridge && curl -fsSL -o ~/yaver-bridge/yaver-bridge.mjs https://raw.githubusercontent.com/mskorkmaz08-del/yaver/main/bridge/yaver-bridge.mjs && node ~/yaver-bridge/yaver-bridge.mjs --install';
 export const onComputer = () => matchMedia('(pointer: fine)').matches;
 let pairedAt = 0;
 export async function pairLocal(force = false) {
   if (!onComputer() || (!force && Date.now() - pairedAt < 60000)) return false;
   pairedAt = Date.now();
-  try {
-    const res = await fetch(`${LOCAL}/pair`, { signal: AbortSignal.timeout(900) });
-    if (!res.ok) return false;
-    const { url, token } = await res.json();
-    if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(url || '') || !token) return false;
-    if (url !== base()) await db.setSetting('macUrl', url);
-    if (token !== db.setting('macToken', '')) await db.setSetting('macToken', token);
-    last = { at: Date.now(), ok: true };
-    return true;
-  } catch { return false; }
+  // 127.0.0.1 first; some browsers (older Safari) only allow plain http to the name "localhost"
+  // from a secure page, so that is tried too, and whichever answers is kept for chat.
+  for (const host of [LOCAL, LOCAL.replace('127.0.0.1', 'localhost')]) {
+    try {
+      const res = await fetch(`${host}/pair`, { signal: AbortSignal.timeout(900) });
+      if (!res.ok) continue;
+      const { url, token } = await res.json();
+      if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(url || '') || !token) continue;
+      const use = host === LOCAL ? url : url.replace('127.0.0.1', 'localhost');
+      if (use !== base()) await db.setSetting('macUrl', use);
+      if (token !== db.setting('macToken', '')) await db.setSetting('macToken', token);
+      last = { at: Date.now(), ok: true };
+      return true;
+    } catch { /* not reachable this way */ }
+  }
+  return false;
 }
-
 // Quick check before each message; remembered for 30 seconds so a chat stays snappy.
 export async function macOnline(force = false) {
   if (!macConfigured()) return pairLocal(force);

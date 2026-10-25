@@ -200,6 +200,13 @@ process.on('SIGTERM', stop);
 const SERVICE = process.env.YAVER_SERVICE === '1';
 const LABEL = 'com.yaver.bridge';
 const PLIST = join(homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
+// The login item gets this shell's PATH plus the usual install places, so it finds node,
+// claude and cloudflared however they were installed.
+function servicePath() {
+  const h = homedir();
+  const extra = ['/opt/homebrew/bin', '/usr/local/bin', join(h, '.local', 'bin'), join(h, '.claude', 'local'), join(h, '.npm-global', 'bin'), dirname(process.execPath), '/usr/bin', '/bin', '/usr/sbin', '/sbin'];
+  return [...new Set([...(process.env.PATH || '').split(':').filter(Boolean), ...extra])].join(':');
+}
 function service(install) {
   if (process.platform !== 'darwin') { console.log('--install works on a Mac only.'); process.exit(1); }
   const domain = `gui/${process.getuid()}`;
@@ -217,13 +224,17 @@ function service(install) {
 <plist version="1.0"><dict>
   <key>Label</key><string>${LABEL}</string>
   <key>ProgramArguments</key><array><string>${esc(process.execPath)}</string><string>${esc(fileURLToPath(import.meta.url))}</string></array>
-  <key>EnvironmentVariables</key><dict><key>PATH</key><string>${esc(process.env.PATH)}</string><key>YAVER_SERVICE</key><string>1</string></dict>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>${esc(servicePath())}</string><key>YAVER_SERVICE</key><string>1</string></dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>${esc(log)}</string>
   <key>StandardErrorPath</key><string>${esc(log)}</string>
 </dict></plist>
 `);
+  // Claude Code must be installed and signed in; say so now rather than failing quietly later.
+  const v = spawnSync(CLAUDE, ['--version'], { encoding: 'utf8', env: { ...process.env, PATH: servicePath() } });
+  if (v.status !== 0) console.log('Note: Claude Code was not found. Install it from claude.com/claude-code, run `claude`, type /login, then run this line again.');
+  if (process.env.ANTHROPIC_API_KEY) console.log('Note: ANTHROPIC_API_KEY is set in this shell, so Claude Code would bill the API instead of your subscription. Remove it from ~/.zshrc.');
   const r = spawnSync('launchctl', ['bootstrap', domain, PLIST], { encoding: 'utf8' });
   if (r.status !== 0) { console.log(`launchctl could not start it: ${(r.stderr || '').trim()}`); process.exit(1); }
   console.log(`Done. The bridge now runs in the background and starts with your Mac.

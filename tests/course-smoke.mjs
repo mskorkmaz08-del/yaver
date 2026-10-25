@@ -27,7 +27,7 @@ async function newPage(opts, at) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-  page.on('console', m => { if (m.type() === 'error' && !m.location().url.includes('127.0.0.1:8787')) errors.push('console: ' + m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !/(127\.0\.0\.1|localhost):8787/.test(m.location().url)) errors.push('console: ' + m.text()); });
   await page.clock.install({ time: new Date(at) });
   await page.route('https://tile.openstreetmap.org/**', r => r.fulfill({ status: 204 }));
   return { ctx, page, errors };
