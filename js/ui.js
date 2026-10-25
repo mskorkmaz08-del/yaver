@@ -74,31 +74,66 @@ export function subdial(value, max, { size = 112, label = '' } = {}) {
   </svg>`;
 }
 
-// The lesson timer as a chronograph: the lesson's steps sit around the dial as segments,
-// elapsed time fills them with amber lume, and the hand sweeps the seconds.
+// The lesson timer as a hextech gauge (after the gauge from the show): a steel case, one hex
+// window per lesson step that lights teal while you're in that step, teal glass below, a ring
+// that fills gold with elapsed time, a brass gear at the centre and a white needle sweeping
+// the seconds.
+const gearPath = (n, r1, r2) => {
+  const pts = [];
+  for (let k = 0; k < n; k++) for (const [fr, r] of [[-0.5, r1], [-0.22, r1], [-0.13, r2], [0.13, r2], [0.22, r1]]) {
+    const t = ((k + fr) / n) * Math.PI * 2;
+    pts.push(`${f2(r * Math.cos(t))} ${f2(r * Math.sin(t))}`);
+  }
+  return `M${pts.join(' L')} Z`;
+};
+const hexAt = (x, y, r, rot = 0) => `M${Array.from({ length: 6 }, (_, i) => { const t = ((60 * i + 30 + rot) * Math.PI) / 180; return `${f2(x + r * 1.18 * Math.cos(t))} ${f2(y + r * 0.86 * Math.sin(t))}`; }).join(' L')} Z`;
 export function stopwatch(steps, planned) {
   const R = 45, C2 = 2 * Math.PI * R;
-  const arc = (from, to) => { const a = (from / planned) * 360, b = (to / planned) * 360; return { off: f2(C2 * (1 - a / 360) + C2 * 0.25), len: f2(Math.max(0, (b - a - 2.2) / 360) * C2) }; };
-  const segs = steps.map((s, i) => { const { off, len } = arc(s.from, s.to); return `<circle class="sw-seg" data-seg="${i}" r="${R}" stroke-dasharray="${len} ${f2(C2)}" stroke-dashoffset="${off}"/>`; }).join('');
-  const ticks = Array.from({ length: 60 }, (_, i) => `<line class="${i % 5 ? 'sw-t' : 'sw-t5'}" x1="0" y1="${i % 5 ? -37 : -35}" x2="0" y2="-40" transform="rotate(${i * 6})"/>`).join('');
+  const n = Math.max(1, steps.length);
+  // hex windows on an arc over the top half, one per step
+  const span = Math.min(150, 26 * n), a0 = -90 - span / 2;
+  const wins = steps.map((s, i) => {
+    const a = ((a0 + (n === 1 ? span / 2 : (span * i) / (n - 1))) * Math.PI) / 180;
+    const x = 32 * Math.cos(a), y = 32 * Math.sin(a);
+    return `<g class="sw-seg" data-seg="${i}"><path class="sw-win" d="${hexAt(x, y, 6.2, ((a * 180) / Math.PI) + 90)}"/><line class="sw-mark" x1="${f2(x - 2.4 * Math.sin(a))}" y1="${f2(y + 2.4 * Math.cos(a))}" x2="${f2(x + 2.4 * Math.sin(a))}" y2="${f2(y - 2.4 * Math.cos(a))}"/></g>`;
+  }).join('');
   return `<svg class="stopwatch" viewBox="-60 -66 120 126" aria-hidden="true">
-    <rect class="sw-crown" x="-6" y="-66" width="12" height="7" rx="1.5"/><rect class="sw-stem" x="-3" y="-60" width="6" height="5"/>
-    <circle r="55" class="sw-bezel"/><circle r="50.5" class="sw-face"/>
-    <circle r="${R}" class="sw-track"/>${segs}
+    <rect class="sw-crown" x="-7" y="-66" width="14" height="7" rx="2"/><rect class="sw-stem" x="-3" y="-60" width="6" height="5"/>
+    <circle r="55" class="sw-bezel"/><circle r="51.5" class="sw-case"/><circle r="49" class="sw-face"/>
+    <path class="sw-glass" d="M-47 6 A47 47 0 0 0 47 6 L18 6 L0 24 L-18 6 Z"/>
+    <circle r="${R}" class="sw-track"/>
     <circle r="${R}" class="sw-fill" stroke-dasharray="0 ${f2(C2)}" stroke-dashoffset="${f2(C2 * 0.25)}" data-fill/>
-    ${ticks}
-    <text class="sw-time" y="24" text-anchor="middle" data-clock>00:00</text>
-    <g class="sw-hand" data-hand><line y1="9" y2="-38"/><circle cy="-38" r="1.6" class="sw-tip"/></g>
+    ${wins}
+    <path class="sw-plate" d="M0 -16 L16 0 L0 16 L-16 0 Z"/>
+    <path class="sw-gear" d="${gearPath(12, 9, 11.4)}"/><circle r="6" class="sw-gear-in"/>
+    <text class="sw-time" y="37" text-anchor="middle" data-clock>00:00</text>
+    <g class="sw-hand" data-hand><path class="sw-needle" d="M-2.4 4 L0 -34 L2.4 4 Z"/><path class="sw-tip" d="M-1.4 -27 L0 -34 L1.4 -27 Z"/></g>
     <circle r="3.4" class="sw-hub"/>
   </svg>`;
 }
 const f2 = v => Math.round(v * 100) / 100;
 
-// Çetele as a chronograph dial: one segment per minimum around the bezel (amber when met,
-// steel while in progress), sixty minute ticks, the count in the middle, and a second hand
-// that sweeps once a minute.
+// Çetele as the clock from the show's poster: an ivory face with a chapter ring of tall gold
+// Roman numerals, a ring of segments (one per minimum: teal underway, gold when met), a green
+// subdial holding the count, a bronze subdial turning, a gold hand pointing at how much of
+// the day's minimums are done and a long hand sweeping once a minute.
+const ROMAN = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+function numeral(t, k) {
+  // drawn as strokes, tall and narrow, standing on the inner ring and facing the centre
+  const W = { I: 1.5, V: 3.6, X: 3.6 }, gap = 1.1, top = -56.5, bot = -46;
+  const total = [...t].reduce((a, c) => a + W[c], 0) + gap * (t.length - 1);
+  let x = -total / 2, d = '';
+  for (const c of t) {
+    const w = W[c];
+    if (c === 'I') d += `M${f2(x + w / 2)} ${top}V${bot}`;
+    if (c === 'V') d += `M${f2(x)} ${top}L${f2(x + w / 2)} ${bot}L${f2(x + w)} ${top}`;
+    if (c === 'X') d += `M${f2(x)} ${top}L${f2(x + w)} ${bot}M${f2(x + w)} ${top}L${f2(x)} ${bot}`;
+    x += w + gap;
+  }
+  return `<path d="${d}" transform="rotate(${k * 30})"/>`;
+}
 export function cetDial(rows, { done = rows.filter(r => r.met).length, label = 'minimums' } = {}) {
-  const n = Math.max(1, rows.length), r = 54, C = 2 * Math.PI * r, gap = n > 1 ? 5 : 0, seg = C / n;
+  const n = Math.max(1, rows.length), r = 39, C = 2 * Math.PI * r, gap = n > 1 ? 3.5 : 0, seg = C / n;
   const segs = rows.map((row, i) => {
     const f = row.met ? 1 : Math.max(0, Math.min(1, row.target ? row.progress / row.target : 0));
     const rot = -90 + (i * 360) / n + (gap / C) * 180;
@@ -106,20 +141,22 @@ export function cetDial(rows, { done = rows.filter(r => r.met).length, label = '
       + (f ? `<circle class="cd-seg ${row.met ? 'met' : ''}" r="${r}" stroke-dasharray="${f2((seg - gap) * f)} ${f2(C)}" transform="rotate(${f2(rot)})"/>` : '');
   }).join('');
   let ticks = '';
-  for (let k = 0; k < 60; k++) ticks += `<line class="${k % 5 ? 'cd-t' : 'cd-t5'}" y1="-47" y2="${k % 5 ? -44.5 : -42}" transform="rotate(${k * 6})"/>`;
-  // an ivory clock face: roman numerals at the quarters, a gold bezel, a hextech jewel on the hand
-  const romans = [['XII', 0, -33], ['III', 34, 0], ['VI', 0, 35], ['IX', -34, 0]].map(([t, x, y]) => `<text class="cd-roman" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${t}</text>`).join('');
+  for (let k = 0; k < 60; k++) if (k % 5) ticks += `<line class="cd-t" y1="-44.6" y2="-42.8" transform="rotate(${k * 6})"/>`;
   const s = new Date().getSeconds();
+  const frac = rows.length ? done / rows.length : 0;
   return `<svg class="cetdial" viewBox="-66 -66 132 132" role="img" aria-label="Çetele: ${done} of ${rows.length} ${esc(label)} met">
-    <defs><radialGradient id="cdIvory" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#fbf5e6"/><stop offset=".7" stop-color="#efe4c9"/><stop offset="1" stop-color="#ddcca6"/></radialGradient>
-    <linearGradient id="cdGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc9c"/><stop offset=".45" stop-color="#c9963f"/><stop offset=".7" stop-color="#f0cf85"/><stop offset="1" stop-color="#8e6424"/></linearGradient></defs>
-    <circle class="cd-bezel" r="62.5"/>
-    <circle class="cd-face" r="61"/>
-    ${segs}${ticks}${romans}
-    <g class="cd-hand" style="animation-delay:-${s}s"><line y1="9" y2="-46"/><path class="cd-jewel" d="M0 -37.5l3 2.2v3.6l-3 2.2l-3-2.2v-3.6z"/><circle r="2.4"/></g>
-    <circle class="cd-cap" r="21"/>
-    <text class="cd-num" y="3" text-anchor="middle">${done}<tspan class="cd-of">/${rows.length}</tspan></text>
-    <text class="cd-sub" y="12.5" text-anchor="middle">${esc(label.toUpperCase())}</text>
+    <circle class="cd-bezel" r="63.5"/><circle class="cd-rim" r="60.5"/><circle class="cd-face" r="58.5"/>
+    <circle class="cd-ring" r="57.2"/><circle class="cd-ring" r="45.6"/><circle class="cd-ring thin" r="44.4"/>
+    <g class="cd-roman">${ROMAN.map(numeral).join('')}</g>${ticks}
+    ${segs}
+    <g transform="translate(15 -15)"><circle class="cd-sub-rim" r="15.5"/><circle class="cd-sub-face" r="13.6"/><circle class="cd-sub-ring" r="10.8"/>
+      <text class="cd-num" y="2.4" text-anchor="middle">${done}<tspan class="cd-of">/${rows.length}</tspan></text>
+      <text class="cd-sub" y="8.2" text-anchor="middle">${esc(label.toUpperCase())}</text></g>
+    <g transform="translate(17 20)"><circle class="cd-bronze" r="10"/><circle class="cd-bronze-2" r="7"/><circle class="cd-bronze-3" r="3.6"/>
+      <g class="cd-hand2"><line y1="1.5" y2="-8.4"/></g></g>
+    <g class="cd-hour" transform="rotate(${f2(frac * 360)})"><path d="M-1.6 5 L-1.1 -12 Q-3.2 -15 0 -18.5 Q3.2 -15 1.1 -12 L1.6 5 Z"/><path d="M0 -18.5 L-.8 -26 L0 -28 L.8 -26 Z"/><circle class="cd-jewel" cy="-15" r="1.4"/></g>
+    <g class="cd-hand" style="animation-delay:-${s}s"><path d="M-1.1 7 L-.6 -34 L0 -41 L.6 -34 L1.1 7 Z"/><circle cy="-22" r="1.8" class="cd-loop"/></g>
+    <circle class="cd-cap" r="3.6"/><circle class="cd-jewel" r="1.6"/>
   </svg>`;
 }
 

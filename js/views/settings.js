@@ -127,10 +127,10 @@ export function render(root, go) {
       ${raw(standalone ? '' : group('install', 'plus', isPhone ? 'Install on iPhone' : 'Install on this computer', 'Open Yaver like an app, offline', installBody))}
       <a class="set-group set-link" href="handbook/"><span class="set-ic">${raw(icon('book'))}</span><span class="set-t"><b>System handbook</b><small>How Yaver works: architecture, files, data, AI tools ↗</small></span></a>
     </div>
-    <p class="small dim center mono" data-version>yaver · press ? for keyboard shortcuts</p>`;
+    <p class="small dim center mono" data-version>Yaver Mark II · press ? for keyboard shortcuts</p>`;
 
   root.querySelectorAll('[data-group]').forEach(d => d.addEventListener('toggle', () => (d.open ? OPEN.add(d.dataset.group) : OPEN.delete(d.dataset.group))));
-  caches?.keys?.().then(k => { const v = k.find(x => /^yaver-v\d+/.test(x)); if (v) root.querySelector('[data-version]').textContent = `${v.replace('-', ' ')} · press ? for keyboard shortcuts`; }).catch(() => {});
+  caches?.keys?.().then(k => { const v = k.find(x => /^yaver-v\d+/.test(x)); if (v) root.querySelector('[data-version]').textContent = `Yaver Mark II · ${v.replace('yaver-', '')} · press ? for keyboard shortcuts`; }).catch(() => {});
   if (computer) macOnline(true).then(ok => {
     const st = root.querySelector('[data-mac-state]'), sub = root.querySelector('[data-mac-sub]');
     if (sub) sub.textContent = ok ? 'Connected on this Mac' : 'Bridge not running';

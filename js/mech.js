@@ -1,7 +1,8 @@
-// Hextech mechanisms for the Chronograph look: the Yaver gear button with its crystal,
-// the gear pairs on page titles and the home header, the gear train behind the Çetele dial,
-// the crystal on the Ask bar and the engine in an empty chat. Gears are antique brass and
-// steel; hextech blue marks Yaver's AI. One drive shaft turns every gear on screen: it idles
+// Hextech mechanisms: the Yaver gear button with its hextech core, the gear pairs on page
+// titles and the home header, the gear train behind the Çetele dial, the core on the Ask bar
+// and the engine in an empty chat. Gears are flat brass and steel with no baked-in light, so
+// they look right at every angle as they turn (v31); the core is a round, imperfect orb of
+// hextech light like the show's hexcore. One drive shaft turns every gear on screen: it idles
 // slowly, scrolling winds it, and every tap or save gives it a kick, so the UI behaves like
 // one machine. Gears that touch mesh for real (teeth ratios and phases).
 
@@ -19,7 +20,9 @@ export function teeth(n, rp, m, inward = false) {
   const w = (2 * Math.PI) / n;
   const pts = [];
   for (let k = 0; k < n; k++) {
-    for (const [fr, r] of [[-0.5, rr], [-0.3, rr], [-0.17, ro], [0.17, ro], [0.3, rr]]) {
+    // root, a curved flank (involute-like), a rounded tip, the other flank
+    const rm = (rr + ro) / 2, rt = ro - 0.12 * m;
+    for (const [fr, r] of [[-0.5, rr], [-0.31, rr], [-0.27, rr + 0.25 * (rm - rr)], [-0.22, rm], [-0.175, rt], [-0.13, ro], [0.13, ro], [0.175, rt], [0.22, rm], [0.27, rr + 0.25 * (rm - rr)], [0.31, rr]]) {
       const t = k * w + fr * w;
       pts.push(`${f(r * Math.cos(t))} ${f(r * Math.sin(t))}`);
     }
@@ -32,62 +35,72 @@ const meshExt = (n1, a1, n2, phi) => phi + 180 - 180 / n2 + (360 / n2) * ((phi -
 // Ring gear (internal teeth) driving a planet that sits in direction phi.
 const meshInt = (nR, aR, nP, phi) => phi - (360 / nP) * (((phi - aR) / (360 / nR)) + 0.5);
 
+// Flat metal: one colour per part, no gradients, so nothing lights up wrongly as a gear turns.
+const BRASS = '#b88a44', BRASS_DK = '#7a5826', BRASS_LT = '#d9b46e', STEEL = '#8793a0', STEEL_DK = '#56616d', EDGE = '#1a1309';
+
 const DEFS = `
-  <linearGradient id="mx-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecd29b"/><stop offset=".45" stop-color="#b08648"/><stop offset="1" stop-color="#4f381a"/></linearGradient>
-  <linearGradient id="mx-gold2" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#6e5226"/><stop offset=".5" stop-color="#c7a265"/><stop offset="1" stop-color="#f6e2b4"/></linearGradient>
-  <linearGradient id="mx-steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d3dae1"/><stop offset=".5" stop-color="#76818d"/><stop offset="1" stop-color="#2c333b"/></linearGradient>
   <radialGradient id="mx-glow"><stop offset="0" stop-color="#e9feff" stop-opacity=".95"/><stop offset=".25" stop-color="#7fe6f7" stop-opacity=".7"/><stop offset=".6" stop-color="#2aa6c4" stop-opacity=".22"/><stop offset="1" stop-color="#2aa6c4" stop-opacity="0"/></radialGradient>
-  <linearGradient id="mx-gemA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f2feff"/><stop offset=".4" stop-color="#8eeaff"/><stop offset="1" stop-color="#2a9fd0"/></linearGradient>
-  <linearGradient id="mx-gemB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ee3ff"/><stop offset=".5" stop-color="#2f9fe0"/><stop offset="1" stop-color="#1557a8"/></linearGradient>
-  <linearGradient id="mx-gemC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a7fc8"/><stop offset="1" stop-color="#0b2f6b"/></linearGradient>
-  <linearGradient id="mx-gemD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f6bb8"/><stop offset="1" stop-color="#0a2457"/></linearGradient>
+  <radialGradient id="mx-orb" cx=".42" cy=".38" r=".68"><stop offset="0" stop-color="#f4feff"/><stop offset=".2" stop-color="#b4f4ff"/><stop offset=".5" stop-color="#4ccaf0"/><stop offset=".8" stop-color="#1b6fc2"/><stop offset="1" stop-color="#0b2c68"/></radialGradient>
   <radialGradient id="mx-core"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".45" stop-color="#bff6ff" stop-opacity=".6"/><stop offset="1" stop-color="#5fd8ff" stop-opacity="0"/></radialGradient>
   <radialGradient id="mx-plate" cx=".5" cy=".35" r=".75"><stop offset="0" stop-color="#20262d"/><stop offset=".7" stop-color="#13171b"/><stop offset="1" stop-color="#0b0e11"/></radialGradient>`;
 
-// The hextech gemstone: a tall six-sided crystal with pointed ends, its facets shaded from
-// ice-white to deep sapphire, a living white-blue light inside, held by four brass claws.
+// The hextech core: a round, slightly irregular orb of blue light (like the show's hexcore),
+// brighter at its heart, with energy swirling inside, fine fracture lines and a glint, held
+// in a thin brass ring with four prongs. The orb never turns, so its light can stay fixed.
+const blob = (r, k = 0) => {
+  const pts = [];
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * Math.PI * 2;
+    const w = 1 + 0.045 * Math.sin(3 * a + 0.7 + k) + 0.03 * Math.sin(5 * a + 2.1 + k) + 0.02 * Math.sin(8 * a + 0.4);
+    pts.push(`${f(r * w * Math.cos(a))} ${f(r * w * Math.sin(a))}`);
+  }
+  return `M${pts.join(' L')} Z`;
+};
 function gem(s, cls = '') {
-  const P = (x, y) => `${f(x * s)} ${f(y * s)}`;
-  const W = 0.5, T = 1.45, B = 0.82, R = 0.1; // half width, tip height, shoulder height, ridge offset
-  // Seen slightly turned: a left face, a broad front face and a narrow right face.
-  const faces = [
-    ['url(#mx-gemA)', [[-W, -B], [-0.18, -B - 0.06], [R - 0.05, T * -1], [-W, -B]]],
-    ['url(#mx-gemB)', [[-0.18, -B - 0.06], [0.3, -B + 0.02], [R - 0.05, -T]]],
-    ['url(#mx-gemC)', [[0.3, -B + 0.02], [W, -B], [R - 0.05, -T]]],
-    ['url(#mx-gemA)', [[-W, -B], [-0.18, -B - 0.06], [-0.18, B + 0.06], [-W, B]]],
-    ['url(#mx-gemB)', [[-0.18, -B - 0.06], [0.3, -B + 0.02], [0.3, B - 0.02], [-0.18, B + 0.06]]],
-    ['url(#mx-gemC)', [[0.3, -B + 0.02], [W, -B], [W, B], [0.3, B - 0.02]]],
-    ['url(#mx-gemC)', [[-W, B], [-0.18, B + 0.06], [R - 0.05, T]]],
-    ['url(#mx-gemD)', [[-0.18, B + 0.06], [0.3, B - 0.02], [R - 0.05, T]]],
-    ['url(#mx-gemA)', [[0.3, B - 0.02], [W, B], [R - 0.05, T]]],
-  ].map(([fill, pts]) => `<path d="M${pts.map(([x, y]) => P(x, y)).join(' L')} Z" fill="${fill}"/>`).join('');
-  const claw = (sx, sy) => `<path d="M${P(sx * 0.9, sy * 0.02)} Q${P(sx * 0.78, sy * 0.52)} ${P(sx * 0.44, sy * 0.74)} L${P(sx * 0.38, sy * 0.56)} Q${P(sx * 0.58, sy * 0.4)} ${P(sx * 0.62, sy * 0.02)} Z" fill="url(#mx-gold)" stroke="#120d06" stroke-width="${f(s * 0.03)}"/>`;
+  const R = s * 1.15;
+  const P = (x, y) => `${f(x * R)} ${f(y * R)}`;
+  // fracture lines: an imperfect crystal under the glow
+  const cracks = [[[-0.62, -0.18], [-0.2, -0.32], [0.1, -0.7]], [[-0.2, -0.32], [0.05, 0.12], [0.6, 0.22]], [[0.05, 0.12], [-0.28, 0.55]], [[0.3, -0.45], [0.62, -0.2]]]
+    .map(l => `M${l.map(([x, y]) => P(x, y)).join(' L')}`).join(' ');
+  const swirl = [0, 120, 240].map(a => `<path d="M${P(0.12, -0.05)} C${P(0.5, -0.1)} ${P(0.62, 0.3)} ${P(0.34, 0.52)}" transform="rotate(${a})"/>`).join('');
+  const prong = a => `<path d="M${P(-0.12, -1.02)} L${P(-0.07, -1.24)} L${P(0.07, -1.24)} L${P(0.12, -1.02)} Z" transform="rotate(${a})" fill="${BRASS}" stroke="${EDGE}" stroke-width="${f(R * 0.03)}"/>`;
   return `<g class="mx-gem ${cls}">
-    <circle class="mx-halo" r="${f(s * 2.6)}" fill="url(#mx-glow)"/>
+    <circle class="mx-halo" r="${f(R * 2.3)}" fill="url(#mx-glow)"/>
     <g class="mx-crystal">
-      ${faces}
-      <ellipse class="mx-core" rx="${f(s * 0.26)}" ry="${f(s * 0.62)}" cx="${f(s * 0.04)}" fill="url(#mx-core)"/>
-      <path d="M${P(R - 0.05, -T)} L${P(-0.18, -B - 0.06)} L${P(-0.18, B + 0.06)} L${P(R - 0.05, T)} M${P(R - 0.05, -T)} L${P(0.3, -B + 0.02)} L${P(0.3, B - 0.02)} L${P(R - 0.05, T)}" fill="none" stroke="#e9fdff" stroke-opacity=".55" stroke-width="${f(s * 0.025)}"/>
-      <path d="M${P(R - 0.05, -T)} L${P(-W, -B)} L${P(-W, B)} L${P(R - 0.05, T)} L${P(W, B)} L${P(W, -B)} Z" fill="none" stroke="#bdf6ff" stroke-width="${f(s * 0.035)}"/>
-      <path class="mx-spark" d="M${P(-0.1, -1.05)} L${P(-0.02, -0.55)} L${P(-0.12, -0.5)} Z" fill="#fff" opacity=".85"/>
+      <path d="${blob(R)}" fill="url(#mx-orb)"/>
+      <path class="mx-core" d="${blob(R * 0.42, 1.3)}" fill="url(#mx-core)"/>
+      <g class="mx-swirl" fill="none" stroke="#e9feff" stroke-opacity=".7" stroke-width="${f(R * 0.06)}" stroke-linecap="round">${swirl}</g>
+      <path d="${cracks}" fill="none" stroke="#e9feff" stroke-opacity=".32" stroke-width="${f(R * 0.03)}" stroke-linejoin="round"/>
+      <path d="${blob(R)}" fill="none" stroke="#9feeff" stroke-opacity=".7" stroke-width="${f(R * 0.05)}"/>
+      <ellipse class="mx-spark" cx="${f(-R * 0.36)}" cy="${f(-R * 0.4)}" rx="${f(R * 0.22)}" ry="${f(R * 0.12)}" transform="rotate(-38 ${f(-R * 0.36)} ${f(-R * 0.4)})" fill="#fff" opacity=".6"/>
     </g>
-    ${claw(-1, -1)}${claw(1, -1)}${claw(-1, 1)}${claw(1, 1)}
+    <circle r="${f(R * 1.1)}" fill="none" stroke="${BRASS}" stroke-width="${f(R * 0.09)}"/>
+    ${[45, 135, 225, 315].map(prong).join('')}
   </g>`;
 }
 
-// A spur gear with deco spokes and a bolted hub.
-function spur(n, rp, m, { spokes = 5, hub = 0.22, fill = 'url(#mx-gold)', hollow = 0 } = {}) {
+// A spur gear in flat brass (or steel): rounded teeth, a recessed web with deco spokes, a hub
+// boss with bolts and a hex bore. Every detail is a flat colour, so it reads cleanly at any angle.
+function spur(n, rp, m, { spokes = 5, hub = 0.22, fill = BRASS, hollow = 0 } = {}) {
+  const dark = fill === STEEL ? STEEL_DK : BRASS_DK;
   const rim = rp - 1.1 * m - Math.max(2, rp * 0.1);
-  const out = [`<path d="${teeth(n, rp, m)} ${ring(hollow || rim)}" fill-rule="evenodd" fill="${fill}" stroke="#120d06" stroke-width=".6"/>`];
+  const sw = f(Math.max(0.4, rp * 0.022));
+  const out = [`<path d="${teeth(n, rp, m)} ${ring(hollow || rim)}" fill-rule="evenodd" fill="${fill}" stroke="${EDGE}" stroke-width="${sw}" stroke-linejoin="round"/>`];
   if (!hollow) {
+    out.push(`<circle r="${f(rim)}" fill="${dark}" fill-opacity=".55"/>`);
     for (let i = 0; i < spokes; i++) {
-      const w = Math.max(1.6, rp * 0.09);
-      out.push(`<path d="M${f(-w)} ${f(-rp * hub)} L${f(-w * 0.55)} ${f(-rim - 0.5)} L${f(w * 0.55)} ${f(-rim - 0.5)} L${f(w)} ${f(-rp * hub)} Z" fill="${fill}" stroke="#120d06" stroke-width=".5" transform="rotate(${f((360 / spokes) * i)})"/>`);
+      const w = Math.max(1.4, rp * 0.085);
+      out.push(`<path d="M${f(-w)} ${f(-rp * hub * 0.9)} L${f(-w * 0.6)} ${f(-rim - 0.3)} L${f(w * 0.6)} ${f(-rim - 0.3)} L${f(w)} ${f(-rp * hub * 0.9)} Z" fill="${fill}" stroke="${EDGE}" stroke-width="${sw}" stroke-linejoin="round" transform="rotate(${f((360 / spokes) * i)})"/>`);
     }
-    out.push(`<circle r="${f(rp * hub)}" fill="${fill.includes('steel') ? 'url(#mx-steel)' : 'url(#mx-gold2)'}" stroke="#120d06" stroke-width=".6"/>`);
-    out.push(`<path d="${hexPath(rp * hub * 0.45)}" fill="#1a140b" stroke="#f3dfa4" stroke-opacity=".5" stroke-width=".4"/>`);
+    out.push(`<circle r="${f(rp * hub)}" fill="${fill}" stroke="${EDGE}" stroke-width="${sw}"/>`);
+    out.push(`<circle r="${f(rp * hub * 0.74)}" fill="none" stroke="${dark}" stroke-width="${f(rp * 0.025)}"/>`);
+    if (rp > 7) for (let i = 0; i < spokes; i++) {
+      const a = rad((360 / spokes) * (i + 0.5) - 90), d = rp * hub * 0.74;
+      out.push(`<circle cx="${f(d * Math.cos(a))}" cy="${f(d * Math.sin(a))}" r="${f(Math.max(0.35, rp * 0.022))}" fill="${EDGE}"/>`);
+    }
+    out.push(`<path d="${hexPath(rp * hub * 0.42)}" fill="${EDGE}"/>`);
   }
-  out.push(`<circle r="${f(rp - 1.1 * m - 0.6)}" fill="none" stroke="#fff3c9" stroke-opacity=".28" stroke-width=".5"/>`);
+  out.push(`<circle r="${f(rp - 1.1 * m - 0.5)}" fill="none" stroke="${dark}" stroke-width="${f(Math.max(0.4, rp * 0.03))}"/>`);
   return out.join('');
 }
 const hexPath = r => `M${Array.from({ length: 6 }, (_, i) => `${f(r * Math.cos(rad(60 * i + 30)))} ${f(r * Math.sin(rad(60 * i + 30)))}`).join(' L')} Z`;
@@ -123,20 +136,20 @@ const SIDES = [158, 22];
 export function engineSVG({ core = true } = {}) {
   const sunrays = Array.from({ length: 48 }, (_, i) => `<line x1="0" y1="${i % 2 ? -66 : -70}" x2="0" y2="-98" transform="rotate(${f(i * 7.5)})"/>`).join('');
   // Art-deco keys on the outer frame, left out where the side gears sit.
-  const deco = Array.from({ length: 12 }, (_, i) => i * 30 + 15).filter(a => SIDES.every(sa => Math.abs(((a - (sa + 90) + 540) % 360) - 180) > 22)).map(a => `<path d="M-7 -126 L7 -126 L4 -134 L-4 -134 Z" transform="rotate(${a})" fill="url(#mx-gold2)" stroke="#120d06" stroke-width=".5"/>`).join('');
+  const deco = Array.from({ length: 12 }, (_, i) => i * 30 + 15).filter(a => SIDES.every(sa => Math.abs(((a - (sa + 90) + 540) % 360) - 180) > 22)).map(a => `<path d="M-7 -126 L7 -126 L4 -134 L-4 -134 Z" transform="rotate(${a})" fill="${BRASS_LT}" stroke="#120d06" stroke-width=".5"/>`).join('');
   // Crank-slider pistons hang under each side gear; their glass windows charge as they compress.
   const sides = SIDES.map(a => {
     const x = E.cx * Math.cos(rad(a)), y = E.cx * Math.sin(rad(a));
     const cy = y + E.X + 26;
     return `<g class="mx-piston">
-      <g class="mx-link"><line x1="0" y1="0" x2="0" y2="0" stroke="url(#mx-gold)" stroke-width="4.5" stroke-linecap="round"/></g>
-      <g class="mx-rod"><rect x="${f(x - 3)}" y="0" width="6" height="30" rx="1.5" fill="url(#mx-steel)" stroke="#1b1f24" stroke-width=".5"/></g>
-      <rect x="${f(x - 11)}" y="${f(cy)}" width="22" height="44" rx="2" fill="url(#mx-steel)" stroke="#1b1f24" stroke-width=".7"/>
+      <g class="mx-link"><line x1="0" y1="0" x2="0" y2="0" stroke="${BRASS}" stroke-width="4.5" stroke-linecap="round"/></g>
+      <g class="mx-rod"><rect x="${f(x - 3)}" y="0" width="6" height="30" rx="1.5" fill="${STEEL}" stroke="#1b1f24" stroke-width=".5"/></g>
+      <rect x="${f(x - 11)}" y="${f(cy)}" width="22" height="44" rx="2" fill="${STEEL}" stroke="#1b1f24" stroke-width=".7"/>
       <rect x="${f(x - 5)}" y="${f(cy + 7)}" width="10" height="30" rx="1" fill="#0c3a4c"/>
       <rect x="${f(x - 5)}" y="${f(cy + 7)}" width="10" height="30" rx="1" fill="#7fe6f7" class="mx-charge" opacity=".2"/>
-      <rect x="${f(x - 13)}" y="${f(cy - 4)}" width="26" height="6" rx="1" fill="url(#mx-gold)" stroke="#120d06" stroke-width=".5"/>
-      <rect x="${f(x - 13)}" y="${f(cy + 42)}" width="26" height="6" rx="1" fill="url(#mx-gold)" stroke="#120d06" stroke-width=".5"/>
-      <g class="mx-side" transform="translate(${f(x)} ${f(y)})"><g class="mx-rot">${spur(E.NX, E.X, E.mo, { spokes: 4, hub: 0.3 })}<circle cx="${f(E.X * 0.55)}" cy="0" r="3.2" fill="url(#mx-gold2)" stroke="#120d06" stroke-width=".5"/></g></g>
+      <rect x="${f(x - 13)}" y="${f(cy - 4)}" width="26" height="6" rx="1" fill="${BRASS}" stroke="#120d06" stroke-width=".5"/>
+      <rect x="${f(x - 13)}" y="${f(cy + 42)}" width="26" height="6" rx="1" fill="${BRASS}" stroke="#120d06" stroke-width=".5"/>
+      <g class="mx-side" transform="translate(${f(x)} ${f(y)})"><g class="mx-rot">${spur(E.NX, E.X, E.mo, { spokes: 4, hub: 0.3 })}<circle cx="${f(E.X * 0.55)}" cy="0" r="3.2" fill="${BRASS_LT}" stroke="#120d06" stroke-width=".5"/></g></g>
     </g>`;
   }).join('');
   const planets = PLANETS.map(a => {
@@ -151,7 +164,7 @@ export function engineSVG({ core = true } = {}) {
     ${deco}
     <circle r="${E.Ro + 1.6 * E.mo}" fill="url(#mx-plate)" stroke="#3a424c" stroke-width="1"/>
     <g stroke="#d9b56c" stroke-opacity=".18" stroke-width=".6">${sunrays}</g>
-    <g class="mx-ringA"><path d="${teeth(E.NRo, E.Ro, E.mo)} ${teeth(E.NR, E.R, E.m, true)}" fill-rule="evenodd" fill="url(#mx-gold)" stroke="#120d06" stroke-width=".7"/>
+    <g class="mx-ringA"><path d="${teeth(E.NRo, E.Ro, E.mo)} ${teeth(E.NR, E.R, E.m, true)}" fill-rule="evenodd" fill="${BRASS}" stroke="#120d06" stroke-width=".7"/>
       <circle r="${E.R + 6}" fill="none" stroke="#120d06" stroke-opacity=".6" stroke-width="1"/>
       <g class="mx-runes">${glyphs(E.R + 8.5, 24, 2.2)}</g></g>
     ${carrier}
@@ -162,8 +175,8 @@ export function engineSVG({ core = true } = {}) {
     <circle r="40" fill="none" stroke="#3fb6c9" stroke-opacity=".25" stroke-width=".8"/>
     <g class="mx-arcs" stroke="#9ff0ff" stroke-width=".9" fill="none" stroke-linecap="round"></g>
     ${core ? `<g class="mx-gimbal">
-      <ellipse class="mx-g1" rx="34" ry="34" fill="none" stroke="url(#mx-gold)" stroke-width="3"/>
-      <ellipse class="mx-g2" rx="27" ry="27" fill="none" stroke="url(#mx-gold2)" stroke-width="2.4"/>
+      <ellipse class="mx-g1" rx="34" ry="34" fill="none" stroke="${BRASS}" stroke-width="3"/>
+      <ellipse class="mx-g2" rx="27" ry="27" fill="none" stroke="${BRASS_LT}" stroke-width="2.4"/>
       ${gem(13)}
     </g>` : ''}
   </svg>`;
@@ -201,7 +214,7 @@ export function trainSVG() {
   const pc = [pb[0] + (rb + rc) * Math.cos(rad(TR.phiC)), pb[1] + (rb + rc) * Math.sin(rad(TR.phiC))];
   return `<svg class="mx-train" viewBox="-44 -70 150 120" aria-hidden="true">
     <g class="mx-ta">${spur(TR.A, ra, TR.m, { spokes: 6, hub: 0.24 })}</g>
-    <g transform="translate(${f(pb[0])} ${f(pb[1])})"><g class="mx-tb">${spur(TR.B, rb, TR.m, { spokes: 4, hub: 0.36, fill: 'url(#mx-steel)' })}</g></g>
+    <g transform="translate(${f(pb[0])} ${f(pb[1])})"><g class="mx-tb">${spur(TR.B, rb, TR.m, { spokes: 4, hub: 0.36, fill: STEEL })}</g></g>
     <g transform="translate(${f(pc[0])} ${f(pc[1])})"><g class="mx-tc">${spur(TR.C, rc, TR.m, { spokes: 5, hub: 0.3 })}</g></g>
   </svg>`;
 }
@@ -308,7 +321,7 @@ function mountEngine(host) {
       const pulse = 0.82 + 0.12 * Math.sin(t * 2.4) + Math.min(0.5, v / 900) + flare * 0.6;
       halo.setAttribute('transform', `scale(${f(pulse)})`);
       gemEl.setAttribute('transform', `scale(${f(1 + flare * 0.15)})`);
-      // the light inside breathes and shivers; the crystal floats a little in its claws
+      // the light inside breathes and shivers; the core floats a little in its ring
       core?.setAttribute('opacity', f(Math.min(1, 0.55 + 0.25 * Math.sin(t * 3.1) + 0.12 * Math.sin(t * 11.7) + flare * 0.5 + Math.min(0.3, v / 800))));
       crystal?.setAttribute('transform', `translate(0 ${f(Math.sin(t * 1.3) * 0.8)})`);
     }
