@@ -1,9 +1,10 @@
 // Sounds and music. Interface sounds are small mechanisms made for Yaver by modal synthesis
 // (a detent snapping into its notch, a pawl on a ratchet, a latch, a stamp, a small clock bell;
 // see sounds/CREDITS.md), played at a slightly different pitch each time and softer when they
-// come quickly, so they don't wear on you. The background music is a slow D-minor piece for
-// violin, cello, double bass and harp (sounds/strings.mp3), rendered from recorded samples; it
-// loops seamlessly. On the iPhone the audio session is "ambient": music from other apps keeps
+// come quickly, so they don't wear on you. The background music, "Academy", is a hopeful
+// A-minor piece for a clockwork academy: piano ostinato, escapement ticks, cello and bass, horn
+// swells, a violin melody, flute and harp, and a hextech shimmer (sounds/academy.mp3, rendered
+// from recorded samples); it loops seamlessly. On the iPhone the audio session is "ambient": music from other apps keeps
 // playing and the silent switch mutes Yaver.
 import * as db from './db.js';
 
@@ -75,7 +76,7 @@ export const bell = () => play('bell', { gap: 1500 });
 
 // ---------- music ----------
 // The piece is rendered to loop seamlessly, so copies only overlap by a short crossfade.
-const MUSIC = 'strings.mp3', FADE = 0.3, VOL = 0.24;
+const MUSIC = 'academy.mp3', FADE = 0.3, VOL = 0.24;
 let playing = false, nextAt = 0, timer = 0, ducked = false, sources = [];
 
 function schedule() {

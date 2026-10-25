@@ -10,6 +10,7 @@ import { speaker, chunks, pickDeviceVoice, unlockAudio, stopAudio, audioPlaying,
 import { html, raw, md, esc, shrinkImage, toast, haptic } from '../util.js';
 import { icon } from '../icons.js';
 import * as sound from '../sound.js';
+import * as mech from '../mech.js';
 
 const CHAT_ID = 'main';
 let chat;          // { id, api: [Claude], gapi: [Gemini], mapi: [Claude on Mac], view: [what the user sees] }
@@ -44,7 +45,7 @@ export function initAssistant() {
       <header class="chat-head">
         <span class="grip" aria-hidden="true"></span>
         <button class="icon-btn" data-close aria-label="Close">${icon('chevronDown')}</button>
-        <div class="chat-title"><span class="knob sm" aria-hidden="true"></span><div><b class="wordmark">Yaver</b><small data-status>ready</small></div></div>
+        <div class="chat-title"><span class="chat-gear" data-gear="button" aria-hidden="true"></span><div><b class="wordmark">Yaver</b><small data-status>ready</small></div></div>
         <div class="chat-tools"><button class="icon-btn" data-voice aria-label="Voice chat" aria-pressed="false">${icon('wave')}</button><button class="icon-btn" data-new aria-label="New chat">${icon('edit')}</button></div>
       </header>
       <div class="chat-log" data-log></div>
@@ -95,11 +96,11 @@ export function initAssistant() {
 }
 
 export function openAssistant(prompt) {
-  // On the phone the chat opens out of the knob like an iris.
+  // On the phone the chat opens out of the gear button like an iris.
   const fab = document.getElementById('fab');
   const r = fab?.getBoundingClientRect();
   if (r?.width) { el.style.setProperty('--ox', `${r.left + r.width / 2}px`); el.style.setProperty('--oy', `${r.top + r.height / 2}px`); }
-  if (!el.classList.contains('open')) sound.open();
+  if (!el.classList.contains('open')) { mech.kick(480); sound.open(); }
   el.classList.add('open');
   document.body.classList.add('chat-open');
   haptic();
@@ -168,7 +169,7 @@ function orb(state) {
 
 export function closeAssistant() {
   if (voice) setVoice(false);
-  if (el.classList.contains('open')) sound.close();
+  if (el.classList.contains('open')) { mech.kick(-420); sound.close(); }
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
   hush();
@@ -236,11 +237,12 @@ function render() {
     const name = db.setting('userName', '');
     log.innerHTML = html`
       <div class="chat-empty">
-        <span class="knob lg" aria-hidden="true"></span>
+        <div class="chat-engine" data-engine aria-hidden="true"></div>
         <h2>${name ? `What's next, ${name}?` : "What's next?"}</h2>
         <p class="muted small">Ask anything, or tell me what you did: I log study, practice, expenses, meetings and meals, explain concepts, quiz you, and find places nearby.</p>
         <div class="chips">${raw(SUGGESTIONS.map(s => html`<button class="chip" data-suggest="${s}">${s}</button>`).join(''))}</div>
       </div>`;
+    mech.scan(log);
     return;
   }
   log.innerHTML = chat.view.map(bubble).join('');

@@ -25,6 +25,7 @@ import { currencyOptions } from './data.js';
 import * as D from './data.js';
 import { subdial } from './ui.js';
 import * as sound from './sound.js';
+import * as mech from './mech.js';
 import { icon } from './icons.js';
 
 const TABS = { home: ['home', 'Home', '1'], cetele: ['tally', 'Çetele', '2'], study: ['book', 'Study', '3'], calendar: ['calendar', 'Meet', '4'], money: ['wallet', 'Money', '5'], diet: ['leaf', 'Diet', '6'], map: ['map', 'Map', '7'], settings: ['settings', 'Settings', ','] };
@@ -54,15 +55,23 @@ export function go(name, arg = '') {
 }
 
 let entering = false, enterTimer;
+const MOUNTS = ['[data-engine]', '[data-train]', '[data-gem]'];
 const PREV_VIEW = { name: null, arg: null };
 function draw() {
   const root = $('#view');
   const y = window.scrollY;
+  // Keep running mechanisms across redraws so their gears don't jump back to the start.
+  const kept = MOUNTS.map(sel => [...root.querySelectorAll(sel)]);
   VIEWS[current].render(root, go, param);
+  MOUNTS.forEach((sel, k) => root.querySelectorAll(sel).forEach((el, i) => kept[k][i] && el.replaceWith(kept[k][i])));
+  // A meshing pair of small gears sits on the rule under each screen title.
+  root.querySelectorAll('.page-head').forEach(h => h.querySelector('.head-gears') || h.insertAdjacentHTML('beforeend', '<span class="head-gears" data-gear="pair" aria-hidden="true"></span>'));
+  mech.scan(root);
   window.scrollTo(0, y);
   // A new screen rises in; a redraw after a data change doesn't.
   if (entering) {
     entering = false;
+    mech.kick(220);
     revealLater(root);
     root.classList.remove('enter');
     void root.offsetWidth;
@@ -145,7 +154,10 @@ async function start() {
     b.onclick = () => go(b.dataset.tab);
   });
   sound.init();
-  // A soft click for every button; the Yaver knob makes its own sound.
+  mech.initDrive();
+  mech.onEngineTap(sound.spin);
+  mech.scan(document);
+  // A soft click for every button; the Yaver gear makes its own sound.
   document.addEventListener('pointerdown', e => {
     const b = e.target.closest('button, a, label, .chip, select');
     if (b && !b.closest('#fab') && !b.querySelector('input[type=checkbox]') && !e.target.matches('input[type=checkbox]')) sound.tap();
@@ -174,7 +186,7 @@ async function start() {
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
   // (The map keeps its own state, so data changes don't redraw it.)
-  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') sound.save(); clearTimeout(pending); pending = setTimeout(draw, 30); });
+  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') { mech.kick(90); sound.save(); } clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
   window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });

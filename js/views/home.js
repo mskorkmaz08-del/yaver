@@ -33,6 +33,7 @@ function nextPlate() {
   const cur = steps.findIndex((_, i) => !done.has(i));
   return html`
     <section class="plate next">
+      <span class="next-train" data-train aria-hidden="true"></span>
       <p class="meta"><b>Next · ${when}</b>${raw(l ? html`<span>${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)} · ${l.minutes} min</span>` : '')}</p>
       <h2>${l ? l.title : C.slotTitle(nb)}</h2>
       ${raw(steps.length ? stepStrip(steps.map(stepName), done, { current: cur, names: true }) : '')}
@@ -79,12 +80,14 @@ export function render(root, go) {
 
   root.innerHTML = html`
     <header class="home-head">
+      <span class="head-pair" data-gear="pair" aria-hidden="true"></span>
       <b class="wordmark">Yaver</b>
       <span class="clock" data-clock><i class="tick"></i>${headDate(now)} · <span data-hm>${timeHM(now)}</span></span>
       <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
     </header>
 
     <button class="plate ct-plate" data-go="cetele">
+      <span class="ct-train" data-train aria-hidden="true"></span>
       ${raw(cetDial(ct.rows.filter(r => r.per !== 'week')))}
       <div class="mins">
         <div class="mins-h"><b>Çetele</b><span class="eyebrow">${cs.current} day streak</span></div>
@@ -113,6 +116,7 @@ export function render(root, go) {
       </section>`)}
 
     <div class="plate ask" data-ask role="button" tabindex="0">
+      <span class="ask-gem" data-gem aria-hidden="true"></span>
       <span class="ask-text"><b>Ask Yaver…</b><small>${hasKey ? '"log 45 min of algorithms" · "pharmacy near me"' : 'add your key above to start'}</small></span>
       <button class="ask-cta" data-brief>Brief me</button>
     </div>

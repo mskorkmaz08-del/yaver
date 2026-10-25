@@ -109,6 +109,7 @@ export function cetDial(rows, { done = rows.filter(r => r.met).length, label = '
   for (let k = 0; k < 60; k++) ticks += `<line class="${k % 5 ? 'cd-t' : 'cd-t5'}" y1="-44" y2="${k % 5 ? -41 : -38}" transform="rotate(${k * 6})"/>`;
   const s = new Date().getSeconds();
   return `<svg class="cetdial" viewBox="-66 -66 132 132" role="img" aria-label="Çetele: ${done} of ${rows.length} ${esc(label)} met">
+    <circle class="cd-face" r="61"/>
     ${segs}${ticks}
     <g class="cd-hand" style="animation-delay:-${s}s"><line y1="8" y2="-40"/><circle r="2.2"/></g>
     <circle class="cd-cap" r="24"/>
