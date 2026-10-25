@@ -106,15 +106,20 @@ export function cetDial(rows, { done = rows.filter(r => r.met).length, label = '
       + (f ? `<circle class="cd-seg ${row.met ? 'met' : ''}" r="${r}" stroke-dasharray="${f2((seg - gap) * f)} ${f2(C)}" transform="rotate(${f2(rot)})"/>` : '');
   }).join('');
   let ticks = '';
-  for (let k = 0; k < 60; k++) ticks += `<line class="${k % 5 ? 'cd-t' : 'cd-t5'}" y1="-44" y2="${k % 5 ? -41 : -38}" transform="rotate(${k * 6})"/>`;
+  for (let k = 0; k < 60; k++) ticks += `<line class="${k % 5 ? 'cd-t' : 'cd-t5'}" y1="-47" y2="${k % 5 ? -44.5 : -42}" transform="rotate(${k * 6})"/>`;
+  // an ivory clock face: roman numerals at the quarters, a gold bezel, a hextech jewel on the hand
+  const romans = [['XII', 0, -33], ['III', 34, 0], ['VI', 0, 35], ['IX', -34, 0]].map(([t, x, y]) => `<text class="cd-roman" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${t}</text>`).join('');
   const s = new Date().getSeconds();
   return `<svg class="cetdial" viewBox="-66 -66 132 132" role="img" aria-label="Çetele: ${done} of ${rows.length} ${esc(label)} met">
+    <defs><radialGradient id="cdIvory" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#fbf5e6"/><stop offset=".7" stop-color="#efe4c9"/><stop offset="1" stop-color="#ddcca6"/></radialGradient>
+    <linearGradient id="cdGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc9c"/><stop offset=".45" stop-color="#c9963f"/><stop offset=".7" stop-color="#f0cf85"/><stop offset="1" stop-color="#8e6424"/></linearGradient></defs>
+    <circle class="cd-bezel" r="62.5"/>
     <circle class="cd-face" r="61"/>
-    ${segs}${ticks}
-    <g class="cd-hand" style="animation-delay:-${s}s"><line y1="8" y2="-40"/><circle r="2.2"/></g>
-    <circle class="cd-cap" r="24"/>
-    <text class="cd-num" y="5" text-anchor="middle">${done}<tspan class="cd-of">/${rows.length}</tspan></text>
-    <text class="cd-sub" y="18" text-anchor="middle">${esc(label.toUpperCase())}</text>
+    ${segs}${ticks}${romans}
+    <g class="cd-hand" style="animation-delay:-${s}s"><line y1="9" y2="-46"/><path class="cd-jewel" d="M0 -37.5l3 2.2v3.6l-3 2.2l-3-2.2v-3.6z"/><circle r="2.4"/></g>
+    <circle class="cd-cap" r="21"/>
+    <text class="cd-num" y="3" text-anchor="middle">${done}<tspan class="cd-of">/${rows.length}</tspan></text>
+    <text class="cd-sub" y="12.5" text-anchor="middle">${esc(label.toUpperCase())}</text>
   </svg>`;
 }
 

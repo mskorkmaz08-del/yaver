@@ -77,7 +77,7 @@ export function render(root, go) {
     <p class="muted small">Yaver listens only when you tap the microphone or start voice chat.</p>`;
 
   const soundBody = html`
-    ${raw(sw('sounds', 'Mechanical sounds: quiet clicks and detents (the silent switch mutes them)', s('sounds', true)))}
+    ${raw(sw('sfx', 'Interface sounds: clicks and detents (the silent switch mutes them)', s('sfx', false)))}
     ${raw(sw('music', 'Background music: a slow, quiet piece while Yaver is open', s('music', true)))}`;
 
   const youBody = html`
@@ -118,7 +118,7 @@ export function render(root, go) {
       ${raw(group('ai', 'sparkle', 'Assistant', using(), ai))}
       ${raw(group('mac', 'terminal', 'Claude on your Mac', computer ? 'checking…' : macConfigured() ? 'connected by code' : 'not connected', mac))}
       ${raw(group('voice', 'mic', 'Voice', `${s('voiceEngine', 'live') === 'live' ? 'Live engine' : 'Standard engine'} · ${s('ttsVoice', 'Charon')}`, voiceBody))}
-      ${raw(group('sound', 'bell', 'Sound and music', `${s('sounds', true) ? 'Sounds on' : 'Sounds off'} · ${s('music', true) ? 'music on' : 'music off'}`, soundBody))}
+      ${raw(group('sound', 'bell', 'Sound and music', `${s('sfx', false) ? 'Sounds on' : 'Sounds off'} · ${s('music', true) ? 'music on' : 'music off'}`, soundBody))}
       ${raw(group('you', 'target', 'You and goals', `${s('currency', 'TRY')} · ${s('dailyStudyMin', 60)} min study a day`, youBody))}
     </form>
     <div class="set-list">
@@ -157,7 +157,7 @@ export function render(root, go) {
     if (String(fd.get('macCode') || '').trim()) await useCode(fd.get('macCode'));
     await db.setSetting('webSearch', fd.has('webSearch'));
     await db.setSetting('speak', fd.has('speak'));
-    await db.setSetting('sounds', fd.has('sounds'));
+    await db.setSetting('sfx', fd.has('sfx'));
     await db.setSetting('music', fd.has('music'));
     await db.setSetting('voiceAuto', fd.has('voiceAuto'));
     await db.setSetting('jarvis', fd.has('jarvis'));

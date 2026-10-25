@@ -199,8 +199,10 @@ const ev = (page, fn, arg) => page.evaluate(fn, arg);
   await page.waitForTimeout(400);
   await page.click('.today-card .slot[data-open]');
   await page.waitForSelector('.lesson-grid');
-  const cols = await ev(page, () => getComputedStyle(document.querySelector('.lesson-grid')).gridTemplateColumns.split(' ').length);
-  check(cols === 2, 'Lesson runner has two columns');
+  // on a laptop the lesson is an open notebook: two pages side by side
+  await page.waitForTimeout(300);
+  const cols = await ev(page, () => { const f = document.querySelector('.lesson-main.spread .nb-flow'); return f ? getComputedStyle(f).columnCount : null; });
+  check(cols === '2', 'Lesson runner opens as a two-page notebook', String(cols));
   // Keyboard: s starts the timer, ? opens the overlay
   await page.keyboard.press('s');
   await page.waitForTimeout(200);

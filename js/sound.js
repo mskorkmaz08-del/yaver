@@ -11,7 +11,8 @@ import * as db from './db.js';
 const LEVEL = { tap: 0.34, on: 0.38, off: 0.36, enter: 0.3, spin: 0.42, open: 0.42, close: 0.4, save: 0.4, done: 0.45, step: 0.28, swipe: 0.34, stop: 0.38, bell: 0.4 };
 
 let ctx = null, sfx = null, musicBus = null, buffers = {}, loading = {}, last = {}, recent = 0, recentAt = 0;
-const fxOn = () => db.setting('sounds', true);
+// off by default since v30: the synthesized set was not good enough; real recordings come next
+const fxOn = () => db.setting('sfx', false);
 const musicOn = () => db.setting('music', true);
 
 function audio() {

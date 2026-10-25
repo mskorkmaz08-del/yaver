@@ -12,6 +12,7 @@ import { stepName } from './home.js';
 import { simHTML, mountSim } from '../sims.js';
 import * as sound from '../sound.js';
 import { enterFocus, exitFocus, inFocus } from '../focus.js';
+import * as notebook from '../notebook.js';
 
 let tick;
 let state = {}; // per-render UI state that isn't worth storing: revealed answers, marks
@@ -25,6 +26,7 @@ function stop() {
 // Leaving the lesson undocks the tutor; a redraw of the same lesson keeps it docked.
 export function cleanup() {
   stop();
+  notebook.unmount();
   document.body.classList.remove('lesson-docked');
 }
 
@@ -55,7 +57,7 @@ function onKeys(map) {
     if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
     if (document.querySelector('.sheet-wrap') || document.body.classList.contains('chat-open') && !document.body.classList.contains('lesson-docked')) return;
     const fn = map[e.key] || map[e.key.toLowerCase()];
-    if (fn) { e.preventDefault(); fn(); }
+    if (fn && fn(e) !== false) e.preventDefault();
   };
   document.addEventListener('keydown', keyHandler);
 }
@@ -108,10 +110,13 @@ function lessonView(root, go, l, { retake = false } = {}) {
       <span class="lb-clock"><svg viewBox="-12 -13 24 25" aria-hidden="true"><rect x="-2" y="-13" width="4" height="3" rx=".8"/><circle r="9.5"/><path d="M0 0V-6.5" data-hand2/></svg><b data-clock2>${t ? '' : '00:00'}</b><small>/ ${l.minutes} min</small></span>
       ${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}
       <button class="btn ghost" data-focus aria-label="Focus mode">${raw(icon('target'))}</button>
+      <button class="btn ghost spread-only" data-bar-tutor>${raw(icon('sparkle'))} Tutor</button>
+      <button class="btn ghost spread-only" data-bar-complete>${raw(icon('check'))} ${retake ? 'Save retake' : st === 'done' ? 'Complete again' : 'Complete'}</button>
     </div>
     <div class="lesson-grid">
       <article class="lesson-main">
         ${raw(steps.length ? stepStrip(steps.map(stepName), doneSteps, { current: steps.findIndex((_, i) => !doneSteps.has(i)), jump: true, names: true }) : '')}
+        <div class="nb-flow">
         <section class="card">
           <p class="label">objectives</p>
           <ul class="objectives">${raw((l.objectives || []).map(o => html`<li>${o}</li>`).join(''))}</ul>
@@ -122,6 +127,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
         ${raw(steps.map((s, i) => stepHTML(l, s, i, doneSteps.has(i))).join(''))}
         ${raw(leetcodeHTML(l))}
         ${raw(l.deliverable ? html`<section class="card"><p class="label">deliverable</p><p class="small">${l.deliverable}</p></section>` : '')}
+        </div>
       </article>
       ${raw(side)}
     </div>`;
@@ -133,7 +139,10 @@ function lessonView(root, go, l, { retake = false } = {}) {
     if (oldSim) simCard.replaceWith(oldSim); else mountSim(simCard, l);
   }
   root.querySelector('[data-back]').onclick = () => go('study');
-  root.querySelectorAll('[data-jump]').forEach(b => (b.onclick = () => root.querySelector(`[data-stepcard="${b.dataset.jump}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })));
+  // On a wide screen the lesson is an open notebook (two pages, page turns); elsewhere it scrolls.
+  notebook.mount(root.querySelector('.lesson-main'), l.id);
+  const toStep = (n, smooth = true) => { const el = root.querySelector(`[data-stepcard="${n}"]`); if (el && !notebook.show(el)) el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' }); };
+  root.querySelectorAll('[data-jump]').forEach(b => (b.onclick = () => toStep(b.dataset.jump)));
   const notes = root.querySelector('[data-notes]');
   notes.onchange = () => db.put('courseProgress', { ...(C.progress(l.id) || { id: l.id, lessonId: l.id, status: 'in progress' }), notes: notes.value });
   const startTimer = async () => { await C.startLesson(l.id); haptic(); askNotify(); };
@@ -145,7 +154,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
     enterFocus({ mode: 'lesson', title: l.title, planned: l.minutes, start: () => timerFor(l.id)?.start ?? null });
     // open at the step you're on, not wherever the timer card was
     const i = Math.max(0, steps.findIndex((_, k) => !doneSteps.has(k)));
-    requestAnimationFrame(() => document.querySelector(`[data-stepcard="${i + 1}"]`)?.scrollIntoView({ block: 'start' }));
+    requestAnimationFrame(() => { notebook.refit(); toStep(i + 1, false); });
   };
   root.querySelectorAll('[data-focus]').forEach(b => (b.onclick = focus));
   const markStep = async (i, on = true) => {
@@ -159,12 +168,16 @@ function lessonView(root, go, l, { retake = false } = {}) {
   root.querySelectorAll('[data-step-done]').forEach(b => (b.onclick = () => markStep(Number(b.dataset.stepDone), !doneSteps.has(Number(b.dataset.stepDone)))));
   bindStepContent(root, l);
   const tutor = () => tutorMe(l, currentStep(l, steps));
-  root.querySelector('[data-tutor]').onclick = tutor;
-  root.querySelector('[data-complete]').onclick = () => complete(l, root, go, { retake, diag });
+  root.querySelectorAll('[data-tutor], [data-bar-tutor]').forEach(b => (b.onclick = tutor));
+  root.querySelectorAll('[data-complete], [data-bar-complete]').forEach(b => (b.onclick = () => complete(l, root, go, { retake, diag })));
 
   onKeys({
     s: () => (timerFor(l.id) ? db.setSetting('lessonTimer', null) : startTimer()),
-    n: () => { const i = steps.findIndex((_, k) => !doneSteps.has(k)); if (i >= 0) { markStep(i); setTimeout(() => document.querySelector(`[data-stepcard="${i + 1}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); } },
+    n: () => { const i = steps.findIndex((_, k) => !doneSteps.has(k)); if (i >= 0) { markStep(i); setTimeout(() => toStep(i + 1), 80); } },
+    ArrowRight: () => notebook.turn(1),
+    ArrowLeft: () => notebook.turn(-1),
+    PageDown: () => notebook.turn(1),
+    PageUp: () => notebook.turn(-1),
     h: () => root.querySelector('[data-hint]:not([disabled])')?.click(),
     t: tutor,
     f: focus,
