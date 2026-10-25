@@ -4,7 +4,7 @@
 // AI-generated weeks live in IndexedDB like everything else.
 import * as db from './db.js';
 import * as D from './data.js';
-import { today, addDays, parseDay, dayKey } from './util.js';
+import { today, addDays, parseDay, dayKey, elapsedMs, pauseTimer, resumeTimer } from './util.js';
 
 let META = null;
 const BUNDLED = new Map(); // week -> lessons[]
@@ -369,15 +369,20 @@ export async function startLesson(id) {
   if (!l) throw new Error('No lesson with that id');
   const p = progress(id);
   if (!p || p.status === 'flagged') await db.put('courseProgress', { ...(p || {}), id, lessonId: id, status: p?.status === 'flagged' ? 'flagged' : 'in progress', startedAt: new Date().toISOString(), attempts: (p?.attempts || 0) + 1 });
+  const t = db.setting('lessonTimer', null);
+  // a paused timer for this lesson carries on from where it stopped
+  if (t?.lessonId === id) return db.setSetting('lessonTimer', resumeTimer(t));
   await db.setSetting('lessonTimer', { lessonId: id, start: Date.now(), plannedMin: l.minutes });
 }
+export const pauseLesson = () => db.setSetting('lessonTimer', pauseTimer(db.setting('lessonTimer', null)));
+export const resetLessonTimer = () => db.setSetting('lessonTimer', null);
 
 export async function completeLesson({ lessonId, minutes, score = null, notes = '', hintsUsed = 0, solutionsRevealed = 0 }) {
   const l = lesson(lessonId);
   if (!l) throw new Error('No lesson with that id');
   const t = db.setting('lessonTimer', null);
   const p = progress(lessonId) || {};
-  if (minutes == null) minutes = t?.lessonId === lessonId ? Math.max(1, Math.round((Date.now() - t.start) / 60000)) : l.minutes;
+  if (minutes == null) minutes = t?.lessonId === lessonId ? Math.max(1, Math.round(elapsedMs(t) / 60000)) : l.minutes;
   minutes = Math.max(1, Math.round(Number(minutes)));
   if (score != null) score = Math.max(0, Math.min(1, Number(score) > 1 ? Number(score) / 100 : Number(score)));
   const mastered = score == null || score >= META.masteryThreshold;

@@ -1,14 +1,26 @@
 import * as db from '../db.js';
 import * as D from '../data.js';
 import * as CT from '../cetele.js';
-import { html, raw, money, timeHM, today, fmtDay, dayKey, addDays, weekStart, toast } from '../util.js';
-import { ring, stepStrip, cetDial, arc } from '../ui.js';
+import { html, raw, money, timeHM, today, fmtDay, dayKey, addDays, weekStart, toast, haptic } from '../util.js';
+import { stepStrip, cetDial, arc } from '../ui.js';
 import * as C from '../course.js';
 import { icon } from '../icons.js';
 import { reminders } from '../reminders.js';
 import { expenseForm, meetingForm, studyForm, mealForm, taskForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
 import { hasKey as aiReady, saveKey } from '../ai/provider.js';
+import { openCommand, logCetele } from '../command.js';
+
+const greeting = h => (h >= 4 && h < 12 ? 'Good morning' : h < 18 && h >= 12 ? 'Good afternoon' : 'Good evening');
+// One line under the greeting: what's open today, in plain words.
+function dayLine(ct, nextMeet, due) {
+  const bits = [];
+  const left = ct.rows.filter(r => !r.met && r.per !== 'week').length;
+  bits.push(left ? `${left} minimum${left > 1 ? 's' : ''} open` : 'Minimums met');
+  if (nextMeet && dayKey(new Date(nextMeet.start)) === today()) bits.push(`${nextMeet.title} at ${timeHM(nextMeet.start)}`);
+  if (due) bits.push(`${due} card${due > 1 ? 's' : ''} to review`);
+  return bits.join(' · ');
+}
 
 // The head line: weekday, date and a running clock, like the date window on a chronograph.
 export const headDate = (d = new Date()) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '').toUpperCase();
@@ -78,30 +90,43 @@ export function render(root, go) {
   const weekGoalH = Math.round(s.dailyGoalMin * 7 / 60);
   const due = course ? C.dueCount() : 0;
 
+  // Morning is for the minimums, the rest of the day for the next lesson: whichever matters now
+  // comes first.
+  const hour = now.getHours();
+  const ctFirst = hour >= 4 && hour < 11 && !ct.complete;
+  const open = ct.rows.filter(r => !r.met).slice(0, 4);
+  const ctPlate = html`
+    <section class="ct-wrap">
+      <button class="plate ct-plate" data-go="cetele">
+        <span class="ct-train" data-train aria-hidden="true"></span>
+        ${raw(cetDial(ct.rows.filter(r => r.per !== 'week')))}
+        <div class="mins">
+          <div class="mins-h"><b>Çetele</b><span class="eyebrow">${cs.current} day streak</span></div>
+          ${raw(ceteleMins(ct))}
+        </div>
+      </button>
+      ${raw(open.length ? html`<div class="ct-quick" aria-label="Log a minimum">${raw(open.map(r => html`<button class="chip" data-log="${r.id}">${raw(CT.isCheck(r) ? icon('check') : '')}${r.name}${raw(CT.isCheck(r) ? '' : html`<b>+${Number(r.step) || 1}</b>`)}</button>`).join(''))}</div>` : '')}
+    </section>`;
+
   root.innerHTML = html`
     <header class="home-head">
       <span class="head-pair" data-gear="pair" aria-hidden="true"></span>
       <b class="wordmark">Yaver</b>
-      <span class="clock" data-clock><i class="tick"></i>${headDate(now)} · <span data-hm>${timeHM(now)}</span></span>
       <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
     </header>
+    <header class="hello">
+      <p class="clock" data-clock><i class="tick"></i>${headDate(now)} · <span data-hm>${timeHM(now)}</span></p>
+      <h1>${greeting(hour)}${db.setting('userName', '') ? `, ${db.setting('userName', '')}` : ''}</h1>
+      <p class="hello-sub">${dayLine(ct, next, due)}</p>
+    </header>
 
-    <button class="plate ct-plate" data-go="cetele">
-      <span class="ct-train" data-train aria-hidden="true"></span>
-      ${raw(cetDial(ct.rows.filter(r => r.per !== 'week')))}
-      <div class="mins">
-        <div class="mins-h"><b>Çetele</b><span class="eyebrow">${cs.current} day streak</span></div>
-        ${raw(ceteleMins(ct))}
-      </div>
-    </button>
-
-    ${raw(nx)}
+    ${raw(ctFirst ? ctPlate + nx : nx + ctPlate)}
 
     <div class="gauges">
       <button class="plate g" data-go="study"><span class="eyebrow">Study</span>${raw(arc(weekGoalH ? s.weekMin / 60 / weekGoalH : 0, 'lume'))}<strong>${(s.weekMin / 60).toFixed(1)}<small>h</small></strong><small>of ${weekGoalH} h this week</small></button>
       <button class="plate g" data-go="${course ? 'lesson/review' : 'study'}"><span class="eyebrow">Cards</span>${raw(arc(course ? Math.min(1, due / 30) : 0, due ? 'steel' : 'ok'))}<strong>${course ? due : '—'}</strong><small>${course ? (due ? 'due for review' : 'all reviewed') : 'course off'}</small></button>
-      <button class="plate g" data-go="calendar"><span class="eyebrow">Meet</span>${raw(arc(next ? Math.max(.06, 1 - Math.min(1, (new Date(next.start) - now) / 864e5)) : 0, 'steel'))}<strong>${next ? timeHM(next.start) : '—'}</strong><small>${next ? `${dayKey(new Date(next.start)) === today() ? '' : `${fmtDay(dayKey(new Date(next.start)))} · `}${next.title}` : 'nothing scheduled'}</small></button>
-      <button class="plate g" data-go="money"><span class="eyebrow">Spent</span>${raw(arc(m.budget ? m.month / m.budget : 0, m.budget && m.month > m.budget ? 'over' : m.budget && m.month / m.budget > .85 ? 'warn' : 'steel'))}<strong>${money(m.today)}</strong><small>${money(m.month)} this month</small></button>
+      <button class="plate g" data-go="money"><span class="eyebrow">Spent</span>${raw(arc(m.budget ? m.month / m.budget : 0, m.budget && m.month > m.budget ? 'over' : m.budget && m.month / m.budget > .85 ? 'warn' : 'steel'))}<strong>${money(m.today)}</strong><small>${m.budget ? `${money(Math.max(0, m.budgetLeft))} left this month` : `${money(m.month)} this month`}</small></button>
+      <button class="plate g" data-go="diet"><span class="eyebrow">Diet</span>${raw(arc(d.goals.dailyCalories ? d.calories / d.goals.dailyCalories : 0, d.calories > d.goals.dailyCalories ? 'over' : 'ok'))}<strong>${Math.round(d.calories)}<small>kcal</small></strong><small>${Math.round(d.protein)}/${d.goals.dailyProtein} g protein</small></button>
     </div>
 
     ${raw(hasKey ? '' : html`
@@ -128,29 +153,13 @@ export function render(root, go) {
         ${raw(notes.length > SHOW ? html`<button class="link more-toggle" data-more>${notes.length - SHOW} more</button>` : '')}
       </section>` : '')}
 
-    <div class="quick">
-      <button data-q="study">${raw(icon('book'))}Study</button>
+    <div class="quick" aria-label="Quick add">
       <button data-q="expense">${raw(icon('wallet'))}Expense</button>
-      <button data-q="meeting">${raw(icon('calendar'))}Meeting</button>
+      <button data-q="study">${raw(icon('book'))}Study</button>
       <button data-q="meal">${raw(icon('leaf'))}Meal</button>
+      <button data-q="meeting">${raw(icon('calendar'))}Meeting</button>
       <button data-go="map">${raw(icon('map'))}Map</button>
-    </div>
-
-    <div class="tiles">
-      <button class="tile" data-go="money">
-        <p class="tile-k">${raw(icon('wallet'))}This month</p>
-        <p class="tile-v">${money(m.month)}</p>
-        ${raw(m.budget ? `<div class="bar ${m.month > m.budget ? 'over' : m.month / m.budget > .85 ? 'warn' : ''}"><div style="width:${Math.min(100, (m.month / m.budget) * 100)}%"></div></div>` : '')}
-        <p class="tile-s">${m.budget ? `${money(Math.max(0, m.budgetLeft))} left of the budget` : `${money(m.today)} today`}</p>
-      </button>
-      <button class="tile" data-go="diet">
-        <p class="tile-k">${raw(icon('leaf'))}Diet</p>
-        <div class="tile-ring">
-          ${raw(ring(d.calories, d.goals.dailyCalories, { size: 58, stroke: 5, label: String(Math.round(d.calories)), sub: 'kcal' }))}
-          <p class="tile-s">${Math.round(d.protein)}/${d.goals.dailyProtein} g protein</p>
-        </div>
-        <p class="tile-s">${Math.max(0, d.goals.dailyCalories - d.calories)} kcal left</p>
-      </button>
+      <button data-cmd>${raw(icon('search'))}More</button>
     </div>
 
     <section class="plate card">
@@ -193,8 +202,15 @@ export function render(root, go) {
   root.querySelectorAll('[data-task]').forEach(cb => (cb.onchange = () => {
     const t = db.get('tasks', cb.dataset.task);
     cb.closest('.task').classList.add('done');
+    haptic();
     setTimeout(() => db.put('tasks', { ...t, done: true, doneAt: new Date().toISOString() }), 350);
+    toast(`Done: ${t.title}`, { action: { label: 'Undo', run: () => db.put('tasks', t) } });
   }));
+  root.querySelectorAll('[data-log]').forEach(b => (b.onclick = () => {
+    const r = ct.rows.find(x => x.id === b.dataset.log);
+    if (r) logCetele(r.id, CT.isCheck(r) ? 1 : Number(r.step) || 1, CT.isCheck(r));
+  }));
+  root.querySelector('[data-cmd]')?.addEventListener('click', () => openCommand());
   root.querySelector('[data-save-key]')?.addEventListener('click', async () => {
     try { toast(await saveKey(root.querySelector('[data-key]').value)); } catch (e) { toast(e.message, 4000); }
   });

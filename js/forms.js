@@ -1,7 +1,7 @@
 // Add/edit sheets, shared by Home's quick actions and each tab.
 import * as db from './db.js';
 import * as D from './data.js';
-import { sheet, today, localInput, toast, confirmSheet } from './util.js';
+import { sheet, today, localInput, toast, haptic } from './util.js';
 import { openInCalendar } from './ics.js';
 
 export async function expenseForm(existing) {
@@ -17,7 +17,7 @@ export async function expenseForm(existing) {
     ],
   });
   if (!v) return;
-  if (v.__danger) { await db.remove('expenses', e.id); toast('Expense deleted'); return; }
+  if (v.__danger) { await db.remove('expenses', e.id); haptic(); toast('Expense deleted', { action: { label: 'Undo', run: () => db.put('expenses', e) } }); return; }
   if (existing) await db.put('expenses', { ...e, ...v, amount: Number(v.amount) });
   else await D.addExpense(v);
   toast(existing ? 'Saved' : 'Expense added');
@@ -43,7 +43,7 @@ export async function meetingForm(existing, day = today(), preset = {}) {
   });
   if (!v) return;
   if (v.__danger) {
-    if (await confirmSheet('Delete meeting?', e.title)) { await db.remove('events', e.id); toast('Meeting deleted'); }
+    await db.remove('events', e.id); haptic(); toast('Meeting deleted', { action: { label: 'Undo', run: () => db.put('events', e) } });
     return;
   }
   let saved;
@@ -94,7 +94,7 @@ export async function mealForm(existing, day = today(), preset = {}) {
     ],
   });
   if (!v) return;
-  if (v.__danger) { await db.remove('meals', m.id); toast('Meal deleted'); return; }
+  if (v.__danger) { await db.remove('meals', m.id); haptic(); toast('Meal deleted', { action: { label: 'Undo', run: () => db.put('meals', m) } }); return; }
   if (existing) await db.put('meals', { ...m, ...v });
   else await D.logMeal(v);
   toast('Meal logged');

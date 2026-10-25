@@ -112,7 +112,21 @@ export async function mountSim(card, l) {
   card._mounted = true;
   const p = pickSim(l);
   const host = card.querySelector('[data-sim-host]');
-  card.querySelector('[data-sim-full]')?.addEventListener('click', () => { card.classList.toggle('full'); host._resize?.(); });
+  // Bigger: the workshop takes the whole screen, above everything (focus mode's notebook too);
+  // the same button, or Esc, brings it back onto the page.
+  const btn = card.querySelector('[data-sim-full]');
+  let spot = null;
+  const setFull = on => {
+    // the card moves to the top level while it's full, so nothing on the page can clip or cover it
+    if (on && !spot) { spot = document.createComment('sim'); card.before(spot); document.body.append(card); }
+    if (!on && spot) { spot.isConnected ? spot.replaceWith(card) : card.remove(); spot = null; }
+    card.classList.toggle('full', on);
+    document.body.classList.toggle('sim-open', on);
+    if (btn) { btn.textContent = on ? '✕' : '⤢'; btn.setAttribute('aria-label', on ? 'Back to the page' : 'Bigger'); }
+    host._resize?.();
+  };
+  btn?.addEventListener('click', () => setFull(!card.classList.contains('full')));
+  addEventListener('keydown', e => { if (e.key === 'Escape' && card.classList.contains('full')) { e.stopImmediatePropagation(); setFull(false); } }, true);
   try {
     const mod = await import(`./sims/${p.sim}.js`);
     host.innerHTML = '';

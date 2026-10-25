@@ -1,6 +1,6 @@
 import * as D from '../data.js';
 import * as db from '../db.js';
-import { html, raw, mins, today, addDays, parseDay, fmtDay, toast, sheet, haptic } from '../util.js';
+import { html, raw, mins, today, addDays, parseDay, fmtDay, toast, sheet, haptic, elapsedMs, pauseTimer, resumeTimer } from '../util.js';
 import { barList, empty } from '../ui.js';
 import { icon } from '../icons.js';
 import { weekCompare } from '../reminders.js';
@@ -67,7 +67,7 @@ export function render(root, go) {
       ${raw(t ? html`
         <div class="focus-clock" data-clock>00:00</div>
         <div class="focus-sub" data-left></div>
-        <div class="btn-row"><button class="btn ghost" data-cancel>Discard</button><button class="btn ghost" data-focus>${raw(icon('target'))} Focus mode</button><button class="btn primary" data-stop>Stop & log</button></div>` : html`
+        <div class="btn-row">${raw(t.pausedAt ? html`<button class="btn ghost" data-resume>Resume</button>` : html`<button class="btn ghost" data-pause>Pause</button>`)}<button class="btn ghost" data-cancel>Reset</button><button class="btn ghost" data-focus>${raw(icon('target'))} Focus</button><button class="btn primary" data-stop>Stop & log</button></div>` : html`
         <input list="subj" data-subject placeholder="Subject, e.g. Algorithms" value="${subjects[0]?.name || ''}" aria-label="Subject">
         <datalist id="subj">${raw(subjects.map(x => html`<option value="${x.name}">`).join(''))}</datalist>
         <div class="presets">${raw([25, 45, 60, 90].map(m => `<button class="chip" data-start="${m}">${m}m</button>`).join(''))}</div>
@@ -173,29 +173,32 @@ export function render(root, go) {
     const clock = root.querySelector('[data-clock]');
     const left = root.querySelector('[data-left]');
     const update = () => {
-      const sec = Math.floor((Date.now() - t.start) / 1000);
+      const sec = Math.floor(elapsedMs(t) / 1000);
       clock.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       const remain = t.plannedMin * 60 - sec;
       left.textContent = remain > 0 ? `${Math.ceil(remain / 60)} min left of ${t.plannedMin}` : `${t.plannedMin} min done · stop when ready`;
       if (remain <= 0 && remain > -1) { haptic(); notify(`${t.plannedMin} min of ${t.subject} done.`); }
     };
     update();
-    tick = setInterval(update, 1000);
+    if (t.pausedAt) left.textContent = `paused · ${left.textContent}`;
+    else tick = setInterval(update, 1000);
+    root.querySelector('[data-pause]')?.addEventListener('click', () => { haptic(); db.setSetting('timer', pauseTimer(t)); });
+    root.querySelector('[data-resume]')?.addEventListener('click', () => { haptic(); db.setSetting('timer', resumeTimer(t)); });
     root.querySelector('[data-stop]').onclick = async () => {
       clearInterval(tick);
-      const m = Math.max(1, Math.round((Date.now() - t.start) / 60000));
+      const m = Math.max(1, Math.round(elapsedMs(t) / 60000));
       await db.setSetting('timer', null);
       await D.logStudy({ subject: t.subject, minutes: m });
       toast(`Logged ${m} min · ${t.subject}`);
     };
-    root.querySelector('[data-cancel]').onclick = () => { clearInterval(tick); db.setSetting('timer', null); };
-    root.querySelector('[data-focus]').onclick = () => focusOn(t.subject, t.plannedMin);
+    root.querySelector('[data-cancel]').onclick = () => { clearInterval(tick); db.setSetting('timer', null); toast('Timer reset', { action: { label: 'Undo', run: () => db.setSetting('timer', t) } }); };
+    root.querySelector('[data-focus]').onclick = () => { if (t.pausedAt) db.setSetting('timer', resumeTimer(t)); focusOn(t.subject, t.plannedMin); };
   }
 }
 
 // Full-screen focus: a dark, empty screen with the subject and a small timer.
 function focusOn(subject, planned) {
-  enterFocus({ mode: 'blank', title: subject, planned, start: () => timer()?.start ?? null });
+  enterFocus({ mode: 'blank', title: subject, planned, start: () => { const x = timer(); return x ? Date.now() - elapsedMs(x) : null; } });
 }
 
 function heatmap(perDay, goal) {

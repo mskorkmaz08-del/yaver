@@ -3,7 +3,7 @@
 // One timer per lesson, stored as a start time so closing the app loses nothing.
 import * as C from '../course.js';
 import * as db from '../db.js';
-import { html, raw, mdDoc, toast, haptic, sheet, today, addDays, saveFile, mins, esc } from '../util.js';
+import { html, raw, mdDoc, toast, haptic, sheet, today, addDays, saveFile, mins, esc, elapsedMs } from '../util.js';
 import { icon } from '../icons.js';
 import { openAssistant } from '../ai/assistant.js';
 import { dotColor, exportWeek } from './course.js';
@@ -65,6 +65,13 @@ function onKeys(map) {
 // ---------- Lesson ----------
 const timerFor = id => { const t = db.setting('lessonTimer', null); return t?.lessonId === id ? t : null; };
 
+// Start, or Pause and Reset while it runs, or Resume and Reset while paused.
+function timerButtons(t, st) {
+  if (!t) return html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`;
+  return (t.pausedAt ? html`<button class="btn primary" data-start>Resume</button>` : html`<button class="btn ghost" data-pause-timer>Pause</button>`)
+    + html`<button class="btn ghost" data-reset-timer aria-label="Reset the timer">Reset</button>`;
+}
+
 function stepMarks(l) {
   let at = 0;
   return (l.steps || []).map(s => { const r = { ...s, from: at, to: at + (s.minutes || 0) }; at += s.minutes || 0; return r; });
@@ -81,11 +88,11 @@ function lessonView(root, go, l, { retake = false } = {}) {
 
   const side = html`
     <aside class="lesson-side">
-      <section class="card timer ${raw(t ? 'running' : '')}">
+      <section class="card timer ${raw(t ? (t.pausedAt ? 'paused' : 'running') : '')}">
         <div class="card-head"><p class="label">timer</p><span class="small mono muted">${l.minutes} min planned</span></div>
         ${raw(stopwatch(steps, l.minutes))}
         <div class="focus-sub" data-now>${t ? '' : st === 'done' ? 'completed' : 'not started'}</div>
-        <div class="btn-row">${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}<button class="btn ghost" data-focus>${raw(icon('target'))} Focus</button></div>
+        <div class="btn-row">${raw(timerButtons(t, st))}<button class="btn ghost" data-focus>${raw(icon('target'))} Focus</button></div>
       </section>
       <section class="card desk-only">
         <p class="label">steps</p>
@@ -106,9 +113,9 @@ function lessonView(root, go, l, { retake = false } = {}) {
   const oldSim = root.querySelector(`.sim-card[data-lesson="${CSS.escape(l.id)}"]`);
   root.innerHTML = html`
     ${raw(head(`wk ${l.week ?? ''}`, l.title, html`<p class="small muted mono lesson-meta"><span class="dot" style="background:${raw(dotColor(l.track))}"></span>${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)} · ${l.minutes} min · ${st}${raw(p.score != null ? ` · ${Math.round(p.score * 100)}%` : '')}${raw(tb ? ` · <span class="${C.deadlines(7).some(d => d.lessonId === l.id) ? 'bad' : ''}">teach by ${esc(tb)}</span>` : '')}</p>`))}
-    <div class="lesson-bar ${raw(t ? 'running' : '')}">
+    <div class="lesson-bar ${raw(t ? (t.pausedAt ? 'paused' : 'running') : '')}">
       <span class="lb-clock"><svg viewBox="-12 -13 24 25" aria-hidden="true"><rect x="-2" y="-13" width="4" height="3" rx=".8"/><circle r="9.5"/><path d="M0 0V-6.5" data-hand2/></svg><b data-clock2>${t ? '' : '00:00'}</b><small>/ ${l.minutes} min</small></span>
-      ${raw(t ? html`<button class="btn ghost" data-stop-timer>Pause</button>` : html`<button class="btn primary" data-start>${st === 'in progress' ? 'Resume' : 'Start'}</button>`)}
+      ${raw(timerButtons(t, st))}
       <button class="btn ghost" data-focus aria-label="Focus mode">${raw(icon('target'))}</button>
       <button class="btn ghost spread-only" data-bar-tutor>${raw(icon('sparkle'))} Tutor</button>
       <button class="btn ghost spread-only" data-bar-complete>${raw(icon('check'))} ${retake ? 'Save retake' : st === 'done' ? 'Complete again' : 'Complete'}</button>
@@ -147,11 +154,17 @@ function lessonView(root, go, l, { retake = false } = {}) {
   notes.onchange = () => db.put('courseProgress', { ...(C.progress(l.id) || { id: l.id, lessonId: l.id, status: 'in progress' }), notes: notes.value });
   const startTimer = async () => { await C.startLesson(l.id); haptic(); askNotify(); };
   root.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', startTimer));
-  root.querySelectorAll('[data-stop-timer]').forEach(b => b.addEventListener('click', () => db.setSetting('lessonTimer', null)));
+  root.querySelectorAll('[data-pause-timer]').forEach(b => b.addEventListener('click', () => { haptic(); C.pauseLesson(); }));
+  root.querySelectorAll('[data-reset-timer]').forEach(b => b.addEventListener('click', () => {
+    const before = timerFor(l.id);
+    C.resetLessonTimer();
+    toast('Timer reset', { action: { label: 'Undo', run: () => db.setSetting('lessonTimer', before) } });
+  }));
   // Focus: only the lesson paper and a small timer stay on screen.
   const focus = async () => {
-    if (!timerFor(l.id)) await startTimer();
-    enterFocus({ mode: 'lesson', title: l.title, planned: l.minutes, start: () => timerFor(l.id)?.start ?? null });
+    const ft = timerFor(l.id);
+    if (!ft || ft.pausedAt) await startTimer();
+    enterFocus({ mode: 'lesson', title: l.title, planned: l.minutes, start: () => { const x = timerFor(l.id); return x ? Date.now() - elapsedMs(x) : null; } });
     // open at the step you're on, not wherever the timer card was
     const i = Math.max(0, steps.findIndex((_, k) => !doneSteps.has(k)));
     requestAnimationFrame(() => { notebook.refit(); toStep(i + 1, false); });
@@ -172,7 +185,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
   root.querySelectorAll('[data-complete], [data-bar-complete]').forEach(b => (b.onclick = () => complete(l, root, go, { retake, diag })));
 
   onKeys({
-    s: () => (timerFor(l.id) ? db.setSetting('lessonTimer', null) : startTimer()),
+    s: () => (timerFor(l.id) && !timerFor(l.id).pausedAt ? C.pauseLesson() : startTimer()),
     n: () => { const i = steps.findIndex((_, k) => !doneSteps.has(k)); if (i >= 0) { markStep(i); setTimeout(() => toStep(i + 1), 80); } },
     ArrowRight: () => notebook.turn(1),
     ArrowLeft: () => notebook.turn(-1),
@@ -190,7 +203,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
     const hand = root.querySelector('[data-hand]'), fill = root.querySelector('[data-fill]');
     const clock2 = root.querySelector('[data-clock2]'), hand2 = root.querySelector('[data-hand2]');
     const update = () => {
-      const sec = Math.floor((Date.now() - t.start) / 1000);
+      const sec = Math.floor(elapsedMs(t) / 1000);
       clock.textContent = clock2.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       hand2?.setAttribute('transform', `rotate(${(sec % 60) * 6})`);
       const m = sec / 60;
@@ -204,14 +217,15 @@ function lessonView(root, go, l, { retake = false } = {}) {
       if (Math.abs(sec - l.minutes * 60) < 1) notify(`${l.title}: ${l.minutes} minutes done.`);
     };
     update();
-    tick = setInterval(update, 1000);
+    if (t.pausedAt) now.textContent = `paused · ${now.textContent}`;
+    else tick = setInterval(update, 1000);
   }
 }
 
 function currentStep(l, steps) {
   const t = timerFor(l.id);
   const done = new Set(C.progress(l.id)?.stepsDone || []);
-  if (t) { const m = (Date.now() - t.start) / 60000; const s = steps.find(x => m >= x.from && m < x.to); if (s) return s; }
+  if (t) { const m = elapsedMs(t) / 60000; const s = steps.find(x => m >= x.from && m < x.to); if (s) return s; }
   return steps.find((_, i) => !done.has(i)) || steps[0];
 }
 
@@ -418,7 +432,7 @@ async function complete(l, root, go, { retake, diag }) {
       if (!ok) return;
     } else score = marks.filter(Boolean).length / qs.length;
   }
-  let minutes = t ? Math.max(1, Math.round((Date.now() - t.start) / 60000)) : null;
+  let minutes = t ? Math.max(1, Math.round(elapsedMs(t) / 60000)) : null;
   if (minutes == null) {
     const v = await sheet({ title: 'How long did it take?', fields: [{ name: 'm', label: 'Minutes', type: 'number', value: l.minutes, required: true }], submit: 'Complete' });
     if (!v) return;

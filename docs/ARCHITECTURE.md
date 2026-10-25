@@ -163,7 +163,8 @@ yaver/
     │                       probability, data (tables), trace (Python), memory (C++), git, shell
     ├── db.js               IndexedDB storage, settings, backup/restore
     ├── data.js             The "business logic": budgets, streaks, free slots, totals
-    ├── util.js             Dates, money formatting, bottom sheets, toasts, Markdown
+    ├── util.js             Dates, money formatting, bottom sheets, toasts with Undo, haptics, timers, Markdown
+    ├── command.js          The command bar (hold the gear, or ⌘K): do, find or ask
     ├── ui.js               Progress rings, bar charts, the lesson step strip, the study subdial
     ├── forms.js            Add/edit sheets for expenses, meetings, study, meals, tasks
     ├── ics.js              Builds .ics calendar files
@@ -228,7 +229,21 @@ The Study tab can run a full day-by-day course: Python, C++, algorithms, math, A
 
 New files: `js/course.js` (all course logic), `js/views/course.js` (overview, today card, block alerts), `js/views/lesson.js` (lesson runner, review, test, ship, prepare), `js/keys.js` (keyboard shortcuts). New database tables: `courseProgress`, `cards`, `courseLessons`, `courseTests`, and `tombstones`.
 
-## 9c. The look, sounds and the workshop (v25 to v31)
+## 9c. The look, sounds and the workshop (v25 to v32)
+
+**Mark II craft and daily flow (v32).** Researched against current platform guidance (Apple's 2025 design language, Google's Material 3 Expressive research, the dark-first craft of apps like Linear) and applied as habits, not decoration:
+- *Hierarchy from size and space.* Titles are big, bold and left aligned; labels are calm sentence case; numbers line up (tabular figures).
+- *Surfaces step up in tone* and catch light on their top edge (a thin gradient border) instead of relying on heavy shadows; corners are precise and nested (16px plates, 10px controls, pill chips). The one main action on a screen is a lit gold button.
+- *Controls float above content and get out of the way.* The tab bar is floating glass with a gold mark that glides to the open tab; scrolling down tucks it into a smaller pill and scrolling up brings it back. Once a screen's title scrolls away, a slim bar keeps it at the top (tap it to jump back up).
+- *Thumb reach.* Messages rise from the bottom above the tab bar; the command bar's search field sits at the bottom on the phone.
+- *One place to do anything* (`js/command.js`): hold the Yaver gear (or flick it up) on the phone, or press ⌘K / Ctrl+K on the laptop (also "Do or find" in the sidebar). It lists quick actions, a +1 for each open Çetele minimum and every screen; typing filters, and anything unmatched becomes a question to Yaver.
+- *Undo instead of "are you sure?".* Deleting an expense, meal or meeting, finishing a to-do, logging a Çetele count or resetting a timer happens at once, with Undo in the message.
+- *Feel.* A light haptic on the moments that matter (a count logged, a minimum met, a deletion); on the iPhone this uses the haptic Safari plays when a switch flips.
+- *Home answers "what now?"* A greeting with one line of what is open today; the Çetele dial comes first in the morning and the next lesson first the rest of the day; one-tap +1 chips under the dial; four gauges (study, cards, spent with budget left, diet); a quick-add row.
+- *Motion with meaning.* Springy easing; screens slide in from the side of the tab they come from, deeper screens rise.
+- *Timers pause.* The lesson timer and the Study focus timer have Pause (keeps the time), Resume and a separate Reset.
+- *Focus mode is truly full screen.* On a laptop the open notebook fills the whole screen; on the phone the paper runs edge to edge. A workshop opened with ⤢ now covers everything and ✕ or Esc reliably puts it back.
+
 
 **Yaver Mark II, modern Piltover (v31).** Mustafa named this generation Yaver Mark II (shown in Settings next to the version); version numbers keep counting, and a fundamental redesign would become Mark III. v31 keeps the navy and gold but drops the 2000s-style trim: plates are rounded with a faint white hairline and a soft shadow, buttons are flat gold, chips are pills, switches look like iOS switches, the tab bar is frosted glass, headings are sentence-case Archivo (Cinzel only in the wordmark). Gears are flat colour with no painted lighting, so they look right at every angle while they turn. The hextech core is a round, slightly irregular glowing orb with a slow swirl and cracks of light, held in a brass ring. Lesson paper is plain yellow with no lines. The Çetele dial is redrawn after the clock on the show's poster (gold bezel, ivory face, tall gold numerals, a green subdial holding the count, a bronze subdial turning), and the lesson timer after the show's hextech gauge (steel case, hex windows that light teal for the current step, teal glass, a brass gear, a white needle with an orange tip). Because the repo and site are public, the show's art is redrawn as SVG in its design rather than copied in.
 

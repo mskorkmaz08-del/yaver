@@ -85,7 +85,11 @@ export function refit() {
   if (!on) { flow.removeAttribute('style'); return; }
   const W = Math.floor(nb.win.clientWidth);
   const top = stickyTop();
-  const H = Math.max(PAD * 13, Math.min(PAD * 36, Math.floor((innerHeight - top - nb.nav.offsetHeight - PAD * 2 - 22) / PAD) * PAD));
+  // focus mode: the notebook is the whole screen, so the pages take its full height
+  const cs = getComputedStyle(art);
+  const H = document.body.classList.contains('focus-lesson')
+    ? Math.max(PAD * 13, Math.floor((innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) / PAD) * PAD)
+    : Math.max(PAD * 13, Math.min(PAD * 36, Math.floor((innerHeight - top - nb.nav.offsetHeight - PAD * 2 - 22) / PAD) * PAD));
   if (W !== nb.W || H !== nb.H) {
     nb.W = W; nb.H = H;
     Object.assign(flow.style, { width: `${W}px`, height: `${H}px`, columnCount: '2', columnGap: `${GAP}px` });
@@ -98,8 +102,8 @@ export function refit() {
 }
 
 function stickyTop() {
-  // in focus mode nothing is sticky: the notebook sits under the step rail, no scrolling
-  if (document.body.classList.contains('focus-lesson')) return nb.art.getBoundingClientRect().top + scrollY;
+  // in focus mode the notebook fills the screen from the top edge
+  if (document.body.classList.contains('focus-lesson')) return 0;
   const bar = document.querySelector('.lesson-bar');
   return bar && bar.offsetParent ? bar.offsetHeight + 20 : 70;
 }

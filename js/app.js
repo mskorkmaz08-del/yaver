@@ -1,7 +1,7 @@
 // Yaver entry point: opens the database, draws the current screen, and
 // re-draws it whenever data changes (from a form or from Claude).
 import * as db from './db.js';
-import { $, sheet, toast } from './util.js';
+import { $, sheet, toast, haptic } from './util.js';
 import { initAssistant, openAssistant, routeChanged } from './ai/assistant.js';
 import { exitFocus } from './focus.js';
 import { saveKey, sortKeys } from './ai/provider.js';
@@ -20,6 +20,7 @@ import * as courseView from './views/course.js';
 import * as lessonView from './views/lesson.js';
 import * as C from './course.js';
 import { initShortcuts } from './keys.js';
+import { initCommand, openCommand } from './command.js';
 import { initSync } from './sync.js';
 import { currencyOptions } from './data.js';
 import * as D from './data.js';
@@ -39,13 +40,17 @@ let param = '';
 export function go(name, arg = '') {
   if (name.includes('/')) [name, arg] = [name.slice(0, name.indexOf('/')), decodeURIComponent(name.slice(name.indexOf('/') + 1))];
   if (!VIEWS[name]) name = 'home';
-  if (current !== name || param !== arg) { VIEWS[current].cleanup?.(); exitFocus(); routeChanged(); }
+  if (current !== name || param !== arg) { VIEWS[current].cleanup?.(); exitFocus(); routeChanged(); document.body.classList.remove('sim-open'); document.querySelectorAll('body > .sim-card.full').forEach(c => c.remove()); }
   current = name;
   param = arg;
   const hash = arg ? `${name}/${encodeURIComponent(arg)}` : name;
   if (location.hash.slice(1) !== hash) history.replaceState(null, '', `#${hash}`);
   document.body.dataset.view = name;
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === (PARENT[name] || name)));
+  // screens slide in from the side of the tab they come from; deeper screens rise
+  const order = Object.keys(TABS), a = order.indexOf(PARENT[current] || current), b = order.indexOf(PARENT[name] || name);
+  document.body.dataset.dir = PARENT[name] && !PARENT[current] ? 'in' : b > a ? 'next' : b < a ? 'prev' : 'in';
+  moveTabMark();
   if (current !== PREV_VIEW.name || param !== PREV_VIEW.arg) sound.enter();
   PREV_VIEW.name = current; PREV_VIEW.arg = param;
   entering = true;
@@ -63,7 +68,7 @@ function draw() {
   // Keep running mechanisms across redraws so their gears don't jump back to the start.
   const kept = MOUNTS.map(sel => [...root.querySelectorAll(sel)]);
   VIEWS[current].render(root, go, param);
-  MOUNTS.forEach((sel, k) => root.querySelectorAll(sel).forEach((el, i) => kept[k][i] && el.replaceWith(kept[k][i])));
+  MOUNTS.forEach((sel, k) => root.querySelectorAll(sel).forEach((el, i) => kept[k][i] && kept[k][i].className === el.className && el.replaceWith(kept[k][i])));
   // A meshing pair of small gears sits on the rule under each screen title.
   root.querySelectorAll('.page-head').forEach(h => h.querySelector('.head-gears') || h.insertAdjacentHTML('beforeend', '<span class="head-gears" data-gear="pair" aria-hidden="true"></span>'));
   mech.scan(root);
@@ -80,6 +85,35 @@ function draw() {
     enterTimer = setTimeout(() => root.classList.remove('enter'), 1100);
   }
   sideGauge();
+}
+
+// The gold mark under the open tab glides to the tab you pick.
+function moveTabMark() {
+  const mark = $('.tab-mark'), on = $('.tabbar button.active');
+  if (!mark) return;
+  if (!on || !on.offsetWidth || matchMedia('(min-width: 1100px)').matches) { mark.style.opacity = 0; return; }
+  mark.style.opacity = 1;
+  mark.style.transform = `translateX(${on.offsetLeft + on.offsetWidth / 2 - 14}px)`;
+}
+
+// Scrolling: past a screen's title a slim bar keeps the title in view; scrolling down tucks
+// the tab bar into a small pill so the screen gets the room, and any scroll up brings it back.
+function initScrollChrome() {
+  const bar = $('#topbar');
+  let lastY = scrollY, ticking = false;
+  const update = () => {
+    ticking = false;
+    const y = scrollY, head = $('#view .page-head h1, #view .hello h1');
+    const past = !!head && head.getBoundingClientRect().bottom < 8 + (parseFloat(getComputedStyle(document.body).getPropertyValue('--safe-t')) || 0);
+    if (past && bar.firstChild.textContent !== head.textContent) bar.firstChild.textContent = head.textContent;
+    document.body.classList.toggle('compact', past);
+    const dy = y - lastY;
+    if (y < 80 || dy < -6) document.body.classList.remove('tab-min');
+    else if (dy > 8) document.body.classList.add('tab-min');
+    if (Math.abs(dy) > 6 || y < 80) lastY = y;
+  };
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  bar.onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Parts of a new screen that start below the fold latch into place as they scroll in.
@@ -163,8 +197,21 @@ async function start() {
     if (b && !b.closest('#fab') && !b.querySelector('input[type=checkbox]') && !e.target.matches('input[type=checkbox]')) sound.tap();
   }, { capture: true, passive: true });
   // Switches and checkboxes click on and off.
-  document.addEventListener('change', e => { if (e.target.matches?.('input[type=checkbox]')) sound.toggle(e.target.checked); }, true);
-  $('#fab').onclick = () => openAssistant();
+  document.addEventListener('change', e => { if (e.target.matches?.('input[type=checkbox]') && !e.target.closest('[data-haptic]')) sound.toggle(e.target.checked); }, true);
+  // The Yaver gear: tap to ask, hold (or flick up) for the command bar.
+  const fab = $('#fab');
+  let hold, held = false, y0 = 0;
+  fab.addEventListener('pointerdown', e => { held = false; y0 = e.clientY; clearTimeout(hold); hold = setTimeout(() => { held = true; haptic(); openCommand(); }, 420); });
+  fab.addEventListener('pointermove', e => { if (!held && y0 - e.clientY > 28) { clearTimeout(hold); held = true; haptic(); openCommand(); } });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => fab.addEventListener(t, () => clearTimeout(hold)));
+  fab.addEventListener('contextmenu', e => e.preventDefault());
+  fab.onclick = () => { if (held) { held = false; return; } openAssistant(); };
+  const cmd = $('.tabbar [data-cmd]');
+  cmd.innerHTML = `${icon('search')}<span>Do or find</span><kbd>${/Mac|iP/.test(navigator.platform) ? '⌘K' : 'Ctrl K'}</kbd>`;
+  cmd.onclick = () => openCommand();
+  initCommand(go);
+  initScrollChrome();
+  addEventListener('resize', moveTabMark);
   // On a laptop the assistant button lives in the sidebar.
   const ask = $('.tabbar [data-ask]');
   ask.innerHTML = `${icon('sparkle')}<span>Ask Yaver</span><kbd>/</kbd>`;

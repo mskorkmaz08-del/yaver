@@ -4,8 +4,8 @@ import { html, raw } from './util.js';
 import { openAssistant } from './ai/assistant.js';
 
 const LIST = [
-  ['Anywhere', [['1 … 7', 'Home, Çetele, Study, Meet, Money, Diet, Map'], [',', 'Settings'], ['g then t', 'Today (Study)'], ['g then c', 'Course'], ['/', 'Ask Yaver'], ['?', 'This list']]],
-  ['Lesson', [['s', 'Start or pause the timer'], ['n', 'Finish this step, go to the next'], ['h', 'Next hint'], ['t', 'Tutor me'], ['Esc', 'Back']]],
+  ['Anywhere', [['1 … 7', 'Home, Çetele, Study, Meet, Money, Diet, Map'], [',', 'Settings'], ['g then t', 'Today (Study)'], ['g then c', 'Course'], ['/', 'Ask Yaver'], ['⌘K or Ctrl K', 'Command bar: do, find or ask'], ['?', 'This list']]],
+  ['Lesson', [['s', 'Start, pause or resume the timer'], ['n', 'Finish this step, go to the next'], ['h', 'Next hint'], ['t', 'Tutor me'], ['Esc', 'Back']]],
   ['Review cards', [['Space', 'Show answer'], ['1', 'Again'], ['2', 'Hard'], ['3', 'Good'], ['4', 'Easy']]],
 ];
 

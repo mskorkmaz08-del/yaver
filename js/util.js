@@ -50,17 +50,51 @@ export function html(strings, ...vals) {
 }
 export const raw = s => ({ __raw: true, s });
 
-export function toast(msg, ms = 2400) {
+// A short message at the top. opts: a duration in ms, or { ms, action: { label, run } } for an
+// Undo-style button (undo beats "are you sure?": the change happens, and one tap takes it back).
+let lastToast;
+// Timers are stored as when they started (and when they were paused), so they survive the app
+// being closed. Pausing keeps the time; resuming shifts the start by the paused gap.
+export const elapsedMs = t => (t ? Math.max(0, (t.pausedAt ?? Date.now()) - t.start) : 0);
+export const pauseTimer = t => (t && !t.pausedAt ? { ...t, pausedAt: Date.now() } : t);
+export const resumeTimer = t => (t?.pausedAt ? { ...t, start: t.start + (Date.now() - t.pausedAt), pausedAt: null } : t);
+
+export function toast(msg, opts = 2400) {
+  const { ms = 2400, action } = typeof opts === 'number' ? { ms: opts } : opts;
+  lastToast?.dismiss();
   const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
+  t.className = `toast${action ? ' has-act' : ''}`;
+  t.setAttribute('role', 'status');
+  t.append(Object.assign(document.createElement('span'), { textContent: msg }));
+  const dismiss = () => { clearTimeout(timer); t.classList.remove('show'); setTimeout(() => t.remove(), 300); if (lastToast?.t === t) lastToast = null; };
+  if (action) {
+    const b = Object.assign(document.createElement('button'), { className: 'toast-act', textContent: action.label });
+    b.onclick = () => { dismiss(); action.run(); };
+    t.append(b);
+  }
   document.body.append(t);
   requestAnimationFrame(() => t.classList.add('show'));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, ms);
+  const timer = setTimeout(dismiss, action ? Math.max(ms, 5000) : ms);
+  lastToast = { t, dismiss };
 }
 
-export function haptic() {
-  navigator.vibrate?.(8);
+// A light tap you can feel. Android vibrates; on the iPhone, Safari plays its own haptic when a
+// switch toggles, so a hidden switch is flicked. Kept for moments that matter: a count logged,
+// a minimum met, something deleted. kind: 'tap' or 'success' (a double tap).
+let hapticEl;
+export function haptic(kind = 'tap') {
+  if (navigator.vibrate) { navigator.vibrate(kind === 'success' ? [10, 60, 14] : 8); return; }
+  if (!/iP(hone|ad|od)|Macintosh/.test(navigator.userAgent) || !('ontouchend' in document)) return;
+  if (!hapticEl) {
+    hapticEl = document.createElement('label');
+    hapticEl.dataset.haptic = '';
+    hapticEl.setAttribute('aria-hidden', 'true');
+    hapticEl.style.cssText = 'position:fixed;left:-200px;top:0;opacity:0;pointer-events:none';
+    hapticEl.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+    document.body.append(hapticEl);
+  }
+  hapticEl.click();
+  if (kind === 'success') setTimeout(() => hapticEl.click(), 110);
 }
 
 // Bottom sheet with a form. fields: [{name,label,type,value,options,step,placeholder,required}]
@@ -91,6 +125,8 @@ export function sheet({ title, fields = [], submit = 'Save', danger, body }) {
       resolve(val);
     };
     wrap.addEventListener('click', e => { if (e.target === wrap) close(null); });
+    wrap.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(null); } });
+    dragToClose(wrap, () => close(null));
     wrap.querySelector('[data-cancel]').onclick = () => close(null);
     const dz = wrap.querySelector('[data-danger]');
     if (dz) dz.onclick = () => close({ __danger: true });
@@ -109,6 +145,35 @@ export function sheet({ title, fields = [], submit = 'Save', danger, body }) {
     const first = wrap.querySelector('input,select,textarea');
     if (first && fields[0]?.autofocus !== false) setTimeout(() => first.focus(), 300);
   });
+}
+
+// Pull a bottom sheet down by its top edge to dismiss it, the way iOS sheets work.
+export function dragToClose(wrap, close) {
+  const el = wrap.querySelector('.sheet');
+  if (!el || matchMedia('(min-width: 700px)').matches) return;
+  let y0 = null, dy = 0, t0 = 0;
+  el.addEventListener('pointerdown', e => {
+    const r = el.getBoundingClientRect();
+    if (e.clientY - r.top > 56 || e.target.closest('input, select, textarea, button')) return;
+    y0 = e.clientY; dy = 0; t0 = Date.now();
+    el.setPointerCapture?.(e.pointerId);
+    el.style.transition = 'none';
+  });
+  el.addEventListener('pointermove', e => {
+    if (y0 === null) return;
+    dy = Math.max(0, e.clientY - y0);
+    el.style.transform = `translateY(${dy}px)`;
+  });
+  const end = () => {
+    if (y0 === null) return;
+    y0 = null;
+    el.style.transition = '';
+    const fast = dy / Math.max(1, Date.now() - t0) > 0.6;
+    if (dy > 110 || (fast && dy > 30)) { el.style.transform = 'translateY(100%)'; close(); }
+    else el.style.transform = '';
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
 }
 
 function fieldHTML(f) {
