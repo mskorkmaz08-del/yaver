@@ -1,5 +1,5 @@
-// Sounds and music. Interface sounds are recordings (v35), softened in v37 (highs rounded off, a
-// touch of room): switch and detent clicks, a latch and a metronome tick for the mechanism, glass
+// Sounds and music. Interface sounds are recordings (v35), softened in v37 and v39 (slow
+// attack, light compression, highs rounded off, a touch of room, played quietly): switch and detent clicks, a latch and a metronome tick for the mechanism, glass
 // pings for sheets opening and closing, a glass clink for saving and small chimes for done
 // (sources and licences in sounds/CREDITS.md). The page turn is silent. Each plays at a slightly different pitch each time
 // and softer when they come quickly, so they don't wear on you. The background music, "Academy", is a hopeful
@@ -9,7 +9,7 @@
 // playing and the silent switch mutes Yaver.
 import * as db from './db.js';
 
-const LEVEL = { tap: 0.3, on: 0.34, off: 0.32, enter: 0.26, spin: 0.3, open: 0.3, close: 0.28, save: 0.36, done: 0.32, step: 0.2, swipe: 0.26, stop: 0.3, bell: 0.32 };
+const LEVEL = { tap: 0.17, on: 0.19, off: 0.18, enter: 0.15, spin: 0.17, open: 0.17, close: 0.16, save: 0.2, done: 0.18, step: 0.12, swipe: 0.15, stop: 0.17, bell: 0.18 };
 
 let ctx = null, sfx = null, musicBus = null, buffers = {}, loading = {}, last = {}, recent = 0, recentAt = 0;
 // on by default again with the recorded set (v35); a new key, so turning the old synthesized

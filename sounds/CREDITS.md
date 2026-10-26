@@ -2,7 +2,7 @@
 
 Interface sounds (since v35) are recordings from open-source projects, trimmed, faded and
 levelled for Yaver (mono MP3); since v37 softened with a gentle treble cut, a low-pass and a
-short room echo. Yaver is a personal, non-commercial app; if that ever changes,
+short room echo; since v39 quieter and rounder (12ms soft attack, gentle compression, a steeper low-pass, levelled to -24 LUFS). Yaver is a personal, non-commercial app; if that ever changes,
 the CC BY-NC sounds below must be replaced.
 
 | File | What it is | Source | Licence |

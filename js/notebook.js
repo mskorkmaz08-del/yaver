@@ -1,6 +1,6 @@
 // The lesson as an open notebook on wide screens. The lesson's sections flow into side-by-side
 // pages (CSS columns in a fixed-height box, shifted a spread at a time), like a book in Apple
-// Books on a laptop: turning slides the whole spread away and the next one in, like a fresh sheet. Below 1100px nothing changes: the lesson is one scrolling page.
+// Books on a laptop: turning slides the row of pages along by one spread, like a fresh sheet. Below 1100px nothing changes: the lesson is one scrolling page.
 // The open spread is kept per lesson, so a redraw (revealing an answer) stays on the same pages.
 const MQ = matchMedia('(min-width: 1100px)');
 const GAP = 76; // the gutter between pages; half of it is each page's outer margin
@@ -68,8 +68,7 @@ export function unmount() {
   removeEventListener('resize', nb.onResize);
   MQ.removeEventListener?.('change', nb.onResize);
   document.body.classList.remove('nb-spread');
-  sliding?.remove();
-  sliding = null;
+  sliding?.finish();
   nb = null;
 }
 
@@ -143,43 +142,31 @@ function go(k, animate = true) {
   if (animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) slide(from, k);
 }
 
-// Like Apple Books on a laptop: the open book slides away as one sheet and the next spread
-// slides in after it, like moving to a fresh sheet of paper. Both sheets are copies (the real
-// pages underneath already show the new spread) and leave once the new one has settled.
+// Like Apple Books on a laptop: the open spread slides away and the next one slides in after
+// it, like moving to a fresh sheet. The lesson's pages already sit side by side in one long row
+// of columns, so the slide is just that row moving sideways by one spread: no copies, nothing to
+// lay out, only a transform the graphics chip animates (copying whole pages made it stutter).
+// While it moves, the text may run into the page margins; a soft edge marks where one spread
+// ends and the next begins.
 let sliding = null;
 function slide(from, to) {
-  sliding?.remove();
+  sliding?.finish();
   const { art, win, flow } = nb;
+  const d = Math.sign(to - from), shift = nb.W + GAP;
   const ar = art.getBoundingClientRect(), wr = win.getBoundingClientRect();
-  const pages = art.querySelector('.nb-pages');
-  const sheet = k => {
-    const sh = document.createElement('div');
-    sh.className = 'nb-sheet';
-    if (pages) sh.append(pages.cloneNode(true));
-    const w = document.createElement('div');
-    w.className = 'nb-sheet-win';
-    Object.assign(w.style, { left: `${wr.left - ar.left}px`, top: `${wr.top - ar.top}px`, width: `${wr.width}px`, height: `${wr.height}px` });
-    const c = flow.cloneNode(true);
-    c.inert = true;
-    c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
-    const src = [...flow.querySelectorAll('canvas')];
-    c.querySelectorAll('canvas').forEach((cv, i) => { try { cv.getContext('2d')?.drawImage(src[i], 0, 0); } catch {} });
-    c.style.marginLeft = `${-k * (nb.W + GAP)}px`;
-    w.append(c);
-    sh.append(w);
-    return sh;
-  };
-  const layer = document.createElement('div');
-  layer.className = 'nb-slide';
-  layer.setAttribute('aria-hidden', 'true');
-  const d = Math.sign(to - from), W = ar.width + 24;
-  const out = sheet(from), inn = sheet(to);
-  layer.append(out, inn);
-  art.append(layer);
-  sliding = layer;
-  const opt = { duration: TURN_MS, easing: 'cubic-bezier(.32, .72, 0, 1)', fill: 'both' };
-  out.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${-d * W}px)` }], opt);
-  inn.animate([{ transform: `translateX(${d * W}px)` }, { transform: 'translateX(0)' }], opt).onfinish = () => { layer.remove(); if (sliding === layer) sliding = null; };
+  // let the text show across the whole page while it moves, but nothing outside the book
+  Object.assign(win.style, { overflow: 'visible', clipPath: `inset(${ar.top - wr.top}px ${wr.right - ar.right}px ${wr.bottom - ar.bottom}px ${ar.left - wr.left}px)` });
+  const seam = document.createElement('i');
+  seam.className = 'nb-seam';
+  seam.style.left = `${d > 0 ? -GAP / 2 : nb.W + GAP / 2}px`;
+  win.append(seam);
+  const opt = { duration: TURN_MS, easing: 'cubic-bezier(.32, .72, 0, 1)' };
+  const a = flow.animate([{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }], opt);
+  seam.animate([{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }], opt);
+  const done = () => { seam.remove(); win.style.overflow = ''; win.style.clipPath = ''; if (sliding === a) sliding = null; };
+  a.onfinish = done;
+  a.oncancel = done;
+  sliding = a;
 }
 
 // Turn one spread forward (1) or back (-1). False when the lesson isn't a notebook right now.
