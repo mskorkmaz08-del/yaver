@@ -146,8 +146,9 @@ function go(k, animate = true) {
 // it, like moving to a fresh sheet. The lesson's pages already sit side by side in one long row
 // of columns, so the slide is just that row moving sideways by one spread: no copies, nothing to
 // lay out, only a transform the graphics chip animates (copying whole pages made it stutter).
-// While it moves, the text may run into the page margins; a soft edge marks where one spread
-// ends and the next begins.
+// The book is exactly one spread wide (the page margins are half the gutter), so each spread is
+// a whole sheet in that row: a strip of the desk shows between the two sheets and moves with them,
+// so the paper's edges travel with the text instead of the text crossing still margins (v42).
 let sliding = null;
 function slide(from, to) {
   sliding?.finish();
@@ -156,19 +157,16 @@ function slide(from, to) {
   const ar = art.getBoundingClientRect(), wr = win.getBoundingClientRect();
   // let the text show across the whole page while it moves, but nothing outside the book
   Object.assign(win.style, { overflow: 'visible', clipPath: `inset(${ar.top - wr.top}px ${wr.right - ar.right}px ${wr.bottom - ar.bottom}px ${ar.left - wr.left}px)` });
-  // a thin edge between the two sheets rides along with the paper
-  const lines = [d > 0 ? -GAP / 2 : nb.W + GAP / 2].map(x => {
-    const i = document.createElement('i');
-    i.className = 'nb-seam';
-    i.style.left = `${x}px`;
-    win.append(i);
-    return i;
-  });
+  // the gap between the two sheets rides along with the paper
+  const gap = document.createElement('i');
+  gap.className = 'nb-seam';
+  gap.style.left = `${d > 0 ? -GAP / 2 : nb.W + GAP / 2}px`;
+  win.append(gap);
   const opt = { duration: TURN_MS, easing: 'cubic-bezier(.32, .72, 0, 1)' };
   const move = [{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }];
   const a = flow.animate(move, opt);
-  lines.forEach(i => i.animate(move, opt));
-  const done = () => { lines.forEach(i => i.remove()); win.style.overflow = ''; win.style.clipPath = ''; if (sliding === a) sliding = null; };
+  gap.animate(move, opt);
+  const done = () => { gap.remove(); win.style.overflow = ''; win.style.clipPath = ''; if (sliding === a) sliding = null; };
   a.onfinish = done;
   a.oncancel = done;
   sliding = a;

@@ -1497,7 +1497,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   /* focus mode on a laptop: the open notebook is the whole screen. The step rail, exit, timer and
      page arrows float on the paper's margins. */
   body.focus-lesson.nb-spread #view { max-width: none; padding: 0; gap: 0; }
-  body.focus-lesson.nb-spread .lesson-main.spread { position: fixed; inset: 0; z-index: 40; padding: 72px 64px 58px !important; border-radius: 0; box-shadow: none; --g: 128px; }
+  body.focus-lesson.nb-spread .lesson-main.spread { position: fixed; inset: 0; z-index: 40; padding: 72px calc(var(--g) / 2) 58px !important; border-radius: 0; box-shadow: none; }
   body.focus-lesson.nb-spread .nb-page { border-radius: 0; }
   body.focus-lesson.nb-spread .nb-spine { top: 0; bottom: 0; }
   body.focus-lesson.nb-spread .lesson-grid > .step-strip, body.focus-lesson.nb-spread .lesson-bar + .step-strip {
@@ -1587,10 +1587,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .lesson-main .sim-card select { height: 32px; border-radius: 6px; font: 500 13px var(--sans); padding-top: 0; padding-bottom: 0; }
 @media (min-width: 1100px) {
   /* the edge between two spreads while they slide (js/notebook.js) */
-  .nb-seam { position: absolute; top: -200px; bottom: -200px; width: 1px; margin-left: -.5px; z-index: 1; pointer-events: none; background: rgba(70, 52, 30, .14); }
+  /* v42: the desk showing between two sheets while they slide, so whole sheets move */
+  .nb-seam { position: absolute; top: -200px; bottom: -200px; width: 28px; margin-left: -14px; z-index: 1; pointer-events: none; background: var(--bg); box-shadow: inset 6px 0 8px -6px rgba(0, 0, 0, .5), inset -6px 0 8px -6px rgba(0, 0, 0, .5); }
   /* v41: nothing where the pages meet, one plain sheet; only the edge between sheets shows while turning */
   .lesson-main.spread .nb-page.left, .lesson-main.spread .nb-page.right { background: var(--paper); }
   .lesson-main.spread .nb-spine { display: none; }
   /* Apple Books style: no stacked page edges, just the sheet */
   .lesson-main.spread { box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .5); }
 }
+
