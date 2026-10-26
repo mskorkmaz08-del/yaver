@@ -40,7 +40,7 @@ export function enterFocus(opts) {
     chip.querySelector('.hand').setAttribute('transform', `rotate(${(sec % 60) * 6})`);
     const over = opts.planned && sec >= opts.planned * 60;
     chip.classList.toggle('done', !!over);
-    if (over && !rang) { rang = true; sound.bell(); navigator.vibrate?.([30, 60, 30]); }
+    if (over && !rang) { rang = true; navigator.vibrate?.([30, 60, 30]); }
   };
   tick();
   const timer = setInterval(tick, 1000);

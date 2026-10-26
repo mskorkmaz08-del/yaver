@@ -156,14 +156,21 @@ function slide(from, to) {
   const ar = art.getBoundingClientRect(), wr = win.getBoundingClientRect();
   // let the text show across the whole page while it moves, but nothing outside the book
   Object.assign(win.style, { overflow: 'visible', clipPath: `inset(${ar.top - wr.top}px ${wr.right - ar.right}px ${wr.bottom - ar.bottom}px ${ar.left - wr.left}px)` });
-  const seam = document.createElement('i');
-  seam.className = 'nb-seam';
-  seam.style.left = `${d > 0 ? -GAP / 2 : nb.W + GAP / 2}px`;
-  win.append(seam);
+  // thin lines ride along with the paper: the middle of the old spread, the edge between the
+  // two sheets and the middle of the new one; the fixed middle line hides meanwhile
+  const lines = [nb.W / 2 - d * shift, d > 0 ? -GAP / 2 : nb.W + GAP / 2, nb.W / 2].map(x => {
+    const i = document.createElement('i');
+    i.className = 'nb-seam';
+    i.style.left = `${x}px`;
+    win.append(i);
+    return i;
+  });
+  art.classList.add('sliding');
   const opt = { duration: TURN_MS, easing: 'cubic-bezier(.32, .72, 0, 1)' };
-  const a = flow.animate([{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }], opt);
-  seam.animate([{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }], opt);
-  const done = () => { seam.remove(); win.style.overflow = ''; win.style.clipPath = ''; if (sliding === a) sliding = null; };
+  const move = [{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }];
+  const a = flow.animate(move, opt);
+  lines.forEach(i => i.animate(move, opt));
+  const done = () => { lines.forEach(i => i.remove()); art.classList.remove('sliding'); win.style.overflow = ''; win.style.clipPath = ''; if (sliding === a) sliding = null; };
   a.onfinish = done;
   a.oncancel = done;
   sliding = a;

@@ -10,7 +10,6 @@ import { dotColor, exportWeek } from './course.js';
 import { stepStrip, roman, stopwatch } from '../ui.js';
 import { stepName } from './home.js';
 import { simHTML, mountSim } from '../sims.js';
-import * as sound from '../sound.js';
 import { enterFocus, exitFocus, inFocus } from '../focus.js';
 import * as notebook from '../notebook.js';
 
@@ -442,7 +441,6 @@ async function complete(l, root, go, { retake, diag }) {
   const notes = root.querySelector('[data-notes]')?.value || p.notes || '';
   const r = await C.completeLesson({ lessonId: l.id, minutes, score, notes, hintsUsed: state.hintsUsed || 0, solutionsRevealed: state.solutions || 0 });
   haptic();
-  if (r.mastered) sound.done();
   toast(r.mastered ? `Done${score != null ? ` · ${Math.round(score * 100)}%` : ''}. ${mins(minutes)} logged.` : `Flagged at ${Math.round(score * 100)}%: cards come back tomorrow and it returns in the next buffer slot.`, 4500);
   go('study');
 }

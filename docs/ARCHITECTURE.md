@@ -152,13 +152,13 @@ yaver/
 ├── css/app.css             All styling: the Piltover look (navy, gold trim, ivory marble, the yellow notebook) and its motion, cards, sheets, chat
 ├── fonts/                  Archivo (variable width) and IBM Plex Mono, stored in the app so they work offline
 ├── icons/                  Home Screen icons: the Yaver gear with its hextech crystal
-├── sounds/                 Interface sounds and the Academy music (see CREDITS.md)
+├── sounds/                 The Academy music (see CREDITS.md)
 ├── tools/                  Scripts that made the sounds and the music (run on a computer)
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
 ├── vendor/                 Anthropic SDK (one file) and Leaflet (map)
 └── js/
     ├── app.js              Starts everything; switches screens; redraws on data change
-    ├── sound.js            Mechanism sounds and violin music (files in sounds/), switches in Settings
+    ├── sound.js            Background music (sounds/academy.mp3), switch in Settings
     ├── focus.js            Full-screen focus mode with a small timer
     ├── sims.js             The workshop: picks a simulator for each lesson and gives it canvas, controls, timeline
     ├── sims/               13 simulators: circuit, sort, search, graph, structures, vectors, calculus,
@@ -252,6 +252,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**No sounds, a thin middle line (v40).** Mustafa found the interface sounds bad even after softening, so they are gone: no clicks, latches or chimes, only the optional background music (Settings → Music). The shadow where the two pages meet is gone too; a thin line marks the middle instead, and while a page turns the middle lines and the edge between the sheets slide along with the paper.
 
 **Smooth page slide, quiet sounds (v39).** The v38 slide sometimes froze: every turn copied the whole lesson twice and slid the big copies, so the browser had to lay out and paint far more than a screen. Now the real row of pages slides on the graphics chip (a transform), clipped to the book, with a soft seam between the sheets, so every frame takes the normal 1/60 s. The interface sounds were also made quieter and smoother on Mustafa's request: each starts with a slow fade instead of a sharp click, is gently compressed and has its treble rolled off, and plays at about half the old volume.
 

@@ -52,8 +52,6 @@ export function go(name, arg = '') {
   const order = Object.keys(TABS), a = order.indexOf(PARENT[current] || current), b = order.indexOf(PARENT[name] || name);
   document.body.dataset.dir = PARENT[name] && !PARENT[current] ? 'in' : b > a ? 'next' : b < a ? 'prev' : 'in';
   moveTabMark();
-  if (current !== PREV_VIEW.name || param !== PREV_VIEW.arg) sound.enter();
-  PREV_VIEW.name = current; PREV_VIEW.arg = param;
   entering = true;
   draw();
   $('#view').scrollTo?.(0, 0);
@@ -62,7 +60,6 @@ export function go(name, arg = '') {
 
 let entering = false, enterTimer;
 const MOUNTS = ['[data-engine]', '[data-train]', '[data-gem]'];
-const PREV_VIEW = { name: null, arg: null };
 function draw() {
   const root = $('#view');
   const y = window.scrollY;
@@ -190,15 +187,7 @@ async function start() {
   });
   sound.init();
   mech.initDrive();
-  mech.onEngineTap(sound.spin);
   mech.scan(document);
-  // A soft click for every button; the Yaver gear makes its own sound.
-  document.addEventListener('pointerdown', e => {
-    const b = e.target.closest('button, a, label, .chip, select');
-    if (b && !b.closest('#fab') && !b.querySelector('input[type=checkbox]') && !e.target.matches('input[type=checkbox]')) sound.tap();
-  }, { capture: true, passive: true });
-  // Switches and checkboxes click on and off.
-  document.addEventListener('change', e => { if (e.target.matches?.('input[type=checkbox]') && !e.target.closest('[data-haptic]')) sound.toggle(e.target.checked); }, true);
   // The Yaver gear: tap to ask, hold (or flick up) for the command bar.
   const fab = $('#fab');
   let hold, held = false, y0 = 0;
@@ -234,7 +223,7 @@ async function start() {
   // Redraw after any change, batched so a burst of writes draws once.
   let pending;
   // (The map keeps its own state, so data changes don't redraw it.)
-  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') { mech.kick(90); sound.save(); } clearTimeout(pending); pending = setTimeout(draw, 30); });
+  db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') mech.kick(90); clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
   document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
   window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });

@@ -100,7 +100,7 @@ export function openAssistant(prompt) {
   const fab = document.getElementById('fab');
   const r = fab?.getBoundingClientRect();
   if (r?.width) { el.style.setProperty('--ox', `${r.left + r.width / 2}px`); el.style.setProperty('--oy', `${r.top + r.height / 2}px`); }
-  if (!el.classList.contains('open')) { mech.kick(480); sound.open(); }
+  if (!el.classList.contains('open')) { mech.kick(480); sound.duck(true); }
   el.classList.add('open');
   document.body.classList.add('chat-open');
   haptic();
@@ -169,7 +169,7 @@ function orb(state) {
 
 export function closeAssistant() {
   if (voice) setVoice(false);
-  if (el.classList.contains('open')) { mech.kick(-420); sound.close(); }
+  if (el.classList.contains('open')) { mech.kick(-420); sound.duck(false); }
   el.classList.remove('open');
   document.body.classList.remove('chat-open');
   hush();

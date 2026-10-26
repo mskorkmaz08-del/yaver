@@ -1,20 +1,12 @@
-// Sounds and music. Interface sounds are recordings (v35), softened in v37 and v39 (slow
-// attack, light compression, highs rounded off, a touch of room, played quietly): switch and detent clicks, a latch and a metronome tick for the mechanism, glass
-// pings for sheets opening and closing, a glass clink for saving and small chimes for done
-// (sources and licences in sounds/CREDITS.md). The page turn is silent. Each plays at a slightly different pitch each time
-// and softer when they come quickly, so they don't wear on you. The background music, "Academy", is a hopeful
-// A-minor piece for a clockwork academy: piano ostinato, escapement ticks, cello and bass, horn
-// swells, a violin melody, flute and harp, and a hextech shimmer (sounds/academy.mp3, rendered
-// from recorded samples); it loops seamlessly. On the iPhone the audio session is "ambient": music from other apps keeps
-// playing and the silent switch mutes Yaver.
+// Background music. Interface sounds were removed in v40 (Mustafa found every set too much);
+// Yaver is quiet except for the music. "Academy" is a hopeful A-minor piece for a clockwork
+// academy: piano ostinato, escapement ticks, cello and bass, horn swells, a violin melody,
+// flute and harp, and a hextech shimmer (sounds/academy.mp3, rendered from recorded samples);
+// it loops seamlessly. On the iPhone the audio session is "ambient": music from other apps
+// keeps playing and the silent switch mutes Yaver.
 import * as db from './db.js';
 
-const LEVEL = { tap: 0.17, on: 0.19, off: 0.18, enter: 0.15, spin: 0.17, open: 0.17, close: 0.16, save: 0.2, done: 0.18, step: 0.12, swipe: 0.15, stop: 0.17, bell: 0.18 };
-
-let ctx = null, sfx = null, musicBus = null, buffers = {}, loading = {}, last = {}, recent = 0, recentAt = 0;
-// on by default again with the recorded set (v35); a new key, so turning the old synthesized
-// set off doesn't silence the recordings
-const fxOn = () => db.setting('sfxRec', true);
+let ctx = null, musicBus = null, buffers = {}, loading = {};
 const musicOn = () => db.setting('music', true);
 
 function audio() {
@@ -23,9 +15,6 @@ function audio() {
   if (!AC) return null;
   try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch { /* older iOS */ }
   ctx = new AC();
-  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 10000; lp.Q.value = 0.5;
-  sfx = ctx.createGain(); sfx.gain.value = 1;
-  sfx.connect(lp); lp.connect(ctx.destination);
   musicBus = ctx.createGain(); musicBus.gain.value = 0;
   musicBus.connect(ctx.destination);
   return ctx;
@@ -36,46 +25,6 @@ async function load(name) {
   if (!loading[name]) loading[name] = fetch(`sounds/${name}`).then(r => r.arrayBuffer()).then(b => new Promise((ok, bad) => ctx.decodeAudioData(b, ok, bad))).then(buf => (buffers[name] = buf)).catch(() => { delete loading[name]; return null; });
   return loading[name];
 }
-
-// Quick repeats get softer, so a run of taps never gets loud.
-function level(base) {
-  const now = performance.now();
-  recent = Math.max(0, recent - (now - recentAt) / 700);
-  recentAt = now;
-  recent = Math.min(5, recent + 1);
-  return base / (1 + (recent - 1) * 0.3);
-}
-
-async function play(kind, { gap = 70, rate = 1, when = 0, gain = 1 } = {}) {
-  if (!fxOn() || document.hidden) return;
-  const now = performance.now();
-  if (now - (last[kind] || 0) < gap) return;
-  last[kind] = now;
-  const a = audio();
-  if (!a) return;
-  const buf = await load(`${kind}.mp3`);
-  if (!buf) return;
-  const src = a.createBufferSource(); src.buffer = buf;
-  src.playbackRate.value = rate * (0.96 + Math.random() * 0.08);
-  const g = a.createGain(); g.gain.value = level(LEVEL[kind]) * gain;
-  src.connect(g); g.connect(sfx);
-  src.start(a.currentTime + when);
-}
-
-// ---------- the sounds ----------
-export const tap = () => play('tap');
-export const toggle = on => play(on ? 'on' : 'off');
-export const enter = () => play('enter', { gap: 250 });
-// A latch clicking over its catch.
-export const spin = () => play('spin', { gap: 500 });
-export const open = () => { play('open', { gap: 300 }); duck(true); };
-export const close = () => { play('close', { gap: 300 }); duck(false); };
-export const save = () => play('save', { gap: 700 });
-export const done = () => play('done', { gap: 1500 });
-export const step = () => play('step', { gap: 90 });
-export const swipe = () => play('swipe', { gap: 300 });
-export const stop = () => play('stop', { gap: 300 });
-export const bell = () => play('bell', { gap: 1500 });
 
 // ---------- music ----------
 // The piece is rendered to loop seamlessly, so copies only overlap by a short crossfade.
@@ -128,7 +77,7 @@ export const musicPlaying = () => playing;
 
 // Browsers start audio only after a touch: wake the audio and the music on the first one.
 export function init() {
-  const unlock = () => { if (fxOn() || musicOn()) audio(); if (musicOn()) startMusic(); };
+  const unlock = () => { if (musicOn()) startMusic(); };
   addEventListener('touchend', unlock, { passive: true });
   addEventListener('click', unlock, { passive: true });
   addEventListener('keydown', unlock);
