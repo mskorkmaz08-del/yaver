@@ -325,3 +325,9 @@ A footballer-style attribute card for Mustafa's progress (Skills tab, key 8, and
 - Code: `js/crypto.js` (encryption), `js/sync.js` (GitHub calls and the pull → merge → push loop), `db.merge()` in `js/db.js`.
 
 **Setting it up** (steps also in Settings → Sync): create a GitHub **fine-grained personal access token** with only *Account permissions → Gists: Read and write*; choose a passphrase of a few words; paste both on the first device, then on the second. The first creates the gist; the second finds it by its description and pulls.
+
+## 9e. Yaver Studio: a 3D editor you shape with your hands
+
+`studio/` is a separate page (open `/studio/` on the site) where you build 3D objects with hand gestures in front of the laptop camera. The camera image is never shown: only the 3D scene and a faint outline of your hands. Pinch an object to grab and move it (pull your hand toward or away from the camera to move it nearer or farther), pinch it with both hands to scale and rotate, pinch empty space to orbit the view (both hands to zoom), hold a peace sign to add a shape and hold a fist over an object to delete it. Mouse and keyboard work too.
+
+Hand tracking is Google's MediaPipe hand landmarker, which finds 21 points per hand in each camera frame; `studio/src/gestures.js` turns those points into a gesture, and `studio/src/editor.js` holds the editor commands that gestures, the mouse and (later) Yaver's voice call. Three.js draws the scene. Both libraries load from the jsDelivr CDN, so the Studio needs a connection and is not part of the app's offline cache.
