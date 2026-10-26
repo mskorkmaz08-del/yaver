@@ -1,20 +1,28 @@
 // The ?v= number defeats browser caching after an update (GitHub Pages lets
 // browsers keep files for 10 minutes). Bump it here and in index.html together.
-import { Editor, SHAPES, COLORS } from "./editor.js?v=7";
-import { HandTracker } from "./hands.js?v=7";
-import { classify } from "./gestures.js?v=7";
-import { Hands3D } from "./hand3d.js?v=7";
+import { Editor, SHAPES, COLORS } from "./editor.js?v=8";
+import { HandTracker } from "./hands.js?v=8";
+import { classify } from "./gestures.js?v=8";
+import { Hands3D } from "./hand3d.js?v=8";
+import { Shelf } from "./shelf.js?v=8";
+import { gestureIcon } from "./helpicons.js?v=8";
+import { OneEuro } from "./filters.js?v=8";
 
 const STUDIO_VERSION = new URL(import.meta.url).searchParams.get("v") ?? "dev";
 document.getElementById("version").textContent = `v${STUDIO_VERSION}`;
 
-const PICK_SLOP = 70;      // px: how close a finger must be to an object to grab it
+const PICK_SLOP = 90;      // px: how close a finger must be to an object to grab it
+const SHELF_PAD = 12;      // px: extra reach around each shelf tile
 const ADD_HOLD_MS = 700;   // hold a peace sign this long to add a shape
 const DELETE_HOLD_MS = 900; // hold a fist this long to delete
-const SMOOTHING = 0.5;     // 0 = no smoothing, closer to 1 = smoother but laggier
+const SMOOTHING = 0.35;    // landmark smoothing for reading gestures (the pointer has its own filter)
+const RELEASE_GRACE_MS = 140; // a pinch must stay open this long to let go, so a flicker doesn't drop things
+const LOST_HAND_MS = 300;  // keep a hand (and what it holds) through brief tracking dropouts
 const DEPTH_GAIN = 2.2;    // how strongly pushing your hand toward the camera sends objects away
-const DEPTH_SMOOTHING = 0.75; // hand size is noisy, so depth gets extra smoothing
 const REF_HAND_SIZE = 0.2; // typical hand size on camera at a comfortable reach
+// Pointer and depth filters (see filters.js): steady at rest, quick when moving.
+const POINTER_FILTER = [1.0, 0.007];
+const SIZE_FILTER = [0.5, 3];
 
 const editor = new Editor(document.getElementById("stage"));
 const overlay = document.getElementById("hands-overlay");
@@ -32,21 +40,24 @@ editor.addShape("cube", { x: -1.2, y: 0.5, z: 0 }, COLORS[0]);
 editor.addShape("sphere", { x: 1.2, y: 0.5, z: 0 }, COLORS[1]);
 editor.select(null);
 
-// ---- Toolbar ---------------------------------------------------------------
+// ---- Shape shelf and colours ---------------------------------------------
 
-const shapesEl = document.getElementById("shapes");
-SHAPES.forEach((shape, i) => {
-  const b = document.createElement("button");
-  b.textContent = `${i + 1} ${shape}`;
-  b.dataset.shape = shape;
-  b.onclick = () => { setShape(shape); editor.addShape(shape); };
-  shapesEl.appendChild(b);
-});
+const shelf = new Shelf(document.getElementById("shelf"), SHAPES, COLORS[0]);
 function setShape(shape) {
   editor.currentShape = shape;
-  shapesEl.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.shape === shape));
+  shelf.setActive(shape);
 }
 setShape("cube");
+
+// A new shape pulled off the shelf starts under the pointer, at the depth of
+// the scene's centre, and is held right away.
+function addFromShelf(shape, x, y) {
+  setShape(shape);
+  const dist = editor.distanceFromCamera(editor.target);
+  const p = editor.screenToWorld(x, y, dist);
+  p.y = Math.max(p.y, 0);
+  return { obj: editor.addShape(shape, p), dist };
+}
 
 const colorsEl = document.getElementById("colors");
 COLORS.forEach((c) => {
@@ -57,17 +68,46 @@ COLORS.forEach((c) => {
   b.onclick = () => editor.setColor(c);
   colorsEl.appendChild(b);
 });
-// ---- Help panel --------------------------------------------------------------
+// ---- Help --------------------------------------------------------------------
 
-const legendEl = document.getElementById("legend");
-const legendToggle = document.getElementById("legend-toggle");
-function toggleLegend(collapsed = !legendEl.classList.contains("collapsed")) {
-  legendEl.classList.toggle("collapsed", collapsed);
-  legendToggle.textContent = collapsed ? "Show" : "Hide";
-  try { localStorage.setItem("studio-legend-collapsed", collapsed ? "1" : ""); } catch {}
+// Hidden behind the "?" button: hovering it peeks, clicking (or H) pins it.
+const GESTURES = [
+  ["pinch", null, "Pinch", "grab an object"],
+  ["open", null, "Open hand", "let go"],
+  ["pinch", "shelf", "Pinch a shelf shape", "drag it into the scene to add it"],
+  ["pinch", "depth", "Push or pull", "toward the camera sends it away, back brings it closer"],
+  ["two-pinch", "spread", "Both hands pinch", "spread to scale, twist to rotate"],
+  ["pinch", "orbit", "Pinch empty space", "orbit the view (both hands: zoom)"],
+  ["pinch", "bin", "Drop in the bin", "delete (drop on the shelf to put it back)"],
+  ["fist", "hold", "Fist on an object, hold", "delete"],
+  ["peace", "hold", "Peace sign, hold", "add the last shape again"],
+];
+document.getElementById("gesture-list").innerHTML = GESTURES
+  .map(([pose, glyph, title, text]) => `<li>${gestureIcon(pose, glyph)}<span><b>${title}</b><br>${text}</span></li>`)
+  .join("");
+
+const helpEl = document.getElementById("help");
+const helpButton = document.getElementById("help-button");
+let helpMousePeek = false;
+function setHelpOpen(open) {
+  helpEl.classList.toggle("open", open);
+  helpButton.setAttribute("aria-expanded", String(open));
 }
-legendToggle.onclick = () => toggleLegend();
-try { if (localStorage.getItem("studio-legend-collapsed")) toggleLegend(true); } catch {}
+helpButton.onclick = () => setHelpOpen(!helpEl.classList.contains("open"));
+helpEl.addEventListener("mouseenter", () => { helpMousePeek = true; });
+helpEl.addEventListener("mouseleave", () => { helpMousePeek = false; });
+
+// A hand pointer resting on the button peeks the help too, and it stays up
+// while the pointer is over the panel.
+function updateHelpPeek() {
+  const rects = [helpButton.getBoundingClientRect()];
+  if (helpEl.classList.contains("peek")) rects.push(document.getElementById("help-panel").getBoundingClientRect());
+  let handOver = false;
+  for (const h of hands.values()) {
+    if (rects.some((r) => h.x > r.left && h.x < r.right && h.y > r.top && h.y < r.bottom)) handOver = true;
+  }
+  helpEl.classList.toggle("peek", helpMousePeek || handOver);
+}
 
 // ---- Trash bin ---------------------------------------------------------------
 
@@ -81,18 +121,29 @@ function overTrash(x, y) {
 }
 
 // The bin lights up while something is being dragged, and turns red when the
-// dragged object is over it.
-function updateTrash() {
+// dragged object is over it. The shelf shows it can take a shape back, and
+// its tiles light up under a free hand.
+function updateDropTargets() {
   const dragging = [];
   if (mouse?.obj && mouse.pos) dragging.push(mouse.pos);
   if (!twoHand) for (const h of hands.values()) if (h.grab?.obj) dragging.push({ x: h.x, y: h.y });
   trashEl.classList.toggle("armed", dragging.length > 0);
   trashEl.classList.toggle("hot", dragging.some((p) => overTrash(p.x, p.y)));
+  shelf.setReturning(dragging.some((p) => shelf.contains(p.x, p.y)));
+  const hot = [];
+  for (const h of hands.values()) if (!h.grab) hot.push(shelf.shapeAt(h.x, h.y, SHELF_PAD));
+  shelf.setHot(hot);
+}
+
+// Letting go of a dragged object over the bin deletes it; over the shelf it
+// goes back (the shape is still on the shelf to pull out again).
+function dropAt(obj, x, y) {
+  if (overTrash(x, y) || shelf.contains(x, y)) editor.remove(obj);
 }
 
 window.addEventListener("keydown", (e) => {
-  if (e.key >= "1" && e.key <= String(SHAPES.length)) {
-    const shape = SHAPES[Number(e.key) - 1];
+  if (e.key >= "0" && e.key <= "9" && SHAPES[(Number(e.key) + 9) % 10]) {
+    const shape = SHAPES[(Number(e.key) + 9) % 10]; // 1 is the first shape, 0 the tenth
     setShape(shape);
     editor.addShape(shape);
   } else if (e.key === "Delete" || e.key === "Backspace") {
@@ -100,7 +151,7 @@ window.addEventListener("keydown", (e) => {
   } else if (e.key.toLowerCase() === "c") {
     video.classList.toggle("preview");
   } else if (e.key.toLowerCase() === "h") {
-    toggleLegend();
+    setHelpOpen(!helpEl.classList.contains("open"));
   }
 });
 
@@ -120,11 +171,37 @@ canvas.addEventListener("pointerdown", (e) => {
   }
   canvas.setPointerCapture(e.pointerId);
 });
+// Press on a shelf tile and drag: the new shape follows the mouse. A plain
+// click drops it in the middle of the scene instead.
+shelf.el.addEventListener("pointerdown", (e) => {
+  const shape = shelf.shapeAt(e.clientX, e.clientY);
+  if (!shape) return;
+  e.preventDefault();
+  const { obj, dist } = addFromShelf(shape, e.clientX, e.clientY);
+  mouse = { obj, dist, offset: obj.position.clone().sub(editor.screenToWorld(e.clientX, e.clientY, dist)), fromShelf: { x: e.clientX, y: e.clientY } };
+  shelf.el.setPointerCapture(e.pointerId);
+});
+shelf.el.addEventListener("pointermove", (e) => mouseDrag(e));
+shelf.el.addEventListener("pointerup", (e) => {
+  if (!mouse?.obj) return;
+  const start = mouse.fromShelf;
+  if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 6) {
+    mouse.obj.position.copy(editor.target).add({ x: 0, y: 0.5, z: 0 });
+  } else {
+    dropAt(mouse.obj, e.clientX, e.clientY);
+  }
+  mouse = null;
+});
+
 canvas.addEventListener("pointermove", (e) => {
   if (!mouse) {
     editor.setHovered([editor.pickAt(e.clientX, e.clientY), ...handHovered]);
     return;
   }
+  mouseDrag(e);
+});
+function mouseDrag(e) {
+  if (!mouse) return;
   if (mouse.obj) {
     mouse.pos = { x: e.clientX, y: e.clientY };
     const p = editor.screenToWorld(e.clientX, e.clientY, mouse.dist).add(mouse.offset);
@@ -135,9 +212,9 @@ canvas.addEventListener("pointermove", (e) => {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
   }
-});
+}
 canvas.addEventListener("pointerup", (e) => {
-  if (mouse?.obj && overTrash(e.clientX, e.clientY)) editor.remove(mouse.obj);
+  if (mouse?.obj) dropAt(mouse.obj, e.clientX, e.clientY);
   mouse = null;
 });
 canvas.addEventListener("wheel", (e) => {
@@ -159,9 +236,13 @@ let twoHand = null;      // active two-hand scale/rotate or zoom
 function updateHand(id, raw, now) {
   let h = hands.get(id);
   if (!h) {
-    h = { id, lm: raw, gesture: "point", since: now, fired: false, grab: null };
+    h = {
+      id, lm: raw, gesture: "point", since: now, fired: false, grab: null,
+      fx: new OneEuro(...POINTER_FILTER), fy: new OneEuro(...POINTER_FILTER), fsize: new OneEuro(...SIZE_FILTER),
+    };
     hands.set(id, h);
   }
+  h.lastSeen = now;
   h.lm = raw.map((p, i) => ({
     x: h.lm[i].x * SMOOTHING + p.x * (1 - SMOOTHING),
     y: h.lm[i].y * SMOOTHING + p.y * (1 - SMOOTHING),
@@ -175,13 +256,19 @@ function updateHand(id, raw, now) {
     h.since = now;
     h.fired = false;
   }
-  h.size = h.size ? h.size * DEPTH_SMOOTHING + size * (1 - DEPTH_SMOOTHING) : size;
-  h.x = cursor.x * editor.width;
-  h.y = cursor.y * editor.height;
+  h.size = h.fsize.filter(size, now);
+  h.x = h.fx.filter(cursor.x * editor.width, now);
+  h.y = h.fy.filter(cursor.y * editor.height, now);
   return h;
 }
 
 function startGrab(h) {
+  const shape = shelf.shapeAt(h.x, h.y, SHELF_PAD);
+  if (shape) {
+    const { obj, dist } = addFromShelf(shape, h.x, h.y);
+    h.grab = { obj, dist, offset: obj.position.clone().sub(editor.screenToWorld(h.x, h.y, dist)), size0: h.size };
+    return;
+  }
   const obj = editor.pickAt(h.x, h.y, PICK_SLOP);
   if (obj) {
     const dist = editor.distanceFromCamera(obj.position);
@@ -238,18 +325,34 @@ function processHands(detected, now) {
     seen.add(id);
     updateHand(id, landmarks, now);
   }
-  for (const id of [...hands.keys()]) if (!seen.has(id)) hands.delete(id);
-
-  const all = [...hands.values()];
-  for (const h of all) {
-    if (h.gesture === "pinch" && !h.grab) startGrab(h);
-    if (h.gesture !== "pinch") {
-      const g = h.grab;
-      if (g?.obj && !twoHand && overTrash(g.lastX ?? h.x, g.lastY ?? h.y)) editor.remove(g.obj);
-      h.grab = null;
+  // A hand that vanishes for a moment (motion blur, edge of the frame) keeps
+  // its state and whatever it holds; only a longer absence lets go.
+  for (const [id, h] of hands) {
+    if (now - h.lastSeen > LOST_HAND_MS) {
+      if (h.grab?.obj && !twoHand) dropAt(h.grab.obj, h.grab.lastX ?? h.x, h.grab.lastY ?? h.y);
+      hands.delete(id);
     }
   }
 
+  const all = [...hands.values()];
+  for (const h of all) {
+    if (!seen.has(h.id)) continue;
+    if (h.gesture === "pinch") {
+      h.openSince = null;
+      if (!h.grab) startGrab(h);
+    } else if (h.grab) {
+      h.openSince ??= now;
+      if (now - h.openSince >= RELEASE_GRACE_MS) {
+        const g = h.grab;
+        if (g.obj && !twoHand) dropAt(g.obj, g.lastX ?? h.x, g.lastY ?? h.y);
+        h.grab = null;
+      }
+    }
+  }
+
+  // Hands that are letting go (or briefly lost) hold still instead of
+  // dragging the object along as the fingers open.
+  const steady = (h) => seen.has(h.id) && h.gesture === "pinch";
   const pinching = all.filter((h) => h.grab);
   if (pinching.length >= 2) {
     handleTwoHands(pinching[0], pinching[1]);
@@ -260,12 +363,12 @@ function processHands(detected, now) {
       twoHand = null;
       for (const h of pinching) startGrab(h);
     }
-    for (const h of pinching) moveGrab(h);
+    for (const h of pinching) if (steady(h)) moveGrab(h);
   }
 
   handHovered = [];
   for (const h of all) {
-    if (h.grab) continue;
+    if (h.grab || shelf.contains(h.x, h.y, SHELF_PAD)) continue;
     const target = editor.pickAt(h.x, h.y, PICK_SLOP);
     handHovered.push(target);
     const held = now - h.since;
@@ -328,7 +431,8 @@ function loop() {
   }
   hands3d.update(editor, hands, handDepth);
   drawHoldRings(now);
-  updateTrash();
+  updateDropTargets();
+  updateHelpPeek();
   editor.render();
   requestAnimationFrame(loop);
 }

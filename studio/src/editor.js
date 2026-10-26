@@ -3,20 +3,32 @@
 // through these same methods.
 import * as THREE from "three";
 
-export const SHAPES = ["cube", "sphere", "cylinder", "cone", "torus"];
+export const SHAPES = ["cube", "sphere", "cylinder", "cone", "torus", "pyramid", "capsule", "gem", "diamond", "knot"];
 export const COLORS = ["#4cc9ff", "#ff6b6b", "#ffd166", "#06d6a0", "#c77dff", "#f1f1f1"];
 
 const MIN_SCALE = 0.15;
 const MAX_SCALE = 8;
 
-function makeGeometry(type) {
+// Faceted shapes look best with flat shading.
+const FLAT = new Set(["pyramid", "gem", "diamond"]);
+
+export function makeGeometry(type) {
   switch (type) {
     case "sphere": return new THREE.SphereGeometry(0.5, 48, 32);
     case "cylinder": return new THREE.CylinderGeometry(0.4, 0.4, 1, 48);
     case "cone": return new THREE.ConeGeometry(0.5, 1, 48);
     case "torus": return new THREE.TorusGeometry(0.4, 0.15, 24, 64);
+    case "pyramid": return new THREE.ConeGeometry(0.6, 1, 4);
+    case "capsule": return new THREE.CapsuleGeometry(0.3, 0.5, 8, 32);
+    case "gem": return new THREE.IcosahedronGeometry(0.55);
+    case "diamond": return new THREE.OctahedronGeometry(0.6);
+    case "knot": return new THREE.TorusKnotGeometry(0.32, 0.11, 128, 16);
     default: return new THREE.BoxGeometry(1, 1, 1);
   }
+}
+
+export function makeMaterial(type, color) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.15, flatShading: FLAT.has(type) });
 }
 
 export class Editor extends EventTarget {
@@ -103,8 +115,7 @@ export class Editor extends EventTarget {
   // ---- Objects ----------------------------------------------------------
 
   addShape(type = this.currentShape, position = null, color = this.currentColor) {
-    const material = new THREE.MeshStandardMaterial({ color, roughness: 0.35, metalness: 0.15 });
-    const mesh = new THREE.Mesh(makeGeometry(type), material);
+    const mesh = new THREE.Mesh(makeGeometry(type), makeMaterial(type, color));
     mesh.castShadow = true;
     mesh.userData.shape = type;
     mesh.position.copy(position ?? this.target.clone().add(new THREE.Vector3(0, 0.5, 0)));
