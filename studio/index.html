@@ -24,26 +24,22 @@
     <div id="status" class="status">Starting…</div>
   </header>
 
-  <aside class="hud legend">
-    <h2>Hand controls</h2>
-    <ul>
-      <li><b>Pinch</b> an object: grab and move it</li>
-      <li><b>Push toward the camera</b> while pinching: send it away. <b>Pull back</b>: bring it closer</li>
-      <li><b>Pinch with both hands</b> on an object: scale and rotate it</li>
-      <li><b>Pinch empty space</b>: orbit the view</li>
-      <li><b>Pinch empty space with both hands</b>: zoom</li>
-      <li><b>Peace sign</b> (hold): add a shape</li>
-      <li><b>Drag</b> an object into the bin (bottom left) and let go: delete it</li>
-      <li><b>Fist</b> on an object (hold): delete it</li>
-      <li><b>Open palm</b>: release, just point</li>
+  <aside class="hud legend" id="legend">
+    <div class="legend-head">
+      <h2>Hand controls</h2>
+      <button id="legend-toggle" class="legend-toggle" title="Hide or show help (H)">Hide</button>
+    </div>
+    <ul class="gestures">
+      <li><span class="g-icon" aria-hidden="true">🤏</span><span><b>Pinch</b><br>grab an object</span></li>
+      <li><span class="g-icon" aria-hidden="true">🖐️</span><span><b>Open hand</b><br>let go</span></li>
+      <li><span class="g-icon" aria-hidden="true">🤏↕</span><span><b>Push or pull</b><br>toward the camera sends it away, back brings it closer</span></li>
+      <li><span class="g-icon" aria-hidden="true">🤏🤏</span><span><b>Both hands pinch</b><br>scale and rotate</span></li>
+      <li><span class="g-icon" aria-hidden="true">🤏⟳</span><span><b>Pinch empty space</b><br>orbit (both hands: zoom)</span></li>
+      <li><span class="g-icon" aria-hidden="true">✌️</span><span><b>Peace sign, hold</b><br>add a shape</span></li>
+      <li><span class="g-icon" aria-hidden="true">🤏→🗑️</span><span><b>Drop in the bin</b><br>delete</span></li>
+      <li><span class="g-icon" aria-hidden="true">✊</span><span><b>Fist on an object, hold</b><br>delete</span></li>
     </ul>
-    <h2>Keyboard and mouse</h2>
-    <ul>
-      <li>Drag an object to move it, drag empty space to orbit, scroll to zoom</li>
-      <li>Shift + scroll on a selected object: scale it</li>
-      <li>Drag into the bin, or click the bin: delete</li>
-      <li>1 to 5: add a shape · Delete: remove · C: camera preview</li>
-    </ul>
+    <p class="keys">Mouse: drag to move or orbit, scroll to zoom, Shift + scroll to scale. Keys: 1 to 5 add, Delete removes, H help, C camera.</p>
   </aside>
 
   <footer class="hud toolbar">
@@ -68,6 +64,6 @@
       }, 10000);
     })();
   </script>
-  <script type="module" src="src/main.js?v=6"></script>
+  <script type="module" src="src/main.js?v=7"></script>
 </body>
 </html>
