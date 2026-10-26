@@ -6,7 +6,8 @@ const PICK_SLOP = 70;      // px: how close a finger must be to an object to gra
 const ADD_HOLD_MS = 700;   // hold a peace sign this long to add a shape
 const DELETE_HOLD_MS = 900; // hold a fist this long to delete
 const SMOOTHING = 0.5;     // 0 = no smoothing, closer to 1 = smoother but laggier
-const DEPTH_GAIN = 1.6;    // how strongly moving your hand toward the camera pulls objects
+const DEPTH_GAIN = 2.2;    // how strongly pushing your hand toward the camera sends objects away
+const DEPTH_SMOOTHING = 0.75; // hand size is noisy, so depth gets extra smoothing
 
 const BONES = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -56,7 +57,26 @@ COLORS.forEach((c) => {
   b.onclick = () => editor.setColor(c);
   colorsEl.appendChild(b);
 });
-document.getElementById("delete-btn").onclick = () => editor.remove();
+// ---- Trash bin ---------------------------------------------------------------
+
+const trashEl = document.getElementById("trash");
+trashEl.onclick = () => editor.remove();
+
+function overTrash(x, y) {
+  const r = trashEl.getBoundingClientRect();
+  const pad = 28; // generous, since a fingertip wobbles more than a mouse
+  return x > r.left - pad && x < r.right + pad && y > r.top - pad && y < r.bottom + pad;
+}
+
+// The bin lights up while something is being dragged, and turns red when the
+// dragged object is over it.
+function updateTrash() {
+  const dragging = [];
+  if (mouse?.obj && mouse.pos) dragging.push(mouse.pos);
+  if (!twoHand) for (const h of hands.values()) if (h.grab?.obj) dragging.push({ x: h.x, y: h.y });
+  trashEl.classList.toggle("armed", dragging.length > 0);
+  trashEl.classList.toggle("hot", dragging.some((p) => overTrash(p.x, p.y)));
+}
 
 window.addEventListener("keydown", (e) => {
   if (e.key >= "1" && e.key <= String(SHAPES.length)) {
@@ -92,6 +112,7 @@ canvas.addEventListener("pointermove", (e) => {
     return;
   }
   if (mouse.obj) {
+    mouse.pos = { x: e.clientX, y: e.clientY };
     const p = editor.screenToWorld(e.clientX, e.clientY, mouse.dist).add(mouse.offset);
     p.y = Math.max(p.y, 0);
     mouse.obj.position.copy(p);
@@ -101,7 +122,10 @@ canvas.addEventListener("pointermove", (e) => {
     mouse.y = e.clientY;
   }
 });
-canvas.addEventListener("pointerup", () => { mouse = null; });
+canvas.addEventListener("pointerup", (e) => {
+  if (mouse?.obj && overTrash(e.clientX, e.clientY)) editor.remove(mouse.obj);
+  mouse = null;
+});
 canvas.addEventListener("wheel", (e) => {
   e.preventDefault();
   const factor = Math.exp(e.deltaY * 0.001);
@@ -137,7 +161,7 @@ function updateHand(id, raw, now) {
     h.since = now;
     h.fired = false;
   }
-  h.size = size;
+  h.size = h.size ? h.size * DEPTH_SMOOTHING + size * (1 - DEPTH_SMOOTHING) : size;
   h.x = cursor.x * editor.width;
   h.y = cursor.y * editor.height;
   return h;
@@ -158,7 +182,13 @@ function startGrab(h) {
 function moveGrab(h) {
   const g = h.grab;
   if (g.obj) {
-    const dist = g.dist * Math.pow(g.size0 / h.size, DEPTH_GAIN);
+    // Remember where the pinch was: opening the fingers to let go shifts the
+    // cursor, and the drop should count where the object was held.
+    g.lastX = h.x;
+    g.lastY = h.y;
+    // Reaching into the scene: pushing your hand toward the camera (it looks
+    // bigger) sends the object away, pulling back brings it toward you.
+    const dist = Math.min(Math.max(g.dist * Math.pow(h.size / g.size0, DEPTH_GAIN), 1.5), 25);
     const p = editor.screenToWorld(h.x, h.y, dist).add(g.offset);
     p.y = Math.max(p.y, 0);
     g.obj.position.copy(p);
@@ -198,7 +228,11 @@ function processHands(detected, now) {
   const all = [...hands.values()];
   for (const h of all) {
     if (h.gesture === "pinch" && !h.grab) startGrab(h);
-    if (h.gesture !== "pinch") h.grab = null;
+    if (h.gesture !== "pinch") {
+      const g = h.grab;
+      if (g?.obj && !twoHand && overTrash(g.lastX ?? h.x, g.lastY ?? h.y)) editor.remove(g.obj);
+      h.grab = null;
+    }
   }
 
   const pinching = all.filter((h) => h.grab);
@@ -237,41 +271,55 @@ function processHands(detected, now) {
 
 // ---- Drawing the "ghost hands" (no camera image) ---------------------------
 
+const TIPS = new Set([4, 8, 12, 16, 20]);
+
+// A faint skeleton so you always know where your hands are, without covering
+// the scene: thin bones, small joints, brighter fingertips, and a ring where
+// the pinch point is.
 function drawHands(now) {
   const w = (overlay.width = overlay.clientWidth);
   const hgt = (overlay.height = overlay.clientHeight);
   ctx.clearRect(0, 0, w, hgt);
   for (const h of hands.values()) {
     const pts = h.lm.map((p) => [p.x * w, p.y * hgt]);
-    const color = h.gesture === "pinch" ? "#4cc9ff" : h.gesture === "fist" ? "#ff6b6b" : "rgba(200,230,255,0.75)";
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.55;
+    const color = h.gesture === "pinch" ? "76,201,255" : h.gesture === "fist" ? "255,107,107" : "200,230,255";
+
+    ctx.strokeStyle = `rgba(${color},0.22)`;
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = "round";
     ctx.beginPath();
     for (const [i, j] of BONES) {
       ctx.moveTo(...pts[i]);
       ctx.lineTo(...pts[j]);
     }
     ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = color;
-    for (const [x, y] of pts) {
+
+    pts.forEach(([x, y], i) => {
+      const tip = TIPS.has(i);
+      ctx.fillStyle = `rgba(${color},${tip ? 0.85 : 0.4})`;
       ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.arc(x, y, tip ? 3.5 : 2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Pinch point: where grabbing happens.
+    ctx.strokeStyle = `rgba(${color},0.9)`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.gesture === "pinch" ? 7 : 11, 0, Math.PI * 2);
+    ctx.stroke();
+    if (h.gesture === "pinch") {
+      ctx.fillStyle = `rgba(${color},0.35)`;
       ctx.fill();
     }
 
-    // Cursor, plus a progress ring while holding a peace sign or fist.
-    ctx.beginPath();
-    ctx.arc(h.x, h.y, h.gesture === "pinch" ? 8 : 12, 0, Math.PI * 2);
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Progress ring while holding a peace sign or fist.
     const holdMs = h.gesture === "peace" ? ADD_HOLD_MS : h.gesture === "fist" ? DELETE_HOLD_MS : 0;
     if (holdMs && !h.fired) {
       const t = Math.min((now - h.since) / holdMs, 1);
       ctx.beginPath();
       ctx.arc(h.x, h.y, 20, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2);
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.stroke();
     }
   }
@@ -292,6 +340,7 @@ function loop() {
       : "Show your hands to the camera";
   }
   drawHands(now);
+  updateTrash();
   editor.render();
   requestAnimationFrame(loop);
 }
