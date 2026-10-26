@@ -1,8 +1,9 @@
 // The ?v= number defeats browser caching after an update (GitHub Pages lets
 // browsers keep files for 10 minutes). Bump it here and in index.html together.
-import { Editor, SHAPES, COLORS } from "./editor.js?v=5";
-import { HandTracker } from "./hands.js?v=5";
-import { classify } from "./gestures.js?v=5";
+import { Editor, SHAPES, COLORS } from "./editor.js?v=6";
+import { HandTracker } from "./hands.js?v=6";
+import { classify } from "./gestures.js?v=6";
+import { Hands3D } from "./hand3d.js?v=6";
 
 const STUDIO_VERSION = new URL(import.meta.url).searchParams.get("v") ?? "dev";
 document.getElementById("version").textContent = `v${STUDIO_VERSION}`;
@@ -13,14 +14,7 @@ const DELETE_HOLD_MS = 900; // hold a fist this long to delete
 const SMOOTHING = 0.5;     // 0 = no smoothing, closer to 1 = smoother but laggier
 const DEPTH_GAIN = 2.2;    // how strongly pushing your hand toward the camera sends objects away
 const DEPTH_SMOOTHING = 0.75; // hand size is noisy, so depth gets extra smoothing
-
-const BONES = [
-  [0, 1], [1, 2], [2, 3], [3, 4],
-  [0, 5], [5, 6], [6, 7], [7, 8],
-  [5, 9], [9, 10], [10, 11], [11, 12],
-  [9, 13], [13, 14], [14, 15], [15, 16],
-  [13, 17], [17, 18], [18, 19], [19, 20], [0, 17],
-];
+const REF_HAND_SIZE = 0.2; // typical hand size on camera at a comfortable reach
 
 const editor = new Editor(document.getElementById("stage"));
 const overlay = document.getElementById("hands-overlay");
@@ -28,6 +22,7 @@ const ctx = overlay.getContext("2d");
 const video = document.getElementById("camera");
 const statusEl = document.getElementById("status");
 const tracker = new HandTracker(video);
+const hands3d = new Hands3D(editor.scene);
 
 window.yaver = { editor }; // handy from the console, and the hook for voice commands later
 
@@ -194,6 +189,7 @@ function moveGrab(h) {
     // Reaching into the scene: pushing your hand toward the camera (it looks
     // bigger) sends the object away, pulling back brings it toward you.
     const dist = Math.min(Math.max(g.dist * Math.pow(h.size / g.size0, DEPTH_GAIN), 1.5), 25);
+    g.curDist = dist;
     const p = editor.screenToWorld(h.x, h.y, dist).add(g.offset);
     p.y = Math.max(p.y, 0);
     g.obj.position.copy(p);
@@ -276,57 +272,29 @@ function processHands(detected, now) {
 
 // ---- Drawing the "ghost hands" (no camera image) ---------------------------
 
-const TIPS = new Set([4, 8, 12, 16, 20]);
+// How far into the scene a hand is drawn. A hand holding an object sits at
+// the object; a free hand follows the same reach-in rule as dragging.
+function handDepth(h) {
+  if (h.grab?.obj) return h.grab.curDist ?? h.grab.dist;
+  const base = editor.distanceFromCamera(editor.target);
+  return Math.min(Math.max(base * Math.pow(h.size / REF_HAND_SIZE, DEPTH_GAIN), 2), 20);
+}
 
-// A faint skeleton so you always know where your hands are, without covering
-// the scene: thin bones, small joints, brighter fingertips, and a ring where
-// the pinch point is.
-function drawHands(now) {
+// The hands themselves are drawn in 3D (see hand3d.js). This flat layer only
+// shows the progress ring while holding a peace sign or fist.
+function drawHoldRings(now) {
   const w = (overlay.width = overlay.clientWidth);
   const hgt = (overlay.height = overlay.clientHeight);
   ctx.clearRect(0, 0, w, hgt);
   for (const h of hands.values()) {
-    const pts = h.lm.map((p) => [p.x * w, p.y * hgt]);
-    const color = h.gesture === "pinch" ? "76,201,255" : h.gesture === "fist" ? "255,107,107" : "200,230,255";
-
-    ctx.strokeStyle = `rgba(${color},0.22)`;
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    for (const [i, j] of BONES) {
-      ctx.moveTo(...pts[i]);
-      ctx.lineTo(...pts[j]);
-    }
-    ctx.stroke();
-
-    pts.forEach(([x, y], i) => {
-      const tip = TIPS.has(i);
-      ctx.fillStyle = `rgba(${color},${tip ? 0.85 : 0.4})`;
-      ctx.beginPath();
-      ctx.arc(x, y, tip ? 3.5 : 2, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // Pinch point: where grabbing happens.
-    ctx.strokeStyle = `rgba(${color},0.9)`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(h.x, h.y, h.gesture === "pinch" ? 7 : 11, 0, Math.PI * 2);
-    ctx.stroke();
-    if (h.gesture === "pinch") {
-      ctx.fillStyle = `rgba(${color},0.35)`;
-      ctx.fill();
-    }
-
-    // Progress ring while holding a peace sign or fist.
     const holdMs = h.gesture === "peace" ? ADD_HOLD_MS : h.gesture === "fist" ? DELETE_HOLD_MS : 0;
-    if (holdMs && !h.fired) {
-      const t = Math.min((now - h.since) / holdMs, 1);
-      ctx.beginPath();
-      ctx.arc(h.x, h.y, 20, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2);
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
+    if (!holdMs || h.fired) continue;
+    const t = Math.min((now - h.since) / holdMs, 1);
+    ctx.strokeStyle = h.gesture === "fist" ? "rgba(255,107,107,0.9)" : "rgba(207,232,255,0.9)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, 20, -Math.PI / 2, -Math.PI / 2 + t * Math.PI * 2);
+    ctx.stroke();
   }
 }
 
@@ -344,7 +312,8 @@ function loop() {
       ? `Hands: ${list.map((h) => `${h.id} ${h.gesture}`).join(" · ")}`
       : "Show your hands to the camera";
   }
-  drawHands(now);
+  hands3d.update(editor, hands, handDepth);
+  drawHoldRings(now);
   updateTrash();
   editor.render();
   requestAnimationFrame(loop);
