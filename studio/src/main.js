@@ -1,8 +1,8 @@
 // The ?v= number defeats browser caching after an update (GitHub Pages lets
 // browsers keep files for 10 minutes). Bump it here and in index.html together.
-import { Editor, SHAPES, COLORS } from "./editor.js?v=4";
-import { HandTracker } from "./hands.js?v=4";
-import { classify } from "./gestures.js?v=4";
+import { Editor, SHAPES, COLORS } from "./editor.js?v=5";
+import { HandTracker } from "./hands.js?v=5";
+import { classify } from "./gestures.js?v=5";
 
 const STUDIO_VERSION = new URL(import.meta.url).searchParams.get("v") ?? "dev";
 document.getElementById("version").textContent = `v${STUDIO_VERSION}`;
@@ -350,6 +350,7 @@ function loop() {
   requestAnimationFrame(loop);
 }
 loop();
+window.studioStarted = true;
 
 statusEl.textContent = "Starting camera…";
 tracker.start()
