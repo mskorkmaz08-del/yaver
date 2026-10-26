@@ -55,6 +55,19 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" /></svg>
   </button>
 
-  <script type="module" src="src/main.js?v=4"></script>
+  <script>
+    // If the Studio fails to start, say why instead of sitting on "Starting…".
+    (function () {
+      var status = document.getElementById("status");
+      var lastError = "";
+      function show(msg) { lastError = msg; status.textContent = "Error: " + msg; }
+      window.addEventListener("error", function (e) { show(e.message || "a file failed to load"); });
+      window.addEventListener("unhandledrejection", function (e) { show(String(e.reason && e.reason.message || e.reason)); });
+      setTimeout(function () {
+        if (!window.studioStarted) status.textContent = (lastError ? "Error: " + lastError + ". " : "") + "Couldn't start. Press Cmd+Shift+R (Ctrl+Shift+R on Windows) to reload.";
+      }, 10000);
+    })();
+  </script>
+  <script type="module" src="src/main.js?v=5"></script>
 </body>
 </html>
