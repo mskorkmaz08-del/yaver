@@ -1,18 +1,20 @@
-// Sounds and music. Interface sounds are small mechanisms made for Yaver by modal synthesis
-// (a detent snapping into its notch, a pawl on a ratchet, a latch, a stamp, a small clock bell;
-// see sounds/CREDITS.md), played at a slightly different pitch each time and softer when they
-// come quickly, so they don't wear on you. The background music, "Academy", is a hopeful
+// Sounds and music. Interface sounds are recordings (v35): crisp switch and detent clicks, a
+// latch and a metronome tick for the mechanism, glass pings for sheets opening and closing, a
+// glass clink for saving, small chimes for done, and a card flip for the notebook's page turn
+// (sources and licences in sounds/CREDITS.md). Each plays at a slightly different pitch each time
+// and softer when they come quickly, so they don't wear on you. The background music, "Academy", is a hopeful
 // A-minor piece for a clockwork academy: piano ostinato, escapement ticks, cello and bass, horn
 // swells, a violin melody, flute and harp, and a hextech shimmer (sounds/academy.mp3, rendered
 // from recorded samples); it loops seamlessly. On the iPhone the audio session is "ambient": music from other apps keeps
 // playing and the silent switch mutes Yaver.
 import * as db from './db.js';
 
-const LEVEL = { tap: 0.34, on: 0.38, off: 0.36, enter: 0.3, spin: 0.42, open: 0.42, close: 0.4, save: 0.4, done: 0.45, step: 0.28, swipe: 0.34, stop: 0.38, bell: 0.4 };
+const LEVEL = { tap: 0.3, on: 0.34, off: 0.32, enter: 0.26, spin: 0.3, open: 0.3, close: 0.28, save: 0.36, done: 0.32, step: 0.2, swipe: 0.26, stop: 0.3, bell: 0.32, page: 0.42 };
 
 let ctx = null, sfx = null, musicBus = null, buffers = {}, loading = {}, last = {}, recent = 0, recentAt = 0;
-// off by default since v30: the synthesized set was not good enough; real recordings come next
-const fxOn = () => db.setting('sfx', false);
+// on by default again with the recorded set (v35); a new key, so turning the old synthesized
+// set off doesn't silence the recordings
+const fxOn = () => db.setting('sfxRec', true);
 const musicOn = () => db.setting('music', true);
 
 function audio() {
@@ -64,7 +66,7 @@ async function play(kind, { gap = 70, rate = 1, when = 0, gain = 1 } = {}) {
 export const tap = () => play('tap');
 export const toggle = on => play(on ? 'on' : 'off');
 export const enter = () => play('enter', { gap: 250 });
-// Winding a crown: a pawl clicking over the ratchet, then the spring takes it.
+// A latch clicking over its catch.
 export const spin = () => play('spin', { gap: 500 });
 export const open = () => { play('open', { gap: 300 }); duck(true); };
 export const close = () => { play('close', { gap: 300 }); duck(false); };
@@ -74,6 +76,8 @@ export const step = () => play('step', { gap: 90 });
 export const swipe = () => play('swipe', { gap: 300 });
 export const stop = () => play('stop', { gap: 300 });
 export const bell = () => play('bell', { gap: 1500 });
+// The notebook's page turn.
+export const page = () => play('page', { gap: 250 });
 
 // ---------- music ----------
 // The piece is rendered to loop seamlessly, so copies only overlap by a short crossfade.
