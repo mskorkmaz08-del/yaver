@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yaver Studio</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="stage"></div>
+  <canvas id="hands-overlay"></canvas>
+  <video id="camera" playsinline muted></video>
+
+  <header class="hud hud-top">
+    <div class="brand">YAVER STUDIO</div>
+    <div id="status" class="status">Starting…</div>
+  </header>
+
+  <aside class="hud legend">
+    <h2>Hand controls</h2>
+    <ul>
+      <li><b>Pinch</b> an object: grab and move it</li>
+      <li><b>Pull or push</b> while pinching: move it nearer or farther</li>
+      <li><b>Pinch with both hands</b> on an object: scale and rotate it</li>
+      <li><b>Pinch empty space</b>: orbit the view</li>
+      <li><b>Pinch empty space with both hands</b>: zoom</li>
+      <li><b>Peace sign</b> (hold): add a shape</li>
+      <li><b>Fist</b> on an object (hold): delete it</li>
+      <li><b>Open palm</b>: release, just point</li>
+    </ul>
+    <h2>Keyboard and mouse</h2>
+    <ul>
+      <li>Drag an object to move it, drag empty space to orbit, scroll to zoom</li>
+      <li>Shift + scroll on a selected object: scale it</li>
+      <li>1 to 5: add a shape · Delete: remove · C: camera preview</li>
+    </ul>
+  </aside>
+
+  <footer class="hud toolbar">
+    <div class="group" id="shapes"></div>
+    <div class="group" id="colors"></div>
+    <button id="delete-btn" title="Delete selected">Delete</button>
+  </footer>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
