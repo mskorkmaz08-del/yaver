@@ -1,12 +1,12 @@
 // The ?v= number defeats browser caching after an update (GitHub Pages lets
 // browsers keep files for 10 minutes). Bump it here and in index.html together.
-import { Editor, SHAPES, COLORS } from "./editor.js?v=8";
-import { HandTracker } from "./hands.js?v=8";
-import { classify } from "./gestures.js?v=8";
-import { Hands3D } from "./hand3d.js?v=8";
-import { Shelf } from "./shelf.js?v=8";
-import { gestureIcon } from "./helpicons.js?v=8";
-import { OneEuro } from "./filters.js?v=8";
+import { Editor, SHAPES, COLORS } from "./editor.js?v=9";
+import { HandTracker } from "./hands.js?v=9";
+import { classify } from "./gestures.js?v=9";
+import { Hands3D } from "./hand3d.js?v=9";
+import { Shelf } from "./shelf.js?v=9";
+import { gestureIcon } from "./helpicons.js?v=9";
+import { OneEuro } from "./filters.js?v=9";
 
 const STUDIO_VERSION = new URL(import.meta.url).searchParams.get("v") ?? "dev";
 document.getElementById("version").textContent = `v${STUDIO_VERSION}`;
