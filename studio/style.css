@@ -75,37 +75,110 @@ html, body {
 
 .status { color: var(--muted); }
 
-.legend {
+/* Help: a small button top-right. Hovering it (with the mouse or a hand
+   pointer) peeks the panel; clicking pins it open until clicked again. */
+.help {
+  position: fixed;
   top: 16px;
   right: 16px;
-  width: 270px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 2;
+}
+.help .hud { position: static; }
+.help-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+}
+.help-q {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(76, 201, 255, 0.15);
+  color: var(--accent);
+  font-weight: 700;
+}
+.help.open .help-button, .help.peek .help-button { color: var(--text); border-color: var(--accent); }
+.help-panel {
+  width: 300px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
   padding: 10px 12px;
   font-size: 12.5px;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
-.legend h2 {
-  margin: 0;
+.help.open .help-panel, .help.peek .help-panel {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.help-panel h2 {
+  margin: 0 0 8px;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--accent);
 }
-.legend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.legend-toggle { padding: 2px 8px; font-size: 11px; }
-.gestures { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.gestures li { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px; line-height: 1.3; }
-.g-icon {
-  font-size: 20px;
-  letter-spacing: -2px;
-  text-align: center;
-  white-space: nowrap;
+.gestures { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.gestures li { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 10px; line-height: 1.3; }
+.hand-icon {
+  width: 100%;
+  height: 52px;
   background: rgba(76, 201, 255, 0.07);
   border-radius: 8px;
-  padding: 4px 0;
 }
+.hand-icon .bones { stroke: rgba(76, 201, 255, 0.55); stroke-width: 2.4; stroke-linecap: round; }
+.hand-icon .joint { fill: #cfe8ff; }
+.hand-icon .tip { fill: var(--accent); }
+.hand-icon .touch { fill: rgba(76, 201, 255, 0.18); stroke: var(--accent); stroke-width: 1.5; }
+.hand-icon .mark { fill: none; stroke: #cfe8ff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.hand-icon .faint { opacity: 0.3; }
 .keys { margin: 10px 0 0; color: var(--muted); font-size: 11.5px; }
-/* Collapsed: only the header stays. */
-.legend.collapsed .gestures, .legend.collapsed .keys { display: none; }
-.legend.collapsed .legend-head { margin: 0; }
+
+/* Shape shelf on the left edge: pinch a tile and drag it into the scene. */
+.shelf {
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  grid-template-columns: repeat(2, 64px);
+  gap: 6px;
+  padding: 8px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.shelf.returning { border-style: dashed; border-color: var(--accent); }
+.tile {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  width: 64px;
+  height: 64px;
+  padding: 2px 0 4px;
+  font-size: 10px;
+  color: var(--muted);
+  touch-action: none;
+  user-select: none;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.tile img { width: 44px; height: 44px; pointer-events: none; }
+.tile.active { color: var(--text); }
+.tile.hot {
+  transform: scale(1.08);
+  border-color: var(--accent);
+  background: rgba(76, 201, 255, 0.2);
+  color: var(--text);
+}
 
 .toolbar {
   left: 50%;
@@ -166,6 +239,8 @@ button.active { background: rgba(76, 201, 255, 0.25); border-color: var(--accent
   transform: scale(1.15);
 }
 
-@media (max-width: 800px) {
-  .legend { display: none; }
+@media (max-height: 560px) {
+  .shelf { grid-template-columns: repeat(5, 52px); top: 70px; transform: none; }
+  .tile { width: 52px; height: 52px; }
+  .tile img { width: 36px; height: 36px; }
 }

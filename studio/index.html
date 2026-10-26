@@ -24,26 +24,20 @@
     <div id="status" class="status">Starting…</div>
   </header>
 
-  <aside class="hud legend" id="legend">
-    <div class="legend-head">
+  <div class="help" id="help">
+    <button id="help-button" class="hud help-button" title="Hand controls (H)" aria-expanded="false" aria-controls="help-panel">
+      <span class="help-q">?</span><span class="help-label">Gestures</span>
+    </button>
+    <aside class="hud help-panel" id="help-panel">
       <h2>Hand controls</h2>
-      <button id="legend-toggle" class="legend-toggle" title="Hide or show help (H)">Hide</button>
-    </div>
-    <ul class="gestures">
-      <li><span class="g-icon" aria-hidden="true">🤏</span><span><b>Pinch</b><br>grab an object</span></li>
-      <li><span class="g-icon" aria-hidden="true">🖐️</span><span><b>Open hand</b><br>let go</span></li>
-      <li><span class="g-icon" aria-hidden="true">🤏↕</span><span><b>Push or pull</b><br>toward the camera sends it away, back brings it closer</span></li>
-      <li><span class="g-icon" aria-hidden="true">🤏🤏</span><span><b>Both hands pinch</b><br>scale and rotate</span></li>
-      <li><span class="g-icon" aria-hidden="true">🤏⟳</span><span><b>Pinch empty space</b><br>orbit (both hands: zoom)</span></li>
-      <li><span class="g-icon" aria-hidden="true">✌️</span><span><b>Peace sign, hold</b><br>add a shape</span></li>
-      <li><span class="g-icon" aria-hidden="true">🤏→🗑️</span><span><b>Drop in the bin</b><br>delete</span></li>
-      <li><span class="g-icon" aria-hidden="true">✊</span><span><b>Fist on an object, hold</b><br>delete</span></li>
-    </ul>
-    <p class="keys">Mouse: drag to move or orbit, scroll to zoom, Shift + scroll to scale. Keys: 1 to 5 add, Delete removes, H help, C camera.</p>
-  </aside>
+      <ul class="gestures" id="gesture-list"></ul>
+      <p class="keys">Mouse: drag a shape off the shelf, drag to move or orbit, scroll to zoom, Shift + scroll to scale. Keys: 1 to 0 add shapes, Delete removes, H help, C camera.</p>
+    </aside>
+  </div>
+
+  <nav class="hud shelf" id="shelf" aria-label="Shapes"></nav>
 
   <footer class="hud toolbar">
-    <div class="group" id="shapes"></div>
     <div class="group" id="colors"></div>
   </footer>
 
@@ -64,6 +58,6 @@
       }, 10000);
     })();
   </script>
-  <script type="module" src="src/main.js?v=7"></script>
+  <script type="module" src="src/main.js?v=8"></script>
 </body>
 </html>
