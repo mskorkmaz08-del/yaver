@@ -1,7 +1,7 @@
-// Sounds and music. Interface sounds are recordings (v35): crisp switch and detent clicks, a
-// latch and a metronome tick for the mechanism, glass pings for sheets opening and closing, a
-// glass clink for saving, small chimes for done, and a card flip for the notebook's page turn
-// (sources and licences in sounds/CREDITS.md). Each plays at a slightly different pitch each time
+// Sounds and music. Interface sounds are recordings (v35), softened in v37 (highs rounded off, a
+// touch of room): switch and detent clicks, a latch and a metronome tick for the mechanism, glass
+// pings for sheets opening and closing, a glass clink for saving and small chimes for done
+// (sources and licences in sounds/CREDITS.md). The page turn is silent. Each plays at a slightly different pitch each time
 // and softer when they come quickly, so they don't wear on you. The background music, "Academy", is a hopeful
 // A-minor piece for a clockwork academy: piano ostinato, escapement ticks, cello and bass, horn
 // swells, a violin melody, flute and harp, and a hextech shimmer (sounds/academy.mp3, rendered
@@ -9,7 +9,7 @@
 // playing and the silent switch mutes Yaver.
 import * as db from './db.js';
 
-const LEVEL = { tap: 0.3, on: 0.34, off: 0.32, enter: 0.26, spin: 0.3, open: 0.3, close: 0.28, save: 0.36, done: 0.32, step: 0.2, swipe: 0.26, stop: 0.3, bell: 0.32, page: 0.42 };
+const LEVEL = { tap: 0.3, on: 0.34, off: 0.32, enter: 0.26, spin: 0.3, open: 0.3, close: 0.28, save: 0.36, done: 0.32, step: 0.2, swipe: 0.26, stop: 0.3, bell: 0.32 };
 
 let ctx = null, sfx = null, musicBus = null, buffers = {}, loading = {}, last = {}, recent = 0, recentAt = 0;
 // on by default again with the recorded set (v35); a new key, so turning the old synthesized
@@ -76,8 +76,6 @@ export const step = () => play('step', { gap: 90 });
 export const swipe = () => play('swipe', { gap: 300 });
 export const stop = () => play('stop', { gap: 300 });
 export const bell = () => play('bell', { gap: 1500 });
-// The notebook's page turn.
-export const page = () => play('page', { gap: 250 });
 
 // ---------- music ----------
 // The piece is rendered to loop seamlessly, so copies only overlap by a short crossfade.

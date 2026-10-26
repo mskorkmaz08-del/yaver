@@ -25,6 +25,8 @@
 @font-face { font-family: 'Spectral'; font-style: italic; font-display: swap; font-weight: 400; src: url(../fonts/spectral-latin-400-italic.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 600; src: url(../fonts/spectral-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Spectral'; font-style: normal; font-display: swap; font-weight: 600; src: url(../fonts/spectral-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Edu Hand'; font-style: normal; font-display: swap; font-weight: 400 700; src: url(../fonts/edu-hand-latin-ext-wght-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Edu Hand'; font-style: normal; font-display: swap; font-weight: 400 700; src: url(../fonts/edu-hand-latin-wght-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: 'Caveat'; font-style: normal; font-display: swap; font-weight: 600; src: url(../fonts/caveat-latin-ext-600-normal.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: 'Caveat'; font-style: normal; font-display: swap; font-weight: 600; src: url(../fonts/caveat-latin-600-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
@@ -65,7 +67,7 @@
   --ink-blue: #23408e;
   --display: "Cinzel", "Trajan Pro", Georgia, serif;
   --serif: "Spectral", Georgia, "Times New Roman", serif;
-  --hand: "Caveat", "Bradley Hand", "Segoe Print", cursive;
+  --hand: "Edu Hand", "Caveat", "Bradley Hand", "Segoe Print", cursive;
   --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --code: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -1492,26 +1494,21 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   .nb-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0 0; }
   .nb-at { font-size: 12px; letter-spacing: .08em; color: var(--muted); min-width: 92px; text-align: center; text-transform: uppercase; }
   .nb-nav .icon-btn:disabled { opacity: .3; }
-  .nb-turn { display: block; position: absolute; inset: 0; z-index: 5; perspective: 7000px; perspective-origin: 50% 50%; pointer-events: none; }
-  .lesson-main.spread .nb-spine { z-index: 6; }
-  .nb-face { overflow: hidden; }
-  .nb-turn > .nb-face.left { left: 0; }
-  .nb-turn > .nb-face.right { right: 0; left: auto; }
-  .nb-shade { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: linear-gradient(90deg, rgba(60, 38, 8, .55), rgba(40, 24, 4, .8)); }
-  .nb-cast { position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; pointer-events: none; }
-  .nb-cast.r { left: 50%; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(40, 24, 4, .35), rgba(40, 24, 4, .12) 70%, transparent); }
-  .nb-cast.l { right: 50%; transform-origin: 100% 50%; background: linear-gradient(270deg, rgba(40, 24, 4, .35), rgba(40, 24, 4, .12) 70%, transparent); }
-  .nb-leaf { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; }
-  .nb-leaf.fwd { left: 50%; transform-origin: 0 50%; }
-  .nb-leaf.back { left: 0; transform-origin: 100% 50%; }
-  .nb-strip { position: absolute; top: 0; bottom: 0; transform-style: preserve-3d; }
-  .nb-leaf.fwd > .nb-strip { left: 0; }
-  .nb-leaf.back > .nb-strip { right: 0; }
-  .nb-leaf.fwd .nb-strip .nb-strip { left: 100%; transform-origin: 0 50%; }
-  .nb-leaf.back .nb-strip .nb-strip { right: 100%; transform-origin: 100% 50%; }
-  .nb-strip > .nb-face { border-radius: 0; box-shadow: none; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-  .nb-strip > .rear { transform: rotateY(180deg); }
-  .nb-strip .nb-shade { background: rgb(52, 32, 6); }
+  .nb-turn { display: block; position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; border-radius: inherit; }
+  .nb-turn > div { position: absolute; top: 0; bottom: 0; }
+  .nb-win2, .nb-face { position: absolute; top: 0; bottom: 0; overflow: hidden; }
+  .nb-flap { box-shadow: 0 0 22px rgba(60, 40, 10, .12); }
+  /* light along the fold on the back of the page, darker where it bends away */
+  .nb-shine { position: absolute; top: 0; bottom: 0; width: 56px; }
+  .nb-shine.r { right: 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .45) 62%, rgba(90, 64, 24, .16)); }
+  .nb-shine.l { left: 0; background: linear-gradient(270deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .45) 62%, rgba(90, 64, 24, .16)); }
+  .nb-fshade { position: absolute; top: 0; bottom: 0; width: 70px; }
+  .nb-fshade.r { right: 0; background: linear-gradient(90deg, rgba(90, 64, 24, 0), rgba(90, 64, 24, .14)); }
+  .nb-fshade.l { left: 0; background: linear-gradient(270deg, rgba(90, 64, 24, 0), rgba(90, 64, 24, .14)); }
+  .nb-cast2.r { background: linear-gradient(90deg, rgba(60, 40, 10, .22), rgba(60, 40, 10, .07) 40%, rgba(60, 40, 10, 0)); }
+  .nb-cast2.l { background: linear-gradient(270deg, rgba(60, 40, 10, .22), rgba(60, 40, 10, .07) 40%, rgba(60, 40, 10, 0)); }
+  .nb-under.r { background: linear-gradient(90deg, rgba(60, 40, 10, 0), rgba(60, 40, 10, .12)); }
+  .nb-under.l { background: linear-gradient(270deg, rgba(60, 40, 10, 0), rgba(60, 40, 10, .12)); }
   .lesson-main.spread .nb-win { cursor: auto; }
   .lesson-main.spread::before, .lesson-main.spread::after { content: ''; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 4; cursor: grab; pointer-events: auto; background: none; }
   .lesson-main.spread::before { left: 0; }
@@ -1544,3 +1541,40 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   #view > .later { opacity: 1; transform: none; }
 }
 @media (min-width: 700px) { .heat { max-width: 560px; } }
+
+/* ---------- The calm notebook (v37): after Apple Books' sepia page ----------
+   One flat warm page, soft brown ink, no rings or ruled trim, quiet dividers and code on a light
+   panel instead of a dark board, so long reading doesn't tire the eyes. Step titles are written
+   in a neat school hand (Edu AU VIC WA NT Hand). */
+.lesson-main {
+  --text: #3d3326; --muted: #6e6352; --dim: #8b7f6b; --line: rgba(70, 52, 30, .13); --line-2: rgba(70, 52, 30, .24);
+  --lume: #9a5236; --lume-2: #86452c; --lume-soft: rgba(154, 82, 54, .09); --ink-blue: #3c5784;
+  --plate: rgba(255, 255, 255, .34); --plate-2: rgba(255, 255, 255, .5); --track: rgba(70, 52, 30, .1); --trim: rgba(70, 52, 30, .2);
+  background: #f7f0e2; box-shadow: 0 1px 0 #e9dfca, 0 18px 40px -18px rgba(0, 0, 0, .5);
+}
+.lesson-main .md { color: var(--text); font-size: 17.5px; line-height: 29px; }
+.lesson-main .step-title { font: 500 32px/1.1 var(--hand); color: var(--ink-blue); letter-spacing: 0; }
+.lesson-main .md-h { font: 500 25px/29px var(--hand); color: var(--ink-blue); }
+.lesson-main .step.done .step-title { color: #7d8aa3; }
+.lesson-main .label { color: #9a5a3c; }
+.lesson-main .md code { background: rgba(120, 90, 50, .09); color: #7a3f27; }
+.lesson-main .code {
+  --text: #3a3025; --muted: #6e6352; --dim: #8b7f6b; --line: rgba(70, 52, 30, .12); --line-2: rgba(70, 52, 30, .22);
+  margin: 4px 0; border: 1px solid rgba(70, 52, 30, .13); border-radius: 10px; color: var(--text);
+  background: #efe6d4; box-shadow: none;
+}
+.lesson-main .code pre code { color: #3a3025; text-shadow: none; }
+.lesson-main .code-bar { color: var(--dim); border-bottom-color: rgba(70, 52, 30, .1); }
+.lesson-main .code .copy { border-color: rgba(70, 52, 30, .22); }
+.lesson-main .btn.primary { background: #3c5784; border-color: #3c5784; color: #fbf6ea; box-shadow: none; }
+.lesson-main .res { background: rgba(255, 255, 255, .4); border-color: rgba(70, 52, 30, .14); }
+.lesson-main .sim-card { box-shadow: 0 6px 16px rgba(40, 28, 10, .14); }
+@media (min-width: 1100px) {
+  .lesson-main.spread { --paper: linear-gradient(180deg, #f8f2e5, #f5eddd); background: none; box-shadow: 0 1px 0 #e6dbc4, 0 2px 0 -1px #dccfb4, 0 22px 44px -18px rgba(0, 0, 0, .55); }
+  /* no rings: a soft fold where the pages meet */
+  .nb-spine { background: linear-gradient(90deg, rgba(70, 52, 30, 0), rgba(70, 52, 30, .1) 45%, rgba(70, 52, 30, .16) 50%, rgba(70, 52, 30, .1) 55%, rgba(70, 52, 30, 0)); filter: none; top: 0; bottom: 0; width: 22px; left: calc(50% - 11px); }
+  .nb-page.left { background: linear-gradient(270deg, rgba(70, 52, 30, .1), rgba(70, 52, 30, .03) 18px, rgba(70, 52, 30, 0) 44px), var(--paper); }
+  .nb-page.right { background: linear-gradient(90deg, rgba(70, 52, 30, .1), rgba(70, 52, 30, .03) 18px, rgba(70, 52, 30, 0) 44px), var(--paper); }
+  .lesson-main.spread .nb-flow > .card + .card { border-top: 1px solid rgba(70, 52, 30, .1); }
+  .lesson-main.spread .nb-spine { z-index: 3; }
+}

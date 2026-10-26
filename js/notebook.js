@@ -5,7 +5,7 @@
 const MQ = matchMedia('(min-width: 1100px)');
 const GAP = 76; // the gutter between pages; half of it is each page's outer margin
 const PAD = 28; // paper above and below the text: one ruled line
-const TURN_MS = 820;
+const TURN_MS = 700;
 const pageOf = new Map();
 let nb = null;
 
@@ -167,105 +167,84 @@ export function show(el) {
   return true;
 }
 
-// The page turn. A paper leaf hinged on the rings swings over the spine while the real pages
-// underneath already show the new spread; a copy of the page being covered sits on its side
-// until the leaf lands. The leaf is six hinged strips, so it curls as it lifts and flattens as
-// it lands; each strip darkens as it turns away from the light, and the leaf casts a shadow on
-// the page below it. The same animation can be dragged by the page's outer edge.
-const STRIPS = 6, BEND = 7, FRAMES = 30;
-// the gutter shadow by the rings, the same as the pages' in css/app.css
-const GUTTER_L = 'linear-gradient(270deg, rgba(90, 60, 10, .26), rgba(90, 60, 10, .08) 14px, rgba(90, 60, 10, 0) 34px)';
-const GUTTER_R = GUTTER_L.replace('270deg', '90deg');
-const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2) * 0.85 + t * 0.15;
+// The page turn, after Apple Books: the page folds back along a line that travels from its outer
+// edge to the spine. The part still flat stays put, the folded part shows the back of the page
+// (the next page, as it will lie when it lands), a soft sheen runs along the fold, and the page
+// throws a light shadow on the paper it uncovers and on the page it is about to cover. It is all
+// flat moves (no 3D), so every copy lines up with the real pages to the pixel. The real pages
+// underneath already show the new spread; a copy of the page being covered waits on its side.
+const FRAMES = 32;
+const ease = t => 0.6 * (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2) + 0.4 * (1 - Math.pow(1 - t, 3));
 
 function leaf(d, drag = false) {
   finishTurn();
   const { k, flow, art, win } = nb;
   const ar = art.getBoundingClientRect(), wr = win.getBoundingClientRect();
-  const half = ar.width / 2, shift = nb.W + GAP;
-  // whole-pixel strips: each strip is its own 3D layer, and the compositor snaps layers to pixels
-  const w = Math.floor(half / STRIPS), wOf = i => (i < STRIPS - 1 ? w : half - w * (STRIPS - 1)), at = i => i * w;
+  const P = ar.width / 2, S = P, E = 2 * P, shift = nb.W + GAP;
   const x0 = wr.left - ar.left, y0 = wr.top - ar.top;
-  // the copy of the lesson with spread s's left (side 0) or right (side 1) page at a face's left edge
-  const canvases = [...flow.querySelectorAll('canvas')];
   const fwd = d > 0;
-  const face = (s, side, cut = 0, cls = '') => {
+  const canvases = [...flow.querySelectorAll('canvas')];
+  // a copy of spread s's left (side 0) or right (side 1) page, laid out as that page
+  const page = (s, side) => {
     const f = document.createElement('div');
-    f.className = `nb-page nb-face ${cls}`;
+    f.className = `nb-page nb-face ${side ? 'right' : 'left'}`;
     const c = flow.cloneNode(true);
     c.inert = true;
     c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
     c.querySelectorAll('canvas').forEach((cv, i) => { try { cv.getContext('2d')?.drawImage(canvases[i], 0, 0); } catch {} });
-    // strips overlap their neighbour by a pixel so no seam shows; the paper and the gutter shadow
-    // are a slice of the whole page's, so a strip looks exactly like the part of the page it covers
-    const strip = cls === 'front' || cls === 'rear', lap = strip && !fwd ? 1 : 0;
-    Object.assign(c.style, { marginLeft: `${x0 - s * shift - side * half - cut + lap}px`, marginTop: `${y0}px` });
-    if (strip) {
-      Object.assign(f.style, {
-        left: `${-lap}px`, width: `calc(100% + 1px)`,
-        backgroundImage: `${side ? GUTTER_R : GUTTER_L}, var(--paper)`, backgroundSize: `${half}px 100%`,
-        backgroundPosition: `${lap - cut}px 0`, backgroundRepeat: 'no-repeat',
-      });
-    }
+    Object.assign(c.style, { marginLeft: `${x0 - s * shift - side * P}px`, marginTop: `${y0}px` });
     f.append(c);
-    const sh = document.createElement('i');
-    sh.className = 'nb-shade';
-    f.append(sh);
     return f;
   };
-  const layer = document.createElement('div');
-  layer.className = 'nb-turn';
+  const el = (cls, ...kids) => { const e = document.createElement('div'); e.className = cls; e.append(...kids); return e; };
+  const at = (e, w) => Object.assign(e.style, { left: '0', width: `${w}px` });
+
+  const layer = el('nb-turn');
   layer.setAttribute('aria-hidden', 'true');
-  // forward: the right page lifts and lands on the left; back: the left page lands on the right
-  layer.append(fwd ? face(k, 0, 0, 'left') : face(k, 1, 0, 'right'));
-  const shadowUnder = document.createElement('i'), shadowOver = document.createElement('i');
-  shadowUnder.className = `nb-cast ${fwd ? 'r' : 'l'}`;
-  shadowOver.className = `nb-cast ${fwd ? 'l' : 'r'}`;
-  layer.append(shadowUnder, shadowOver);
-  const sheet = document.createElement('div');
-  sheet.className = `nb-leaf ${fwd ? 'fwd' : 'back'}`;
-  const strips = [];
-  let parent = sheet;
-  for (let i = 0; i < STRIPS; i++) {
-    const st = document.createElement('div');
-    st.className = 'nb-strip';
-    st.style.width = `${wOf(i)}px`;
-    // a strip i away from the spine shows that slice of the lifting page on its front and the
-    // matching slice of the page coming into view on its back (mirrored by the 180° turn)
-    const front = fwd ? face(k, 1, at(i), 'front') : face(k, 0, half - at(i) - wOf(i), 'front');
-    const rear = fwd ? face(k + 1, 0, half - at(i) - wOf(i), 'rear') : face(k - 1, 1, at(i), 'rear');
-    // the back turns about the strip's own middle (not the face's, which is a pixel wider)
-    rear.style.transformOrigin = `${wOf(i) / 2 + (fwd ? 0 : 1)}px 50%`;
-    st.append(front, rear);
-    parent.append(st);
-    strips.push({ st, front: front.lastChild, rear: rear.lastChild });
-    parent = st;
-  }
-  layer.append(sheet);
+  const cover = page(k, fwd ? 0 : 1);
+  Object.assign(cover.style, { left: `${fwd ? 0 : S}px`, width: `${P}px`, right: 'auto' });
+  const frontPage = page(k, fwd ? 1 : 0);
+  const front = el('nb-win2', frontPage);
+  const frontShade = el(`nb-fshade ${fwd ? 'r' : 'l'}`);
+  front.append(frontShade);
+  const backPage = page(fwd ? k + 1 : k - 1, fwd ? 0 : 1);
+  const backClip = el('nb-win2', backPage);
+  const shine = el(`nb-shine ${fwd ? 'r' : 'l'}`);
+  const flap = el('nb-win2 nb-flap', backClip, shine);
+  const cast = el(`nb-cast2 ${fwd ? 'r' : 'l'}`), under = el(`nb-under ${fwd ? 'r' : 'l'}`);
+  [front, backClip, flap].forEach(e => at(e, P));
+  [frontPage, backPage].forEach(e => Object.assign(e.style, { left: '0', right: 'auto', width: `${P}px` }));
+  at(cast, 90); at(under, 48);
+  layer.append(cover, under, front, cast, flap);
   art.append(layer);
 
-  const sg = fwd ? -1 : 1;
+  // x is the fold line, from the outer edge to the spine
   const frames = Array.from({ length: FRAMES + 1 }, (_, n) => {
-    const t = ease(n / FRAMES);
-    return { th: 180 * t, bend: BEND * Math.sin(Math.PI * Math.pow(t, 0.8)) };
+    const e = ease(n / FRAMES);
+    return { x: fwd ? E - P * e : P * e, s: Math.sin(Math.PI * e) };
   });
+  const tx = v => `translateX(${v.toFixed(2)}px)`;
   const opt = { duration: TURN_MS, easing: 'linear', fill: 'both' };
-  const anims = [];
-  anims.push(sheet.animate(frames.map(f => ({ transform: `rotateY(${sg * f.th}deg)` })), opt));
-  strips.forEach(({ st, front, rear }, i) => {
-    if (i) anims.push(st.animate(frames.map(f => ({ transform: `rotateY(${sg * f.bend}deg)` })), opt));
-    const ang = f => Math.min(180, f.th + i * f.bend);
-    anims.push(front.animate(frames.map(f => ({ opacity: 0.42 * Math.pow(Math.min(1, ang(f) / 90), 1.6) })), opt));
-    anims.push(rear.animate(frames.map(f => ({ opacity: 0.42 * Math.pow(Math.max(0, Math.min(1, (180 - ang(f)) / 90)), 1.6) })), opt));
-  });
-  // the shadow the leaf throws: on the uncovered page while it lifts, on the covered one as it lands
-  const rad = f => (f.th * Math.PI) / 180;
-  anims.push(shadowUnder.animate(frames.map(f => ({ opacity: f.th < 90 ? Math.sin(rad(f)) * 0.9 : 0, transform: `scaleX(${Math.max(0.02, Math.cos(rad(f)))})` })), opt));
-  anims.push(shadowOver.animate(frames.map(f => ({ opacity: f.th > 90 ? Math.sin(rad(f)) * 0.9 : 0, transform: `scaleX(${Math.max(0.02, -Math.cos(rad(f)))})` })), opt));
+  const track = (e, f) => e.animate(frames.map(f), opt);
+  const anims = fwd ? [
+    track(front, f => ({ transform: tx(f.x - P) })),
+    track(frontPage, f => ({ transform: tx(S + P - f.x) })),
+    track(flap, f => ({ transform: tx(f.x - P) })),
+    track(backClip, f => ({ transform: tx(f.x - S) })),
+    track(cast, f => ({ transform: tx(f.x), opacity: f.s })),
+    track(under, f => ({ transform: tx(2 * f.x - S - P - 48), opacity: f.s })),
+  ] : [
+    track(front, f => ({ transform: tx(f.x) })),
+    track(frontPage, f => ({ transform: tx(-f.x) })),
+    track(flap, f => ({ transform: tx(f.x) })),
+    track(backClip, f => ({ transform: tx(f.x - P) })),
+    track(cast, f => ({ transform: tx(f.x - 90), opacity: f.s })),
+    track(under, f => ({ transform: tx(2 * f.x), opacity: f.s })),
+  ];
+  anims.push(track(shine, f => ({ opacity: f.s })), track(frontShade, f => ({ opacity: f.s })));
   nb.busy = { layer, anims, d };
   anims[0].onfinish = finishTurn;
   if (drag) anims.forEach(a => a.pause());
-  else import('./sound.js').then(s => s.page?.()).catch(() => {});
   return nb.busy;
 }
 
@@ -314,7 +293,6 @@ function edgeDrag(art) {
       if (!done) { place(nb.k - d); b.anims[0].onfinish = null; }
       b.anims.forEach(a => { a.playbackRate = done ? 1 : -1; a.play(); });
       b.anims[0].onfinish = finishTurn;
-      if (done) import('./sound.js').then(s => s.page?.()).catch(() => {});
     };
     art.addEventListener('pointermove', move);
     art.addEventListener('pointerup', up);

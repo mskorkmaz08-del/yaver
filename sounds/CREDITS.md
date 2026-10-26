@@ -1,7 +1,8 @@
 # Sounds
 
 Interface sounds (since v35) are recordings from open-source projects, trimmed, faded and
-levelled for Yaver (mono MP3). Yaver is a personal, non-commercial app; if that ever changes,
+levelled for Yaver (mono MP3); since v37 softened with a gentle treble cut, a low-pass and a
+short room echo. Yaver is a personal, non-commercial app; if that ever changes,
 the CC BY-NC sounds below must be replaced.
 
 | File | What it is | Source | Licence |
@@ -15,7 +16,6 @@ the CC BY-NC sounds below must be replaced.
 | `done.mp3`, `bell.mp3` | small chimes | osu! `notification-done.wav`, `notification-default.wav` | CC BY-NC 4.0, ppy Pty Ltd |
 | `swipe.mp3` | swap | osu! `item-swap.wav` | CC BY-NC 4.0, ppy Pty Ltd |
 | `stop.mp3` | switch off | osu! `osd-off.wav` | CC BY-NC 4.0, ppy Pty Ltd |
-| `page.mp3` | card / page flip | osu! `Samples/Multiplayer/Matchmaking/Ranked/card-flip-1.wav` | CC BY-NC 4.0, ppy Pty Ltd |
 | `save.mp3` | glass clink (high-passed) | Minetest Game `default_glass_footstep.ogg` by Mito551 | CC BY-SA 3.0 |
 
 osu! samples: https://github.com/ppy/osu-resources (licence: https://creativecommons.org/licenses/by-nc/4.0/).
