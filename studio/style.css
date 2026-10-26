@@ -110,6 +110,35 @@ button.active { background: rgba(76, 201, 255, 0.25); border-color: var(--accent
   border-radius: 50%;
 }
 
+.trash {
+  left: 16px;
+  bottom: 16px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  transition: transform 0.15s ease, color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.trash svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* While something is being dragged, the bin wakes up; over it, it turns red. */
+.trash.armed { color: var(--text); border-color: var(--accent); }
+.trash.hot {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.15);
+  transform: scale(1.15);
+}
+
 @media (max-width: 800px) {
   .legend { display: none; }
 }

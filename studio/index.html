@@ -28,11 +28,12 @@
     <h2>Hand controls</h2>
     <ul>
       <li><b>Pinch</b> an object: grab and move it</li>
-      <li><b>Pull or push</b> while pinching: move it nearer or farther</li>
+      <li><b>Push toward the camera</b> while pinching: send it away. <b>Pull back</b>: bring it closer</li>
       <li><b>Pinch with both hands</b> on an object: scale and rotate it</li>
       <li><b>Pinch empty space</b>: orbit the view</li>
       <li><b>Pinch empty space with both hands</b>: zoom</li>
       <li><b>Peace sign</b> (hold): add a shape</li>
+      <li><b>Drag</b> an object into the bin (bottom left) and let go: delete it</li>
       <li><b>Fist</b> on an object (hold): delete it</li>
       <li><b>Open palm</b>: release, just point</li>
     </ul>
@@ -40,6 +41,7 @@
     <ul>
       <li>Drag an object to move it, drag empty space to orbit, scroll to zoom</li>
       <li>Shift + scroll on a selected object: scale it</li>
+      <li>Drag into the bin, or click the bin: delete</li>
       <li>1 to 5: add a shape · Delete: remove · C: camera preview</li>
     </ul>
   </aside>
@@ -47,8 +49,11 @@
   <footer class="hud toolbar">
     <div class="group" id="shapes"></div>
     <div class="group" id="colors"></div>
-    <button id="delete-btn" title="Delete selected">Delete</button>
   </footer>
+
+  <button id="trash" class="hud trash" title="Drop an object here to delete it (or click to delete the selected one)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" /></svg>
+  </button>
 
   <script type="module" src="src/main.js"></script>
 </body>

@@ -3,6 +3,12 @@
 import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
 
 const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+// Your hand rarely reaches the very edge of the camera frame, so the middle
+// part of the frame is stretched to fill the screen. This keeps the corners
+// (and the trash bin) reachable.
+const EDGE_MARGIN = 0.12;
+const stretch = (v) => (v - EDGE_MARGIN) / (1 - 2 * EDGE_MARGIN);
+
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
@@ -38,7 +44,8 @@ export class HandTracker {
   }
 
   // Returns [{ id: "Left" | "Right", landmarks: [{x, y, z}...21] }].
-  // Coordinates are mirrored so moving your right hand right moves the cursor right.
+  // Coordinates are mirrored so moving your right hand right moves the cursor
+  // right, and stretched so the screen edges are reachable.
   detect() {
     if (!this.landmarker || this.video.readyState < 2) return [];
     const now = performance.now();
@@ -50,7 +57,7 @@ export class HandTracker {
       let id = result.handedness[i]?.[0]?.categoryName ?? `hand${i}`;
       if (used.has(id)) id = `${id}${i}`;
       used.add(id);
-      return { id, landmarks: lm.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z })) };
+      return { id, landmarks: lm.map((p) => ({ x: stretch(1 - p.x), y: stretch(p.y), z: p.z })) };
     });
   }
 }
