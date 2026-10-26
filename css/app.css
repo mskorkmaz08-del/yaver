@@ -1490,18 +1490,30 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   .nb-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0 0; }
   .nb-at { font-size: 12px; letter-spacing: .08em; color: var(--muted); min-width: 92px; text-align: center; text-transform: uppercase; }
   .nb-nav .icon-btn:disabled { opacity: .3; }
-  .nb-turn { display: block; position: absolute; inset: 0; z-index: 5; perspective: 2600px; pointer-events: none; }
+  .nb-turn { display: block; position: absolute; inset: 0; z-index: 5; perspective: 3400px; perspective-origin: 50% 50%; pointer-events: none; }
+  .lesson-main.spread .nb-spine { z-index: 6; }
   .nb-face { overflow: hidden; }
-  .nb-face > .nb-flow { margin-top: 28px; }
   .nb-turn > .nb-face.left { left: 0; }
   .nb-turn > .nb-face.right { right: 0; left: auto; }
+  .nb-shade { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: linear-gradient(90deg, rgba(60, 38, 8, .55), rgba(40, 24, 4, .8)); }
+  .nb-cast { position: absolute; top: 0; bottom: 0; width: 50%; opacity: 0; pointer-events: none; }
+  .nb-cast.r { left: 50%; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(40, 24, 4, .35), rgba(40, 24, 4, .12) 70%, transparent); }
+  .nb-cast.l { right: 50%; transform-origin: 100% 50%; background: linear-gradient(270deg, rgba(40, 24, 4, .35), rgba(40, 24, 4, .12) 70%, transparent); }
   .nb-leaf { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; }
   .nb-leaf.fwd { left: 50%; transform-origin: 0 50%; }
   .nb-leaf.back { left: 0; transform-origin: 100% 50%; }
-  .nb-leaf > .nb-face { left: 0; width: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-  .nb-leaf > .rear { transform: rotateY(180deg); }
-  .nb-leaf.fwd > .front, .nb-leaf.back > .rear { box-shadow: inset 26px 0 30px -24px rgba(90, 60, 10, .35), 0 0 18px rgba(0, 0, 0, .25); }
-  .nb-leaf.fwd > .rear, .nb-leaf.back > .front { box-shadow: inset -26px 0 30px -24px rgba(90, 60, 10, .35), 0 0 18px rgba(0, 0, 0, .25); }
+  .nb-strip { position: absolute; top: 0; bottom: 0; transform-style: preserve-3d; }
+  .nb-leaf.fwd > .nb-strip { left: 0; }
+  .nb-leaf.back > .nb-strip { right: 0; }
+  .nb-leaf.fwd .nb-strip .nb-strip { left: calc(100% - .5px); transform-origin: 0 50%; }
+  .nb-leaf.back .nb-strip .nb-strip { right: calc(100% - .5px); transform-origin: 100% 50%; }
+  .nb-strip > .nb-face { left: 0; width: calc(100% + .5px); border-radius: 0; box-shadow: none; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .nb-strip > .rear { transform: rotateY(180deg); }
+  .nb-strip .nb-shade { background: rgb(52, 32, 6); }
+  .lesson-main.spread .nb-win { cursor: auto; }
+  .lesson-main.spread::before, .lesson-main.spread::after { content: ''; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 4; cursor: grab; pointer-events: auto; background: none; }
+  .lesson-main.spread::before { left: 0; }
+  .lesson-main.spread::after { right: 0; }
   /* focus mode on a laptop: the open notebook is the whole screen. The step rail, exit, timer and
      page arrows float on the paper's margins. */
   body.focus-lesson.nb-spread #view { max-width: none; padding: 0; gap: 0; }
