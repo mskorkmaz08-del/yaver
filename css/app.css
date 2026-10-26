@@ -1320,7 +1320,7 @@ body.sim-open .nb-spine, body.sim-open .nb-nav, body.sim-open .focus-hud, body.s
 .lesson-main .sim-card input, .lesson-main .sim-card textarea, .lesson-main .sim-card select { background-color: var(--sunk); border-color: var(--line-2); color: var(--text); }
 .lesson-main .sim-card .btn.primary { background: linear-gradient(180deg, #f5d995, #dcaa52 52%, #c18b38); color: var(--lume-ink); border-color: #edc67e; }
 /* the notebook's pages and turning leaf exist only in the two-page spread */
-.nb-pages, .nb-nav, .nb-turn, .nb-end { display: none; }
+.nb-pages, .nb-nav, .nb-end { display: none; }
 .nb-flow { display: flex; flex-direction: column; min-width: 0; }
 .spread-only { display: none !important; }
 
@@ -1494,25 +1494,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   .nb-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0 0; }
   .nb-at { font-size: 12px; letter-spacing: .08em; color: var(--muted); min-width: 92px; text-align: center; text-transform: uppercase; }
   .nb-nav .icon-btn:disabled { opacity: .3; }
-  .nb-turn { display: block; position: absolute; inset: 0; z-index: 5; pointer-events: none; overflow: hidden; border-radius: inherit; }
-  .nb-turn > div { position: absolute; top: 0; bottom: 0; }
-  .nb-win2, .nb-face { position: absolute; top: 0; bottom: 0; overflow: hidden; }
-  .nb-flap { box-shadow: 0 0 22px rgba(60, 40, 10, .12); }
-  /* light along the fold on the back of the page, darker where it bends away */
-  .nb-shine { position: absolute; top: 0; bottom: 0; width: 56px; }
-  .nb-shine.r { right: 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .45) 62%, rgba(90, 64, 24, .16)); }
-  .nb-shine.l { left: 0; background: linear-gradient(270deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .45) 62%, rgba(90, 64, 24, .16)); }
-  .nb-fshade { position: absolute; top: 0; bottom: 0; width: 70px; }
-  .nb-fshade.r { right: 0; background: linear-gradient(90deg, rgba(90, 64, 24, 0), rgba(90, 64, 24, .14)); }
-  .nb-fshade.l { left: 0; background: linear-gradient(270deg, rgba(90, 64, 24, 0), rgba(90, 64, 24, .14)); }
-  .nb-cast2.r { background: linear-gradient(90deg, rgba(60, 40, 10, .22), rgba(60, 40, 10, .07) 40%, rgba(60, 40, 10, 0)); }
-  .nb-cast2.l { background: linear-gradient(270deg, rgba(60, 40, 10, .22), rgba(60, 40, 10, .07) 40%, rgba(60, 40, 10, 0)); }
-  .nb-under.r { background: linear-gradient(90deg, rgba(60, 40, 10, 0), rgba(60, 40, 10, .12)); }
-  .nb-under.l { background: linear-gradient(270deg, rgba(60, 40, 10, 0), rgba(60, 40, 10, .12)); }
-  .lesson-main.spread .nb-win { cursor: auto; }
-  .lesson-main.spread::before, .lesson-main.spread::after { content: ''; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 4; cursor: grab; pointer-events: auto; background: none; }
-  .lesson-main.spread::before { left: 0; }
-  .lesson-main.spread::after { right: 0; }
   /* focus mode on a laptop: the open notebook is the whole screen. The step rail, exit, timer and
      page arrows float on the paper's margins. */
   body.focus-lesson.nb-spread #view { max-width: none; padding: 0; gap: 0; }
@@ -1577,4 +1558,39 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   .nb-page.right { background: linear-gradient(90deg, rgba(70, 52, 30, .1), rgba(70, 52, 30, .03) 18px, rgba(70, 52, 30, 0) 44px), var(--paper); }
   .lesson-main.spread .nb-flow > .card + .card { border-top: 1px solid rgba(70, 52, 30, .1); }
   .lesson-main.spread .nb-spine { z-index: 3; }
+}
+
+/* v38: lighter paper, close to white but still warm; quieter workshop controls (no pills or
+   glossy gold: small squared buttons, flat fills, a plain slider knob) */
+.lesson-main { background: #fcf9f2; }
+@media (min-width: 1100px) {
+  .lesson-main.spread { --paper: linear-gradient(180deg, #fdfaf4, #faf6ec); }
+  .nb-page.left { background: linear-gradient(270deg, rgba(70, 52, 30, .07), rgba(70, 52, 30, .02) 18px, rgba(70, 52, 30, 0) 40px), var(--paper); }
+  .nb-page.right { background: linear-gradient(90deg, rgba(70, 52, 30, .07), rgba(70, 52, 30, .02) 18px, rgba(70, 52, 30, 0) 40px), var(--paper); }
+  .nb-spine { background: linear-gradient(90deg, rgba(70, 52, 30, 0), rgba(70, 52, 30, .06) 45%, rgba(70, 52, 30, .1) 50%, rgba(70, 52, 30, .06) 55%, rgba(70, 52, 30, 0)); }
+}
+.lesson-main .code { background: #f3eee3; }
+.lesson-main .btn, .lesson-main .chip, .lesson-main .copy, .lesson-main .icon-btn { border-radius: 7px; box-shadow: none; }
+.lesson-main .sim-card { border-radius: 10px; box-shadow: 0 4px 14px rgba(40, 28, 10, .12); }
+.lesson-main .sim-card .btn, .lesson-main .sim-card .sim-btn, .lesson-main .sim-card .chip, .lesson-main .sim-card .icon-btn {
+  height: 32px; min-height: 32px; padding: 0 12px; border-radius: 6px; font: 500 13px var(--sans); letter-spacing: 0; text-transform: none;
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .14); box-shadow: none; filter: none; color: var(--text);
+}
+.lesson-main .sim-card .icon-btn { width: 32px; padding: 0; }
+.lesson-main .sim-card .btn.primary, .lesson-main .sim-card .sim-btn.primary {
+  background: #d9b56c; border-color: #d9b56c; color: #1d1708; box-shadow: none;
+}
+.lesson-main .sim-card .btn:hover, .lesson-main .sim-card .sim-btn:hover { filter: none; background-color: rgba(255, 255, 255, .08); }
+.lesson-main .sim-card .btn.primary:hover, .lesson-main .sim-card .sim-btn.primary:hover { background: #e3c27f; }
+.lesson-main .sim-card .sim-slider input::-webkit-slider-thumb, .lesson-main .sim-card .sim-scrub::-webkit-slider-thumb { width: 14px; height: 14px; margin-top: -5px; background: #d9b56c; box-shadow: 0 0 0 3px rgba(21, 29, 44, .9); }
+.lesson-main .sim-card .sim-slider input::-webkit-slider-runnable-track, .lesson-main .sim-card .sim-scrub::-webkit-slider-runnable-track { height: 3px; }
+.lesson-main .sim-card select { height: 32px; border-radius: 6px; font: 500 13px var(--sans); padding-top: 0; padding-bottom: 0; }
+@media (min-width: 1100px) {
+  /* the slide between spreads (js/notebook.js): two sheets of the book moving side by side */
+  .nb-slide { position: absolute; inset: 0; z-index: 5; overflow: hidden; pointer-events: none; border-radius: inherit; }
+  .nb-sheet { position: absolute; inset: 0; background: #fcf9f2; box-shadow: 0 0 28px rgba(40, 28, 10, .22); }
+  .nb-sheet > .nb-pages { display: block; position: absolute; inset: 0; }
+  .nb-sheet-win { position: absolute; overflow: hidden; }
+  /* Apple Books style: no stacked page edges, just the sheet */
+  .lesson-main.spread { box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .5); }
 }
