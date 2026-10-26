@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Yaver Studio</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Installable as its own app (separate from the main Yaver app). -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#07090f" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <script type="importmap">
     {
       "imports": {
@@ -56,8 +61,9 @@
       setTimeout(function () {
         if (!window.studioStarted) status.textContent = (lastError ? "Error: " + lastError + ". " : "") + "Couldn't start. Press Cmd+Shift+R (Ctrl+Shift+R on Windows) to reload.";
       }, 10000);
+      if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
     })();
   </script>
-  <script type="module" src="src/main.js?v=8"></script>
+  <script type="module" src="src/main.js?v=9"></script>
 </body>
 </html>

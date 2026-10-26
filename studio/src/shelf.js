@@ -2,7 +2,7 @@
 // shape. Pinch a tile (or press the mouse on it) and drag the new shape out
 // into the scene; letting go back over the shelf puts it away again.
 import * as THREE from "three";
-import { makeGeometry, makeMaterial } from "./editor.js?v=8";
+import { makeGeometry, makeMaterial } from "./editor.js?v=9";
 
 const THUMB_PX = 96;
 
