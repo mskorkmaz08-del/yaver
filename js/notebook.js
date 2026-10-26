@@ -173,16 +173,22 @@ export function show(el) {
 // it lands; each strip darkens as it turns away from the light, and the leaf casts a shadow on
 // the page below it. The same animation can be dragged by the page's outer edge.
 const STRIPS = 6, BEND = 7, FRAMES = 30;
+// the gutter shadow by the rings, the same as the pages' in css/app.css
+const GUTTER_L = 'linear-gradient(270deg, rgba(90, 60, 10, .26), rgba(90, 60, 10, .08) 14px, rgba(90, 60, 10, 0) 34px)';
+const GUTTER_R = GUTTER_L.replace('270deg', '90deg');
 const ease = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2) * 0.85 + t * 0.15;
 
 function leaf(d, drag = false) {
   finishTurn();
   const { k, flow, art, win } = nb;
   const ar = art.getBoundingClientRect(), wr = win.getBoundingClientRect();
-  const half = ar.width / 2, shift = nb.W + GAP, w = half / STRIPS;
+  const half = ar.width / 2, shift = nb.W + GAP;
+  // whole-pixel strips: each strip is its own 3D layer, and the compositor snaps layers to pixels
+  const w = Math.floor(half / STRIPS), wOf = i => (i < STRIPS - 1 ? w : half - w * (STRIPS - 1)), at = i => i * w;
   const x0 = wr.left - ar.left, y0 = wr.top - ar.top;
   // the copy of the lesson with spread s's left (side 0) or right (side 1) page at a face's left edge
   const canvases = [...flow.querySelectorAll('canvas')];
+  const fwd = d > 0;
   const face = (s, side, cut = 0, cls = '') => {
     const f = document.createElement('div');
     f.className = `nb-page nb-face ${cls}`;
@@ -190,7 +196,17 @@ function leaf(d, drag = false) {
     c.inert = true;
     c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
     c.querySelectorAll('canvas').forEach((cv, i) => { try { cv.getContext('2d')?.drawImage(canvases[i], 0, 0); } catch {} });
-    Object.assign(c.style, { marginLeft: `${x0 - s * shift - side * half - cut}px`, marginTop: `${y0}px` });
+    // strips overlap their neighbour by a pixel so no seam shows; the paper and the gutter shadow
+    // are a slice of the whole page's, so a strip looks exactly like the part of the page it covers
+    const strip = cls === 'front' || cls === 'rear', lap = strip && !fwd ? 1 : 0;
+    Object.assign(c.style, { marginLeft: `${x0 - s * shift - side * half - cut + lap}px`, marginTop: `${y0}px` });
+    if (strip) {
+      Object.assign(f.style, {
+        left: `${-lap}px`, width: `calc(100% + 1px)`,
+        backgroundImage: `${side ? GUTTER_R : GUTTER_L}, var(--paper)`, backgroundSize: `${half}px 100%`,
+        backgroundPosition: `${lap - cut}px 0`, backgroundRepeat: 'no-repeat',
+      });
+    }
     f.append(c);
     const sh = document.createElement('i');
     sh.className = 'nb-shade';
@@ -201,7 +217,6 @@ function leaf(d, drag = false) {
   layer.className = 'nb-turn';
   layer.setAttribute('aria-hidden', 'true');
   // forward: the right page lifts and lands on the left; back: the left page lands on the right
-  const fwd = d > 0;
   layer.append(fwd ? face(k, 0, 0, 'left') : face(k, 1, 0, 'right'));
   const shadowUnder = document.createElement('i'), shadowOver = document.createElement('i');
   shadowUnder.className = `nb-cast ${fwd ? 'r' : 'l'}`;
@@ -214,11 +229,13 @@ function leaf(d, drag = false) {
   for (let i = 0; i < STRIPS; i++) {
     const st = document.createElement('div');
     st.className = 'nb-strip';
-    st.style.width = `${w}px`;
+    st.style.width = `${wOf(i)}px`;
     // a strip i away from the spine shows that slice of the lifting page on its front and the
     // matching slice of the page coming into view on its back (mirrored by the 180° turn)
-    const front = fwd ? face(k, 1, i * w, 'front') : face(k, 0, half - (i + 1) * w, 'front');
-    const rear = fwd ? face(k + 1, 0, half - (i + 1) * w, 'rear') : face(k - 1, 1, i * w, 'rear');
+    const front = fwd ? face(k, 1, at(i), 'front') : face(k, 0, half - at(i) - wOf(i), 'front');
+    const rear = fwd ? face(k + 1, 0, half - at(i) - wOf(i), 'rear') : face(k - 1, 1, at(i), 'rear');
+    // the back turns about the strip's own middle (not the face's, which is a pixel wider)
+    rear.style.transformOrigin = `${wOf(i) / 2 + (fwd ? 0 : 1)}px 50%`;
     st.append(front, rear);
     parent.append(st);
     strips.push({ st, front: front.lastChild, rear: rear.lastChild });
