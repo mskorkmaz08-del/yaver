@@ -61,6 +61,13 @@ html, body {
   color: var(--accent);
 }
 
+.version {
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .status { color: var(--muted); }
 
 .legend {

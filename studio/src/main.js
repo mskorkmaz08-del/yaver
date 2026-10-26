@@ -1,6 +1,11 @@
-import { Editor, SHAPES, COLORS } from "./editor.js";
-import { HandTracker } from "./hands.js";
-import { classify } from "./gestures.js";
+// The ?v= number defeats browser caching after an update (GitHub Pages lets
+// browsers keep files for 10 minutes). Bump it here and in index.html together.
+import { Editor, SHAPES, COLORS } from "./editor.js?v=4";
+import { HandTracker } from "./hands.js?v=4";
+import { classify } from "./gestures.js?v=4";
+
+const STUDIO_VERSION = new URL(import.meta.url).searchParams.get("v") ?? "dev";
+document.getElementById("version").textContent = `v${STUDIO_VERSION}`;
 
 const PICK_SLOP = 70;      // px: how close a finger must be to an object to grab it
 const ADD_HOLD_MS = 700;   // hold a peace sign this long to add a shape
