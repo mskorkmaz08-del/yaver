@@ -1,9 +1,9 @@
 // The ?v= number defeats browser caching after an update (GitHub Pages lets
 // browsers keep files for 10 minutes). Bump it here and in index.html together.
-import { Editor, SHAPES, COLORS } from "./editor.js?v=6";
-import { HandTracker } from "./hands.js?v=6";
-import { classify } from "./gestures.js?v=6";
-import { Hands3D } from "./hand3d.js?v=6";
+import { Editor, SHAPES, COLORS } from "./editor.js?v=7";
+import { HandTracker } from "./hands.js?v=7";
+import { classify } from "./gestures.js?v=7";
+import { Hands3D } from "./hand3d.js?v=7";
 
 const STUDIO_VERSION = new URL(import.meta.url).searchParams.get("v") ?? "dev";
 document.getElementById("version").textContent = `v${STUDIO_VERSION}`;
@@ -57,6 +57,18 @@ COLORS.forEach((c) => {
   b.onclick = () => editor.setColor(c);
   colorsEl.appendChild(b);
 });
+// ---- Help panel --------------------------------------------------------------
+
+const legendEl = document.getElementById("legend");
+const legendToggle = document.getElementById("legend-toggle");
+function toggleLegend(collapsed = !legendEl.classList.contains("collapsed")) {
+  legendEl.classList.toggle("collapsed", collapsed);
+  legendToggle.textContent = collapsed ? "Show" : "Hide";
+  try { localStorage.setItem("studio-legend-collapsed", collapsed ? "1" : ""); } catch {}
+}
+legendToggle.onclick = () => toggleLegend();
+try { if (localStorage.getItem("studio-legend-collapsed")) toggleLegend(true); } catch {}
+
 // ---- Trash bin ---------------------------------------------------------------
 
 const trashEl = document.getElementById("trash");
@@ -87,6 +99,8 @@ window.addEventListener("keydown", (e) => {
     editor.remove();
   } else if (e.key.toLowerCase() === "c") {
     video.classList.toggle("preview");
+  } else if (e.key.toLowerCase() === "h") {
+    toggleLegend();
   }
 });
 
