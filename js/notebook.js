@@ -147,7 +147,7 @@ function go(k, animate = true) {
 // of columns, so the slide is just that row moving sideways by one spread: no copies, nothing to
 // lay out, only a transform the graphics chip animates (copying whole pages made it stutter).
 // The book is exactly one spread wide (the page margins are half the gutter), so each spread is
-// a whole sheet in that row: a strip of the desk shows between the two sheets and moves with them,
+// a whole sheet in that row: a white page edge shows between the two sheets and moves with them,
 // so the paper's edges travel with the text instead of the text crossing still margins (v42).
 let sliding = null;
 function slide(from, to) {
@@ -157,7 +157,7 @@ function slide(from, to) {
   const ar = art.getBoundingClientRect(), wr = win.getBoundingClientRect();
   // let the text show across the whole page while it moves, but nothing outside the book
   Object.assign(win.style, { overflow: 'visible', clipPath: `inset(${ar.top - wr.top}px ${wr.right - ar.right}px ${wr.bottom - ar.bottom}px ${ar.left - wr.left}px)` });
-  // the gap between the two sheets rides along with the paper
+  // the white edge of the turning sheet rides along between the two sheets
   const gap = document.createElement('i');
   gap.className = 'nb-seam';
   gap.style.left = `${d > 0 ? -GAP / 2 : nb.W + GAP / 2}px`;
@@ -165,7 +165,7 @@ function slide(from, to) {
   const opt = { duration: TURN_MS, easing: 'cubic-bezier(.32, .72, 0, 1)' };
   const move = [{ transform: `translateX(${d * shift}px)` }, { transform: 'translateX(0)' }];
   const a = flow.animate(move, opt);
-  gap.animate(move, opt);
+  gap.animate([{ ...move[0], opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.6 }, { ...move[1], opacity: 0 }], opt);
   const done = () => { gap.remove(); win.style.overflow = ''; win.style.clipPath = ''; if (sliding === a) sliding = null; };
   a.onfinish = done;
   a.oncancel = done;

@@ -1587,8 +1587,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .lesson-main .sim-card select { height: 32px; border-radius: 6px; font: 500 13px var(--sans); padding-top: 0; padding-bottom: 0; }
 @media (min-width: 1100px) {
   /* the edge between two spreads while they slide (js/notebook.js) */
-  /* v42: the desk showing between two sheets while they slide, so whole sheets move */
-  .nb-seam { position: absolute; top: -200px; bottom: -200px; width: 28px; margin-left: -14px; z-index: 1; pointer-events: none; background: var(--bg); box-shadow: inset 6px 0 8px -6px rgba(0, 0, 0, .5), inset -6px 0 8px -6px rgba(0, 0, 0, .5); }
+  /* v43: the white edge of the sheet being turned, with a soft shadow, sliding between the two
+     sheets; it fades in and out so nothing pops at either end */
+  .nb-seam { position: absolute; top: -200px; bottom: -200px; width: 24px; margin-left: -12px; z-index: 1; pointer-events: none; background: linear-gradient(90deg, #f4efe4, #fff 45%, #fff 55%, #f4efe4); box-shadow: 0 0 16px rgba(70, 52, 30, .16); }
   /* v41: nothing where the pages meet, one plain sheet; only the edge between sheets shows while turning */
   .lesson-main.spread .nb-page.left, .lesson-main.spread .nb-page.right { background: var(--paper); }
   .lesson-main.spread .nb-spine { display: none; }
