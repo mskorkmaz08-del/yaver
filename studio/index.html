@@ -3,67 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Yaver Studio</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Installable as its own app (separate from the main Yaver app). -->
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#07090f" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
-      }
-    }
-  </script>
+  <title>Yaver Studio has moved</title>
+  <meta http-equiv="refresh" content="0; url=https://mskorkmaz08-del.github.io/yaver-m2/" />
+  <style>body{margin:0;display:grid;place-items:center;height:100vh;background:#07090f;color:#d8e6f5;font:15px system-ui,sans-serif}a{color:#4cc9ff}</style>
 </head>
 <body>
-  <div id="stage"></div>
-  <canvas id="hands-overlay"></canvas>
-  <video id="camera" playsinline muted></video>
-
-  <header class="hud hud-top">
-    <div class="brand">YAVER STUDIO <span id="version" class="version"></span></div>
-    <div id="status" class="status">Starting…</div>
-  </header>
-
-  <div class="help" id="help">
-    <button id="help-button" class="hud help-button" title="Hand controls (H)" aria-expanded="false" aria-controls="help-panel">
-      <span class="help-q">?</span><span class="help-label">Gestures</span>
-    </button>
-    <aside class="hud help-panel" id="help-panel">
-      <h2>Hand controls</h2>
-      <ul class="gestures" id="gesture-list"></ul>
-      <p class="keys">Mouse: drag a shape off the shelf, drag to move or orbit, scroll to zoom, Shift + scroll to scale. Keys: 1 to 0 add shapes, Delete removes, H help, C camera.</p>
-    </aside>
-  </div>
-
-  <nav class="hud shelf" id="shelf" aria-label="Shapes"></nav>
-
-  <footer class="hud toolbar">
-    <div class="group" id="colors"></div>
-  </footer>
-
-  <button id="trash" class="hud trash" title="Drop an object here to delete it (or click to delete the selected one)">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" /></svg>
-  </button>
-
+  <p>Yaver Studio is now its own app, Yaver Mark II: <a href="https://mskorkmaz08-del.github.io/yaver-m2/">open it here</a>.</p>
   <script>
-    // If the Studio fails to start, say why instead of sitting on "Starting…".
-    (function () {
-      var status = document.getElementById("status");
-      var lastError = "";
-      function show(msg) { lastError = msg; status.textContent = "Error: " + msg; }
-      window.addEventListener("error", function (e) { show(e.message || "a file failed to load"); });
-      window.addEventListener("unhandledrejection", function (e) { show(String(e.reason && e.reason.message || e.reason)); });
-      setTimeout(function () {
-        if (!window.studioStarted) status.textContent = (lastError ? "Error: " + lastError + ". " : "") + "Couldn't start. Press Cmd+Shift+R (Ctrl+Shift+R on Windows) to reload.";
-      }, 10000);
-      if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
-    })();
+    // Remove the old Studio service worker, then go to the new home.
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (r) { if (r.scope.indexOf("/studio/") !== -1) r.unregister(); });
+      });
+    }
+    location.replace("https://mskorkmaz08-del.github.io/yaver-m2/");
   </script>
-  <script type="module" src="src/main.js?v=9"></script>
 </body>
 </html>
