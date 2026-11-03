@@ -151,7 +151,7 @@ yaver/
 ├── sw.js                   Service worker: offline copy + updates
 ├── css/app.css             All styling: the Piltover look (navy, gold trim, ivory marble, the yellow notebook) and its motion, cards, sheets, chat
 ├── fonts/                  Archivo (variable width) and IBM Plex Mono, stored in the app so they work offline
-├── icons/                  Home Screen icons: the Yaver gear with its hextech crystal
+├── icons/                  Home Screen icons: the line-drawn gear, hexcore and Y (logo.svg is the source)
 ├── sounds/                 The Academy music (see CREDITS.md)
 ├── tools/                  Scripts that made the sounds and the music (run on a computer)
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
@@ -252,6 +252,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**New logo (v45).** Mustafa picked a new mark from options on the design canvas: a fine gold line drawing of a gear, a hexagon core and a Y, on navy, like an engraving. It replaces the brass gear with the glowing crystal on the Home Screen icon and the browser tab; the gears inside the app stay as they are.
 
 **White page edge (v43).** The dark strip between sheets looked like a black border, and a bit of it stayed visible at the edge just as the turn ended. It is now a white page edge with a soft shadow, like the back of the sheet being turned, and it fades in and out so nothing pops at the start or end.
 

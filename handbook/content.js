@@ -99,7 +99,7 @@ export const FILES = {
 export const FOLDERS = {
   'data/course/weeks/': 'One JSON file per course week: lessons with objectives, resources, steps (recall questions name the earlier lesson that taught them), questions, review cards and optional LeetCode problems.',
   'vendor/': 'Third-party code shipped with the app: the Anthropic SDK bundled with esbuild, and Leaflet for the map.',
-  'icons/': 'Home Screen and app icons: the Yaver gear, brass with a hextech crystal in its hub, rendered from js/mech.js (v29).',
+  'icons/': 'Home Screen and app icons (v45): the Yaver mark, a fine gold line drawing of a gear around a hexagon core with a slim serif-free Y letter, on navy. logo.svg is the source; the PNGs (192, 512, a maskable 512 with extra margin, and the 180 Apple touch icon) are rendered from it.',
   'sounds/': 'Audio: academy.mp3, the looping background music (credits in sounds/CREDITS.md). The interface sounds were removed in v40.',
   'fonts/': 'Self-hosted fonts (SIL Open Font License, licence texts included): Archivo variable (weight and width axes), IBM Plex Mono 400/500/600, Cinzel 600/700 (titles), Spectral 400/400 italic/600 (lesson reading) Edu AU VIC WA NT Hand variable (handwritten notebook headings, v37) and Caveat 600 (fallback), Latin and Latin Extended so Turkish and ₸ render, cached by the service worker so they work offline.',
   'studio/': 'Only a forwarding page now: Yaver Studio moved to its own repo and app, Yaver Mark II (github.com/mskorkmaz08-del/yaver-m2, live at mskorkmaz08-del.github.io/yaver-m2/), so it installs separately from this app. studio/index.html removes the old Studio service worker and redirects there.',
