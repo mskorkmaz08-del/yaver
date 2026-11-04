@@ -18,6 +18,14 @@ That's all. The bridge now runs in the background and starts with the Mac. Yaver
 
 The rest of this page is for using it from the iPhone.
 
+## Apple Calendar (v47)
+
+The bridge also hands Yaver the events in the Mac's Calendar app (every account added there: iCloud, Google, work). Yaver shows them in Meet next to its own meetings, counts them for free slots and lets the assistant see them. It only reads; change events in the Calendar app.
+
+- Already set up before v47? Paste the setup line above once more to update the bridge.
+- The first time, the bridge builds a small helper app, **Yaver Calendar**, in `~/yaver-bridge` (needs Apple's free command line tools; if it says so, run `xcode-select --install`). macOS then asks once: "Yaver Calendar would like to access your calendars". Click **Allow**.
+- Turn it off in Yaver → Settings → Claude on your Mac, or on the Mac in System Settings → Privacy & Security → Calendars.
+
 ## One-time setup on the Mac
 
 1. **Claude Code, signed in with your subscription.** Run `claude`. If it's missing, install it from claude.com/claude-code. Inside it, type `/login`, choose your Claude account (Pro or Max), then `/exit`. Make sure `echo $ANTHROPIC_API_KEY` prints nothing; if a key is set, Claude Code bills the API instead of your subscription.
@@ -65,4 +73,6 @@ The secure link changes every time the bridge starts. You don't need a new code:
 - **"The Mac refused the token"**: paste the connection code again.
 - **Errors mentioning login**: run `claude` and `/login` again.
 - **Using Tailscale instead**: start with `YAVER_HOST=<address> node yaver-bridge.mjs` to skip the Cloudflare link; the address you enter in Yaver must start with https://.
+- **"The Mac has not allowed calendar access"**: System Settings → Privacy & Security → Calendars → turn on Yaver Calendar, then tap Sync in Meet.
+- **"The bridge on your Mac is an older version"**: paste the setup line once more.
 - The bridge window logs each reply and how long it took.

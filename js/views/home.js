@@ -6,7 +6,7 @@ import { stepStrip, cetDial, arc } from '../ui.js';
 import * as C from '../course.js';
 import { icon } from '../icons.js';
 import { reminders } from '../reminders.js';
-import { expenseForm, meetingForm, studyForm, mealForm, taskForm } from '../forms.js';
+import { expenseForm, meetingForm, openEvent, studyForm, mealForm, taskForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
 import { hasKey as aiReady, saveKey } from '../ai/provider.js';
 import { openCommand, logCetele } from '../command.js';
@@ -214,7 +214,7 @@ export function render(root, go) {
   root.querySelectorAll('[data-open]').forEach(b => (b.onclick = () => go(b.dataset.open)));
   const q = { expense: () => expenseForm(), meeting: () => meetingForm(), study: () => studyForm(), meal: () => mealForm() };
   root.querySelectorAll('[data-q]').forEach(b => (b.onclick = q[b.dataset.q]));
-  root.querySelectorAll('[data-ev]').forEach(b => (b.onclick = () => meetingForm(db.get('events', b.dataset.ev))));
+  root.querySelectorAll('[data-ev]').forEach(b => (b.onclick = () => openEvent(b.dataset.ev)));
   root.querySelector('[data-add-task]').onclick = taskForm;
   root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => { const n = Number(b.dataset.w); D.setWater(d.water === n ? n - 1 : n); }));
   root.querySelectorAll('[data-task]').forEach(cb => (cb.onchange = () => {

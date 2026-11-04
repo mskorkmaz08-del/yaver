@@ -55,6 +55,7 @@ export function render(root, go) {
       <div class="btn-row"><button type="button" class="btn ghost" data-paste-code>Paste connection code</button></div>
       <label class="field"><span>Or type the code</span><input name="macCode" autocomplete="off" placeholder="yaver1.…"></label>`)}
     <label class="field"><span>Model on the Mac</span>${raw(sel('macModel', [['sonnet', 'Sonnet · fast'], ['opus', 'Opus · smartest, uses more of your limit'], ['haiku', 'Haiku · fastest']], s('macModel', 'sonnet')))}</label>
+    ${raw(sw('appleCal', 'Show Apple Calendar events (read through the Mac)', s('appleCal', true)))}
     <details class="check"><summary class="small">address and token</summary>
       <label class="field"><span>Bridge address</span><input name="macUrl" type="url" autocomplete="off" value="${s('macUrl', '')}" placeholder="filled in by the connection code"></label>
       <label class="field"><span>Bridge token</span><input name="macToken" type="password" autocomplete="off" value="${s('macToken', '')}" placeholder="shown when the bridge starts"></label>
@@ -154,6 +155,8 @@ export function render(root, go) {
     await sortKeys();
     if (String(fd.get('macCode') || '').trim()) await useCode(fd.get('macCode'));
     await db.setSetting('webSearch', fd.has('webSearch'));
+    await db.setSetting('appleCal', fd.has('appleCal'));
+    if (!fd.has('appleCal') && db.all('applecal').length) await db.replaceLocal('applecal', []);
     await db.setSetting('speak', fd.has('speak'));
     await db.setSetting('music', fd.has('music'));
     await db.setSetting('voiceAuto', fd.has('voiceAuto'));

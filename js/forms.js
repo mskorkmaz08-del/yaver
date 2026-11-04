@@ -1,7 +1,7 @@
 // Add/edit sheets, shared by Home's quick actions and each tab.
 import * as db from './db.js';
 import * as D from './data.js';
-import { sheet, today, localInput, toast, haptic } from './util.js';
+import { sheet, today, localInput, toast, haptic, html, raw, timeHM, fmtDay, dayKey } from './util.js';
 import { openInCalendar } from './ics.js';
 
 export async function expenseForm(existing) {
@@ -21,6 +21,28 @@ export async function expenseForm(existing) {
   if (existing) await db.put('expenses', { ...e, ...v, amount: Number(v.amount) });
   else await D.addExpense(v);
   toast(existing ? 'Saved' : 'Expense added');
+}
+
+// Opens any event by id: Yaver's own meetings are editable; Apple Calendar events
+// are a read-only copy, so they open as a details card (change them in Calendar).
+export function openEvent(id) {
+  const ev = db.get('events', id) || db.get('applecal', id);
+  if (!ev) return;
+  if (!D.isApple(ev)) return meetingForm(ev);
+  const s = new Date(ev.start), e = new Date(ev.end);
+  const when = ev.allDay
+    ? `All day · ${fmtDay(dayKey(s), { weekday: 'long', day: 'numeric', month: 'long' })}`
+    : `${fmtDay(dayKey(s), { weekday: 'long', day: 'numeric', month: 'long' })} · ${timeHM(ev.start)}–${timeHM(ev.end)}`;
+  return sheet({
+    title: ev.title,
+    submit: 'Done',
+    body: html`<div class="apple-ev">
+      <p>${when}</p>
+      ${raw(ev.location ? html`<p>${ev.location}</p>` : '')}
+      ${raw(ev.notes ? html`<p class="muted">${ev.notes}</p>` : '')}
+      <p class="muted small">From Apple Calendar${ev.calendar ? ' · ' + ev.calendar : ''}. Read only here: change it in the Calendar app.</p>
+    </div>`,
+  });
 }
 
 export async function meetingForm(existing, day = today(), preset = {}) {

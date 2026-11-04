@@ -47,6 +47,7 @@ await page.route('https://test-mac.trycloudflare.com/**', route => {
   const req = route.request();
   if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
   if (req.url().endsWith('/health')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: '{"ok":true}' });
+  if (req.url().includes('/calendar')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: '{"events":[],"calendars":[]}' });
   macAsked.push(req.postDataJSON().transcript[0].text);
   return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ reply: 'Recursion is a function that calls itself on a smaller problem.' }) });
 });

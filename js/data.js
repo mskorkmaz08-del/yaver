@@ -65,13 +65,22 @@ export function addEvent({ title, start, end, location = '', notes = '', remind 
   const e = end ? new Date(end) : new Date(s.getTime() + 60 * 60000);
   return db.put('events', { title, start: s.toISOString(), end: e.toISOString(), location, notes, remind: Number(remind) || 0 });
 }
-export const eventsOn = key => db.all('events').filter(e => dayKey(new Date(e.start)) === key).sort((a, b) => a.start.localeCompare(b.start));
+// Yaver's own meetings plus the read-only copy of Apple Calendar (source: 'apple').
+export const allEvents = () => [...db.all('events'), ...db.all('applecal')];
+// An all-day event covers every day from its start up to (not including) its end.
+const onDay = (e, key) => {
+  if (!e.allDay) return dayKey(new Date(e.start)) === key;
+  const last = dayKey(new Date(new Date(e.end).getTime() - 1));
+  return dayKey(new Date(e.start)) <= key && key <= last;
+};
+export const isApple = e => e?.source === 'apple';
+export const eventsOn = key => allEvents().filter(e => onDay(e, key)).sort((a, b) => (b.allDay - a.allDay) || a.start.localeCompare(b.start));
 export function eventsBetween(from, to) {
-  return db.all('events').filter(e => { const k = dayKey(new Date(e.start)); return k >= from && k <= to; }).sort((a, b) => a.start.localeCompare(b.start));
+  return allEvents().filter(e => { const k = dayKey(new Date(e.start)); return k >= from && k <= to; }).sort((a, b) => a.start.localeCompare(b.start));
 }
 export function upcomingEvents(n = 5) {
   const now = new Date().toISOString();
-  return db.all('events').filter(e => e.end >= now).sort((a, b) => a.start.localeCompare(b.start)).slice(0, n);
+  return allEvents().filter(e => e.end >= now && !e.allDay).sort((a, b) => a.start.localeCompare(b.start)).slice(0, n);
 }
 // Find free slots on a day between 08:00 and 21:00.
 export function freeSlots(key, minMinutes = 30) {
@@ -80,7 +89,7 @@ export function freeSlots(key, minMinutes = 30) {
   const endOfDay = new Date(y, m - 1, d, 21, 0);
   if (key === today()) cursor = new Date(Math.max(cursor, Date.now()));
   const slots = [];
-  for (const ev of eventsOn(key)) {
+  for (const ev of eventsOn(key).filter(e => !e.allDay)) {
     const s = new Date(ev.start), e = new Date(ev.end);
     if (s - cursor >= minMinutes * 60000) slots.push([cursor, s]);
     if (e > cursor) cursor = e;
@@ -272,4 +281,4 @@ export function overview() {
   };
 }
 // Claude sees local wall-clock times ("2026-10-15T14:00"), the same way the user thinks about them.
-export const slimEvent = e => ({ id: e.id, title: e.title, start: localInput(new Date(e.start)), end: localInput(new Date(e.end)), location: e.location || undefined, notes: e.notes || undefined });
+export const slimEvent = e => ({ id: e.id, title: e.title, start: localInput(new Date(e.start)), end: localInput(new Date(e.end)), location: e.location || undefined, notes: e.notes || undefined, ...(isApple(e) ? { from: `Apple Calendar${e.calendar ? ' · ' + e.calendar : ''} (read only)`, allDay: e.allDay || undefined } : {}) });

@@ -5,15 +5,16 @@
 // tombstone, so two devices can merge their copies record by record (sync.js).
 
 const DB_NAME = 'yaver';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 'tasks', 'milestones', 'chats', 'kv',
-  'courseProgress', 'cards', 'courseLessons', 'courseTests', 'ceteleItems', 'ceteleLog', 'tombstones'];
+  'courseProgress', 'cards', 'courseLessons', 'courseTests', 'ceteleItems', 'ceteleLog', 'applecal', 'tombstones'];
 
 // Settings that belong to this device only: never synced, never in backups' sync payload.
-export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'ttsVoice', 'voiceAuto', 'jarvis', 'voiceMac', 'deviceVoice', 'voiceV16', 'voiceEngine', 'liveModel', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel', 'sounds', 'sfx', 'sfxRec', 'music']);
+export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'ttsVoice', 'voiceAuto', 'jarvis', 'voiceMac', 'deviceVoice', 'voiceV16', 'voiceEngine', 'liveModel', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel', 'sounds', 'sfx', 'sfxRec', 'music', 'appleCal', 'appleCalStatus']);
 export const isLocalKey = id => LOCAL_KEYS.has(id) || id.startsWith('sync');
-// Stores that never leave the device (chat history can be large and holds photos).
-export const LOCAL_STORES = new Set(['chats']);
+// Stores that never leave the device (chat history can be large and holds photos;
+// applecal is a read-only copy of Apple Calendar that each device fetches itself).
+export const LOCAL_STORES = new Set(['chats', 'applecal']);
 
 let idb;
 const mem = Object.fromEntries(STORES.map(s => [s, new Map()]));
@@ -98,6 +99,18 @@ export async function remove(store, id) {
   }
   notify(store, id);
   return existed;
+}
+
+// Swaps a whole device-only store for fresh rows (no tombstones, no sync stamps).
+export async function replaceLocal(store, rows) {
+  if (!LOCAL_STORES.has(store)) throw new Error(`${store} is not a device-only store`);
+  mem[store].clear();
+  const tx = idb.transaction(store, 'readwrite');
+  const os = tx.objectStore(store);
+  os.clear();
+  for (const row of rows) { mem[store].set(row.id, row); os.put(row); }
+  await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+  notify(store, '*');
 }
 
 async function dropTombstone(id) {

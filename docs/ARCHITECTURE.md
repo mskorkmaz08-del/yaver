@@ -133,6 +133,8 @@ Yaver can use either brain. **Gemini** (Google) has a free tier: get a key at ai
 
 A web app can't write directly into the iPhone Calendar or schedule alerts while closed. Yaver bridges that with the standard **`.ics` calendar file**: when you save a meeting with "Also add to iPhone Calendar" on, Yaver hands iOS an `.ics` file containing the meeting and a reminder. You add it to Calendar, and from then on the iPhone itself alerts you, even if Yaver is closed. "Send upcoming to iPhone Calendar" does this for all future meetings at once.
 
+**Apple Calendar (v47).** A web app can't read the iPhone's calendar either, so Yaver reads it on the Mac instead: the Mac bridge has a `/calendar` route that asks a tiny helper app ("Yaver Calendar", built once on the Mac) for the events in the Mac's Calendar app, which holds the same iCloud, Google and work calendars as the iPhone. Yaver fetches 7 days back and 60 days ahead when it opens, when you come back to it and when you open Meet (at most every 10 minutes, or right away with Sync), and keeps a read-only copy on each device. Those events show in Meet with their calendar's colour, block free slots, appear in Up next on Home, and the assistant sees them (but cannot change or delete them). The copy never syncs: each device asks the Mac itself. When the Mac is off, Yaver shows the last copy.
+
 The study focus timer stores *when it started*, not a running counter, so it stays correct even if you close the app mid-session.
 
 ## 5b. Study plan, reminders, map (added in v2)
@@ -171,6 +173,7 @@ yaver/
     ├── ui.js               Progress rings, bar charts, the lesson step strip, the study subdial
     ├── forms.js            Add/edit sheets for expenses, meetings, study, meals, tasks
     ├── ics.js              Builds .ics calendar files
+    ├── applecal.js         Read-only copy of Apple Calendar, fetched through the Mac bridge
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
     ├── icons.js            Line icons
@@ -252,6 +255,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**Apple Calendar (v47).** Meet now shows the events from the Mac's Calendar app, read through the Mac bridge (see section 5). Needs the bridge updated once on the Mac and one Allow click.
 
 **Symmetrical Cinzel Y (v46).** The logo's letter is now the Cinzel Y from the app's titles, made symmetrical: the left arm, its serif and the left foot serif are mirrored around the stem, so both arms carry the same weight. Only the icons changed.
 

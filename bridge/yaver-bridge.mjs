@@ -13,12 +13,18 @@
 // Yaver open in a browser on this same Mac connects by itself: it asks
 // http://127.0.0.1:8787/pair, which answers only local requests from Yaver.
 //
+// Apple Calendar: GET /calendar hands Yaver the events from the Mac's Calendar
+// (iCloud, Google and any other account added there). A tiny helper app,
+// "Yaver Calendar", is built on this Mac the first time (Apple's free command
+// line tools provide the compiler) and macOS asks once to allow calendar access.
+// It only reads: nothing is ever changed in your calendars.
+//
 // Install:   node yaver-bridge.mjs --install    (starts at login and keeps running)
 // Remove:    node yaver-bridge.mjs --uninstall
 import http from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes, createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdtempSync, mkdirSync, unlinkSync, rmSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -103,6 +109,134 @@ function runClaude(body) {
   });
 }
 
+
+// ---------- Apple Calendar (read only) ----------
+// The helper is a small background app bundle so macOS shows its own clear
+// permission prompt ("Yaver Calendar would like to access your calendars") and
+// remembers the answer, whether the bridge runs in Terminal or as a login item.
+const HERE = dirname(fileURLToPath(import.meta.url));
+const CAL_APP = join(HERE, 'YaverCalendar.app');
+const CAL_EXE = join(CAL_APP, 'Contents', 'MacOS', 'YaverCalendar');
+const CAL_SWIFT = `import AppKit
+import EventKit
+let args = CommandLine.arguments
+let out = URL(fileURLWithPath: args.count > 1 ? args[1] : "/tmp/yaver-calendar.json")
+let from = Date(timeIntervalSince1970: (Double(args.count > 2 ? args[2] : "") ?? Date().timeIntervalSince1970 * 1000) / 1000)
+let to = Date(timeIntervalSince1970: (Double(args.count > 3 ? args[3] : "") ?? (from.timeIntervalSince1970 + 2592000) * 1000) / 1000)
+let store = EKEventStore()
+let iso = ISO8601DateFormatter()
+func finish(_ o: [String: Any]) {
+  if let d = try? JSONSerialization.data(withJSONObject: o) { try? d.write(to: out) }
+  exit(0)
+}
+func hex(_ c: CGColor?) -> String {
+  guard let c = c, let rgb = c.converted(to: CGColorSpace(name: CGColorSpace.sRGB)!, intent: .defaultIntent, options: nil), let p = rgb.components, p.count >= 3 else { return "" }
+  return String(format: "#%02x%02x%02x", Int(p[0] * 255), Int(p[1] * 255), Int(p[2] * 255))
+}
+func read() {
+  let found = store.events(matching: store.predicateForEvents(withStart: from, end: to, calendars: nil))
+  let events: [[String: Any]] = found.map { e in
+    let start = e.startDate ?? from
+    return [
+      "uid": (e.calendarItemExternalIdentifier ?? e.eventIdentifier ?? UUID().uuidString) + "@" + String(Int(start.timeIntervalSince1970)),
+      "title": e.title ?? "",
+      "start": iso.string(from: start),
+      "end": iso.string(from: e.endDate ?? start),
+      "allDay": e.isAllDay,
+      "location": e.location ?? "",
+      "notes": String((e.notes ?? "").prefix(400)),
+      "calendar": e.calendar?.title ?? "",
+      "color": hex(e.calendar?.cgColor),
+    ]
+  }
+  finish(["ok": true, "events": events, "calendars": store.calendars(for: .event).map { $0.title }])
+}
+let app = NSApplication.shared
+app.setActivationPolicy(.prohibited)
+let answer: (Bool, Error?) -> Void = { ok, _ in
+  if ok { read() } else { finish(["ok": false, "error": "denied"]) }
+}
+if #available(macOS 14.0, *) { store.requestFullAccessToEvents(completion: answer) } else { store.requestAccess(to: .event, completion: answer) }
+app.run()
+`;
+const CAL_PLIST = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>CFBundleIdentifier</key><string>com.yaver.calendar</string>
+  <key>CFBundleName</key><string>Yaver Calendar</string>
+  <key>CFBundleDisplayName</key><string>Yaver Calendar</string>
+  <key>CFBundleExecutable</key><string>YaverCalendar</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>LSBackgroundOnly</key><true/>
+  <key>NSCalendarsUsageDescription</key><string>Yaver shows your calendar events next to your study plan. It only reads them.</string>
+  <key>NSCalendarsFullAccessUsageDescription</key><string>Yaver shows your calendar events next to your study plan. It only reads them.</string>
+</dict></plist>
+`;
+const calHash = createHash('sha256').update(CAL_SWIFT + CAL_PLIST).digest('hex').slice(0, 16);
+const CAL_STAMP = join(CAL_APP, 'Contents', 'yaver-build');
+
+// Builds the helper once (again only if this file's helper code changes).
+let building = null;
+function buildCalendar() { return (building ||= build().finally(() => { building = null; })); }
+async function build() {
+  if (process.env.YAVER_CAL_BIN) return null;
+  if (process.platform !== 'darwin') return 'Apple Calendar works when the bridge runs on a Mac.';
+  if (existsSync(CAL_EXE) && existsSync(CAL_STAMP) && readFileSync(CAL_STAMP, 'utf8') === calHash) return null;
+  rmSync(CAL_APP, { recursive: true, force: true });
+  mkdirSync(dirname(CAL_EXE), { recursive: true });
+  const src = join(WORKDIR, 'calendar.swift');
+  writeFileSync(src, CAL_SWIFT);
+  writeFileSync(join(CAL_APP, 'Contents', 'Info.plist'), CAL_PLIST);
+  console.log('Building the Yaver Calendar helper (once)…');
+  const r = await new Promise(resolve => {
+    const p = spawn('swiftc', ['-O', '-o', CAL_EXE, src], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    const timer = setTimeout(() => p.kill(), 300000);
+    p.stderr.on('data', d => (stderr += d));
+    p.on('error', error => { clearTimeout(timer); resolve({ status: 1, error, stderr }); });
+    p.on('close', status => { clearTimeout(timer); resolve({ status, stderr }); });
+  });
+  if (r.status !== 0) {
+    rmSync(CAL_APP, { recursive: true, force: true });
+    if (r.error || /xcrun|developer tools|xcode-select/i.test(r.stderr || '')) return 'Apple Calendar needs Apple\'s free command line tools on the Mac. Run: xcode-select --install, then restart the bridge.';
+    return `Could not build the calendar helper: ${(r.stderr || '').trim().slice(0, 300)}`;
+  }
+  spawnSync('codesign', ['--force', '--sign', '-', CAL_APP], { stdio: 'ignore' });
+  writeFileSync(CAL_STAMP, calHash);
+  return null;
+}
+
+let calCache = { key: '', at: 0, data: null }, calBusy = null;
+async function readCalendar(from, to) {
+  const key = `${from}-${to}`;
+  if (calCache.key === key && Date.now() - calCache.at < 60000) return calCache.data;
+  if (calBusy) return calBusy;
+  calBusy = (async () => {
+    const problem = await buildCalendar();
+    if (problem) throw new Error(problem);
+    const out = join(WORKDIR, `cal-${Date.now()}.json`);
+    // `open` starts it as its own app, so the permission belongs to Yaver Calendar.
+    const [cmd, args] = process.env.YAVER_CAL_BIN
+      ? [process.env.YAVER_CAL_BIN, [out, String(from), String(to)]]
+      : ['open', ['-g', '-n', '-W', CAL_APP, '--args', out, String(from), String(to)]];
+    await new Promise((resolve, reject) => {
+      const p = spawn(cmd, args, { stdio: 'ignore' });
+      // Long enough to answer the permission prompt the first time.
+      const timer = setTimeout(() => { p.kill(); reject(new Error('The Mac did not answer. If a calendar permission prompt is showing on the Mac, click Allow.')); }, 90000);
+      p.on('error', e => { clearTimeout(timer); reject(e); });
+      p.on('close', () => { clearTimeout(timer); resolve(); });
+    });
+    let r;
+    try { r = JSON.parse(readFileSync(out, 'utf8')); unlinkSync(out); }
+    catch { throw new Error('The calendar helper gave no answer. Try again.'); }
+    if (!r.ok) throw new Error('The Mac has not allowed calendar access. On the Mac: System Settings → Privacy & Security → Calendars → turn on Yaver Calendar.');
+    calCache = { key, at: Date.now(), data: r };
+    return r;
+  })();
+  try { return await calBusy; } finally { calBusy = null; }
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin;
   const cors = {
@@ -124,7 +258,20 @@ const server = http.createServer(async (req, res) => {
     return send(200, { url: `http://127.0.0.1:${PORT}`, token: TOKEN });
   }
   if (req.headers.authorization !== `Bearer ${TOKEN}`) return send(401, { error: 'Wrong bridge token. Copy it again from the Mac.' });
-  if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true, name: 'yaver-bridge' });
+  if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true, name: 'yaver-bridge', calendar: true });
+  if (req.method === 'GET' && req.url.startsWith('/calendar')) {
+    const q = new URL(req.url, 'http://x').searchParams;
+    const now = Date.now();
+    const from = Number(q.get('from')) || now - 7 * 86400e3;
+    const to = Math.min(Number(q.get('to')) || now + 60 * 86400e3, from + 400 * 86400e3);
+    try {
+      const r = await readCalendar(from, to);
+      return send(200, { events: r.events, calendars: r.calendars });
+    } catch (e) {
+      console.error('calendar:', e.message);
+      return send(502, { error: e.message });
+    }
+  }
   if (req.method === 'POST' && req.url === '/chat') {
     let raw = '';
     for await (const c of req) { raw += c; if (raw.length > 2e6) return send(413, { error: 'Message too large' }); }
@@ -248,6 +395,8 @@ if (process.argv.includes('--uninstall')) service(false);
 
 server.listen(PORT, HOST, () => {
   console.log(`Yaver bridge running on http://${HOST}:${PORT}`);
+  // Build the calendar helper now, so Yaver's first calendar request is quick.
+  setTimeout(() => buildCalendar().then(p => p && console.log(p)), 2000);
   if (TUNNEL) { console.log('Opening a secure link for your iPhone…'); startTunnel(); }
   else console.log(`Bridge token: ${TOKEN}\nConnection code for this address: ${codeFor(`http://${HOST}:${PORT}`)}`);
 });

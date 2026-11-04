@@ -6,6 +6,7 @@ import { initAssistant, openAssistant, routeChanged } from './ai/assistant.js';
 import { exitFocus } from './focus.js';
 import { saveKey, sortKeys } from './ai/provider.js';
 import { useCode, pairLocal } from './ai/mac.js';
+import { syncAppleCalendar } from './applecal.js';
 import { unlockAudio } from './ai/voice.js';
 import * as home from './views/home.js';
 import * as money from './views/money.js';
@@ -216,6 +217,8 @@ async function start() {
   initSync();
   // Yaver on the Mac: connect to Claude through the bridge running on this Mac, if there is one.
   pairLocal();
+  // Apple Calendar through the Mac bridge: a fresh copy on start and when coming back.
+  setTimeout(() => syncAppleCalendar().catch(() => {}), 1500);
   // The first tap anywhere unlocks sound, so voice chat can speak straight away.
   document.addEventListener('pointerdown', () => { try { unlockAudio(); } catch {} }, { once: true, capture: true });
   courseView.initSlotAlerts();
@@ -225,7 +228,7 @@ async function start() {
   // (The map keeps its own state, so data changes don't redraw it.)
   db.onChange((store, id) => { if (current === 'map' || (store === 'kv' && (/^sync/.test(String(id)) || current === 'settings'))) return; if (store !== 'kv') mech.kick(90); clearTimeout(pending); pending = setTimeout(draw, 30); });
   // Midnight rollover, coming back to the app, etc.
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && current !== 'map') draw(); if (!document.hidden) syncAppleCalendar().catch(() => {}); });
   window.addEventListener('hashchange', () => { if (takeConnectLink()) return go('settings'); const h = location.hash.slice(1); if (h !== (param ? `${current}/${encodeURIComponent(param)}` : current)) go(h); });
 
   takeConnectLink();

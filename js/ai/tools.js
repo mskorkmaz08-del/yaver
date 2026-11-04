@@ -118,6 +118,7 @@ const TOOLS = [
     input_schema: obj({ id: { type: 'string' }, title: { type: 'string' }, start: { type: 'string' }, end: { type: 'string' }, location: { type: 'string' }, notes: { type: 'string' } }, ['id']),
     run: async ({ id, ...ch }) => {
       const ev = db.get('events', id);
+      if (!ev && db.get('applecal', id)) throw new Error('That event is from Apple Calendar and is read only in Yaver. Tell the user to change it in the Calendar app.');
       if (!ev) throw new Error('No meeting with that id');
       const dur = new Date(ev.end) - new Date(ev.start);
       if (ch.start) { ev.start = new Date(ch.start).toISOString(); if (!ch.end) ev.end = new Date(new Date(ch.start).getTime() + dur).toISOString(); }
@@ -130,7 +131,10 @@ const TOOLS = [
     name: 'delete_meeting',
     description: 'Delete a meeting by id. Only when the user asks.',
     input_schema: obj({ id: { type: 'string' } }, ['id']),
-    run: async ({ id }) => ({ deleted: await db.remove('events', id) }),
+    run: async ({ id }) => {
+      if (db.get('applecal', id)) throw new Error('That event is from Apple Calendar and is read only in Yaver. Tell the user to delete it in the Calendar app.');
+      return { deleted: await db.remove('events', id) };
+    },
   },
   // ----- Study -----
   {
