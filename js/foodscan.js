@@ -43,6 +43,15 @@ const SCHEMA = {
   required: ['dish', 'items', 'confidence'],
 };
 
+// Typed meals (v53): the same estimate from words alone, e.g. "2 eggs, bread with butter, tea with 1 sugar".
+const TEXT_PROMPT = text => `You are a careful dietitian estimating nutrition from what the user wrote they ate or drank:
+"${text}"
+1. Split it into separate foods and drinks (include butter, oil, sauce or sugar they mention or that the dish normally has).
+2. For each, use the amount they give (convert pieces, slices, cups, spoons, bowls to grams or ml). If they give none, assume one typical home portion and say so in note.
+3. Then give that amount's nutrients: calories (kcal), protein, carbs, fat, fiber, sugar (g), sodium, potassium, calcium, iron, magnesium, zinc (mg), vitamin A (µg RAE), vitamin C (mg), vitamin D (µg), vitamin B12 (µg), caffeine (mg). Use 0 when there is none.
+Turkish and Central Asian dishes are common (the user lives in Kazakhstan). Use the user's own words for item names. If it is not food or drink, return no items.
+Also guess the meal from what they wrote, or from the time now: ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.`;
+
 const PROMPT = note => `You are a careful dietitian estimating nutrition from a photo.
 1. List every separate food or drink you can see (include sauces, oil, dressing, bread, sugar in tea).
 2. For each, estimate the weight in grams (ml for drinks) of the portion actually visible in this photo. Use the plate, glass, cutlery and hands for scale. Do not assume a standard serving size.
@@ -66,13 +75,15 @@ function thinking(model) {
   return {};
 }
 
+// image is null for a typed meal: then note is what they ate.
 export async function scanFood(image, note = '', { signal, onStatus } = {}) {
+  if (!image && !String(note).trim()) throw new Error('Write what you ate or drank first.');
   const key = db.setting('geminiKey', '');
   if (!key) throw Object.assign(new Error('Food photos use Gemini (free). Paste your Gemini key in Settings → AI first.'), { code: 'nokey' });
   const all = await flashModels();
   const order = [...new Set([db.setting('foodModel', ''), db.setting('geminiModel', ''), ...all.filter(m => !/lite/.test(m)).slice(0, 2), ...all.filter(m => /lite/.test(m))].filter(Boolean))].slice(0, MAX_TRIES);
   const body = (m, think) => JSON.stringify({
-    contents: [{ role: 'user', parts: [{ inlineData: { mimeType: image.media_type, data: image.data } }, { text: PROMPT(note.trim()) }] }],
+    contents: [{ role: 'user', parts: image ? [{ inlineData: { mimeType: image.media_type, data: image.data } }, { text: PROMPT(note.trim()) }] : [{ text: TEXT_PROMPT(note.trim()) }] }],
     generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA, ...(think ? thinking(m) : {}) },
   });
   let lastError = '';

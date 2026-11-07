@@ -77,6 +77,20 @@ check('meal logged with extras', meal?.name === 'Plov with salad' && meal.meal =
 const card = await page.evaluate(() => [...document.querySelectorAll('.nutrients .nut span')].map(s => s.textContent));
 check('nutrients card shows fiber, sodium and vitamins', card.includes('Fiber') && card.includes('Sodium') && card.includes('Vitamin C'), card.join(', '));
 await page.screenshot({ path: join(dir, 'diet.png'), fullPage: true });
+// Typed meal: words instead of a photo, same check-and-log sheet.
+await page.click('[data-type-meal]');
+await page.waitForSelector('.food-sheet textarea[name=note]');
+check('typed meal has no photo', !(await page.$('.food-sheet .food-img')));
+await page.fill('.food-sheet textarea[name=note]', '2 eggs and black tea with 1 sugar');
+await page.click('.food-sheet [data-go]');
+await page.waitForSelector('.food-sheet [data-log]', { timeout: 10000 });
+const treq = sent.body.contents[0].parts;
+check('typed meal sends only the words', treq.length === 1 && !treq[0].inlineData && /2 eggs and black tea with 1 sugar/.test(treq[0].text) && /what the user wrote/.test(treq[0].text));
+const nMeals = await page.evaluate(async () => (await import('./js/db.js')).all('meals').length);
+await page.click('.food-sheet [data-log]');
+await page.waitForTimeout(400);
+check('typed meal is logged', await page.evaluate(async n => (await import('./js/db.js')).all('meals').length === n + 1, nMeals));
+
 // The chat also moves to a backup model when the main one is overloaded.
 calls.length = 0;
 await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('geminiModel', 'gemini-3-flash'); });

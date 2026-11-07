@@ -36,6 +36,7 @@ export function render(root) {
 
     <div class="btn-row">
       <button class="btn ghost" data-snap>${raw(icon('camera'))} Photo a meal</button>
+      <button class="btn ghost" data-type-meal>${raw(icon('edit'))} Type a meal</button>
       <button class="btn ghost" data-ai>${raw(icon('sparkle'))} What next?</button>
     </div>
 
@@ -56,6 +57,7 @@ export function render(root) {
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = () => mealForm(db.get('meals', b.dataset.id))));
   root.querySelectorAll('[data-d]').forEach(b => (b.onclick = () => { day = addDays(day, Number(b.dataset.d)); render(root); }));
   root.querySelector('[data-snap]').onclick = () => pickPhoto(day);
+  root.querySelector('[data-type-meal]').onclick = () => photoSheet(null, day);
   root.querySelector('[data-ai]').onclick = () => openAssistant('Given what I ate today and my goals, suggest 3 simple options for my next meal with rough calories and protein.');
 }
 
@@ -78,7 +80,7 @@ function nutrients(d) {
 }
 const fmt = v => (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleString('en');
 
-// ---------- Food photo: pick → (optional note) → Gemini estimate → check → log ----------
+// ---------- Food photo or typed meal: photo (+ note) or words → Gemini estimate → check → log ----------
 function pickPhoto(day) {
   const input = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*' });
   input.onchange = async () => {
@@ -100,13 +102,14 @@ export function photoSheet(image, day = today()) {
   const close = () => { ctrl?.abort(); wrap.classList.remove('open'); setTimeout(() => wrap.remove(), 250); };
   const draw = () => {
     const t = F.totals(items);
-    wrap.innerHTML = html`<div class="sheet tall food-sheet" role="dialog" aria-label="Food photo">
+    wrap.innerHTML = html`<div class="sheet tall food-sheet" role="dialog" aria-label="${image ? 'Food photo' : 'Type a meal'}">
       <div class="grabber"></div>
-      <h2>${result ? 'Check and log' : 'Food photo'}</h2>
-      <img class="food-img" src="${image.url}" alt="">
+      <h2>${result ? 'Check and log' : image ? 'Food photo' : 'What did you eat or drink?'}</h2>
+      ${raw(image ? html`<img class="food-img" src="${image.url}" alt="">` : '')}
       ${raw(!result ? html`
-        <label class="field"><span>Anything the photo doesn't show? (optional)</span><input name="note" value="${note}" placeholder="fried in butter, 2 sugars, ate half…" autocomplete="off"></label>
-        <p class="small muted food-status">${busy ? 'Looking at your photo…' : 'Gemini estimates the weight of each item, then its nutrients.'}</p>
+        ${raw(image ? html`<label class="field"><span>Anything the photo doesn't show? (optional)</span><input name="note" value="${note}" placeholder="fried in butter, 2 sugars, ate half…" autocomplete="off"></label>`
+          : html`<label class="field"><span>Write it the way you'd say it, with amounts if you know them</span><textarea name="note" rows="3" placeholder="2 eggs, a slice of bread with butter, black tea with 1 sugar">${note}</textarea></label>`)}
+        <p class="small muted food-status">${busy ? (image ? 'Looking at your photo…' : 'Working it out…') : image ? 'Gemini estimates the weight of each item, then its nutrients.' : 'Gemini works out each item\'s amount and nutrients; you can check them before logging.'}</p>
         <div class="sheet-actions"><button class="btn ghost" data-cancel>Cancel</button><button class="btn primary" data-go ${raw(busy ? 'disabled' : '')}>${busy ? 'Estimating…' : 'Estimate'}</button></div>` : html`
         <label class="field"><span>Name</span><input name="dish" value="${dish}"></label>
         <div class="food-items">
@@ -128,6 +131,7 @@ export function photoSheet(image, day = today()) {
     </div>`;
     wrap.querySelector('[data-cancel]')?.addEventListener('click', close);
     const n = wrap.querySelector('[name=note]'); if (n) n.oninput = () => (note = n.value);
+    if (n && !image && !busy && !note) setTimeout(() => n.focus(), 300);
     const dn = wrap.querySelector('[name=dish]'); if (dn) dn.oninput = () => (dish = dn.value);
     const ms = wrap.querySelector('[name=meal]'); if (ms) ms.onchange = () => (meal = ms.value);
     wrap.querySelector('[data-go]')?.addEventListener('click', run);
@@ -141,6 +145,7 @@ export function photoSheet(image, day = today()) {
     });
   };
   async function run() {
+    if (!image && !note.trim()) { toast('Write what you ate or drank first.'); return; }
     busy = true; draw();
     ctrl = new AbortController();
     try {
