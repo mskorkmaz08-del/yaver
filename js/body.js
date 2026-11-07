@@ -1,4 +1,4 @@
-// Body (v56): Mustafa's weight, height and training, an athletic target weight,
+// Body (v56, plan and training since v57): Mustafa's weight, height and training, an athletic target weight,
 // what each logged day of eating does to the body, and where a month of eating
 // like this leads. Every number here is an estimate from standard formulas; the
 // screen says so, and real weigh-ins are what keep it honest.
@@ -20,6 +20,7 @@
 import * as db from './db.js';
 import * as D from './data.js';
 import { today, addDays } from './util.js';
+import * as T from './training.js';
 
 export const ACTIVITY = [['low', 'Mostly sitting', 1.2], ['light', 'On my feet a bit, walk daily', 1.375], ['moderate', 'Active job or sport 3-5 days', 1.55], ['high', 'Hard training most days', 1.725]];
 export const EXPERIENCE = [['new', 'New to lifting (under 1 year)', 1], ['some', '1 to 3 years', 0.5], ['long', 'More than 3 years', 0.25]];
@@ -56,15 +57,18 @@ export function profile() {
   else { bodyFat = 1.2 * bmi + 0.23 * age - 10.8 * (male ? 1 : 0) - 5.4; fatFrom = 'BMI'; }
   bodyFat = Math.min(50, Math.max(male ? 5 : 10, bodyFat));
   const lean = kg * (1 - bodyFat / 100);
-  const activity = ACTIVITY.find(a => a[0] === db.setting('bodyActivity', 'light')) || ACTIVITY[1];
+  // Day to day plus the training plan (4 sessions a week by default): "moderate" unless set.
+  const activity = ACTIVITY.find(a => a[0] === db.setting('bodyActivity', 'moderate')) || ACTIVITY[2];
   const bmr = 10 * kg + 6.25 * height - 5 * age + (male ? 5 : -161);
-  const training = Number(db.setting('bodyTraining', 0)) || 0;
+  // Strength sessions a week: what was actually logged in the last two weeks, else the plan.
+  const logged = T.recentPerWeek();
+  const training = logged ?? T.daysAWeek();
   const exp = EXPERIENCE.find(e => e[0] === db.setting('bodyExperience', 'new')) || EXPERIENCE[0];
   // Muscle a month at best, from training sessions a week and years of training.
   const muscleCap = (male ? 0.9 : 0.45) * exp[2] * Math.min(1, training / 3);
   return {
     kg, height, sex, male, age, bmi: r1(bmi), bodyFat: r1(bodyFat), fatFrom, waist, lean: r1(lean), fatKg: r1(kg - lean),
-    ffmi: r1(lean / (m * m)), bmr: Math.round(bmr), tdee: Math.round(bmr * activity[2]), activity: activity[0], training, experience: exp[0], muscleCap,
+    ffmi: r1(lean / (m * m)), bmr: Math.round(bmr), tdee: Math.round(bmr * activity[2]), activity: activity[0], training, trainingFrom: logged == null ? 'plan' : 'logged', experience: exp[0], muscleCap,
     weighedOn: w.date,
   };
 }
@@ -82,12 +86,23 @@ export function target(p = profile()) {
   const fatToLose = r1(Math.max(0, p.fatKg - kg * bf / 100));
   // The plan: cut first if clearly over the target fat, otherwise a lean gain.
   const cut = p.bodyFat > bf + 4;
-  const calories = Math.round((p.tdee + (cut ? -450 : 250)) / 10) * 10;
-  const protein = Math.round(p.kg * (cut ? 2.0 : 1.8) / 5) * 5;
+  // Diet for the goal: a moderate deficit to lose fat first (keeps strength and
+  // muscle), otherwise a small surplus of about 10% for a lean gain. Protein 2.2 g/kg
+  // while cutting, 1.8 g/kg while gaining (Morton 2018: gains plateau near 1.6,
+  // up to 2.2; more helps hold muscle in a deficit). Fat 25% of calories (ACSM:
+  // 20-35%), the rest carbohydrate, which fuels sprint and power work.
+  const calories = Math.round((p.tdee + (cut ? -450 : Math.min(300, p.tdee * 0.1))) / 10) * 10;
+  const protein = Math.round(p.kg * (cut ? 2.2 : 1.8) / 5) * 5;
+  const fat = Math.round((calories * 0.25) / 9 / 5) * 5;
+  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4 / 5) * 5);
   const monthlyFat = cut ? (450 * 30) / FAT_KCAL : 0;
-  const monthlyMuscle = p.muscleCap || (p.male ? 0.9 : 0.45) * 0.5;
-  const months = Math.ceil(Math.max(cut ? fatToLose / Math.max(0.1, monthlyFat) : 0, muscle / Math.max(0.05, monthlyMuscle)));
-  return { kg, low: at(ffmi - 1), high: at(ffmi + 1), bodyFat: bf, ffmi, lean: r1(lean), muscle, fatToLose, mode: cut ? 'cut' : 'gain', calories, protein, months: Math.min(months, 60) };
+  // Time to the target if the plan is followed: the fat-loss phase (some muscle still
+  // comes with high protein and lifting), then the lean gain at the plan's best rate.
+  const exp = EXPERIENCE.find(e => e[0] === p.experience) || EXPERIENCE[0];
+  const monthlyMuscle = Math.max(0.05, (p.male ? 0.9 : 0.45) * exp[2] * Math.min(1, T.daysAWeek() / 3));
+  const cutMonths = cut ? fatToLose / Math.max(0.1, monthlyFat) : 0;
+  const months = Math.ceil(cutMonths + Math.max(0, muscle - cutMonths * monthlyMuscle * 0.4) / monthlyMuscle);
+  return { kg, low: at(ffmi - 1), high: at(ffmi + 1), bodyFat: bf, ffmi, lean: r1(lean), muscle, fatToLose, mode: cut ? 'cut' : 'gain', calories, protein, fat, carbs, months: Math.min(months, 60) };
 }
 
 // What one day of eating did: energy balance, then fat and muscle in grams.
@@ -151,18 +166,10 @@ export function status() {
   return { profile: p, target: target(p), today: t, week: { ...sumUp(week), list: week }, month: sumUp(month), projection };
 }
 
-// A body shape for the figure: how broad (muscle) and how soft (fat) it is.
-export function shape(p, { kg, bodyFat } = {}) {
-  kg ??= p.kg; bodyFat ??= p.bodyFat;
-  const m = p.height / 100;
-  const lean = kg * (1 - bodyFat / 100);
-  return { ffmi: lean / (m * m), bodyFat };
-}
-
 // For the assistant.
 export function forAI() {
   const s = status();
-  if (!s) return { missing: 'No body profile yet. Ask for height (cm), weight (kg), birth year, and strength sessions a week, or point to the Body screen (Diet → Body).' };
+  if (!s) return { missing: 'No body profile yet. Ask for height (cm) and weight (kg), or point to the Body screen (Diet → Body).' };
   const g = x => `${Math.round(x)} g`;
   return {
     profile: { ...s.profile, muscleCap: `${r1(s.profile.muscleCap)} kg muscle a month at best` },
@@ -171,6 +178,8 @@ export function forAI() {
     week: `${s.week.days} counted days: balance ${s.week.balance} kcal, fat ${g(s.week.fat)}, muscle ${g(s.week.muscle)}`,
     month: `${s.month.days} counted days: balance ${s.month.balance} kcal, fat ${g(s.month.fat)}, muscle ${g(s.month.muscle)}`,
     projection: s.projection,
+    goal: 'Athletic: muscular, strong, fast and flexible',
+    training: { daysAWeek: T.daysAWeek(), today: T.sessionOn()?.name || 'rest and mobility', doneLast14Days: T.workouts().filter(w => w.date >= addDays(today(), -13)).length, setsThisWeek: T.setsThisWeek() },
     weighins: weighins().slice(-10).map(w => `${w.date}: ${w.kg} kg${w.waist ? `, waist ${w.waist} cm` : ''}${w.fat ? `, ${w.fat}% fat` : ''}`),
     note: 'Estimates from standard formulas (Mifflin-St Jeor, RFM or Deurenberg body fat, FFMI target). Real weigh-ins over weeks are the check. Not medical advice.',
   };

@@ -1,9 +1,9 @@
 // Service worker: keeps a copy of the app on the phone so Yaver opens
 // instantly and works offline. Bump VERSION whenever app files change.
-const VERSION = 'yaver-v56';
+const VERSION = 'yaver-v57';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js', 'js/applecal.js', 'js/teams.js', 'js/body.js', 'js/foodscan.js', 'js/foodgaps.js', 'js/dietlog.js', 'js/views/teams.js', 'js/views/body.js',
+  'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js', 'js/applecal.js', 'js/teams.js', 'js/body.js', 'js/training.js', 'js/anatomy.js', 'js/foodscan.js', 'js/foodgaps.js', 'js/dietlog.js', 'js/views/teams.js', 'js/views/body.js',
   'js/ai/claude.js', 'js/ai/tools.js', 'js/ai/assistant.js', 'js/ai/gemini.js', 'js/ai/provider.js', 'js/ai/mac.js', 'js/ai/voice.js', 'js/ai/live.js', 'js/cetele.js', 'js/views/cetele.js',
   'js/course.js', 'js/keys.js', 'js/command.js', 'js/sync.js', 'js/crypto.js', 'js/views/course.js', 'js/views/lesson.js', 'js/views/skills.js', 'js/skills.js', 'js/sims.js', 'js/sound.js', 'js/focus.js', 'js/mech.js', 'js/notebook.js',
   // (no music since v55)

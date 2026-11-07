@@ -12,6 +12,7 @@ import * as T from '../teams.js';
 import * as L from '../dietlog.js';
 import * as G from '../foodgaps.js';
 import * as B from '../body.js';
+import * as TR from '../training.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -283,6 +284,12 @@ const TOOLS = [
     input_schema: obj({ kg: { type: 'number' }, date: { type: 'string', description: 'YYYY-MM-DD, default today' }, waist_cm: { type: 'number' }, body_fat_pct: { type: 'number' } }, ['kg']),
     run: async ({ kg, date, waist_cm, body_fat_pct }) => { await B.logWeight({ kg, date: date || today(), waist: waist_cm, fat: body_fat_pct }); return { ok: true, now: B.forAI().profile || null }; },
   },
+  {
+    name: 'log_workout',
+    description: 'Mark a training session done (or undo it) on a day. With no session, the plan\'s session for that day. Sessions: ' + Object.keys(TR.SESSIONS).join(', ') + '.',
+    input_schema: obj({ date: { type: 'string', description: 'YYYY-MM-DD, default today' }, session: { type: 'string', enum: Object.keys(TR.SESSIONS) } }),
+    run: async ({ date, session }) => { const r = await TR.markDone(date || today(), session || TR.sessionOn(date || today())?.key || 'fullA'); return r ? { ok: true, done: r.name } : { ok: true, undone: true }; },
+  },
   // ----- Diet -----
   {
     name: 'log_meal',
@@ -352,7 +359,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['log_weight', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['log_weight', 'log_workout', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -369,6 +376,7 @@ export function describeAction(name, input) {
   switch (name) {
     case 'log_cetele': return `Çetele · ${input.item}${input.done !== undefined ? (input.done ? ' done' : ' cleared') : input.set !== undefined ? ` = ${input.set}` : ` +${input.add ?? 1}`}`;
     case 'set_cetele_item': return input.remove ? `Removed ${input.name} from çetele` : `Çetele · ${input.name}: ${input.target ?? ''} ${input.unit ?? ''} per ${input.per || 'day'}`.replace(/\s+/g, ' ');
+    case 'log_workout': return `Training done${input.session ? ` · ${TR.SESSIONS[input.session]?.name || ''}` : ''}`;
     case 'log_weight': return `Weight ${input.kg} kg${input.waist_cm ? ` · waist ${input.waist_cm} cm` : ''}`;
     case 'add_person': return `${input.name} added to ${T.TEAMS[input.team] || 'Students'}`;
     case 'log_team_activity': return `Logged “${input.title}”${input.place ? ` at ${input.place}` : ''}${input.people?.length ? ` · ${input.people.length} people` : ''}`;
