@@ -4,6 +4,7 @@ import { html, raw, today, addDays, fmtDay, shrinkImage, toast, haptic } from '.
 import * as F from '../foodscan.js';
 import * as L from '../dietlog.js';
 import * as G from '../foodgaps.js';
+import * as B from '../body.js';
 import { ring } from '../ui.js';
 import { icon } from '../icons.js';
 import { mealForm } from '../forms.js';
@@ -12,7 +13,7 @@ import { openAssistant } from '../ai/assistant.js';
 let day = today();
 let span = 7;
 
-export function render(root) {
+export function render(root, go) {
   const d = D.dietDay(day);
   const g = d.goals;
   const macro = (label, v, goal, color) => html`
@@ -24,7 +25,7 @@ export function render(root) {
   root.innerHTML = html`
     <header class="page-head">
       <div><p class="path">Yaver <b>·</b> diet</p><h1><span class="num">${Math.max(0, g.dailyCalories - Math.round(d.calories))}</span> kcal left</h1></div>
-      <button class="icon-btn primary" data-add aria-label="Log meal">${raw(icon('plus'))}</button>
+      <div class="head-btns"><button class="icon-btn" data-body aria-label="Body">${raw(icon('body'))}</button><button class="icon-btn primary" data-add aria-label="Log meal">${raw(icon('plus'))}</button></div>
     </header>
     <div class="switch"><button data-d="-1" aria-label="Previous day">${raw(icon('chevronLeft'))}</button><span>${fmtDay(day).toLowerCase()}</span><button data-d="1" ${raw(day === today() ? 'disabled' : '')} aria-label="Next day">${raw(icon('chevronRight'))}</button></div>
 
@@ -36,6 +37,8 @@ export function render(root) {
         ${raw(macro('Fat', d.fat, fatGoal, 'var(--amber)'))}
       </div>
     </section>
+
+    ${raw(day === today() ? bodyLine() : '')}
 
     <div class="btn-row">
       <button class="btn ghost" data-snap>${raw(icon('camera'))} Photo a meal</button>
@@ -60,6 +63,7 @@ export function render(root) {
     ${raw(diary())}`;
 
   root.querySelector('[data-add]').onclick = () => mealForm(null, day);
+  root.querySelectorAll('[data-body]').forEach(b => (b.onclick = () => go('body')));
   root.querySelectorAll('[data-type]').forEach(b => (b.onclick = () => mealForm(null, day, { meal: b.dataset.type })));
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = () => mealForm(db.get('meals', b.dataset.id))));
   root.querySelectorAll('[data-d]').forEach(b => (b.onclick = () => { day = addDays(day, Number(b.dataset.d)); render(root); }));
@@ -76,6 +80,15 @@ export function render(root) {
     if (root.isConnected) render(root);
   });
   root.querySelector('[data-ai]').onclick = () => openAssistant('Given what I ate today and my goals, suggest 3 simple options for my next meal with rough calories and protein.');
+}
+
+// What today's eating does to the body (v56), one line that opens the Body screen.
+function bodyLine() {
+  const s = B.status();
+  if (!s) return html`<button class="card body-line" data-body><span class="label">body</span><span class="small">Add your height and weight: athletic target, and what each day does to fat and muscle.</span></button>`;
+  const t = s.today, r = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(Math.round(n))}`;
+  return html`<button class="card body-line" data-body><span class="label">body · ${s.profile.kg} kg → ${s.target.kg} kg</span>
+    <span class="small">${raw(t.counted ? html`Today ${r(t.balance)} kcal: fat <b class="mono">${r(t.fat)} g</b>, muscle <b class="mono">${r(t.muscle)} g</b>` : 'Log today\'s meals to see what they do to fat and muscle.')}</span></button>`;
 }
 
 // ---------- Fill the gaps (v55): foods for the rest of today or tomorrow ----------

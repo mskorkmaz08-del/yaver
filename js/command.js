@@ -56,7 +56,7 @@ function items() {
       run: () => logCetele(r.id, check ? 1 : step, check),
     });
   }
-  const screens = [['home', 'home', 'Home'], ['cetele', 'tally', 'Çetele'], ['study', 'book', 'Study'], ['course', 'book', 'Course'], ['calendar', 'calendar', 'Meet'], ['teams', 'users', 'Teams'], ['money', 'wallet', 'Money'], ['diet', 'leaf', 'Diet'], ['map', 'map', 'Map'], ['skills', 'trophy', 'Skills'], ['settings', 'settings', 'Settings']];
+  const screens = [['home', 'home', 'Home'], ['cetele', 'tally', 'Çetele'], ['study', 'book', 'Study'], ['course', 'book', 'Course'], ['calendar', 'calendar', 'Meet'], ['teams', 'users', 'Teams'], ['money', 'wallet', 'Money'], ['diet', 'leaf', 'Diet'], ['body', 'body', 'Body'], ['map', 'map', 'Map'], ['skills', 'trophy', 'Skills'], ['settings', 'settings', 'Settings']];
   for (const [to, ic, name] of screens) out.push({ group: 'Go to', icon: ic, label: name, run: () => goTo(to), keys: to });
   return out;
 }

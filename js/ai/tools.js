@@ -11,6 +11,7 @@ import * as CT from '../cetele.js';
 import * as T from '../teams.js';
 import * as L from '../dietlog.js';
 import * as G from '../foodgaps.js';
+import * as B from '../body.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -269,6 +270,19 @@ const TOOLS = [
       return list.slice(0, 8).map(p => ({ name: p.name, distance: p.km != null ? Places.fmtDist(p.km) : undefined, address: p.address || undefined, hours: p.hours || undefined, directions: Places.directionsUrl(p) }));
     },
   },
+  // ----- Body (v56) -----
+  {
+    name: 'body_status',
+    description: 'The user\'s body: weight, height, estimated body fat, lean mass, FFMI, energy burned a day, the athletic target weight and the plan to it (calories, protein, months), what today, the last 7 and 30 days of eating did (fat and muscle in grams), and a projection for the next month and 3 months if eating continues like the last 14 days. All estimates.',
+    input_schema: obj({}),
+    run: () => B.forAI(),
+  },
+  {
+    name: 'log_weight',
+    description: 'Log a weigh-in: weight in kg, and optionally waist at the navel in cm or a measured body fat %.',
+    input_schema: obj({ kg: { type: 'number' }, date: { type: 'string', description: 'YYYY-MM-DD, default today' }, waist_cm: { type: 'number' }, body_fat_pct: { type: 'number' } }, ['kg']),
+    run: async ({ kg, date, waist_cm, body_fat_pct }) => { await B.logWeight({ kg, date: date || today(), waist: waist_cm, fat: body_fat_pct }); return { ok: true, now: B.forAI().profile || null }; },
+  },
   // ----- Diet -----
   {
     name: 'log_meal',
@@ -338,7 +352,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['log_weight', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -355,6 +369,7 @@ export function describeAction(name, input) {
   switch (name) {
     case 'log_cetele': return `Çetele · ${input.item}${input.done !== undefined ? (input.done ? ' done' : ' cleared') : input.set !== undefined ? ` = ${input.set}` : ` +${input.add ?? 1}`}`;
     case 'set_cetele_item': return input.remove ? `Removed ${input.name} from çetele` : `Çetele · ${input.name}: ${input.target ?? ''} ${input.unit ?? ''} per ${input.per || 'day'}`.replace(/\s+/g, ' ');
+    case 'log_weight': return `Weight ${input.kg} kg${input.waist_cm ? ` · waist ${input.waist_cm} cm` : ''}`;
     case 'add_person': return `${input.name} added to ${T.TEAMS[input.team] || 'Students'}`;
     case 'log_team_activity': return `Logged “${input.title}”${input.place ? ` at ${input.place}` : ''}${input.people?.length ? ` · ${input.people.length} people` : ''}`;
     case 'add_expense': return `Added ${input.amount} · ${input.category}${input.note ? ` · ${input.note}` : ''}`;
