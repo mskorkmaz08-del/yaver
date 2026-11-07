@@ -144,7 +144,7 @@ export function photoSheet(image, day = today()) {
     busy = true; draw();
     ctrl = new AbortController();
     try {
-      result = await F.scanFood(image, note, { signal: ctrl.signal });
+      result = await F.scanFood(image, note, { signal: ctrl.signal, onStatus: t => { const el = wrap.querySelector('.food-status'); if (el) el.textContent = t; } });
       items = result.items.map(i => ({ ...i }));
       dish = result.dish;
       if (D.MEAL_TYPES.includes(result.meal)) meal = result.meal;

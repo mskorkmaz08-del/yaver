@@ -8,7 +8,7 @@
 // already uses. The prompt follows that study's best single-pass strategy:
 // judge the portion actually visible (not a standard serving), weight first.
 import * as db from './db.js';
-import { pickModel } from './ai/gemini.js';
+import { flashModels } from './ai/gemini.js';
 
 const API = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -51,31 +51,70 @@ Turkish and Central Asian dishes are common (the user lives in Kazakhstan). If t
 ${note ? `The user adds: "${note}". Trust this over the photo where they differ.` : ''}
 Also guess the meal from the time now: ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.`;
 
-export async function scanFood(image, note = '', { signal } = {}) {
+// Gemini's free models get overloaded at busy times (503 "high demand"). So each
+// try has a time limit, thinking is kept low (much faster, same estimate), and a
+// busy model hands over to the next one: the model that worked last time, the
+// chat model, other Flash models, then Flash Lite (nearly as accurate in the
+// benchmark, and usually free when the others are busy).
+const TRY_MS = 30000, MAX_TRIES = 4;
+const BUSY = new Set([429, 500, 502, 503, 504]);
+
+function thinking(model) {
+  if (/^gemini-2\.5-flash-lite/.test(model)) return {};
+  if (/^gemini-2\.5-flash/.test(model)) return { thinkingConfig: { thinkingBudget: 0 } };
+  if (/^gemini-[3-9]/.test(model)) return { thinkingConfig: { thinkingLevel: 'low' } };
+  return {};
+}
+
+export async function scanFood(image, note = '', { signal, onStatus } = {}) {
   const key = db.setting('geminiKey', '');
   if (!key) throw Object.assign(new Error('Food photos use Gemini (free). Paste your Gemini key in Settings → AI first.'), { code: 'nokey' });
-  let model = db.setting('geminiModel', '') || await pickModel();
-  const call = m => fetch(`${API}/models/${m}:generateContent`, {
-    method: 'POST', signal,
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ inlineData: { mimeType: image.media_type, data: image.data } }, { text: PROMPT(note.trim()) }] }],
-      generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA },
-    }),
+  const all = await flashModels();
+  const order = [...new Set([db.setting('foodModel', ''), db.setting('geminiModel', ''), ...all.filter(m => !/lite/.test(m)).slice(0, 2), ...all.filter(m => /lite/.test(m))].filter(Boolean))].slice(0, MAX_TRIES);
+  const body = (m, think) => JSON.stringify({
+    contents: [{ role: 'user', parts: [{ inlineData: { mimeType: image.media_type, data: image.data } }, { text: PROMPT(note.trim()) }] }],
+    generationConfig: { temperature: 0.2, responseMimeType: 'application/json', responseSchema: SCHEMA, ...(think ? thinking(m) : {}) },
   });
-  let res;
-  try { res = await call(model); } catch (e) {
-    if (e.name === 'AbortError') throw e;
-    throw new Error('Could not reach Gemini. Check your connection.');
+  let lastError = '';
+  for (const [i, model] of order.entries()) {
+    if (i) onStatus?.(`Gemini is busy. Trying ${model.replace(/^gemini-/, '')}…`);
+    for (const think of [true, false]) {
+      const ctrl = new AbortController();
+      const stop = () => ctrl.abort();
+      signal?.addEventListener('abort', stop);
+      const timer = setTimeout(stop, TRY_MS);
+      let res;
+      try {
+        res = await fetch(`${API}/models/${model}:generateContent`, { method: 'POST', signal: ctrl.signal, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: body(model, think) });
+        if (res.ok) {
+          const out = await res.json();
+          const text = (out.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+          let r;
+          try { r = JSON.parse(text.replace(/^```(json)?|```$/g, '').trim()); } catch { lastError = 'unreadable'; break; }
+          if (db.setting('foodModel', '') !== model) db.setSetting('foodModel', model);
+          return normalize(r, model);
+        }
+      } catch (e) {
+        if (signal?.aborted) throw Object.assign(new Error('Stopped.'), { name: 'AbortError' });
+        lastError = ctrl.signal.aborted ? 'timeout' : 'network';
+        if (lastError === 'network' && !navigator.onLine) throw new Error('You are offline. Log it by hand, or try again when you are back online.');
+        break; // next model
+      } finally { clearTimeout(timer); signal?.removeEventListener('abort', stop); }
+      let msg = '';
+      try { msg = (await res.json()).error?.message || ''; } catch {}
+      // A model that rejects the thinking setting: same model again without it.
+      if (res.status === 400 && think && /think/i.test(msg)) continue;
+      if (res.status === 400 && /api key/i.test(msg)) throw new Error('Google says the Gemini key is not valid. Paste it again in Settings → AI.');
+      if (res.status === 403) throw new Error(`Google refused the Gemini key: ${msg || 'permission denied'}.`);
+      lastError = BUSY.has(res.status) ? 'busy' : res.status === 404 ? 'missing' : (msg || `error ${res.status}`);
+      if (res.status === 404 && db.setting('foodModel', '') === model) db.setSetting('foodModel', '');
+      break; // next model
+    }
   }
-  if (res.status === 404) { model = await pickModel(); res = await call(model); }
-  if (res.status === 429) throw new Error('Free Gemini limit reached for now. Wait a minute and try again.');
-  if (!res.ok) { let m = ''; try { m = (await res.json()).error?.message || ''; } catch {} throw new Error(m || `Gemini error ${res.status}`); }
-  const out = await res.json();
-  const text = (out.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
-  let r;
-  try { r = JSON.parse(text.replace(/^```(json)?|```$/g, '').trim()); } catch { throw new Error('Gemini gave an answer Yaver could not read. Try the photo again.'); }
-  return normalize(r, model);
+  if (lastError === 'unreadable') throw new Error('Gemini gave an answer Yaver could not read. Try the photo again.');
+  if (lastError === 'busy' || lastError === 'timeout') throw new Error('Gemini is overloaded right now (on Google\'s side) and every free model was busy. Try again in a minute, or log the meal by hand.');
+  if (lastError === 'network') throw new Error('Could not reach Gemini. Check your connection.');
+  throw new Error(`Gemini could not read the photo (${lastError}).`);
 }
 
 const round = (n, d = 1) => Math.round((Number(n) || 0) * 10 ** d) / 10 ** d;

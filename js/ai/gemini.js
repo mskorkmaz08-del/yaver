@@ -56,6 +56,28 @@ export async function pickModel() {
   return model;
 }
 
+// Every Flash and Flash Lite model this key can use, best first (refreshed daily).
+export async function flashModels() {
+  const k = key();
+  const cached = db.setting('foodModels', null);
+  if (cached?.list?.length && Date.now() - cached.at < 86400e3) return cached.list;
+  let names = [];
+  try {
+    const res = await fetch(`${API}/models?pageSize=200`, { headers: { 'x-goog-api-key': k }, signal: AbortSignal.timeout(8000) });
+    if (res.ok) names = ((await res.json()).models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace('models/', ''))
+      .filter(n => /^gemini-[\d.]+-flash/.test(n) && !/(image|tts|live|audio|thinking-exp|embedding)/.test(n));
+  } catch { /* keep the fallbacks below */ }
+  const ver = n => parseFloat((n.match(/^gemini-([\d.]+)/) || [0, 0])[1]);
+  const lite = n => /lite/.test(n), pre = n => /preview|exp/.test(n);
+  names.sort((a, b) => lite(a) - lite(b) || pre(a) - pre(b) || ver(b) - ver(a) || a.length - b.length);
+  const list = names.length ? names : ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+  await db.setSetting('foodModels', { at: Date.now(), list });
+  return list;
+}
+
+
 async function apiError(res) {
   let msg = '';
   try { msg = (await res.json()).error?.message || ''; } catch {}
@@ -74,8 +96,23 @@ function thinkingOff(model) {
   return {};
 }
 
-async function streamOnce(contents, { onDelta, onStatus, signal, fast }) {
-  const model = db.setting('geminiModel', '') || await pickModel();
+// Free Gemini models are often overloaded ("high demand", 503). The chat then
+// moves to the next Flash model, and finally Flash Lite, before giving up.
+const BUSY = new Set([429, 500, 502, 503, 504]);
+async function streamOnce(contents, opts) {
+  const first = db.setting('geminiModel', '') || await pickModel();
+  let others = [];
+  for (let i = 0; ; i++) {
+    const model = i ? others[i - 1] : first;
+    const r = await streamModel(model, contents, opts);
+    if (r !== 'busy') return r;
+    if (i === 0) others = (await flashModels().catch(() => [])).filter(m => m !== first).slice(0, 3);
+    if (i >= others.length) throw new Error('Gemini is overloaded or at its free limit right now (on Google\'s side, not your key), and the backup models were busy too. Try again in a minute.');
+    opts.onStatus?.(`Gemini is busy. Trying ${others[i].replace(/^gemini-/, '')}…`);
+  }
+}
+
+async function streamModel(model, contents, { onDelta, onStatus, signal, fast }) {
   const body = {
     systemInstruction: { parts: [{ text: `${STATIC_SYSTEM}\n\nWeb search is not available in this mode: answer from what you know, and say plainly when something may be out of date.\n\n${dynamicContext()}` }] },
     contents,
@@ -95,7 +132,9 @@ async function streamOnce(contents, { onDelta, onStatus, signal, fast }) {
     throw new Error(navigator.onLine ? 'Could not reach Gemini. Check your connection.' : 'You are offline. Your trackers still work; Yaver needs internet to think.');
   }
   // A model that rejects the thinking setting: ask again without it.
-  if (res.status === 400 && fast) return streamOnce(contents, { onDelta, onStatus, signal, fast: false });
+  if (res.status === 400 && fast) return streamModel(model, contents, { onDelta, onStatus, signal, fast: false });
+  // Free limits are per model too, so a 429 is also worth another model.
+  if (BUSY.has(res.status)) return 'busy';
   if (!res.ok) throw await apiError(res);
 
   // Server-sent events: each "data:" line is a partial response.

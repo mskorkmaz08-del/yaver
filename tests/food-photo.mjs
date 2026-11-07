@@ -21,6 +21,7 @@ const check = (name, ok, extra = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} $
 
 const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
 let sent = null;
+const calls = [];
 const answer = {
   dish: 'Plov with salad', meal: 'Lunch', confidence: 'medium', note: 'Oil in the rice is hard to see.',
   items: [
@@ -31,7 +32,11 @@ const answer = {
 await page.route('https://generativelanguage.googleapis.com/**', async route => {
   const req = route.request();
   if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
-  if (req.url().includes('/models?')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ models: [{ name: 'models/gemini-3-flash', supportedGenerationMethods: ['generateContent'] }] }) });
+  if (req.url().includes('/models?')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ models: [{ name: 'models/gemini-3-flash', supportedGenerationMethods: ['generateContent'] }, { name: 'models/gemini-3.1-flash-lite', supportedGenerationMethods: ['generateContent'] }] }) });
+  calls.push(req.url().match(/models\/([^:]+):/)[1]);
+  // The main model is overloaded ("high demand"); Flash Lite answers.
+  if (req.url().includes('gemini-3-flash:')) return route.fulfill({ status: 503, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ error: { code: 503, message: 'The model is overloaded. Please try again later.', status: 'UNAVAILABLE' } }) });
+  if (req.url().includes('streamGenerateContent')) return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'text/event-stream' }, body: `data: ${JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: 'Lite here.' }] }, finishReason: 'STOP' }] })}\r\n\r\n` });
   sent = { url: req.url(), body: req.postDataJSON() };
   await new Promise(r => setTimeout(r, 300));
   return route.fulfill({ status: 200, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(answer) }] } }] }) });
@@ -50,7 +55,11 @@ await page.fill('.food-sheet [name=note]', 'cooked with lots of oil');
 await page.click('.food-sheet [data-go]');
 await page.waitForSelector('.food-sheet [data-g="0"]', { timeout: 10000 });
 const req = sent?.body;
-check('sends the photo to Gemini', !!req?.contents?.[0]?.parts?.[0]?.inlineData?.data && /gemini-3-flash:generateContent/.test(sent.url), sent?.url);
+check('sends the photo to Gemini', !!req?.contents?.[0]?.parts?.[0]?.inlineData?.data, sent?.url);
+check('busy model hands over to Flash Lite', calls.join() === 'gemini-3-flash,gemini-3.1-flash-lite', calls.join());
+check('keeps thinking low for speed', req?.generationConfig?.thinkingConfig?.thinkingLevel === 'low');
+const remembered = await page.evaluate(async () => (await import('./js/db.js')).setting('foodModel'));
+check('remembers the model that answered', remembered === 'gemini-3.1-flash-lite', remembered);
 check('asks for JSON with a schema', req?.generationConfig?.responseMimeType === 'application/json' && !!req.generationConfig.responseSchema?.properties?.items);
 check('prompt asks for the visible portion and includes the note', /actually visible/.test(req?.contents[0].parts[1].text) && /lots of oil/.test(req?.contents[0].parts[1].text));
 const before = await page.textContent('.food-total b');
@@ -68,6 +77,15 @@ check('meal logged with extras', meal?.name === 'Plov with salad' && meal.meal =
 const card = await page.evaluate(() => [...document.querySelectorAll('.nutrients .nut span')].map(s => s.textContent));
 check('nutrients card shows fiber, sodium and vitamins', card.includes('Fiber') && card.includes('Sodium') && card.includes('Vitamin C'), card.join(', '));
 await page.screenshot({ path: join(dir, 'diet.png'), fullPage: true });
+// The chat also moves to a backup model when the main one is overloaded.
+calls.length = 0;
+await page.evaluate(async () => { const db = await import('./js/db.js'); await db.setSetting('geminiModel', 'gemini-3-flash'); });
+await page.click('#fab');
+await page.fill('[data-input]', 'hello');
+await page.click('[data-send]');
+await page.waitForFunction(() => document.querySelector('.chat-wrap:not(.busy)') && [...document.querySelectorAll('.msg.bot .bot-text')].some(b => /Lite here/.test(b.textContent)), null, { timeout: 15000 }).catch(() => {});
+const chat = await page.evaluate(() => [...document.querySelectorAll('.msg.bot .bot-text')].map(b => b.textContent).join(' | '));
+check('chat falls back when Gemini is busy', /Lite here/.test(chat) && calls[0] === 'gemini-3-flash', `${calls.join()} → ${chat.slice(0, 60)}`);
 check('no page errors', !errors.length, errors.join(' | '));
 await browser.close();
 console.log(fail.length ? `\n${fail.length} failed` : '\nall checks passed');
