@@ -1,0 +1,74 @@
+// Food diary (v54): everything logged in Diet, looked at over time. Meals live in
+// the synced 'meals' store, so they survive app updates and move between devices;
+// this module adds them up per day, compares the averages with Mustafa's goals and
+// the daily values, and flags what has been running low. Vitamins and minerals only
+// come from photo or typed meals, so they are averaged over the days that have them.
+import * as db from './db.js';
+import * as D from './data.js';
+import { today, addDays } from './util.js';
+import { MICROS, DAILY } from './foodscan.js';
+
+const r1 = n => Math.round((Number(n) || 0) * 10) / 10;
+
+export function days(n = 30, end = today()) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const k = addDays(end, -i);
+    const d = D.dietDay(k);
+    out.push({ date: k, meals: d.meals.length, detailed: d.detailed, calories: d.calories, protein: d.protein, carbs: d.carbs, fat: d.fat, fiber: d.fiber, sugar: d.sugar, sodium: d.sodium, micros: d.micros });
+  }
+  return out;
+}
+
+// Averages over logged days, % of goal / daily value, and what is low or high.
+export function report(n = 30, end = today()) {
+  const all = days(n, end);
+  const logged = all.filter(d => d.meals);
+  const detailed = logged.filter(d => d.detailed);
+  const g = D.goals();
+  const avg = (list, f) => (list.length ? list.reduce((a, d) => a + (Number(f(d)) || 0), 0) / list.length : 0);
+  const pct = (v, ref) => (ref ? Math.round((v / ref) * 100) : null);
+  const nutrients = [
+    { key: 'calories', label: 'Calories', unit: 'kcal', avg: avg(logged, d => d.calories), ref: g.dailyCalories, kind: 'goal' },
+    { key: 'protein', label: 'Protein', unit: 'g', avg: avg(logged, d => d.protein), ref: g.dailyProtein, kind: 'goal' },
+    { key: 'fiber', label: 'Fiber', unit: 'g', avg: avg(detailed, d => d.fiber), ref: DAILY.fiber, kind: 'min', partial: true },
+    { key: 'sugar', label: 'Sugar', unit: 'g', avg: avg(detailed, d => d.sugar), ref: DAILY.sugar, kind: 'max', partial: true },
+    { key: 'sodium', label: 'Sodium', unit: 'mg', avg: avg(detailed, d => d.sodium), ref: DAILY.sodium, kind: 'max', partial: true },
+    ...MICROS.map(([key, label, unit, ref]) => ({ key, label, unit, avg: avg(detailed, d => d.micros[key]), ref, kind: key === 'caffeine' ? 'max' : 'min', partial: true })),
+  ].map(x => ({ ...x, avg: r1(x.avg), pct: pct(x.avg, x.ref) }));
+  const usable = x => (x.partial ? detailed.length : logged.length) > 0;
+  const low = nutrients.filter(x => usable(x) && x.kind !== 'max' && x.pct !== null && x.pct < 70).sort((a, b) => a.pct - b.pct);
+  const high = nutrients.filter(x => usable(x) && x.kind === 'max' && x.pct > 100).sort((a, b) => b.pct - a.pct);
+  return {
+    days: n, from: all[0].date, to: end,
+    loggedDays: logged.length, detailedDays: detailed.length,
+    nutrients: nutrients.filter(usable), low, high,
+    lowCalorieDays: logged.filter(d => g.dailyCalories && d.calories < g.dailyCalories * 0.7).map(d => d.date),
+    lowProteinDays: logged.filter(d => g.dailyProtein && d.protein < g.dailyProtein * 0.7).map(d => d.date),
+    missedDays: all.filter(d => !d.meals).map(d => d.date),
+  };
+}
+
+// For the assistant: the report plus a compact line per logged day.
+export function forAI(n = 30) {
+  const r = report(n);
+  return {
+    ...r,
+    nutrients: r.nutrients.map(x => `${x.label}: avg ${x.avg}${x.unit}${x.pct !== null ? ` (${x.pct}% of ${x.kind === 'goal' ? 'goal' : x.kind === 'max' ? 'limit' : 'daily value'})` : ''}`),
+    low: r.low.map(x => `${x.label} ${x.pct}%`), high: r.high.map(x => `${x.label} ${x.pct}%`),
+    perDay: days(n).filter(d => d.meals).map(d => `${d.date}: ${Math.round(d.calories)} kcal, P${Math.round(d.protein)}, ${d.meals} meals${d.detailed ? '' : ' (no vitamin data)'}`),
+    meals: db.all('meals').filter(m => m.date >= r.from).sort((a, b) => a.date.localeCompare(b.date)).map(m => `${m.date} ${m.meal}: ${m.name} (${m.calories} kcal)`).slice(-120),
+    note: 'Estimates from photos and descriptions. Vitamins and minerals only from photo or typed meals (detailedDays). Not a medical diagnosis.',
+  };
+}
+
+// The whole diary as a spreadsheet, one row per meal.
+export function csv() {
+  const cols = ['date', 'meal', 'name', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sugar_g', 'sodium_mg', ...MICROS.map(([k, , u]) => `${k}_${u === 'µg' ? 'ug' : u}`), 'items', 'source'];
+  const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const rows = db.all('meals').sort((a, b) => (a.date + D.MEAL_TYPES.indexOf(a.meal)).localeCompare(b.date + D.MEAL_TYPES.indexOf(b.meal))).map(m => [
+    m.date, m.meal, m.name, m.calories, m.protein, m.carbs, m.fat, m.fiber ?? '', m.sugar ?? '', m.sodium ?? '',
+    ...MICROS.map(([k]) => m.micros?.[k] ?? ''), (m.items || []).map(i => `${i.name} ${i.grams}g`).join('; '), m.source || 'manual',
+  ].map(q).join(','));
+  return [cols.join(','), ...rows].join('\n');
+}

@@ -1641,3 +1641,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .nutrients .nut b { font-size: 12px; font-weight: 500; min-width: 86px; text-align: right; }
 .nutrients .nut b small { color: var(--muted); }
 .nutrients .bar .over { background: var(--warn); }
+.diary .card-head .chips { gap: 4px; }
+.diary .chip { padding: 4px 10px; font-size: 13px; }
+.diary p { margin: 6px 0; }
+.diary .btn-row { margin-top: 10px; }

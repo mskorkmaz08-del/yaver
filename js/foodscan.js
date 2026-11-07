@@ -150,7 +150,7 @@ export function totals(items) {
 }
 
 // What gets stored on the meal row: whole-number macros as before, plus the extras.
-export function mealRow({ dish, items, meal, date, confidence }) {
+export function mealRow({ dish, items, meal, date, confidence, source = 'photo' }) {
   const t = totals(items);
   const micros = Object.fromEntries(MICROS.map(([k]) => [k, round(t[k], 1)]));
   return {
@@ -158,6 +158,6 @@ export function mealRow({ dish, items, meal, date, confidence }) {
     calories: Math.round(t.calories), protein: Math.round(t.protein), carbs: Math.round(t.carbs), fat: Math.round(t.fat),
     fiber: round(t.fiber), sugar: round(t.sugar), sodium: Math.round(t.sodium), micros,
     items: items.map(i => ({ name: i.name, grams: Math.round(i.grams), calories: Math.round(i.calories), protein: round(i.protein) })),
-    source: 'photo', confidence,
+    source, confidence,
   };
 }

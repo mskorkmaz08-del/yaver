@@ -176,6 +176,7 @@ yaver/
     ├── applecal.js         Read-only copy of Apple Calendar, fetched through the Mac bridge
     ├── teams.js            Dev team and students: people, activities, last met, who is overdue
     ├── foodscan.js         Food photos: Gemini estimates each item's weight and nutrients
+    ├── dietlog.js          Food diary: averages, what's running low, CSV export
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
     ├── icons.js            Line icons
@@ -257,6 +258,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**Food diary (v54).** Every meal already lives in the meals store in Yaver's database on the device: app updates never touch it, it is in Settings → Export backup, and with sync on it is also in the encrypted GitHub copy. Diet now has a food diary card for the last 7 or 30 days: how many days were logged, average calories and protein against your goals, and which vitamins and minerals have been under 70% of the daily value (or sodium, sugar and caffeine over the limit). "I feel weak: check my diet" asks the assistant to look through the diary with its new diet_history tool, and Download diary saves every meal as a CSV spreadsheet. Vitamins and minerals only come from photo or typed meals, so the card says how many days have that data.
 
 **Type a meal (v53).** Next to Photo a meal, Diet has Type a meal: write what you ate or drank the way you'd say it ("2 eggs, bread with butter, tea with 1 sugar"), and Gemini splits it into items, turns pieces, slices and cups into grams, and estimates the same nutrients as a photo. The same check sheet lets you change amounts before logging; with no amount given it assumes one home portion and says so.
 

@@ -9,6 +9,7 @@ import * as Places from '../places.js';
 import * as C from '../course.js';
 import * as CT from '../cetele.js';
 import * as T from '../teams.js';
+import * as L from '../dietlog.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -279,6 +280,12 @@ const TOOLS = [
     description: 'Meals, calories and macros for a day, with the user\'s goals.',
     input_schema: obj({ date }),
     run: ({ date: k = today() }) => { const d = D.dietDay(k); return { ...d, meals: d.meals.map(slim) }; },
+  },
+  {
+    name: 'diet_history',
+    description: 'The food diary over the last N days: average calories and protein against goals, fiber, sugar, sodium and vitamins and minerals against daily values, what is running low or over the limit, thin days, a line per logged day and every meal. Use it when the user feels weak, tired or unwell, or asks how they have been eating.',
+    input_schema: obj({ days: { type: 'number', description: 'How many days back, 1 to 180. Default 30.' } }),
+    run: ({ days = 30 }) => L.forAI(Math.max(1, Math.min(180, Math.round(days) || 30))),
   },
   // ----- Tasks & goals -----
   {

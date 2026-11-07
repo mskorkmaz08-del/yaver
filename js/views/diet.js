@@ -2,12 +2,14 @@ import * as D from '../data.js';
 import * as db from '../db.js';
 import { html, raw, today, addDays, fmtDay, shrinkImage, toast, haptic } from '../util.js';
 import * as F from '../foodscan.js';
+import * as L from '../dietlog.js';
 import { ring } from '../ui.js';
 import { icon } from '../icons.js';
 import { mealForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
 
 let day = today();
+let span = 7;
 
 export function render(root) {
   const d = D.dietDay(day);
@@ -46,11 +48,13 @@ export function render(root) {
       const items = d.meals.filter(m => kind(m) === type);
       return html`<section class="list">
         <h4 class="list-day">${type} <span>${items.reduce((a, m) => a + m.calories, 0)} kcal</span></h4>
-        ${raw(items.map(m => html`<button class="row" data-id="${m.id}"><span class="row-main"><b>${m.name}</b><small class="mono">P${m.protein} C${m.carbs} F${m.fat}${m.source === 'photo' ? ' · photo' : ''}</small></span><span class="row-amt">${m.calories}</span></button>`).join('') || `<button class="row add-row" data-type="${type}">+ ${type.toLowerCase()}</button>`)}
+        ${raw(items.map(m => html`<button class="row" data-id="${m.id}"><span class="row-main"><b>${m.name}</b><small class="mono">P${m.protein} C${m.carbs} F${m.fat}${m.source === 'photo' ? ' · photo' : m.source === 'typed' ? ' · typed' : ''}</small></span><span class="row-amt">${m.calories}</span></button>`).join('') || `<button class="row add-row" data-type="${type}">+ ${type.toLowerCase()}</button>`)}
       </section>`;
     }).join(''))}
 
-    ${raw(nutrients(d))}`;
+    ${raw(nutrients(d))}
+
+    ${raw(diary())}`;
 
   root.querySelector('[data-add]').onclick = () => mealForm(null, day);
   root.querySelectorAll('[data-type]').forEach(b => (b.onclick = () => mealForm(null, day, { meal: b.dataset.type })));
@@ -58,6 +62,9 @@ export function render(root) {
   root.querySelectorAll('[data-d]').forEach(b => (b.onclick = () => { day = addDays(day, Number(b.dataset.d)); render(root); }));
   root.querySelector('[data-snap]').onclick = () => pickPhoto(day);
   root.querySelector('[data-type-meal]').onclick = () => photoSheet(null, day);
+  root.querySelectorAll('[data-span]').forEach(b => (b.onclick = () => { span = Number(b.dataset.span); render(root); }));
+  root.querySelector('[data-weak]')?.addEventListener('click', () => openAssistant(`I feel weak or unwell. Look at what I have eaten and drunk over the last ${span} days (diet_history) and tell me plainly: am I eating enough, which vitamins or minerals look low, which days were thin, and what simple foods would close the gaps. Say what the data can't show, and when I should see a doctor instead.`));
+  root.querySelector('[data-csv]')?.addEventListener('click', exportDiary);
   root.querySelector('[data-ai]').onclick = () => openAssistant('Given what I ate today and my goals, suggest 3 simple options for my next meal with rough calories and protein.');
 }
 
@@ -139,7 +146,7 @@ export function photoSheet(image, day = today()) {
     wrap.querySelectorAll('[data-g]').forEach(inp => (inp.onchange = () => { const i = Number(inp.dataset.g); items[i] = F.scaleItem(result.items[i], Math.max(0, Number(inp.value) || 0)); setTimeout(draw); })); // redraw after the field's blur finishes
     wrap.querySelectorAll('[data-x]').forEach(b => (b.onclick = () => { items.splice(Number(b.dataset.x), 1); result.items.splice(Number(b.dataset.x), 1); draw(); }));
     wrap.querySelector('[data-log]')?.addEventListener('click', async () => {
-      await D.logMeal(F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: day, confidence: result.confidence }));
+      await D.logMeal(F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: day, confidence: result.confidence, source: image ? 'photo' : 'typed' }));
       haptic(); close();
       toast(`Logged ${Math.round(F.totals(items).calories)} kcal · ${Math.round(F.totals(items).protein)}g protein`);
     });
@@ -164,4 +171,30 @@ export function photoSheet(image, day = today()) {
   draw();
   document.body.append(wrap);
   requestAnimationFrame(() => wrap.classList.add('open'));
+}
+
+// ---------- Food diary: the last 7 or 30 days, what's running low, and an export ----------
+function diary() {
+  if (!db.all('meals').length) return '';
+  const r = L.report(span);
+  const get = k => r.nutrients.find(x => x.key === k);
+  const kc = get('calories'), pr = get('protein');
+  return html`<section class="card diary">
+    <div class="card-head"><p class="label">food diary</p>
+      <div class="chips">${raw([7, 30].map(n => `<button class="chip ${n === span ? 'on' : ''}" data-span="${n}">${n} days</button>`).join(''))}</div></div>
+    <p class="small">${r.loggedDays} of ${r.days} days logged${raw(r.loggedDays ? html` · average <b class="mono">${Math.round(kc.avg)}</b> kcal (${kc.pct}%) and <b class="mono">${Math.round(pr.avg)}g</b> protein (${pr.pct}%)` : '')}.</p>
+    ${raw(r.low.length ? html`<p class="small"><span class="muted">Running low:</span> ${r.low.slice(0, 6).map(x => `${x.label} ${x.pct}%`).join(' · ')}</p>` : r.detailedDays ? '<p class="small muted">Nothing running low on the days with vitamin data.</p>' : '')}
+    ${raw(r.high.length ? html`<p class="small"><span class="muted">Above the limit:</span> ${r.high.map(x => `${x.label} ${x.pct}%`).join(' · ')}</p>` : '')}
+    ${raw(r.lowCalorieDays.length ? html`<p class="small muted">Thin days (under 70% of your calories): ${r.lowCalorieDays.length}</p>` : '')}
+    <p class="small muted">Vitamins and minerals come from photo and typed meals (${r.detailedDays} of the logged days). Every meal is kept.</p>
+    <div class="btn-row"><button class="btn ghost" data-weak>${raw(icon('sparkle'))} I feel weak: check my diet</button><button class="btn ghost" data-csv>${raw(icon('share'))} Download diary</button></div>
+  </section>`;
+}
+
+async function exportDiary() {
+  const blob = new Blob([L.csv()], { type: 'text/csv' });
+  const file = new File([blob], `yaver-food-diary-${today()}.csv`, { type: 'text/csv' });
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: file.name });
+  document.body.append(a); a.click(); a.remove();
 }
