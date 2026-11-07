@@ -142,9 +142,12 @@ export function cetDial(rows, { done = rows.filter(r => r.met).length, label = '
   }).join('');
   let ticks = '';
   for (let k = 0; k < 60; k++) if (k % 5) ticks += `<line class="cd-t" y1="-44.6" y2="-42.8" transform="rotate(${k * 6})"/>`;
-  const s = new Date().getSeconds();
-  const frac = rows.length ? done / rows.length : 0;
-  return `<svg class="cetdial" viewBox="-66 -66 132 132" role="img" aria-label="Çetele: ${done} of ${rows.length} ${esc(label)} met">
+  // The hands keep real time (v58): each starts at the current angle and a CSS
+  // rotation carries it on (12 h, 60 min, 60 s), so it stays right without timers;
+  // with reduced motion the hands simply show the time the screen was drawn.
+  const now = new Date(), sec = now.getSeconds() + now.getMilliseconds() / 1000;
+  const minA = (now.getMinutes() + sec / 60) * 6, hourA = ((now.getHours() % 12) + now.getMinutes() / 60 + sec / 3600) * 30, secA = sec * 6;
+  return `<svg class="cetdial" viewBox="-66 -66 132 132" role="img" aria-label="${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}. Çetele: ${done} of ${rows.length} ${esc(label)} met">
     <circle class="cd-bezel" r="63.5"/><circle class="cd-rim" r="60.5"/><circle class="cd-face" r="58.5"/>
     <circle class="cd-ring" r="57.2"/><circle class="cd-ring" r="45.6"/><circle class="cd-ring thin" r="44.4"/>
     <g class="cd-roman">${ROMAN.map(numeral).join('')}</g>${ticks}
@@ -153,9 +156,9 @@ export function cetDial(rows, { done = rows.filter(r => r.met).length, label = '
       <text class="cd-num" y="2.4" text-anchor="middle">${done}<tspan class="cd-of">/${rows.length}</tspan></text>
       <text class="cd-sub" y="8.2" text-anchor="middle">${esc(label.toUpperCase())}</text></g>
     <g transform="translate(17 20)"><circle class="cd-bronze" r="10"/><circle class="cd-bronze-2" r="7"/><circle class="cd-bronze-3" r="3.6"/>
-      <g class="cd-hand2"><line y1="1.5" y2="-8.4"/></g></g>
-    <g class="cd-hour" transform="rotate(${f2(frac * 360)})"><path d="M-1.6 5 L-1.1 -12 Q-3.2 -15 0 -18.5 Q3.2 -15 1.1 -12 L1.6 5 Z"/><path d="M0 -18.5 L-.8 -26 L0 -28 L.8 -26 Z"/><circle class="cd-jewel" cy="-15" r="1.4"/></g>
-    <g class="cd-hand" style="animation-delay:-${s}s"><path d="M-1.1 7 L-.6 -34 L0 -41 L.6 -34 L1.1 7 Z"/><circle cy="-22" r="1.8" class="cd-loop"/></g>
+      <g transform="rotate(${f2(secA)})"><g class="cd-hand2 run-s"><line y1="1.5" y2="-8.4"/></g></g></g>
+    <g transform="rotate(${f2(hourA)})"><g class="cd-hour run-h"><path d="M-1.6 5 L-1.1 -12 Q-3.2 -15 0 -18.5 Q3.2 -15 1.1 -12 L1.6 5 Z"/><path d="M0 -18.5 L-.8 -26 L0 -28 L.8 -26 Z"/><circle class="cd-jewel" cy="-15" r="1.4"/></g></g>
+    <g transform="rotate(${f2(minA)})"><g class="cd-hand run-m"><path d="M-1.1 7 L-.6 -34 L0 -41 L.6 -34 L1.1 7 Z"/><circle cy="-22" r="1.8" class="cd-loop"/></g></g>
     <circle class="cd-cap" r="3.6"/><circle class="cd-jewel" r="1.6"/>
   </svg>`;
 }
