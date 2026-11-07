@@ -5,6 +5,7 @@ import * as D from './data.js';
 import { today, addDays, weekStart, sum, mins, money, timeHM, parseDay } from './util.js';
 import * as C from './course.js';
 import * as CT from './cetele.js';
+import * as T from './teams.js';
 
 export function reminders() {
   const out = [];
@@ -67,6 +68,14 @@ export function reminders() {
   // Calendar
   const soon = D.upcomingEvents(3).find(e => new Date(e.start) > now && new Date(e.start) - now < 3 * 3600e3);
   if (soon) out.push({ kind: 'meeting', text: `${soon.title} at ${timeHM(soon.start)}.` });
+
+  // Teams: people not met within their target, with nothing planned
+  for (const t of Object.keys(T.TEAMS)) {
+    const need = T.needMeeting(t);
+    if (!need.length) continue;
+    const who = need.slice(0, 3).map(x => x.p.name.split(' ')[0]).join(', ');
+    out.push({ kind: 'teams', text: `${T.TEAMS[t]}: no meeting with ${who}${need.length > 3 ? ` +${need.length - 3} more` : ''} lately, and none planned.`, open: `teams/${t}` });
+  }
 
   // Tasks
   const overdue = D.openTasks().filter(t => t.due && t.due < today());

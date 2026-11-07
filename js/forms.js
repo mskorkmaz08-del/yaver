@@ -3,6 +3,7 @@ import * as db from './db.js';
 import * as D from './data.js';
 import { sheet, today, localInput, toast, haptic, html, raw, timeHM, fmtDay, dayKey } from './util.js';
 import { openInCalendar } from './ics.js';
+import * as T from './teams.js';
 
 export async function expenseForm(existing) {
   const e = existing || {};
@@ -125,4 +126,69 @@ export async function mealForm(existing, day = today(), preset = {}) {
 export async function taskForm() {
   const v = await sheet({ title: 'New task', fields: [{ name: 'title', label: 'Task', required: true }, { name: 'due', label: 'Due (optional)', type: 'date' }] });
   if (v?.title) { await D.addTask({ title: v.title, due: v.due || null }); toast('Task added'); }
+}
+
+// ---------- Teams ----------
+export async function personForm(existing, team = 'student') {
+  const p = existing || { team, meetEvery: team === 'dev' ? 0 : 14 };
+  const st = existing ? T.status(existing) : null;
+  const history = existing ? T.contacts(existing).slice(0, 6) : [];
+  const v = await sheet({
+    title: existing ? existing.name : 'New person',
+    danger: existing ? 'Delete' : null,
+    body: existing ? html`<div class="apple-ev">
+      <p class="small">${T.ago(st.days)}${st.next ? ` · next: ${st.next.title}, ${localInput(new Date(st.next.at)).replace('T', ' ')}` : ''}</p>
+      ${raw(history.map(c => html`<p class="small muted">${localInput(new Date(c.at)).replace('T', ' ')} · ${c.title}${c.place ? ' · ' + c.place : ''}${c.from === 'apple' ? ' · Apple Calendar' : ''}</p>`).join(''))}
+    </div>` : '',
+    fields: [
+      { name: 'name', label: 'Name', value: p.name, required: true, placeholder: 'Ayşe Yılmaz' },
+      { name: 'team', label: 'Team', type: 'select', value: p.team, options: Object.entries(T.TEAMS) },
+      { name: 'role', label: 'Role or group', value: p.role, placeholder: p.team === 'dev' ? 'Backend' : 'Group A, week 3' },
+      { name: 'meetEvery', label: 'Meet', type: 'select', value: p.meetEvery ?? 0, options: T.EVERY },
+      { name: 'contact', label: 'Contact', value: p.contact, placeholder: 'Phone, Telegram, email' },
+      { name: 'notes', label: 'Notes', type: 'textarea', value: p.notes },
+    ],
+  });
+  if (!v) return;
+  if (v.__danger) {
+    await db.remove('people', p.id); haptic(); toast(`${p.name} removed`, { action: { label: 'Undo', run: () => db.put('people', p) } });
+    return;
+  }
+  const row = { name: v.name.trim(), team: v.team, role: v.role, meetEvery: Number(v.meetEvery) || 0, contact: v.contact, notes: v.notes };
+  if (existing) await db.put('people', { ...existing, ...row });
+  else await T.addPerson(row);
+  toast(existing ? 'Saved' : `${row.name} added to ${T.TEAMS[row.team]}`);
+}
+
+export async function activityForm(existing, team = 'student') {
+  const a = existing || { team, kind: 'activity', date: new Date().toISOString() };
+  const names = (a.people || []).map(id => db.get('people', id)?.name).filter(Boolean).join(', ');
+  const known = T.people(a.team === 'dev' ? 'dev' : a.team === 'both' ? null : 'student').map(p => p.name.split(' ')[0]).slice(0, 4).join(', ');
+  const v = await sheet({
+    title: existing ? 'Activity' : 'Log activity',
+    danger: existing ? 'Delete' : null,
+    fields: [
+      { name: 'title', label: 'What', value: a.title, required: true, placeholder: 'Workshop, code review, 1:1…' },
+      { name: 'kind', label: 'Kind', type: 'select', value: a.kind, options: Object.entries(T.KINDS) },
+      { name: 'team', label: 'Team', type: 'select', value: a.team, options: [...Object.entries(T.TEAMS), ['both', 'Both']] },
+      { name: 'date', label: 'When', type: 'datetime-local', value: localInput(new Date(a.date)), required: true },
+      { name: 'place', label: 'Where', value: a.place, placeholder: 'Lab 2, Zoom, café…' },
+      { name: 'people', label: 'Who came (names, commas)', value: names, placeholder: known || 'Ali, Ayşe' },
+      { name: 'notes', label: 'Notes', type: 'textarea', value: a.notes },
+    ],
+  });
+  if (!v) return;
+  if (v.__danger) {
+    await db.remove('activities', a.id); haptic(); toast('Activity deleted', { action: { label: 'Undo', run: () => db.put('activities', a) } });
+    return;
+  }
+  const list = String(v.people || '').split(',').map(x => x.trim()).filter(Boolean);
+  if (existing) {
+    const { ids, added } = await T.resolvePeople(list, v.team);
+    await db.put('activities', { ...existing, title: v.title, kind: v.kind, team: v.team, date: new Date(v.date).toISOString(), place: v.place, people: ids, notes: v.notes });
+    toast(added.length ? `Saved · added ${added.join(', ')}` : 'Saved');
+  } else {
+    const { added } = await T.logActivity({ ...v, people: list });
+    toast(added.length ? `Logged · added ${added.join(', ')}` : 'Activity logged');
+  }
 }

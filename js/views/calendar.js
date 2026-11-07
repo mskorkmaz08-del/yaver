@@ -11,7 +11,7 @@ import { openAssistant } from '../ai/assistant.js';
 let selected = today();
 let start = weekStart();
 
-export function render(root) {
+export function render(root, go) {
   const days = Array.from({ length: 14 }, (_, i) => addDays(start, i));
   const events = D.eventsOn(selected);
   const free = D.freeSlots(selected, 30);
@@ -19,7 +19,7 @@ export function render(root) {
   root.innerHTML = html`
     <header class="page-head">
       <div><p class="path">Yaver <b>·</b> meetings</p><h1>${parseDay(selected).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</h1></div>
-      <button class="icon-btn primary" data-add aria-label="Add meeting">${raw(icon('plus'))}</button>
+      <div class="head-btns"><button class="icon-btn" data-teams aria-label="Teams">${raw(icon('users'))}</button><button class="icon-btn primary" data-add aria-label="Add meeting">${raw(icon('plus'))}</button></div>
     </header>
 
     <div class="week-nav">
@@ -55,6 +55,7 @@ export function render(root) {
     </div>`;
 
   root.querySelector('[data-add]').onclick = () => meetingForm(null, selected);
+  root.querySelector('[data-teams]').onclick = () => go('teams');
   root.querySelectorAll('[data-day]').forEach(b => (b.onclick = () => { selected = b.dataset.day; render(root); }));
   root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => { start = addDays(start, Number(b.dataset.w)); selected = addDays(selected, Number(b.dataset.w)); render(root); }));
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = () => openEvent(b.dataset.id)));

@@ -8,6 +8,7 @@ import { reminders } from '../reminders.js';
 import * as Places from '../places.js';
 import * as C from '../course.js';
 import * as CT from '../cetele.js';
+import * as T from '../teams.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -298,6 +299,25 @@ const TOOLS = [
     input_schema: obj({ id: { type: 'string' } }, ['id']),
     run: async ({ id }) => { const t = db.get('tasks', id); if (!t) throw new Error('No task with that id'); t.done = true; t.doneAt = new Date().toISOString(); await db.put('tasks', t); return { done: true }; },
   },
+  // ----- Teams (dev team and students) -----
+  {
+    name: 'team_status',
+    description: 'The dev team and the students: each person with when they were last met, the next planned meeting, their meeting target and whether a meeting is overdue, plus recent team activities (what, where, who). Meetings count from logged activities and from calendar events whose title names the person.',
+    input_schema: obj({ team: { type: 'string', enum: ['student', 'dev'], description: 'Leave out for both teams.' } }),
+    run: ({ team }) => T.summary(team),
+  },
+  {
+    name: 'add_person',
+    description: 'Add a person to the dev team or the students.',
+    input_schema: obj({ name: { type: 'string' }, team: { type: 'string', enum: ['student', 'dev'] }, role: { type: 'string', description: 'Role or group, e.g. Backend or Group A' }, meet_every_days: { type: 'number', description: 'How often to meet them; 0 for no target. Default 14 for students, 0 for the dev team.' }, notes: { type: 'string' } }, ['name', 'team']),
+    run: async ({ name, team, role, meet_every_days, notes }) => slim(await T.addPerson({ name, team, role, notes, meetEvery: meet_every_days })),
+  },
+  {
+    name: 'log_team_activity',
+    description: 'Log something a team did or a meeting with people: what, where, when and who came. Use kind "meeting" for a 1:1 or group meeting with students or the dev team. Unknown names are added to the team.',
+    input_schema: obj({ title: { type: 'string' }, kind: { type: 'string', enum: ['meeting', 'activity', 'event'] }, team: { type: 'string', enum: ['student', 'dev', 'both'] }, date: { type: 'string', description: 'Local date and time like 2026-11-07T15:00. Defaults to now.' }, place: { type: 'string' }, people: { type: 'array', items: { type: 'string' }, description: 'Names of who took part' }, notes: { type: 'string' } }, ['title', 'team']),
+    run: async i => { const { row, added } = await T.logActivity(i); return { ...slim(row), people: i.people || [], added_people: added }; },
+  },
   {
     name: 'set_goal',
     description: 'Change one of the user\'s goals.',
@@ -316,7 +336,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -333,6 +353,8 @@ export function describeAction(name, input) {
   switch (name) {
     case 'log_cetele': return `Çetele · ${input.item}${input.done !== undefined ? (input.done ? ' done' : ' cleared') : input.set !== undefined ? ` = ${input.set}` : ` +${input.add ?? 1}`}`;
     case 'set_cetele_item': return input.remove ? `Removed ${input.name} from çetele` : `Çetele · ${input.name}: ${input.target ?? ''} ${input.unit ?? ''} per ${input.per || 'day'}`.replace(/\s+/g, ' ');
+    case 'add_person': return `${input.name} added to ${T.TEAMS[input.team] || 'Students'}`;
+    case 'log_team_activity': return `Logged “${input.title}”${input.place ? ` at ${input.place}` : ''}${input.people?.length ? ` · ${input.people.length} people` : ''}`;
     case 'add_expense': return `Added ${input.amount} · ${input.category}${input.note ? ` · ${input.note}` : ''}`;
     case 'add_meeting': return `Scheduled “${input.title}” · ${String(input.start).replace('T', ' ')}`;
     case 'update_meeting': return 'Updated a meeting';

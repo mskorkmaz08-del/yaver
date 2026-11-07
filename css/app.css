@@ -294,6 +294,20 @@ button.card, button.plate { width: 100%; text-align: left; }
 .dot[data-k="task"] { background: var(--red); }
 .dot[data-k="cetele"], .dot[data-k="meeting"] { background: var(--lume); }
 .dot[data-k="diet"] { background: var(--ok); }
+.dot[data-k="teams"] { background: var(--warn); }
+.dot.warn { background: var(--warn); }
+.dot.ok { background: var(--ok); }
+.team-pick { margin: 4px 0 14px; }
+.team-pick .muted { font-size: 12px; margin-left: 4px; }
+.need .need-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.need .need-row:first-of-type { border-top: 0; }
+.need .small-btn { padding: 6px 12px; min-height: 0; font-size: 13px; }
+.list-day .link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.list-day .link .i { width: 14px; height: 14px; }
+.list-day.sub { padding-top: 10px; font-size: 12px; color: var(--muted); }
+.row-side { flex: none; color: var(--muted); text-align: right; }
+.row-time { flex: none; width: 44px; color: var(--muted); }
+.head-btns { display: flex; gap: 8px; }
 .task { display: flex; align-items: center; gap: 12px; padding: 9px 0; transition: opacity .3s; border-top: 1px solid var(--line); cursor: pointer; }
 .task:first-of-type, .card-head + .task, .label + .task { border-top: 0; }
 .task input { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 1.5px solid var(--line-2); border-radius: 6px; flex: none; padding: 0; background: var(--sunk); position: relative; cursor: pointer; }

@@ -174,10 +174,11 @@ yaver/
     ├── forms.js            Add/edit sheets for expenses, meetings, study, meals, tasks
     ├── ics.js              Builds .ics calendar files
     ├── applecal.js         Read-only copy of Apple Calendar, fetched through the Mac bridge
+    ├── teams.js            Dev team and students: people, activities, last met, who is overdue
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
     ├── icons.js            Line icons
-    ├── views/              One file per screen: home, çetele, study, calendar, money, diet, map, skills, settings
+    ├── views/              One file per screen: home, çetele, study, calendar, teams, money, diet, map, skills, settings
     └── ai/
         ├── provider.js     Picks Gemini (free) or Claude; saves and tests keys
         ├── gemini.js       Talks to Google's Gemini API; same agent loop
@@ -255,6 +256,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**Teams (v48).** A Teams screen for the two groups Mustafa coordinates, the dev team and the students. Each person has a team, a role and how often to meet them (students every 2 weeks by default). Activities record what happened, where, when and who came. Yaver works out when each person was last met and whether a meeting is planned, counting logged activities and any Yaver or Apple Calendar meeting whose title names them ("1:1 with Ali"). Students past their target with nothing planned show in a "not met lately" card with a Plan button and as a reminder on Home. The assistant can add people, log activities and answer who needs a meeting. People and activities sync between devices like the rest. Open it from the Teams button in Meet, the command bar or the laptop sidebar.
 
 **Apple Calendar (v47).** Meet now shows the events from the Mac's Calendar app, read through the Mac bridge (see section 5). Needs the bridge updated once on the Mac and one Allow click.
 
