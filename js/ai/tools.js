@@ -276,15 +276,9 @@ const TOOLS = [
   },
   {
     name: 'get_diet_day',
-    description: 'Meals, calories, macros and water for a day, with the user\'s goals.',
+    description: 'Meals, calories and macros for a day, with the user\'s goals.',
     input_schema: obj({ date }),
     run: ({ date: k = today() }) => { const d = D.dietDay(k); return { ...d, meals: d.meals.map(slim) }; },
-  },
-  {
-    name: 'log_water',
-    description: 'Add glasses of water drunk today (can be negative to correct).',
-    input_schema: obj({ glasses: { type: 'number' } }, ['glasses']),
-    run: async ({ glasses }) => ({ waterToday: await D.addWater(glasses) }),
   },
   // ----- Tasks & goals -----
   {
@@ -321,7 +315,7 @@ const TOOLS = [
   {
     name: 'set_goal',
     description: 'Change one of the user\'s goals.',
-    input_schema: obj({ goal: { type: 'string', enum: ['monthlyBudget', 'dailyStudyMin', 'dailyCalories', 'dailyProtein', 'dailyWater'] }, value: { type: 'number' } }, ['goal', 'value']),
+    input_schema: obj({ goal: { type: 'string', enum: ['monthlyBudget', 'dailyStudyMin', 'dailyCalories', 'dailyProtein'] }, value: { type: 'number' } }, ['goal', 'value']),
     run: async ({ goal, value }) => { await db.setSetting(goal, value); return { [goal]: value }; },
   },
 ];
@@ -336,7 +330,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'log_water', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -362,7 +356,6 @@ export function describeAction(name, input) {
     case 'delete_expense': return 'Removed an expense';
     case 'log_study': return `Logged ${input.minutes} min of ${input.subject}`;
     case 'log_meal': return `Logged ${input.name} · ${input.calories} kcal`;
-    case 'log_water': return `Water ${input.glasses > 0 ? '+' : ''}${input.glasses}`;
     case 'add_task': return `Task: ${input.title}`;
     case 'complete_task': return 'Completed a task';
     case 'add_roadmap_milestones': return `Roadmap: +${input.milestones?.length || 0} milestones in ${input.subject}`;

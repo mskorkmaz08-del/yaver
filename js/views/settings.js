@@ -88,7 +88,6 @@ export function render(root, go) {
       <label class="field"><span>Study / day (min)</span><input name="dailyStudyMin" type="number" inputmode="numeric" value="${s('dailyStudyMin', 60)}"></label>
       <label class="field"><span>Calories / day</span><input name="dailyCalories" type="number" inputmode="numeric" value="${s('dailyCalories', 2200)}"></label>
       <label class="field"><span>Protein / day (g)</span><input name="dailyProtein" type="number" inputmode="numeric" value="${s('dailyProtein', 120)}"></label>
-      <label class="field"><span>Water / day (glasses)</span><input name="dailyWater" type="number" inputmode="numeric" value="${s('dailyWater', 8)}"></label>
     </div>`;
 
   const dataBody = html`

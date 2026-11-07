@@ -34,11 +34,6 @@ export function render(root) {
       </div>
     </section>
 
-    <section class="card">
-      <div class="card-head"><p class="label">water</p><span class="small muted mono">${d.water}/${g.dailyWater}</span></div>
-      <div class="water">${raw(Array.from({ length: Math.max(g.dailyWater, d.water) }, (_, i) => `<button class="glass ${i < d.water ? 'full' : ''}" data-w="${i + 1}" aria-label="${i + 1} glasses"></button>`).join(''))}</div>
-    </section>
-
     <div class="btn-row">
       <button class="btn ghost" data-snap>${raw(icon('camera'))} Photo a meal</button>
       <button class="btn ghost" data-ai>${raw(icon('sparkle'))} What next?</button>
@@ -60,10 +55,6 @@ export function render(root) {
   root.querySelectorAll('[data-type]').forEach(b => (b.onclick = () => mealForm(null, day, { meal: b.dataset.type })));
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = () => mealForm(db.get('meals', b.dataset.id))));
   root.querySelectorAll('[data-d]').forEach(b => (b.onclick = () => { day = addDays(day, Number(b.dataset.d)); render(root); }));
-  root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => {
-    const n = Number(b.dataset.w);
-    D.setWater(d.water === n ? n - 1 : n, day);
-  }));
   root.querySelector('[data-snap]').onclick = () => pickPhoto(day);
   root.querySelector('[data-ai]').onclick = () => openAssistant('Given what I ate today and my goals, suggest 3 simple options for my next meal with rough calories and protein.');
 }

@@ -194,11 +194,6 @@ export function render(root, go) {
       ${raw(tasks.length ? tasks.map(t => html`
         <label class="task"><input type="checkbox" data-task="${t.id}"><span>${t.title}</span>${raw(t.due ? html`<small class="${t.due < today() ? 'overdue' : ''}">${fmtDay(t.due)}</small>` : '')}</label>`).join('') : '<p class="small muted">Empty.</p>')}
     </section>
-
-    <section class="plate card">
-      <div class="card-head"><p class="eyebrow">Water</p><span class="small muted mono">${d.water}/${d.goals.dailyWater}</span></div>
-      <div class="water">${raw(Array.from({ length: d.goals.dailyWater }, (_, i) => `<button class="glass ${i < d.water ? 'full' : ''}" data-w="${i + 1}" aria-label="${i + 1} glasses"></button>`).join(''))}</div>
-    </section>
   `;
 
   const ask = root.querySelector('[data-ask]');
@@ -216,7 +211,6 @@ export function render(root, go) {
   root.querySelectorAll('[data-q]').forEach(b => (b.onclick = q[b.dataset.q]));
   root.querySelectorAll('[data-ev]').forEach(b => (b.onclick = () => openEvent(b.dataset.ev)));
   root.querySelector('[data-add-task]').onclick = taskForm;
-  root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => { const n = Number(b.dataset.w); D.setWater(d.water === n ? n - 1 : n); }));
   root.querySelectorAll('[data-task]').forEach(cb => (cb.onchange = () => {
     const t = db.get('tasks', cb.dataset.task);
     cb.closest('.task').classList.add('done');

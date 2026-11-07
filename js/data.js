@@ -282,7 +282,7 @@ export function overview() {
     money: { currency: db.setting('currency', 'TRY'), today: m.today, thisWeek: m.week, thisMonth: m.month, monthlyBudget: m.budget || null, budgetLeft: m.budgetLeft, topCategories: m.categories.slice(0, 4) },
     calendar: { today: eventsOn(today()).map(slimEvent), upcoming: upcomingEvents(6).map(slimEvent) },
     study: { todayMin: s.todayMin, dailyGoalMin: s.dailyGoalMin, weekMin: s.weekMin, streakDays: s.streak.current, bestStreak: s.streak.best, subjects: s.bySubject.map(x => ({ name: x.name, totalMin: x.totalMin, weekMin: x.weekMin })) },
-    diet: { calories: d.calories, calorieGoal: d.goals.dailyCalories, protein: d.protein, proteinGoal: d.goals.dailyProtein, waterGlasses: d.water, meals: d.meals.map(x => `${x.meal}: ${x.name} (${x.calories} kcal)`) },
+    diet: { calories: d.calories, calorieGoal: d.goals.dailyCalories, protein: d.protein, proteinGoal: d.goals.dailyProtein, meals: d.meals.map(x => `${x.meal}: ${x.name} (${x.calories} kcal)`) },
     tasks: openTasks().slice(0, 10).map(t => ({ id: t.id, title: t.title, due: t.due })),
     plan: (p => p && { title: p.title, week: p.week, phase: p.phase.name, phaseProgress: `${p.phaseDone}/${p.phaseTotal}`, weeklyHoursTarget: p.weeklyHours, minimumDay: p.minimumDay, template: p.template })(planStatus()),
     practiceToday: { problems: practiceOn('problems'), anki: practiceOn('anki') },
