@@ -271,8 +271,8 @@ const TOOLS = [
   {
     name: 'log_meal',
     description: 'Record food the user ate. Estimate calories and macros (grams) yourself from the description or photo if the user does not give them, and say they are estimates.',
-    input_schema: obj({ name: { type: 'string' }, meal: { type: 'string', enum: D.MEAL_TYPES }, calories: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' }, date }, ['name', 'meal', 'calories']),
-    run: async i => { await D.logMeal(i); const d = D.dietDay(i.date || today()); return { logged: true, dayCalories: d.calories, calorieGoal: d.goals.dailyCalories, dayProtein: d.protein }; },
+    input_schema: obj({ name: { type: 'string' }, meal: { type: 'string', enum: D.MEAL_TYPES }, calories: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' }, fiber: { type: 'number' }, sugar: { type: 'number' }, sodium_mg: { type: 'number' }, date }, ['name', 'meal', 'calories']),
+    run: async ({ sodium_mg, ...i }) => { await D.logMeal({ ...i, sodium: sodium_mg }); const d = D.dietDay(i.date || today()); return { logged: true, dayCalories: d.calories, calorieGoal: d.goals.dailyCalories, dayProtein: d.protein }; },
   },
   {
     name: 'get_diet_day',

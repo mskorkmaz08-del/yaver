@@ -235,10 +235,14 @@ export const addWater = (n, key = today()) => addCounter(`water:${key}`, n);
 export const setWater = (total, key = today()) => addWater(total - waterOn(key), key);
 
 // ---------- Diet ----------
-export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today() }) {
+// Optional extras (v50, from food photos or the assistant): fiber, sugar (g), sodium (mg),
+// micros {potassium, calcium, iron, …}, items [{name, grams, …}], source, confidence.
+export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today(), fiber, sugar, sodium, micros, items, source, confidence }) {
   if (!name) throw new Error('name is required');
   if (!MEAL_TYPES.includes(meal)) meal = 'Snack';
-  return db.put('meals', { name, calories: Number(calories) || 0, protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0, meal, date });
+  const extra = Object.fromEntries(Object.entries({ fiber, sugar, sodium }).filter(([, v]) => v != null && v !== '').map(([k, v]) => [k, Number(v) || 0]));
+  return db.put('meals', { name, calories: Number(calories) || 0, protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0, meal, date, ...extra,
+    ...(micros ? { micros } : {}), ...(items ? { items } : {}), ...(source ? { source } : {}), ...(confidence ? { confidence } : {}) });
 }
 export function dietDay(key = today()) {
   const meals = db.all('meals').filter(m => m.date === key).sort((a, b) => MEAL_TYPES.indexOf(a.meal) - MEAL_TYPES.indexOf(b.meal));
@@ -250,6 +254,12 @@ export function dietDay(key = today()) {
     protein: sum(meals, m => m.protein),
     carbs: sum(meals, m => m.carbs),
     fat: sum(meals, m => m.fat),
+    fiber: sum(meals, m => m.fiber || 0),
+    sugar: sum(meals, m => m.sugar || 0),
+    sodium: sum(meals, m => m.sodium || 0),
+    // Vitamins and minerals add up only from meals that have them (photo logs).
+    micros: meals.reduce((t, m) => { for (const [k, v] of Object.entries(m.micros || {})) t[k] = (t[k] || 0) + (Number(v) || 0); return t; }, {}),
+    detailed: meals.filter(m => m.micros).length,
     water,
     goals: goals(),
   };

@@ -1625,3 +1625,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
   .lesson-main.spread { box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .5); }
 }
 
+
+/* Food photo sheet and the day's nutrients (v50) */
+.food-img { display: block; width: 100%; max-height: 220px; object-fit: cover; border-radius: var(--r-sm); margin: 0 0 12px; }
+.food-items { display: flex; flex-direction: column; margin: 4px 0 10px; }
+.food-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.fi-name { flex: 1; min-width: 0; display: flex; flex-direction: column; font-weight: 500; }
+.fi-name small { color: var(--muted); font-size: 12px; font-weight: 400; }
+.fi-g { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; }
+.fi-g input { width: 64px; padding: 6px 8px; text-align: right; font: 500 15px var(--mono); }
+.food-item .icon-btn .i { width: 16px; height: 16px; }
+.food-total { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.food-total b { font-size: 20px; color: var(--lume); }
+.nutrients .nut { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
+.nutrients .nut b { font-size: 12px; font-weight: 500; min-width: 86px; text-align: right; }
+.nutrients .nut b small { color: var(--muted); }
+.nutrients .bar .over { background: var(--warn); }

@@ -175,6 +175,7 @@ yaver/
     ├── ics.js              Builds .ics calendar files
     ├── applecal.js         Read-only copy of Apple Calendar, fetched through the Mac bridge
     ├── teams.js            Dev team and students: people, activities, last met, who is overdue
+    ├── foodscan.js         Food photos: Gemini estimates each item's weight and nutrients
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
     ├── icons.js            Line icons
@@ -256,6 +257,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**Food photos (v50).** Diet → Photo a meal: take or pick a photo, optionally add what it can't show ("fried in butter"), and Gemini lists each item with its estimated weight and nutrients: calories, protein, carbs, fat, fiber, sugar, sodium, key minerals and vitamins, and caffeine. You can change any weight (its numbers follow) or drop an item, then log it. The Diet screen gets a nutrients card with fiber, sugar, sodium and vitamins and minerals as a share of the daily value. Gemini is used because a 2026 benchmark of ten vision models on 3,229 meal photos found Gemini 3 Flash the most accurate (ahead of GPT-4o and GPT-5 Mini), and it is free; the prompt follows that study's best strategy (judge the portion actually visible, weight first). Photo estimates are rough: studies put single-meal calorie errors around 20-40%, mostly from portion size and hidden oil.
 
 **Edit the Çetele list (v49).** The Çetele header has an Edit list button. Each item has a × that removes it in one tap (with Undo); removed items stay as chips under the list to bring back, and their past days are kept. Adding a removed name again brings the old item back instead of making a duplicate.
 

@@ -105,7 +105,7 @@ export async function mealForm(existing, day = today(), preset = {}) {
   const v = await sheet({
     title: existing ? 'Edit meal' : 'Log a meal',
     danger: existing ? 'Delete' : null,
-    body: existing ? '' : '<p class="muted small">Don\'t know the calories? Ask Yaver or send it a photo, and it estimates for you.</p>',
+    body: existing ? (m.items?.length ? html`<p class="small muted">${m.source === 'photo' ? 'From a photo (estimate): ' : ''}${m.items.map(i => `${i.name} ${i.grams}g`).join(', ')}${m.fiber != null ? ` · fiber ${m.fiber}g, sugar ${m.sugar}g, sodium ${m.sodium}mg` : ''}</p>` : '') : '<p class="muted small">Don\'t know the calories? Tap Photo a meal on the Diet screen, or ask Yaver.</p>',
     fields: [
       { name: 'name', label: 'Food', value: m.name, required: true, placeholder: 'e.g. Chicken wrap' },
       { name: 'meal', label: 'Meal', type: 'select', options: D.MEAL_TYPES, value: m.meal || guess },
