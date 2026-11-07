@@ -804,6 +804,11 @@ details.check[open] summary { margin-bottom: 6px; }
 .ct-edit-row .link { text-align: left; color: var(--text); text-transform: none; letter-spacing: 0; font: 500 15px var(--sans); }
 .ct-edit-row small { color: var(--muted); }
 .ct-edit-row span { display: flex; gap: 6px; }
+.ct-edit-row .ct-rm { color: var(--muted); }
+.ct-edit-row .ct-rm .i { width: 16px; height: 16px; }
+.ct-removed { margin: 6px 0 12px; }
+.ct-edit-btn { padding: 8px 12px; min-height: 0; font-size: 14px; gap: 6px; }
+.ct-edit-btn .i { width: 16px; height: 16px; }
 .ct-home { display: flex; flex-wrap: wrap; gap: 6px; }
 .ct-home span { font: 500 13px var(--sans); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .ct-home span.met { border-color: rgba(226, 182, 96, .5); color: var(--lume); }

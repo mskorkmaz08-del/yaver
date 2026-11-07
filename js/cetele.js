@@ -80,11 +80,16 @@ export function streak() {
 
 export async function saveItem({ id, name, unit = '', target = 1, per = 'day', step = 1 }) {
   if (!String(name || '').trim()) throw new Error('name is required');
+  // Adding a name that was removed before brings that item back, with its history.
+  if (!id) { const back = db.all('ceteleItems').find(i => i.archived && i.name.toLocaleLowerCase('tr') === String(name).trim().toLocaleLowerCase('tr')); if (back) id = back.id; }
   const old = id ? db.get('ceteleItems', id) : null;
-  return db.put('ceteleItems', { ...(old || { order: items().length, archived: false }), ...(id ? { id } : {}), name: String(name).trim(), unit: String(unit || '').trim(), target: Math.max(1, Number(target) || 1), per: per === 'week' ? 'week' : 'day', step: Math.max(1, Number(step) || 1) });
+  return db.put('ceteleItems', { ...(old || { order: items().length }), ...(old?.archived ? { archived: false, order: items().length } : {}), ...(id ? { id } : {}), name: String(name).trim(), unit: String(unit || '').trim(), target: Math.max(1, Number(target) || 1), per: per === 'week' ? 'week' : 'day', step: Math.max(1, Number(step) || 1) });
 }
 // Archived, not deleted: past days keep their history.
 export const archiveItem = id => { const i = db.get('ceteleItems', id); return i && db.put('ceteleItems', { ...i, archived: true }); };
+export const removed = () => db.all('ceteleItems').filter(i => i.archived).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+// Brings a removed item back at the end of the list, with its history.
+export const restoreItem = id => { const i = db.get('ceteleItems', id); return i && db.put('ceteleItems', { ...i, archived: false, order: items().length }); };
 export async function move(id, dir) {
   const list = items();
   const i = list.findIndex(x => x.id === id), j = i + dir;

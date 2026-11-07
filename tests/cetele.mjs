@@ -61,6 +61,28 @@ await page.waitForTimeout(300);
 const q = await page.evaluate(async () => (await import('./js/cetele.js')).valueOn('quran'));
 ok('AI log_cetele added 3 pages', q === 4);
 ok('receipt shown', (await page.$$('.receipt')).length === 1);
+// Edit list: remove Namaz with one tap, undo-free bring back, and re-adding by name restores it.
+await page.click('.chat-wrap [data-close], #chat-close').catch(() => {});
+await page.evaluate(() => { location.hash = 'cetele'; });
+await page.keyboard.press('Escape').catch(() => {});
+await page.waitForSelector('[data-edit]');
+await page.evaluate(() => document.querySelector('[data-edit]').click());
+await page.waitForSelector('[data-rm="namaz"]');
+await page.click('[data-rm="namaz"]');
+await page.waitForSelector('[data-back="namaz"]');
+const gone = await page.evaluate(async () => !(await import('./js/cetele.js')).items().some(i => i.id === 'namaz'));
+ok('one tap removes Namaz', gone);
+await page.click('[data-back="namaz"]');
+await page.waitForSelector('[data-rm="namaz"]');
+ok('removed item comes back from the chips', true);
+const readd = await page.evaluate(async () => {
+  const CT = await import('./js/cetele.js');
+  await CT.archiveItem('namaz');
+  const before = (await import('./js/db.js')).all('ceteleItems').length;
+  const row = await CT.saveItem({ name: 'Namaz', target: 5, unit: 'times' });
+  return row.id === 'namaz' && !row.archived && (await import('./js/db.js')).all('ceteleItems').length === before;
+});
+ok('adding a removed name restores it, no duplicate', readd);
 ok('no page errors', !errors.length);
 for (const [n, c] of checks) console.log(c ? 'ok  ' : 'FAIL', n);
 if (errors.length) console.log(errors.join('\n'));

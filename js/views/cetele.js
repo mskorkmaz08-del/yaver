@@ -17,7 +17,7 @@ export function render(root) {
   root.innerHTML = html`
     <header class="page-head">
       <div><p class="path">Yaver <b>·</b> çetele</p><h1><span class="num ${raw(d.complete ? 'lit' : '')}">${d.done}/${d.total}</span> minimums</h1></div>
-      <button class="icon-btn" data-edit aria-label="Edit list">${raw(icon('edit'))}</button>
+      <button class="btn ghost ct-edit-btn" data-edit>${raw(icon('edit'))} Edit list</button>
     </header>
     <div class="switch"><button data-d="-1" aria-label="Previous day">${raw(icon('chevronLeft'))}</button><span>${fmtDay(day).toLowerCase()}</span><button data-d="1" ${raw(day === today() ? 'disabled' : '')} aria-label="Next day">${raw(icon('chevronRight'))}</button></div>
 
@@ -94,11 +94,19 @@ async function listSheet(root) {
       <div class="grabber"></div><h2>Edit çetele</h2>
       <div class="ct-edit">${raw(CT.items().map((it, i, a) => html`
         <div class="ct-edit-row"><button class="link" data-it="${it.id}"><b>${it.name}</b><small class="mono"> ${it.target}${it.unit ? ' ' + it.unit : ''} / ${it.per}</small></button>
-        <span><button class="icon-btn" data-up="${it.id}" ${raw(i ? '' : 'disabled')} aria-label="Move up">↑</button><button class="icon-btn" data-down="${it.id}" ${raw(i < a.length - 1 ? '' : 'disabled')} aria-label="Move down">↓</button></span></div>`).join(''))}</div>
+        <span><button class="icon-btn" data-up="${it.id}" ${raw(i ? '' : 'disabled')} aria-label="Move up">↑</button><button class="icon-btn" data-down="${it.id}" ${raw(i < a.length - 1 ? '' : 'disabled')} aria-label="Move down">↓</button><button class="icon-btn ct-rm" data-rm="${it.id}" aria-label="Remove ${it.name}">${raw(icon('close'))}</button></span></div>`).join(''))}</div>
+      ${raw(CT.removed().length ? html`<p class="label">removed · tap to bring back</p><div class="chips ct-removed">${raw(CT.removed().map(it => html`<button class="chip" data-back="${it.id}">${raw(icon('plus'))} ${it.name}</button>`).join(''))}</div>` : '')}
+      <p class="muted small">Tap a name to change its minimum. Removing keeps past days.</p>
       <div class="sheet-actions"><button class="btn ghost" data-new>${raw(icon('plus'))} Add</button><button class="btn primary" data-done>Done</button></div></div>`;
     wrap.querySelectorAll('[data-it]').forEach(b => (b.onclick = async () => { await itemForm(db.get('ceteleItems', b.dataset.it)); draw(); }));
     wrap.querySelectorAll('[data-up]').forEach(b => (b.onclick = async () => { await CT.move(b.dataset.up, -1); draw(); }));
     wrap.querySelectorAll('[data-down]').forEach(b => (b.onclick = async () => { await CT.move(b.dataset.down, 1); draw(); }));
+    wrap.querySelectorAll('[data-rm]').forEach(b => (b.onclick = async () => {
+      const it = db.get('ceteleItems', b.dataset.rm);
+      haptic(); await CT.archiveItem(it.id); draw();
+      toast(`${it.name} removed`, { action: { label: 'Undo', run: async () => { await CT.restoreItem(it.id); if (wrap.isConnected) draw(); } } });
+    }));
+    wrap.querySelectorAll('[data-back]').forEach(b => (b.onclick = async () => { await CT.restoreItem(b.dataset.back); draw(); }));
     wrap.querySelector('[data-new]').onclick = async () => { await itemForm(); draw(); };
     wrap.querySelector('[data-done]').onclick = close;
     wrap.querySelector('.sheet').classList.add('tall');
