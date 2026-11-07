@@ -1,7 +1,7 @@
 // Focus mode: the screen empties so you can study. In a lesson only the lesson's paper stays;
 // from the Study tab the screen is simply dark. A small stopwatch chip shows the time; tap it
 // and it fades to a faint dot (tap the dot to bring it back). The screen stays awake, the
-// laptop goes full screen, and a soft bell rings when the planned time is up.
+// laptop goes full screen.
 import * as sound from './sound.js';
 
 let state = null;

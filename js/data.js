@@ -236,13 +236,14 @@ export const setWater = (total, key = today()) => addWater(total - waterOn(key),
 
 // ---------- Diet ----------
 // Optional extras (v50, from food photos or the assistant): fiber, sugar (g), sodium (mg),
-// micros {potassium, calcium, iron, …}, items [{name, grams, …}], source, confidence.
-export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today(), fiber, sugar, sodium, micros, items, source, confidence }) {
+// micros {potassium, calcium, iron, …; since v55 also satFat, monoFat, polyFat, omega3},
+// items [{name, grams, basis, from, …}], source, confidence, sources [{title, uri}] (pages looked up).
+export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today(), fiber, sugar, sodium, micros, items, source, confidence, sources }) {
   if (!name) throw new Error('name is required');
   if (!MEAL_TYPES.includes(meal)) meal = 'Snack';
   const extra = Object.fromEntries(Object.entries({ fiber, sugar, sodium }).filter(([, v]) => v != null && v !== '').map(([k, v]) => [k, Number(v) || 0]));
   return db.put('meals', { name, calories: Number(calories) || 0, protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0, meal, date, ...extra,
-    ...(micros ? { micros } : {}), ...(items ? { items } : {}), ...(source ? { source } : {}), ...(confidence ? { confidence } : {}) });
+    ...(micros ? { micros } : {}), ...(items ? { items } : {}), ...(source ? { source } : {}), ...(confidence ? { confidence } : {}), ...(sources?.length ? { sources } : {}) });
 }
 export function dietDay(key = today()) {
   const meals = db.all('meals').filter(m => m.date === key).sort((a, b) => MEAL_TYPES.indexOf(a.meal) - MEAL_TYPES.indexOf(b.meal));

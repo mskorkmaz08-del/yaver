@@ -1645,3 +1645,21 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .diary .chip { padding: 4px 10px; font-size: 13px; }
 .diary p { margin: 6px 0; }
 .diary .btn-row { margin-top: 10px; }
+
+/* Researched estimates, fat quality and gap suggestions (v55) */
+.fi-name .fi-basis { color: var(--muted); font-size: 11.5px; line-height: 1.3; margin-top: 2px; }
+.food-sources a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.fat-mix { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 4px 10px; padding: 5px 0; font-size: 14px; }
+.fat-mix small { grid-column: 2; color: var(--muted); font-size: 12px; }
+.fat-split { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--line); }
+.fat-split i { display: block; height: 100%; }
+.fat-split .sat { background: var(--amber); }
+.fat-split .mono-f { background: var(--accent); }
+.fat-split .poly { background: var(--blue); }
+.tips .card-head { gap: 8px; }
+.tips p { margin: 6px 0; }
+.tips-list { display: flex; flex-direction: column; margin: 6px 0; }
+.tip { display: flex; flex-direction: column; gap: 1px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.tip:last-child { border-bottom: 0; }
+.tips .btn.small { min-height: 34px; padding: 6px 12px; font-size: 13px; }
+.tips .warn-text { color: var(--warn); }

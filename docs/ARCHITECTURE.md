@@ -154,13 +154,13 @@ yaver/
 ├── css/app.css             All styling: the Piltover look (navy, gold trim, ivory marble, the yellow notebook) and its motion, cards, sheets, chat
 ├── fonts/                  Archivo (variable width) and IBM Plex Mono, stored in the app so they work offline
 ├── icons/                  Home Screen icons: the line-drawn gear, hexcore and Y (logo.svg is the source)
-├── sounds/                 The Academy music (see CREDITS.md)
-├── tools/                  Scripts that made the sounds and the music (run on a computer)
+├── sounds/                 Only CREDITS.md (no sound since v55)
+├── tools/                  Scripts that made the old sounds and music (kept for reference)
 ├── data/ml-roadmap.json    Copy of the 52-week study roadmap
 ├── vendor/                 Anthropic SDK (one file) and Leaflet (map)
 └── js/
     ├── app.js              Starts everything; switches screens; redraws on data change
-    ├── sound.js            Background music (sounds/academy.mp3), switch in Settings
+    ├── sound.js            Silent stub (music removed in v55)
     ├── focus.js            Full-screen focus mode with a small timer
     ├── sims.js             The workshop: picks a simulator for each lesson and gives it canvas, controls, timeline
     ├── sims/               13 simulators: circuit, sort, search, graph, structures, vectors, calculus,
@@ -176,6 +176,7 @@ yaver/
     ├── applecal.js         Read-only copy of Apple Calendar, fetched through the Mac bridge
     ├── teams.js            Dev team and students: people, activities, last met, who is overdue
     ├── foodscan.js         Food photos: Gemini estimates each item's weight and nutrients
+    ├── foodgaps.js         Fill the gaps: foods for the rest of today or tomorrow
     ├── dietlog.js          Food diary: averages, what's running low, CSV export
     ├── reminders.js        Plain "what needs attention today" facts
     ├── places.js           OpenStreetMap search and nearby lookup
@@ -258,6 +259,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**No music, researched food estimates, fill the gaps (v55).** The background music is gone (Mustafa found it distracting), so Yaver now makes no sound at all. Photo and typed meals now take two steps: Gemini first researches every item with Google Search (it reads brand labels and looks up the product, checks how a local dish such as doner in Kazakhstan is usually made, looks up what a spoon of honey weighs) and measures what is in the photo against reference objects like the plate, cutlery, cup or a hand, counting pieces and judging how full a cup is; then a second call turns those notes into the item list. The check sheet shows how each amount was judged and links the pages it looked up. Meals now also carry the kind of fat (saturated, mono, poly, omega-3), and the nutrients card shows the split. A Fill the gaps card on Diet looks at today's totals, the fat split and the last week's lows and suggests 3 to 6 real foods with amounts (for the rest of today, or for tomorrow late in the evening), for example oily fish when the day was heavy on seed oils.
 
 **Food diary (v54).** Every meal already lives in the meals store in Yaver's database on the device: app updates never touch it, it is in Settings → Export backup, and with sync on it is also in the encrypted GitHub copy. Diet now has a food diary card for the last 7 or 30 days: how many days were logged, average calories and protein against your goals, and which vitamins and minerals have been under 70% of the daily value (or sodium, sugar and caffeine over the limit). "I feel weak: check my diet" asks the assistant to look through the diary with its new diet_history tool, and Download diary saves every meal as a CSV spreadsheet. Vitamins and minerals only come from photo or typed meals, so the card says how many days have that data.
 

@@ -6,7 +6,7 @@
 import * as db from './db.js';
 import * as D from './data.js';
 import { today, addDays } from './util.js';
-import { MICROS, DAILY } from './foodscan.js';
+import { MICROS, FATS, DAILY } from './foodscan.js';
 
 const r1 = n => Math.round((Number(n) || 0) * 10) / 10;
 
@@ -15,7 +15,7 @@ export function days(n = 30, end = today()) {
   for (let i = n - 1; i >= 0; i--) {
     const k = addDays(end, -i);
     const d = D.dietDay(k);
-    out.push({ date: k, meals: d.meals.length, detailed: d.detailed, calories: d.calories, protein: d.protein, carbs: d.carbs, fat: d.fat, fiber: d.fiber, sugar: d.sugar, sodium: d.sodium, micros: d.micros });
+    out.push({ date: k, meals: d.meals.length, detailed: d.detailed, fatDetailed: d.meals.filter(m => m.micros && m.micros.satFat != null).length, calories: d.calories, protein: d.protein, carbs: d.carbs, fat: d.fat, fiber: d.fiber, sugar: d.sugar, sodium: d.sodium, micros: d.micros });
   }
   return out;
 }
@@ -25,6 +25,7 @@ export function report(n = 30, end = today()) {
   const all = days(n, end);
   const logged = all.filter(d => d.meals);
   const detailed = logged.filter(d => d.detailed);
+  const fatDays = logged.filter(d => d.fatDetailed);
   const g = D.goals();
   const avg = (list, f) => (list.length ? list.reduce((a, d) => a + (Number(f(d)) || 0), 0) / list.length : 0);
   const pct = (v, ref) => (ref ? Math.round((v / ref) * 100) : null);
@@ -34,9 +35,11 @@ export function report(n = 30, end = today()) {
     { key: 'fiber', label: 'Fiber', unit: 'g', avg: avg(detailed, d => d.fiber), ref: DAILY.fiber, kind: 'min', partial: true },
     { key: 'sugar', label: 'Sugar', unit: 'g', avg: avg(detailed, d => d.sugar), ref: DAILY.sugar, kind: 'max', partial: true },
     { key: 'sodium', label: 'Sodium', unit: 'mg', avg: avg(detailed, d => d.sodium), ref: DAILY.sodium, kind: 'max', partial: true },
+    // Fat quality (v55): saturated is a limit, omega-3 a target. Only meals logged since v55 carry them.
+    ...FATS.filter(([, , , ref]) => ref).map(([key, label, unit, ref]) => ({ key, label, unit, avg: avg(fatDays, d => d.micros[key]), ref, kind: key === 'satFat' ? 'max' : 'min', partial: 'fat' })),
     ...MICROS.map(([key, label, unit, ref]) => ({ key, label, unit, avg: avg(detailed, d => d.micros[key]), ref, kind: key === 'caffeine' ? 'max' : 'min', partial: true })),
   ].map(x => ({ ...x, avg: r1(x.avg), pct: pct(x.avg, x.ref) }));
-  const usable = x => (x.partial ? detailed.length : logged.length) > 0;
+  const usable = x => (x.partial === 'fat' ? fatDays.length : x.partial ? detailed.length : logged.length) > 0;
   const low = nutrients.filter(x => usable(x) && x.kind !== 'max' && x.pct !== null && x.pct < 70).sort((a, b) => a.pct - b.pct);
   const high = nutrients.filter(x => usable(x) && x.kind === 'max' && x.pct > 100).sort((a, b) => b.pct - a.pct);
   return {
@@ -64,11 +67,11 @@ export function forAI(n = 30) {
 
 // The whole diary as a spreadsheet, one row per meal.
 export function csv() {
-  const cols = ['date', 'meal', 'name', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sugar_g', 'sodium_mg', ...MICROS.map(([k, , u]) => `${k}_${u === 'µg' ? 'ug' : u}`), 'items', 'source'];
+  const cols = ['date', 'meal', 'name', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'fiber_g', 'sugar_g', 'sodium_mg', ...FATS.map(([k]) => `${k}_g`), ...MICROS.map(([k, , u]) => `${k}_${u === 'µg' ? 'ug' : u}`), 'items', 'source'];
   const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const rows = db.all('meals').sort((a, b) => (a.date + D.MEAL_TYPES.indexOf(a.meal)).localeCompare(b.date + D.MEAL_TYPES.indexOf(b.meal))).map(m => [
     m.date, m.meal, m.name, m.calories, m.protein, m.carbs, m.fat, m.fiber ?? '', m.sugar ?? '', m.sodium ?? '',
-    ...MICROS.map(([k]) => m.micros?.[k] ?? ''), (m.items || []).map(i => `${i.name} ${i.grams}g`).join('; '), m.source || 'manual',
+    ...FATS.map(([k]) => m.micros?.[k] ?? ''), ...MICROS.map(([k]) => m.micros?.[k] ?? ''), (m.items || []).map(i => `${i.name} ${i.grams}g`).join('; '), m.source || 'manual',
   ].map(q).join(','));
   return [cols.join(','), ...rows].join('\n');
 }

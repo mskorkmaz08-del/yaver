@@ -3,6 +3,7 @@ import * as db from '../db.js';
 import { html, raw, today, addDays, fmtDay, shrinkImage, toast, haptic } from '../util.js';
 import * as F from '../foodscan.js';
 import * as L from '../dietlog.js';
+import * as G from '../foodgaps.js';
 import { ring } from '../ui.js';
 import { icon } from '../icons.js';
 import { mealForm } from '../forms.js';
@@ -52,6 +53,8 @@ export function render(root) {
       </section>`;
     }).join(''))}
 
+    ${raw(day === today() ? tipsCard() : '')}
+
     ${raw(nutrients(d))}
 
     ${raw(diary())}`;
@@ -65,7 +68,32 @@ export function render(root) {
   root.querySelectorAll('[data-span]').forEach(b => (b.onclick = () => { span = Number(b.dataset.span); render(root); }));
   root.querySelector('[data-weak]')?.addEventListener('click', () => openAssistant(`I feel weak or unwell. Look at what I have eaten and drunk over the last ${span} days (diet_history) and tell me plainly: am I eating enough, which vitamins or minerals look low, which days were thin, and what simple foods would close the gaps. Say what the data can't show, and when I should see a doctor instead.`));
   root.querySelector('[data-csv]')?.addEventListener('click', exportDiary);
+  root.querySelector('[data-tips]')?.addEventListener('click', async () => {
+    tipsBusy = true; tipsError = ''; render(root);
+    try { await G.suggest({ onStatus: t => { const el = root.querySelector('.tips-status'); if (el) el.textContent = t; } }); }
+    catch (e) { tipsError = e.message; }
+    tipsBusy = false;
+    if (root.isConnected) render(root);
+  });
   root.querySelector('[data-ai]').onclick = () => openAssistant('Given what I ate today and my goals, suggest 3 simple options for my next meal with rough calories and protein.');
+}
+
+// ---------- Fill the gaps (v55): foods for the rest of today or tomorrow ----------
+let tipsBusy = false, tipsError = '';
+function tipsCard() {
+  const c = G.cached();
+  const stale = c && c.key !== G.gaps().key;
+  return html`<section class="card tips">
+    <div class="card-head"><p class="label">fill the gaps${c ? ` · ${c.for === 'tomorrow' ? 'for tomorrow' : 'rest of today'}` : ''}</p>
+      <button class="btn ghost small" data-tips ${raw(tipsBusy ? 'disabled' : '')}>${raw(icon('sparkle'))} ${tipsBusy ? 'Thinking…' : c ? (stale ? 'Update' : 'Again') : 'Suggest foods'}</button></div>
+    ${raw(tipsBusy ? '<p class="small muted tips-status">Looking at today and the last week…</p>' : '')}
+    ${raw(tipsError ? html`<p class="small warn-text">${tipsError}</p>` : '')}
+    ${raw(c ? html`<p class="small">${c.summary}</p>
+      <div class="tips-list">${raw(c.items.map(i => html`<div class="tip"><b>${i.food}</b><span class="mono small">${i.amount}${i.when ? ` · ${i.when}` : ''}</span><small class="muted">${i.why}</small></div>`).join(''))}</div>
+      ${raw(c.ease ? html`<p class="small"><span class="muted">Less of:</span> ${c.ease}</p>` : '')}
+      ${raw(stale ? '<p class="small muted">You have logged more since this; tap Update.</p>' : '')}`
+      : !tipsBusy ? '<p class="small muted">Foods and drinks that cover what today and the last week are missing: protein, vitamins, minerals and the right kind of fat.</p>' : '')}
+  </section>`;
 }
 
 // Fiber, sugar and sodium for the day, and vitamins and minerals from photo-logged meals.
@@ -81,9 +109,22 @@ function nutrients(d) {
     ${raw(bar('Fiber', d.fiber, F.DAILY.fiber, 'g'))}
     ${raw(bar('Sugar', d.sugar, F.DAILY.sugar, 'g', true))}
     ${raw(bar('Sodium', d.sodium, F.DAILY.sodium, 'mg', true))}
+    ${raw(fatMix(d))}
     ${raw(shown.map(([k, label, unit, ref]) => bar(label, d.micros[k], ref, unit, k === 'caffeine')).join(''))}
     ${raw(d.detailed ? html`<p class="small muted">Vitamins and minerals from ${d.detailed} photo-logged meal${d.detailed > 1 ? 's' : ''}. All estimates.</p>` : '')}
   </section>`;
+}
+// Which kind of fat (v55): saturated against its limit, omega-3 against its target,
+// and the mono / poly / saturated split so a day heavy on seed oils shows up.
+function fatMix(d) {
+  const m = d.micros, kinds = (m.satFat || 0) + (m.monoFat || 0) + (m.polyFat || 0);
+  if (kinds < 1) return '';
+  const share = k => Math.round(((m[k] || 0) / kinds) * 100);
+  return html`<div class="fat-mix"><span>Fat</span><div class="fat-split" aria-label="Fat split">
+      <i class="sat" style="width:${raw(share('satFat'))}%"></i><i class="mono-f" style="width:${raw(share('monoFat'))}%"></i><i class="poly" style="width:${raw(share('polyFat'))}%"></i></div>
+    <small>saturated ${share('satFat')}% · mono ${share('monoFat')}% · poly ${share('polyFat')}%</small></div>
+  <div class="nut"><span>Saturated fat</span><div class="bar"><div class="${raw((m.satFat || 0) > F.DAILY.satFat ? 'over' : '')}" style="width:${raw(Math.min(100, ((m.satFat || 0) / F.DAILY.satFat) * 100).toFixed(1))}%"></div></div><b class="mono">${fmt(m.satFat || 0)}g <small>${Math.round(((m.satFat || 0) / F.DAILY.satFat) * 100)}%</small></b></div>
+  <div class="nut"><span>Omega-3</span><div class="bar"><div style="width:${raw(Math.min(100, ((m.omega3 || 0) / F.DAILY.omega3) * 100).toFixed(1))}%"></div></div><b class="mono">${fmt(m.omega3 || 0)}g <small>${Math.round(((m.omega3 || 0) / F.DAILY.omega3) * 100)}%</small></b></div>`;
 }
 const fmt = v => (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleString('en');
 
@@ -116,12 +157,12 @@ export function photoSheet(image, day = today()) {
       ${raw(!result ? html`
         ${raw(image ? html`<label class="field"><span>Anything the photo doesn't show? (optional)</span><input name="note" value="${note}" placeholder="fried in butter, 2 sugars, ate half…" autocomplete="off"></label>`
           : html`<label class="field"><span>Write it the way you'd say it, with amounts if you know them</span><textarea name="note" rows="3" placeholder="2 eggs, a slice of bread with butter, black tea with 1 sugar">${note}</textarea></label>`)}
-        <p class="small muted food-status">${busy ? (image ? 'Looking at your photo…' : 'Working it out…') : image ? 'Gemini estimates the weight of each item, then its nutrients.' : 'Gemini works out each item\'s amount and nutrients; you can check them before logging.'}</p>
+        <p class="small muted food-status">${busy ? 'Looking things up…' : image ? 'Gemini reads labels, measures each item against the plate, cup or cutlery, and looks up brands and local recipes before adding up the nutrients.' : 'Gemini looks up each item (brand, local recipe, spoon and cup sizes), then works out its amount and nutrients; you check them before logging.'}</p>
         <div class="sheet-actions"><button class="btn ghost" data-cancel>Cancel</button><button class="btn primary" data-go ${raw(busy ? 'disabled' : '')}>${busy ? 'Estimating…' : 'Estimate'}</button></div>` : html`
         <label class="field"><span>Name</span><input name="dish" value="${dish}"></label>
         <div class="food-items">
           ${raw(items.length ? items.map((it, i) => html`<div class="food-item">
-            <span class="fi-name">${it.name}<small class="mono">${Math.round(it.calories)} kcal · P${Math.round(it.protein)}</small></span>
+            <span class="fi-name">${it.name}<small class="mono">${Math.round(it.calories)} kcal · P${Math.round(it.protein)}</small>${raw(it.basis || it.source ? html`<small class="fi-basis">${[it.basis, it.source].filter(Boolean).join(' · ')}</small>` : '')}</span>
             <label class="fi-g"><input type="number" inputmode="decimal" min="0" data-g="${i}" value="${Math.round(it.grams)}"><span>g</span></label>
             <button class="icon-btn" data-x="${i}" aria-label="Remove ${it.name}">${raw(icon('close'))}</button>
           </div>`).join('') : '<p class="small muted">No food found in this photo.</p>')}
@@ -130,9 +171,11 @@ export function photoSheet(image, day = today()) {
           <b class="mono">${Math.round(t.calories)} kcal</b>
           <span class="mono">P ${Math.round(t.protein)}g · C ${Math.round(t.carbs)}g · F ${Math.round(t.fat)}g</span>
           <span class="mono small muted">Fiber ${fmt(t.fiber)}g · Sugar ${fmt(t.sugar)}g · Sodium ${Math.round(t.sodium)}mg</span>
+          ${raw(t.fat >= 1 ? html`<span class="mono small muted">Fat: saturated ${fmt(t.satFat)}g · mono ${fmt(t.monoFat)}g · poly ${fmt(t.polyFat)}g · omega-3 ${fmt(t.omega3)}g</span>` : '')}
           <span class="small muted">${F.MICROS.filter(([k]) => t[k] >= 0.05).map(([k, label, unit, ref]) => `${label} ${Math.round((t[k] / ref) * 100)}%`).join(' · ')}</span>
         </div>
         <p class="small muted">${result.confidence === 'low' ? 'Low confidence. ' : ''}${result.note || 'Change a weight if it looks off; everything else follows.'}</p>
+        ${raw(result.sources?.length ? html`<p class="small muted food-sources">Looked up: ${raw(result.sources.map(s => html`<a href="${s.uri}" target="_blank" rel="noopener">${s.title}</a>`).join(', '))}</p>` : result.researched === false ? '<p class="small muted food-sources">Search was busy, so this is a direct estimate without looking things up.</p>' : '')}
         <label class="field"><span>Meal</span><select name="meal">${raw(D.MEAL_TYPES.map(m => `<option ${m === meal ? 'selected' : ''}>${m}</option>`).join(''))}</select></label>
         <div class="sheet-actions"><button class="btn ghost" data-again>Try again</button><button class="btn primary" data-log ${raw(items.length ? '' : 'disabled')}>Log ${Math.round(t.calories)} kcal</button></div>`)}
     </div>`;
@@ -146,7 +189,7 @@ export function photoSheet(image, day = today()) {
     wrap.querySelectorAll('[data-g]').forEach(inp => (inp.onchange = () => { const i = Number(inp.dataset.g); items[i] = F.scaleItem(result.items[i], Math.max(0, Number(inp.value) || 0)); setTimeout(draw); })); // redraw after the field's blur finishes
     wrap.querySelectorAll('[data-x]').forEach(b => (b.onclick = () => { items.splice(Number(b.dataset.x), 1); result.items.splice(Number(b.dataset.x), 1); draw(); }));
     wrap.querySelector('[data-log]')?.addEventListener('click', async () => {
-      await D.logMeal(F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: day, confidence: result.confidence, source: image ? 'photo' : 'typed' }));
+      await D.logMeal(F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: day, confidence: result.confidence, source: image ? 'photo' : 'typed', sources: result.sources }));
       haptic(); close();
       toast(`Logged ${Math.round(F.totals(items).calories)} kcal · ${Math.round(F.totals(items).protein)}g protein`);
     });

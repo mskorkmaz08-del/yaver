@@ -76,9 +76,6 @@ export function render(root, go) {
     <label class="field"><span>Voice input language</span>${raw(sel('voiceLang', [['tr-TR', 'Türkçe'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ru-RU', 'Русский'], ['kk-KZ', 'Қазақша']], s('voiceLang', navigator.language)))}</label>
     <p class="muted small">Yaver listens only when you tap the microphone or start voice chat.</p>`;
 
-  const soundBody = html`
-    ${raw(sw('music', 'Background music: a slow, quiet piece while Yaver is open', s('music', true)))}`;
-
   const youBody = html`
     <label class="field"><span>Your name</span><input name="userName" value="${s('userName', '')}" placeholder="Mustafa"></label>
     <label class="field"><span>About you (Yaver reads this)</span><textarea name="aboutMe" rows="3" placeholder="e.g. Engineering student, exams in January, trying to eat more protein, vegetarian…">${s('aboutMe', '')}</textarea></label>
@@ -116,7 +113,6 @@ export function render(root, go) {
       ${raw(group('ai', 'sparkle', 'Assistant', using(), ai))}
       ${raw(group('mac', 'terminal', 'Claude on your Mac', computer ? 'checking…' : macConfigured() ? 'connected by code' : 'not connected', mac))}
       ${raw(group('voice', 'mic', 'Voice', `${s('voiceEngine', 'live') === 'live' ? 'Live engine' : 'Standard engine'} · ${s('ttsVoice', 'Charon')}`, voiceBody))}
-      ${raw(group('sound', 'bell', 'Music', `${s('music', true) ? 'On' : 'Off'}`, soundBody))}
       ${raw(group('you', 'target', 'You and goals', `${s('currency', 'TRY')} · ${s('dailyStudyMin', 60)} min study a day`, youBody))}
     </form>
     <div class="set-list">
@@ -157,7 +153,6 @@ export function render(root, go) {
     await db.setSetting('appleCal', fd.has('appleCal'));
     if (!fd.has('appleCal') && db.all('applecal').length) await db.replaceLocal('applecal', []);
     await db.setSetting('speak', fd.has('speak'));
-    await db.setSetting('music', fd.has('music'));
     await db.setSetting('voiceAuto', fd.has('voiceAuto'));
     await db.setSetting('jarvis', fd.has('jarvis'));
     await db.setSetting('voiceMac', fd.has('voiceMac'));
