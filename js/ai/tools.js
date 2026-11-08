@@ -13,6 +13,7 @@ import * as L from '../dietlog.js';
 import * as G from '../foodgaps.js';
 import * as B from '../body.js';
 import * as TR from '../training.js';
+import * as IN from '../insights.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -296,6 +297,12 @@ const TOOLS = [
     description: 'Record food the user ate. Estimate calories and macros (grams) yourself from the description or photo if the user does not give them, and say they are estimates.',
     input_schema: obj({ name: { type: 'string' }, meal: { type: 'string', enum: D.MEAL_TYPES }, calories: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' }, fiber: { type: 'number' }, sugar: { type: 'number' }, sodium_mg: { type: 'number' }, date, time: { type: 'string', description: 'When it was eaten, HH:MM 24-hour local time. Defaults to now for today; ask or infer ("last night", "an hour ago") when they log later.' } }, ['name', 'meal', 'calories']),
     run: async ({ sodium_mg, ...i }) => { await D.logMeal({ ...i, sodium: sodium_mg }); const d = D.dietDay(i.date || today()); return { logged: true, dayCalories: d.calories, calorieGoal: d.goals.dailyCalories, dayProtein: d.protein }; },
+  },
+  {
+    name: 'get_insights',
+    description: 'Findings across everything the user logs (food and meal times, how they felt, body and weigh-ins, training, study, çetele, money), each with its importance. Only things the data clearly shows. Use it for briefings, "how am I doing", or before giving advice.',
+    input_schema: obj({}),
+    run: () => IN.forAI(),
   },
   {
     name: 'log_feeling',

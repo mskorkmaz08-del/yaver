@@ -12,8 +12,22 @@ import { hasKey as aiReady, saveKey } from '../ai/provider.js';
 import { openCommand, logCetele } from '../command.js';
 import { onComputer, macOnline, BRIDGE_CMD } from '../ai/mac.js';
 import * as SK from '../skills.js';
+import * as IN from '../insights.js';
 
 // The player card in small: the hexagon, the overall rating and what moved lately.
+// Insights (v60): only when the data shows something; the top three, most important first.
+function insightCard() {
+  const list = IN.all();
+  if (!list.length) return '';
+  return html`<section class="plate card insights">
+    <div class="card-head"><p class="eyebrow">Insights</p>${raw(list.length > 3 ? html`<span class="small muted">${list.length - 3} more · Ask Yaver</span>` : '')}</div>
+    ${raw(list.slice(0, 3).map(i => html`<div class="insight lv${i.level}">
+      <button class="in-main" data-go="${i.go}"><span class="in-area">${i.area}</span><span class="in-text">${i.text}</span></button>
+      <div class="in-acts">${raw(i.ask ? html`<button class="chip" data-in-ask="${i.id}">${raw(icon('sparkle'))} Why?</button>` : '')}<button class="icon-btn" data-in-hide="${i.id}" aria-label="Hide for today">${raw(icon('close'))}</button></div>
+    </div>`).join(''))}
+  </section>`;
+}
+
 function skillCard() {
   const s = SK.summary();
   const gain = s.overall - s.overallThen;
@@ -154,6 +168,8 @@ export function render(root, go) {
         <p class="small muted">Stored only on this device. A Claude key also works here if you have one.</p>
       </section>`)}
 
+    ${raw(insightCard())}
+
     ${raw(skillCard())}
 
     <section class="plate card mac-card" data-mac-card hidden></section>
@@ -198,11 +214,13 @@ export function render(root, go) {
 
   const ask = root.querySelector('[data-ask]');
   ask.onclick = e => {
-    if (e.target.closest('[data-brief]')) openAssistant('Brief me: what needs my attention today (çetele minimums, meetings, study and roadmap, tasks, money, diet). Facts and next steps only.');
+    if (e.target.closest('[data-brief]')) openAssistant('Brief me: what needs my attention today (çetele minimums, meetings, study and roadmap, tasks, money, diet), plus anything get_insights finds in my data. Facts and next steps only.');
     else openAssistant();
   };
   ask.onkeydown = e => { if (e.key === 'Enter' && e.target === ask) openAssistant(); };
   root.querySelectorAll('[data-go]').forEach(b => (b.onclick = () => go(b.dataset.go)));
+  root.querySelectorAll('[data-in-ask]').forEach(b => (b.onclick = () => { const i = IN.all({ hidden: false }).find(x => x.id === b.dataset.inAsk); if (i?.ask) openAssistant(i.ask); }));
+  root.querySelectorAll('[data-in-hide]').forEach(b => (b.onclick = () => IN.hide(b.dataset.inHide)));
   // Focus from Home: open the lesson and go straight into focus mode.
   root.querySelector('[data-focus-lesson]')?.addEventListener('click', e => { go(e.currentTarget.dataset.focusLesson); document.querySelector('#view [data-focus]')?.click(); });
   root.querySelector('[data-more]')?.addEventListener('click', e => { e.target.closest('.card').classList.add('show-all'); e.target.remove(); });

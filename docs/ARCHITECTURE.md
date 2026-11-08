@@ -176,6 +176,7 @@ yaver/
     ├── applecal.js         Read-only copy of Apple Calendar, fetched through the Mac bridge
     ├── teams.js            Dev team and students: people, activities, last met, who is overdue
     ├── foodscan.js         Food photos: Gemini estimates each item's weight and nutrients
+    ├── insights.js         Findings across all logged data, shown on Home when they matter
     ├── training.js         Training plan for the athletic goal, sessions done, sets per muscle
     ├── anatomy.js          Front and back muscle maps (MIT, react-native-body-highlighter)
     ├── body.js             Body: target weight, each day's effect on fat and muscle, projection
@@ -262,6 +263,8 @@ New files: `js/course.js` (all course logic), `js/views/course.js` (overview, to
 
 
 **The look: Piltover (v30).** Built from Arcane reference stills Mustafa sent (the mood only: no names, logos or images from the show). The ground is a navy night sky with a faint art-deco diamond lattice. Plates are navy with a hairline of gold and chamfered corners, a gold line across each cut. The main button on a screen is brass; the next-lesson plate on Home is ivory marble with gold inlay and a navy button. Progress bars are glass tubes with teal or gold light, switches are brass levers in a slot. The Çetele dial is an ivory clock face in a gold bezel with Roman numerals at the quarters and a hextech jewel on its hand; the lesson stopwatch and study subdial are brass and ivory too. Cinzel (inscription capitals) sets the wordmark, page titles and labels; Archivo the interface; IBM Plex Mono the numbers. The gears and crystals of v29 stay.
+
+**Insights (v60).** Mustafa's main aim for all the data he gives Yaver is to learn from it. `js/insights.js` runs plain checks across everything he logs: meals and their times, how he felt, body and weigh-ins, training, study, çetele and money. A finding appears only when the data clearly shows it, for example feeling bad on the mornings after late eating far more often than after other days, eating over the burn while the plan is to lose fat, protein or a vitamin under target all week, study well under the goal, or spending on pace to pass the budget. Home shows the three most important in an Insights card (Why? asks the assistant to explain and suggest a step; × hides it for the day); when nothing stands out, there is no card. The assistant gets every finding through get_insights and uses it in briefings.
 
 **Meal times and how you feel (v59).** Every meal now records when it was eaten: photo and typed meals default to now, and the check sheet and the meal form let you pick another date and time when you log it later (the meal type follows the time). The food diary uses the times: when the first and last meals usually are, how many days had a third or more of the food from 21:00, and, with the new How do you feel today? check-in (Good, OK, Bad), how the next mornings felt after late-eating days compared with other days. The assistant sees all of it in diet_history and can record a feeling with log_feeling. Older meals use the time they were logged, marked with ~.
 

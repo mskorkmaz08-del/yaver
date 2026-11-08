@@ -1757,3 +1757,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .field-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
 .field-row .field { min-width: 0; }
 .diary .feel { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; margin: 10px 0 4px; }
+
+/* Insights on Home (v60) */
+.insights .card-head { display: flex; justify-content: space-between; align-items: baseline; }
+.insight { display: flex; align-items: flex-start; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+.insight:first-of-type { border-top: 0; }
+.in-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; text-align: left; background: none; border: 0; padding: 0 0 0 10px; color: var(--text); font: inherit; cursor: pointer; border-left: 2px solid var(--line-2); }
+.insight.lv3 .in-main { border-left-color: var(--warn); }
+.insight.lv2 .in-main { border-left-color: var(--lume); }
+.in-area { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.in-text { font-size: 14.5px; line-height: 1.4; }
+.in-acts { display: flex; align-items: center; gap: 4px; }
+.in-acts .chip { padding: 5px 10px; font-size: 12.5px; white-space: nowrap; }
+.in-acts .icon-btn { width: 30px; height: 30px; }
+.in-acts .icon-btn .i { width: 14px; height: 14px; }
