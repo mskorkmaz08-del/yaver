@@ -114,11 +114,12 @@ export async function mealForm(existing, day = today(), preset = {}) {
       { name: 'carbs', label: 'Carbs (g)', type: 'number', value: m.carbs },
       { name: 'fat', label: 'Fat (g)', type: 'number', value: m.fat },
       { name: 'date', label: 'Date', type: 'date', value: m.date || day },
+      { name: 'time', label: 'Eaten at', type: 'time', value: m.time || (existing ? D.mealTime(m)?.time || '' : (m.date || day) === today() ? D.nowHM() : '') },
     ],
   });
   if (!v) return;
   if (v.__danger) { await db.remove('meals', m.id); haptic(); toast('Meal deleted', { action: { label: 'Undo', run: () => db.put('meals', m) } }); return; }
-  if (existing) await db.put('meals', { ...m, ...v });
+  if (existing) await db.put('meals', { ...m, ...v, time: D.cleanTime(v.time) || undefined });
   else await D.logMeal(v);
   toast('Meal logged');
 }

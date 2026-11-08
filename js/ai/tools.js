@@ -294,8 +294,14 @@ const TOOLS = [
   {
     name: 'log_meal',
     description: 'Record food the user ate. Estimate calories and macros (grams) yourself from the description or photo if the user does not give them, and say they are estimates.',
-    input_schema: obj({ name: { type: 'string' }, meal: { type: 'string', enum: D.MEAL_TYPES }, calories: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' }, fiber: { type: 'number' }, sugar: { type: 'number' }, sodium_mg: { type: 'number' }, date }, ['name', 'meal', 'calories']),
+    input_schema: obj({ name: { type: 'string' }, meal: { type: 'string', enum: D.MEAL_TYPES }, calories: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' }, fiber: { type: 'number' }, sugar: { type: 'number' }, sodium_mg: { type: 'number' }, date, time: { type: 'string', description: 'When it was eaten, HH:MM 24-hour local time. Defaults to now for today; ask or infer ("last night", "an hour ago") when they log later.' } }, ['name', 'meal', 'calories']),
     run: async ({ sodium_mg, ...i }) => { await D.logMeal({ ...i, sodium: sodium_mg }); const d = D.dietDay(i.date || today()); return { logged: true, dayCalories: d.calories, calorieGoal: d.goals.dailyCalories, dayProtein: d.protein }; },
+  },
+  {
+    name: 'log_feeling',
+    description: 'Record how the user feels on a day (good, ok or bad) with an optional short note, e.g. when they say they feel awful this morning. One check-in per day; it is compared with meal timing and food in diet_history.',
+    input_schema: obj({ feel: { type: 'string', enum: ['good', 'ok', 'bad'] }, note: { type: 'string' }, date }, ['feel']),
+    run: async ({ feel, note, date: k = today() }) => { await L.setFeel(k, feel, note ?? ''); return { ok: true, date: k, feel }; },
   },
   {
     name: 'get_diet_day',
@@ -359,7 +365,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['log_weight', 'log_workout', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['log_feeling', 'log_weight', 'log_workout', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -377,6 +383,7 @@ export function describeAction(name, input) {
     case 'log_cetele': return `Çetele · ${input.item}${input.done !== undefined ? (input.done ? ' done' : ' cleared') : input.set !== undefined ? ` = ${input.set}` : ` +${input.add ?? 1}`}`;
     case 'set_cetele_item': return input.remove ? `Removed ${input.name} from çetele` : `Çetele · ${input.name}: ${input.target ?? ''} ${input.unit ?? ''} per ${input.per || 'day'}`.replace(/\s+/g, ' ');
     case 'log_workout': return `Training done${input.session ? ` · ${TR.SESSIONS[input.session]?.name || ''}` : ''}`;
+    case 'log_feeling': return `Feeling ${input.feel}${input.note ? ` · ${input.note}` : ''}`;
     case 'log_weight': return `Weight ${input.kg} kg${input.waist_cm ? ` · waist ${input.waist_cm} cm` : ''}`;
     case 'add_person': return `${input.name} added to ${T.TEAMS[input.team] || 'Students'}`;
     case 'log_team_activity': return `Logged “${input.title}”${input.place ? ` at ${input.place}` : ''}${input.people?.length ? ` · ${input.people.length} people` : ''}`;

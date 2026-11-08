@@ -238,15 +238,27 @@ export const setWater = (total, key = today()) => addWater(total - waterOn(key),
 // Optional extras (v50, from food photos or the assistant): fiber, sugar (g), sodium (mg),
 // micros {potassium, calcium, iron, …; since v55 also satFat, monoFat, polyFat, omega3},
 // items [{name, grams, basis, from, …}], source, confidence, sources [{title, uri}] (pages looked up).
-export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today(), fiber, sugar, sodium, micros, items, source, confidence, sources }) {
+// time (v59): when it was eaten, "HH:MM" on its date. New logs for today default to now.
+export const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const cleanTime = t => (HM.test(String(t || '').trim()) ? String(t).trim() : String(t || '').trim().replace(/^(\d):/, '0$1:').match(HM)?.[0] || '');
+// When a meal was eaten: its time, else (older meals) when it was logged if that was the same day.
+export function mealTime(m) {
+  if (m.time) return { time: m.time, approx: false };
+  const at = m.createdAt;
+  if (at) { const d = new Date(at); if (dayKey(d) === m.date) return { time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`, approx: true }; }
+  return null;
+}
+export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, meal = 'Snack', date = today(), time, fiber, sugar, sodium, micros, items, source, confidence, sources }) {
   if (!name) throw new Error('name is required');
   if (!MEAL_TYPES.includes(meal)) meal = 'Snack';
+  time = cleanTime(time) || (date === today() ? nowHM() : '');
   const extra = Object.fromEntries(Object.entries({ fiber, sugar, sodium }).filter(([, v]) => v != null && v !== '').map(([k, v]) => [k, Number(v) || 0]));
-  return db.put('meals', { name, calories: Number(calories) || 0, protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0, meal, date, ...extra,
+  return db.put('meals', { name, calories: Number(calories) || 0, protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0, meal, date, ...(time ? { time } : {}), ...extra,
     ...(micros ? { micros } : {}), ...(items ? { items } : {}), ...(source ? { source } : {}), ...(confidence ? { confidence } : {}), ...(sources?.length ? { sources } : {}) });
 }
 export function dietDay(key = today()) {
-  const meals = db.all('meals').filter(m => m.date === key).sort((a, b) => MEAL_TYPES.indexOf(a.meal) - MEAL_TYPES.indexOf(b.meal));
+  const meals = db.all('meals').filter(m => m.date === key).sort((a, b) => MEAL_TYPES.indexOf(a.meal) - MEAL_TYPES.indexOf(b.meal) || (mealTime(a)?.time || '').localeCompare(mealTime(b)?.time || ''));
   const water = waterOn(key);
   return {
     date: key,

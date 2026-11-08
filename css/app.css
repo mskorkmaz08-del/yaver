@@ -1752,3 +1752,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .week-key .up { color: var(--warn); }
 .week-key .good { color: var(--steel); }
 .goal .comp { max-width: 640px; }
+
+/* Meal times and the daily check-in (v59) */
+.field-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+.field-row .field { min-width: 0; }
+.diary .feel { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 10px; margin: 10px 0 4px; }

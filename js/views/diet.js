@@ -52,7 +52,7 @@ export function render(root, go) {
       const items = d.meals.filter(m => kind(m) === type);
       return html`<section class="list">
         <h4 class="list-day">${type} <span>${items.reduce((a, m) => a + m.calories, 0)} kcal</span></h4>
-        ${raw(items.map(m => html`<button class="row" data-id="${m.id}"><span class="row-main"><b>${m.name}</b><small class="mono">P${m.protein} C${m.carbs} F${m.fat}${m.source === 'photo' ? ' · photo' : m.source === 'typed' ? ' · typed' : ''}</small></span><span class="row-amt">${m.calories}</span></button>`).join('') || `<button class="row add-row" data-type="${type}">+ ${type.toLowerCase()}</button>`)}
+        ${raw(items.map(m => html`<button class="row" data-id="${m.id}"><span class="row-main"><b>${m.name}</b><small class="mono">${raw(D.mealTime(m) ? html`${D.mealTime(m).approx ? '~' : ''}${D.mealTime(m).time} · ` : '')}P${m.protein} C${m.carbs} F${m.fat}${m.source === 'photo' ? ' · photo' : m.source === 'typed' ? ' · typed' : ''}</small></span><span class="row-amt">${m.calories}</span></button>`).join('') || `<button class="row add-row" data-type="${type}">+ ${type.toLowerCase()}</button>`)}
       </section>`;
     }).join(''))}
 
@@ -72,6 +72,7 @@ export function render(root, go) {
   root.querySelectorAll('[data-span]').forEach(b => (b.onclick = () => { span = Number(b.dataset.span); render(root); }));
   root.querySelector('[data-weak]')?.addEventListener('click', () => openAssistant(`I feel weak or unwell. Look at what I have eaten and drunk over the last ${span} days (diet_history) and tell me plainly: am I eating enough, which vitamins or minerals look low, which days were thin, and what simple foods would close the gaps. Say what the data can't show, and when I should see a doctor instead.`));
   root.querySelector('[data-csv]')?.addEventListener('click', exportDiary);
+  root.querySelectorAll('[data-feel]').forEach(b => (b.onclick = async () => { await L.setFeel(today(), b.dataset.feel); haptic(); }));
   root.querySelector('[data-tips]')?.addEventListener('click', async () => {
     tipsBusy = true; tipsError = ''; render(root);
     try { await G.suggest({ onStatus: t => { const el = root.querySelector('.tips-status'); if (el) el.textContent = t; } }); }
@@ -159,6 +160,9 @@ export function photoSheet(image, day = today()) {
   const hour = new Date().getHours();
   let meal = hour < 11 ? 'Breakfast' : hour < 16 ? 'Lunch' : hour < 21 ? 'Dinner' : 'Snack';
   let note = '', dish = '';
+  // When it was eaten (v59): now for today, editable if it was logged later.
+  let eatenDate = day, eatenTime = day === today() ? D.nowHM() : '', mealSet = false;
+  const guessMeal = t => { const h = Number(String(t).slice(0, 2)); return h < 11 ? 'Breakfast' : h < 16 ? 'Lunch' : h < 21 ? 'Dinner' : 'Snack'; };
 
   const close = () => { ctrl?.abort(); wrap.classList.remove('open'); setTimeout(() => wrap.remove(), 250); };
   const draw = () => {
@@ -189,6 +193,10 @@ export function photoSheet(image, day = today()) {
         </div>
         <p class="small muted">${result.confidence === 'low' ? 'Low confidence. ' : ''}${result.note || 'Change a weight if it looks off; everything else follows.'}</p>
         ${raw(result.sources?.length ? html`<p class="small muted food-sources">Looked up: ${raw(result.sources.map(s => html`<a href="${s.uri}" target="_blank" rel="noopener">${s.title}</a>`).join(', '))}</p>` : result.researched === false ? '<p class="small muted food-sources">Search was busy, so this is a direct estimate without looking things up.</p>' : '')}
+        <div class="field-row eaten">
+          <label class="field"><span>Eaten on</span><input type="date" name="edate" value="${eatenDate}"></label>
+          <label class="field"><span>at</span><input type="time" name="etime" value="${eatenTime}"></label>
+        </div>
         <label class="field"><span>Meal</span><select name="meal">${raw(D.MEAL_TYPES.map(m => `<option ${m === meal ? 'selected' : ''}>${m}</option>`).join(''))}</select></label>
         <div class="sheet-actions"><button class="btn ghost" data-again>Try again</button><button class="btn primary" data-log ${raw(items.length ? '' : 'disabled')}>Log ${Math.round(t.calories)} kcal</button></div>`)}
     </div>`;
@@ -196,13 +204,15 @@ export function photoSheet(image, day = today()) {
     const n = wrap.querySelector('[name=note]'); if (n) n.oninput = () => (note = n.value);
     if (n && !image && !busy && !note) setTimeout(() => n.focus(), 300);
     const dn = wrap.querySelector('[name=dish]'); if (dn) dn.oninput = () => (dish = dn.value);
-    const ms = wrap.querySelector('[name=meal]'); if (ms) ms.onchange = () => (meal = ms.value);
+    const ms = wrap.querySelector('[name=meal]'); if (ms) ms.onchange = () => { meal = ms.value; mealSet = true; };
+    const ed = wrap.querySelector('[name=edate]'); if (ed) ed.onchange = () => (eatenDate = ed.value || day);
+    const et = wrap.querySelector('[name=etime]'); if (et) et.onchange = () => { eatenTime = et.value; if (!mealSet && eatenTime) { meal = guessMeal(eatenTime); if (ms) ms.value = meal; } };
     wrap.querySelector('[data-go]')?.addEventListener('click', run);
     wrap.querySelector('[data-again]')?.addEventListener('click', () => { result = null; items = []; draw(); });
     wrap.querySelectorAll('[data-g]').forEach(inp => (inp.onchange = () => { const i = Number(inp.dataset.g); items[i] = F.scaleItem(result.items[i], Math.max(0, Number(inp.value) || 0)); setTimeout(draw); })); // redraw after the field's blur finishes
     wrap.querySelectorAll('[data-x]').forEach(b => (b.onclick = () => { items.splice(Number(b.dataset.x), 1); result.items.splice(Number(b.dataset.x), 1); draw(); }));
     wrap.querySelector('[data-log]')?.addEventListener('click', async () => {
-      await D.logMeal(F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: day, confidence: result.confidence, source: image ? 'photo' : 'typed', sources: result.sources }));
+      await D.logMeal({ ...F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: eatenDate, confidence: result.confidence, source: image ? 'photo' : 'typed', sources: result.sources }), time: eatenTime });
       haptic(); close();
       toast(`Logged ${Math.round(F.totals(items).calories)} kcal · ${Math.round(F.totals(items).protein)}g protein`);
     });
@@ -215,7 +225,7 @@ export function photoSheet(image, day = today()) {
       result = await F.scanFood(image, note, { signal: ctrl.signal, onStatus: t => { const el = wrap.querySelector('.food-status'); if (el) el.textContent = t; } });
       items = result.items.map(i => ({ ...i }));
       dish = result.dish;
-      if (D.MEAL_TYPES.includes(result.meal)) meal = result.meal;
+      if (D.MEAL_TYPES.includes(result.meal) && !eatenTime) meal = result.meal;
     } catch (e) {
       if (e.name === 'AbortError') return;
       toast(e.message, 5000);
@@ -242,6 +252,9 @@ function diary() {
     ${raw(r.low.length ? html`<p class="small"><span class="muted">Running low:</span> ${r.low.slice(0, 6).map(x => `${x.label} ${x.pct}%`).join(' · ')}</p>` : r.detailedDays ? '<p class="small muted">Nothing running low on the days with vitamin data.</p>' : '')}
     ${raw(r.high.length ? html`<p class="small"><span class="muted">Above the limit:</span> ${r.high.map(x => `${x.label} ${x.pct}%`).join(' · ')}</p>` : '')}
     ${raw(r.lowCalorieDays.length ? html`<p class="small muted">Thin days (under 70% of your calories): ${r.lowCalorieDays.length}</p>` : '')}
+    ${raw(r.timing ? html`<p class="small"><span class="muted">When you eat:</span> first meal around <b class="mono">${r.timing.first}</b>, last around <b class="mono">${r.timing.last}</b> (${r.timing.window} h). Late eating (a third of the day's food from 21:00): ${r.timing.lateDays.length} of ${r.timing.days} days.</p>` : '')}
+    ${raw(r.timing && (r.timing.afterLate.days || r.timing.afterOther.days) ? html`<p class="small"><span class="muted">Next mornings:</span> after late eating you felt bad ${r.timing.afterLate.bad} of ${r.timing.afterLate.days}; after other days ${r.timing.afterOther.bad} of ${r.timing.afterOther.days}.</p>` : '')}
+    <div class="feel"><span class="small muted">How do you feel today?</span><div class="chips">${raw(L.FEELS.map(([k, label]) => `<button class="chip ${L.feelOn(today())?.feel === k ? 'on' : ''}" data-feel="${k}">${label}</button>`).join(''))}</div></div>
     <p class="small muted">Vitamins and minerals come from photo and typed meals (${r.detailedDays} of the logged days). Every meal is kept.</p>
     <div class="btn-row"><button class="btn ghost" data-weak>${raw(icon('sparkle'))} I feel weak: check my diet</button><button class="btn ghost" data-csv>${raw(icon('share'))} Download diary</button></div>
   </section>`;

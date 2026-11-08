@@ -89,7 +89,7 @@ console.log('screenshot', join(dir, 'review.png'));
 await page.click('.food-sheet [data-log]');
 await page.waitForTimeout(500);
 const meal = await page.evaluate(async () => (await import('./js/db.js')).all('meals').at(-1));
-check('meal logged with extras', meal?.name === 'Plov with salad' && meal.meal === 'Lunch' && meal.calories === 330 && meal.protein === 12 && meal.source === 'photo' && meal.items?.length === 2 && meal.micros?.vitaminC > 0 && meal.micros?.polyFat > 0 && meal.sources?.[0]?.title === 'eda.kz' && /plate/.test(meal.items[0].basis), JSON.stringify({ c: meal?.calories, p: meal?.protein, f: meal?.fiber, na: meal?.sodium }));
+check('meal logged with extras', meal?.name === 'Plov with salad' && ['Breakfast', 'Lunch', 'Dinner', 'Snack'].includes(meal.meal) && meal.calories === 330 && meal.protein === 12 && meal.source === 'photo' && /^\d\d:\d\d$/.test(meal.time || '') && meal.items?.length === 2 && meal.micros?.vitaminC > 0 && meal.micros?.polyFat > 0 && meal.sources?.[0]?.title === 'eda.kz' && /plate/.test(meal.items[0].basis), JSON.stringify({ c: meal?.calories, p: meal?.protein, f: meal?.fiber, na: meal?.sodium }));
 const card = await page.evaluate(() => [...document.querySelectorAll('.nutrients .nut span')].map(s => s.textContent));
 check('nutrients card shows fiber, sodium and vitamins', card.includes('Fiber') && card.includes('Sodium') && card.includes('Vitamin C'), card.join(', '));
 check('nutrients card shows the fat split', /poly \d+%/.test(await page.textContent('.nutrients .fat-mix')) && card.includes('Omega-3'));
