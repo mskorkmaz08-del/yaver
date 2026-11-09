@@ -240,31 +240,33 @@ function syncSection() {
   const st = sync.status();
   if (on) return html`<div>
       <p class="sync-status small"><span class="sync-dot" data-state="${st.state}"></span><span>${sync.describe()}</span></p>
-      <p class="muted small">This device: <b>${sync.deviceName()}</b>. Progress, money, meetings, diet and settings sync through an encrypted secret gist on your GitHub. Chats, API keys, the token and the passphrase stay on each device.</p>
+      <p class="muted small">This device: <b>${sync.deviceName()}</b>. Progress, money, meetings, diet and settings sync through an encrypted secret gist on your GitHub. Chats and API keys stay on each device. To add your other device, tap Copy sync code and paste it there (Settings → Sync). The code opens your data, so only paste it into Yaver.</p>
+      ${raw(st.state === 'error' ? html`<p class="small" style="color:var(--danger,#c44)">${st.error}</p>` : '')}
       <div class="btn-row wrap">
         <button class="btn primary" data-sync-now>Sync now</button>
+        <button class="btn" data-sync-code>Copy sync code</button>
         <button class="btn ghost" data-sync-off>Turn off</button>
         <button class="btn danger" data-sync-forget>Forget this device</button>
       </div>
       ${raw((db.setting('autoBackups', []) || []).length ? html`<button class="link" data-sync-restore>restore the backup taken before the first sync</button>` : '')}
     </div>`;
   return html`<div>
-      <p class="muted small">Keep the iPhone and the laptop on the same progress, with no Yaver server: everything is encrypted on this device with your passphrase, then stored in one secret gist on your GitHub account. GitHub can't read it.</p>
-      <p class="small"><b>1. Create a token</b> (once, on any device):</p>
-      <ol class="small muted" style="margin:0;padding-left:18px">
-        <li>On github.com: your photo → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
-        <li>Name: <b>Yaver sync</b>. Expiration: up to a year (set a reminder to renew it).</li>
-        <li>Repository access: <b>Public repositories</b> (it needs no repository).</li>
-        <li><b>Permissions → Account permissions → Gists: Read and write.</b> Nothing else.</li>
-        <li><b>Generate token</b> and copy it (it's shown once). Use the same token on both devices, or make one per device.</li>
+      <p class="muted small">Keeps the iPhone and the MacBook on the same data. Everything is encrypted here first, then kept in one secret gist on your GitHub account, which is always online, so neither device has to be awake for the other. Nothing is deleted: the first sync takes a backup and merges, keeping the newest version of every record.</p>
+      <p class="small"><b>On the device with your data (your iPhone), once:</b></p>
+      <ol class="small muted" style="margin:0 0 8px;padding-left:18px">
+        <li><a href="${sync.TOKEN_URL}" target="_blank" rel="noopener"><b>Open GitHub to make a key</b></a>. Sign in if asked. Expiration: <b>No expiration</b>. “gist” is already ticked. Tap <b>Generate token</b> at the bottom and copy the key (ghp_…).</li>
+        <li>Paste it here and tap Turn on sync.</li>
       </ol>
-      <p class="small"><b>2. Choose a passphrase</b> of a few words (at least 10 characters). Use the same one on every device. If you lose it, the synced copy can't be opened; your devices keep their own data.</p>
-      <p class="small"><b>3. Paste both below</b>, here and on your other device. The first device creates the gist; the second finds it and pulls everything.</p>
       <form class="form" data-sync-form style="display:flex;flex-direction:column">
-        <label class="field"><span>GitHub token</span><input name="token" type="password" autocomplete="off" placeholder="github_pat_…"></label>
-        <label class="field"><span>Sync passphrase</span><input name="pass" type="password" autocomplete="new-password" placeholder="four or five random words"></label>
+        <label class="field"><span>GitHub key</span><input name="token" type="password" autocomplete="off" placeholder="ghp_…"></label>
         <label class="field"><span>Name of this device</span><input name="name" value="${sync.deviceName()}"></label>
         <button class="btn primary">Turn on sync</button>
+      </form>
+      <p class="small" style="margin-top:14px"><b>On your other device:</b> after the first one is on, tap <b>Copy sync code</b> there, then paste it here. Nothing else to type.</p>
+      <form class="form" data-sync-join style="display:flex;flex-direction:column">
+        <label class="field"><span>Sync code</span><input name="code" type="password" autocomplete="off" placeholder="yaversync1.…"></label>
+        <label class="field"><span>Name of this device</span><input name="name" value="${sync.deviceName()}"></label>
+        <button class="btn">Join with the code</button>
       </form>
     </div>`;
 }
@@ -277,10 +279,28 @@ function bindSync(root, go) {
     const b = f.querySelector('button');
     b.disabled = true; b.textContent = 'Connecting…';
     try {
-      const r = await sync.setup(v);
-      toast(r?.blocked ? 'Sync is on. This device is empty: open Sync now to pull your data.' : 'Sync is on.', 4000);
-    } catch (err) { toast(err.message, 6000); }
+      const r = await sync.setup({ ...v, fresh: true });
+      toast(r?.blocked ? 'Sync is on. This device is empty: open Sync now to pull your data.' : 'Sync is on. Now tap Copy sync code and paste it on your other device.', 6000);
+    } catch (err) { toast(err.message, 8000); }
     render(root, go);
+  };
+  const j = root.querySelector('[data-sync-join]');
+  if (j) j.onsubmit = async e => {
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(j));
+    const b = j.querySelector('button');
+    b.disabled = true; b.textContent = 'Joining…';
+    try {
+      await sync.join(v.code, v.name);
+      toast('Synced. Your data from the other device is here now.', 5000);
+    } catch (err) { toast(err.message, 8000); }
+    render(root, go);
+  };
+  const cc = root.querySelector('[data-sync-code]');
+  if (cc) cc.onclick = async () => {
+    const c = sync.code();
+    try { await navigator.clipboard.writeText(c); toast('Sync code copied. Paste it in Settings → Sync on your other device.', 5000); }
+    catch { window.prompt('Copy this sync code:', c); }
   };
   const now = root.querySelector('[data-sync-now]');
   if (now) now.onclick = async () => {

@@ -33,8 +33,8 @@ async function gh(path, opts = {}) {
     ...opts,
     headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${S('syncToken', '')}`, 'X-GitHub-Api-Version': '2022-11-28', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) },
   });
-  if (res.status === 401) throw new Error('GitHub rejected the token. Create a new one (Settings → Sync shows how).');
-  if (res.status === 403 || res.status === 404 && path.startsWith('/gists?')) throw new Error('This token can\'t use gists. It needs the Gists permission set to read and write.');
+  if (res.status === 401) throw new Error('GitHub rejected the key (expired or deleted). Make a new one: Settings → Sync → Forget this device, then set up again.');
+  if (res.status === 403 || res.status === 404 && path.startsWith('/gists?')) throw new Error(res.headers.get('x-ratelimit-remaining') === '0' ? 'GitHub says too many requests. Sync will try again later.' : 'This GitHub key can\'t use gists. Make a new one with the link in Settings → Sync (it ticks “gist”).');
   if (!res.ok) { let m = ''; try { m = (await res.json()).message; } catch {} throw Object.assign(new Error(`GitHub error ${res.status}${m ? `: ${m}` : ''}`), { status: res.status }); }
   return res.status === 204 ? null : res.json();
 }
@@ -170,16 +170,60 @@ export function describe() {
   return `Synced ${ago}${s.lastFrom && s.lastFrom !== deviceName() ? ` · last changes from ${s.lastFrom}` : ''}.`;
 }
 
+const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
+// A long random passphrase: nobody has to choose or type one; the sync code carries it.
+export function newPass() {
+  const a = crypto.getRandomValues(new Uint8Array(18));
+  return b64u(String.fromCharCode(...a)).slice(0, 24);
+}
+// Link that opens GitHub's new-token page with only the gist scope ticked.
+export const TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=Yaver%20sync';
+
 // Set up on this device: check the token, find or create the gist, first pull.
-export async function setup({ token, pass, name }) {
-  if (!token || !pass) throw new Error('Paste the token and choose a passphrase.');
-  if (pass.length < 10) throw new Error('Use a passphrase of at least 10 characters (a few words is best).');
-  await db.setSetting('syncToken', token.trim());
+// fresh (the first device, usually the iPhone): an older synced copy this passphrase can't
+// open is renamed and kept on GitHub, never overwritten, and a new one is started.
+export async function setup({ token, pass, name, gistId, fresh = false }) {
+  token = String(token || '').trim();
+  if (!token) throw new Error('Paste the GitHub key first.');
+  if (!/^(ghp_|github_pat_|gho_)[A-Za-z0-9_]{10,}$/.test(token)) throw new Error('That does not look like a GitHub key. It starts with ghp_ and is copied from the GitHub page in step 1.');
+  pass = pass || S('syncPass', '') || newPass();
+  if (pass.length < 10) throw new Error('Use a passphrase of at least 10 characters.');
+  await db.setSetting('syncToken', token);
   await db.setSetting('syncPass', pass);
+  if (gistId) await db.setSetting('syncGistId', gistId);
   if (name) await db.setSetting('deviceName', name.trim());
+  if (fresh) await retireUnreadable(pass);
   await db.setSetting('syncEnabled', true);
   await db.setSetting('syncFirstDone', false);
   return syncNow({ confirmEmptyPush: async () => false });
+}
+
+async function retireUnreadable(pass) {
+  const g = await findGist();
+  if (!g) return;
+  const text = await readGist(g);
+  if (!text) return;
+  try { await decryptJSON(text, pass); return; } catch (e) { if (e.code !== 'passphrase') throw e; }
+  await gh(`/gists/${g.id}`, { method: 'PATCH', body: JSON.stringify({ description: `${DESC} (older copy, ${new Date().toISOString().slice(0, 10)})` }) });
+  await db.setSetting('syncGistId', '');
+}
+
+// The sync code: GitHub key + passphrase + gist, for pasting on the other device.
+// It opens the synced data, so it is treated like a password.
+export function code() {
+  if (!configured()) return '';
+  return 'yaversync1.' + b64u(JSON.stringify({ t: S('syncToken', ''), p: S('syncPass', ''), g: S('syncGistId', '') }));
+}
+export function parseCode(raw) {
+  const m = String(raw || '').match(/yaversync1\.([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  try { const { t, p, g } = JSON.parse(unb64u(m[1])); return t && p ? { token: t, pass: p, gistId: g || '' } : null; } catch { return null; }
+}
+export async function join(raw, name) {
+  const c = parseCode(raw);
+  if (!c) throw new Error('That is not a Yaver sync code. On the other device open Settings → Sync and tap Copy sync code.');
+  return setup({ ...c, name });
 }
 
 export async function turnOff({ forget = false } = {}) {

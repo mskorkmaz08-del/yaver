@@ -37,7 +37,8 @@ async function github(route) {
   if (req.method() === 'GET') return json(200, view(g));
   if (req.method() === 'PATCH') {
     const b = req.postDataJSON();
-    for (const [k, v] of Object.entries(b.files)) { if (v === null) delete g.files[k]; else g.files[k] = v.content; }
+    if (b.description) g.description = b.description;
+    for (const [k, v] of Object.entries(b.files || {})) { if (v === null) delete g.files[k]; else g.files[k] = v.content; }
     g.updated_at = stamp();
     uploads.push(JSON.stringify(b));
     return json(200, view(g));
@@ -147,7 +148,30 @@ r = await setup(empty, PASS);
 const emptyData = await run(empty, async () => (await import('./js/db.js')).all('expenses').length);
 check(uploads.length >= uploadsBefore && emptyData === 2, 'A new empty device pulls the data instead of pushing emptiness', `${emptyData} expenses`);
 
-for (const d of [phone, mac, empty]) check(d.errors.length === 0, `No page errors on ${d.name}`, d.errors.join(' | '));
+// Sync code: copy on the phone, join on a new laptop that has its own data; nothing typed, nothing lost.
+const code = await run(phone, async () => (await import('./js/sync.js')).code());
+check(/^yaversync1\.[A-Za-z0-9_-]+$/.test(code), 'Phone gives a sync code');
+const lap = await device('Laptop', { viewport: { width: 1200, height: 800 } });
+await run(lap, async () => { const D = await import('./js/data.js'); await D.addExpense({ amount: 50, category: 'Tea', note: 'Laptop tea', date: '2026-10-21' }); });
+r = await run(lap, async c => { const s = await import('./js/sync.js'); try { return await s.join(c, 'Laptop'); } catch (e) { return { error: e.message }; } }, code);
+await syncNow(phone);
+const lapNotes = await run(lap, async () => (await import('./js/db.js')).all('expenses').map(e => e.note).filter(Boolean).sort());
+const phoneNotes = await run(phone, async () => (await import('./js/db.js')).all('expenses').map(e => e.note).filter(Boolean).sort());
+check(r?.ok && lapNotes.includes('Laptop tea') && phoneNotes.includes('Laptop tea') && lapNotes.join() === phoneNotes.join(), 'Joining with the code merges both ways', `${JSON.stringify(r)} ${lapNotes.join(',')}`);
+const bad = await run(lap, async () => { const s = await import('./js/sync.js'); try { await s.join('hello'); } catch (e) { return e.message; } });
+check(/not a Yaver sync code/.test(bad || ''), 'A wrong code is refused plainly');
+
+// First-device setup with a new key (auto passphrase): an old copy it can't open is kept, renamed, never overwritten.
+const gistsBefore = gists.size;
+const fresh = await device('Fresh', { viewport: { width: 1200, height: 800 } });
+await run(fresh, async () => { const D = await import('./js/data.js'); await D.addExpense({ amount: 9, category: 'Bus', note: 'Fresh bus', date: '2026-10-22' }); });
+r = await run(fresh, async t => { const s = await import('./js/sync.js'); try { return await s.setup({ token: t, fresh: true }); } catch (e) { return { error: e.message }; } }, TOKEN);
+const descs = [...gists.values()].map(g => g.description);
+check(r?.ok && gists.size === gistsBefore + 1 && descs.some(d => /older copy/.test(d)) && descs.includes('Yaver sync, encrypted'), 'Unreadable old copy is renamed and kept; a new one is started', `${JSON.stringify(r)} ${descs.join(' | ')}`);
+const keyErr = await run(fresh, async () => { const s = await import('./js/sync.js'); try { await s.setup({ token: 'hello' }); } catch (e) { return e.message; } });
+check(/does not look like a GitHub key/.test(keyErr || ''), 'A pasted non-key is refused plainly');
+
+for (const d of [phone, mac, empty, lap, fresh]) check(d.errors.length === 0, `No page errors on ${d.name}`, d.errors.join(' | '));
 await browser.close();
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed');
 process.exit(failed ? 1 : 0);

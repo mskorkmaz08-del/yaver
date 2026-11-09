@@ -1,6 +1,6 @@
 // Service worker: keeps a copy of the app on the phone so Yaver opens
 // instantly and works offline. Bump VERSION whenever app files change.
-const VERSION = 'yaver-v61';
+const VERSION = 'yaver-v62';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js', 'js/applecal.js', 'js/teams.js', 'js/insights.js', 'js/nutrients.js', 'js/body.js', 'js/training.js', 'js/anatomy.js', 'js/foodscan.js', 'js/foodgaps.js', 'js/dietlog.js', 'js/views/teams.js', 'js/views/body.js',
