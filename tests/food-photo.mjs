@@ -93,6 +93,23 @@ check('meal logged with extras', meal?.name === 'Plov with salad' && ['Breakfast
 const card = await page.evaluate(() => [...document.querySelectorAll('.nutrients .nut span')].map(s => s.textContent));
 check('nutrients card shows fiber, sodium and vitamins', card.includes('Fiber') && card.includes('Sodium') && card.includes('Vitamin C'), card.join(', '));
 check('nutrients card shows the fat split', /poly \d+%/.test(await page.textContent('.nutrients .fat-mix')) && card.includes('Omega-3'));
+// Nutrient guide (v61): Why and Foods on each row, one sheet with both tabs.
+check('every nutrient row has Why and Foods', await page.$$eval('.nutrients .nut', rows => rows.every(r => r.querySelector('[data-why]') && r.querySelector('[data-foods]'))));
+await page.click('.nutrients [data-why="vitaminC"]');
+await page.waitForSelector('.nutrient-sheet');
+check('Why explains it', /collagen/.test(await page.textContent('.nutrient-sheet')) && /Benefits/.test(await page.textContent('.nutrient-sheet')));
+await page.click('.nutrient-sheet [data-tab-n="foods"]');
+await page.waitForFunction(() => /Red bell pepper/.test(document.querySelector('.nutrient-sheet').textContent));
+check('Foods lists natural sources with amounts', /150 mg/.test(await page.textContent('.nutrient-sheet')));
+await page.locator('.nutrient-sheet').screenshot({ path: join(dir, 'guide.png') });
+console.log('guide', join(dir, 'guide.png'));
+await page.click('.nutrient-sheet [data-close]');
+await page.waitForFunction(() => !document.querySelector('.nutrient-sheet'));
+await page.click('.nutrients [data-foods="omega3"]');
+await page.waitForSelector('.nutrient-sheet');
+check('Foods opens on the sources', /Mackerel/.test(await page.textContent('.nutrient-sheet')));
+await page.click('.nutrient-sheet [data-close]');
+await page.waitForFunction(() => !document.querySelector('.nutrient-sheet'));
 // Fill the gaps: Yaver sends the day's gaps (fat split included), shows the foods.
 await page.click('[data-tips]');
 await page.waitForSelector('.tips .tip', { timeout: 10000 });

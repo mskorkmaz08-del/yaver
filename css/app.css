@@ -1636,8 +1636,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .food-item .icon-btn .i { width: 16px; height: 16px; }
 .food-total { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--r-sm); }
 .food-total b { font-size: 20px; color: var(--lume); }
-.nutrients .nut { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
-.nutrients .nut b { font-size: 12px; font-weight: 500; min-width: 86px; text-align: right; }
+.nutrients .nut { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 4px 10px; padding: 7px 0; font-size: 14px; }
+.nutrients .nut .bar { grid-column: 1 / -1; }
+.nutrients .nut b { font-size: 12px; font-weight: 500; text-align: right; }
 .nutrients .nut b small { color: var(--muted); }
 .nutrients .bar .over { background: var(--warn); }
 .diary .card-head .chips { gap: 4px; }
@@ -1771,3 +1772,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .in-acts .chip { padding: 5px 10px; font-size: 12.5px; white-space: nowrap; }
 .in-acts .icon-btn { width: 30px; height: 30px; }
 .in-acts .icon-btn .i { width: 14px; height: 14px; }
+
+/* Nutrient guide (v61) */
+.nut-acts { display: inline-flex; gap: 4px; }
+.nut-btn { font: 500 11.5px var(--sans); color: var(--lume); background: none; border: 1px solid var(--line-2); border-radius: 999px; padding: 3px 9px; cursor: pointer; }
+.nutrient-sheet h4 { margin: 14px 0 6px; font-size: 13px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
+.nutrient-sheet .tabs { margin: 8px 0 10px; }
+.nut-list { margin: 0; padding-left: 18px; }
+.nut-list li { margin: 4px 0; }
+.food-src { list-style: none; margin: 0; padding: 0; }
+.food-src li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.food-src li b { font-size: 12.5px; font-weight: 500; color: var(--steel); text-align: right; max-width: 45%; }
+.food-src li small { font-size: 12px; }
+.nut-link { background: none; border: 0; padding: 0; font: inherit; color: var(--lume); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

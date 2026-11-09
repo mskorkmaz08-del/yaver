@@ -5,6 +5,8 @@ import * as F from '../foodscan.js';
 import * as L from '../dietlog.js';
 import * as G from '../foodgaps.js';
 import * as B from '../body.js';
+import { INFO } from '../nutrients.js';
+import { dragToClose } from '../util.js';
 import { ring } from '../ui.js';
 import { icon } from '../icons.js';
 import { mealForm } from '../forms.js';
@@ -72,6 +74,8 @@ export function render(root, go) {
   root.querySelectorAll('[data-span]').forEach(b => (b.onclick = () => { span = Number(b.dataset.span); render(root); }));
   root.querySelector('[data-weak]')?.addEventListener('click', () => openAssistant(`I feel weak or unwell. Look at what I have eaten and drunk over the last ${span} days (diet_history) and tell me plainly: am I eating enough, which vitamins or minerals look low, which days were thin, and what simple foods would close the gaps. Say what the data can't show, and when I should see a doctor instead.`));
   root.querySelector('[data-csv]')?.addEventListener('click', exportDiary);
+  root.querySelectorAll('[data-why]').forEach(b => (b.onclick = () => nutrientSheet(b.dataset.why, 'why')));
+  root.querySelectorAll('[data-foods]').forEach(b => (b.onclick = () => nutrientSheet(b.dataset.foods, 'foods')));
   root.querySelectorAll('[data-feel]').forEach(b => (b.onclick = async () => { await L.setFeel(today(), b.dataset.feel); haptic(); }));
   root.querySelector('[data-tips]')?.addEventListener('click', async () => {
     tipsBusy = true; tipsError = ''; render(root);
@@ -113,18 +117,15 @@ function tipsCard() {
 // Fiber, sugar and sodium for the day, and vitamins and minerals from photo-logged meals.
 function nutrients(d) {
   if (!d.fiber && !d.sugar && !d.sodium && !d.detailed) return '';
-  const bar = (label, v, ref, unit, limit) => {
-    const pct = ref ? (v / ref) * 100 : 0;
-    return html`<div class="nut"><span>${label}</span><div class="bar"><div class="${raw(limit && pct > 100 ? 'over' : '')}" style="width:${raw(Math.min(100, pct).toFixed(1))}%"></div></div><b class="mono">${fmt(v)}${unit} <small>${Math.round(pct)}%</small></b></div>`;
-  };
+  const bar = (label, v, ref, unit, limit, key) => nutBar(key, label, v, ref, unit, limit);
   const shown = F.MICROS.filter(([k]) => d.micros[k] > 0);
   return html`<section class="card nutrients">
     <div class="card-head"><p class="label">nutrients</p><span class="small muted">% of daily value</span></div>
-    ${raw(bar('Fiber', d.fiber, F.DAILY.fiber, 'g'))}
-    ${raw(bar('Sugar', d.sugar, F.DAILY.sugar, 'g', true))}
-    ${raw(bar('Sodium', d.sodium, F.DAILY.sodium, 'mg', true))}
+    ${raw(bar('Fiber', d.fiber, F.DAILY.fiber, 'g', false, 'fiber'))}
+    ${raw(bar('Sugar', d.sugar, F.DAILY.sugar, 'g', true, 'sugar'))}
+    ${raw(bar('Sodium', d.sodium, F.DAILY.sodium, 'mg', true, 'sodium'))}
     ${raw(fatMix(d))}
-    ${raw(shown.map(([k, label, unit, ref]) => bar(label, d.micros[k], ref, unit, k === 'caffeine')).join(''))}
+    ${raw(shown.map(([k, label, unit, ref]) => bar(label, d.micros[k], ref, unit, k === 'caffeine', k)).join(''))}
     ${raw(d.detailed ? html`<p class="small muted">Vitamins and minerals from ${d.detailed} photo-logged meal${d.detailed > 1 ? 's' : ''}. All estimates.</p>` : '')}
   </section>`;
 }
@@ -137,8 +138,51 @@ function fatMix(d) {
   return html`<div class="fat-mix"><span>Fat</span><div class="fat-split" aria-label="Fat split">
       <i class="sat" style="width:${raw(share('satFat'))}%"></i><i class="mono-f" style="width:${raw(share('monoFat'))}%"></i><i class="poly" style="width:${raw(share('polyFat'))}%"></i></div>
     <small>saturated ${share('satFat')}% · mono ${share('monoFat')}% · poly ${share('polyFat')}%</small></div>
-  <div class="nut"><span>Saturated fat</span><div class="bar"><div class="${raw((m.satFat || 0) > F.DAILY.satFat ? 'over' : '')}" style="width:${raw(Math.min(100, ((m.satFat || 0) / F.DAILY.satFat) * 100).toFixed(1))}%"></div></div><b class="mono">${fmt(m.satFat || 0)}g <small>${Math.round(((m.satFat || 0) / F.DAILY.satFat) * 100)}%</small></b></div>
-  <div class="nut"><span>Omega-3</span><div class="bar"><div style="width:${raw(Math.min(100, ((m.omega3 || 0) / F.DAILY.omega3) * 100).toFixed(1))}%"></div></div><b class="mono">${fmt(m.omega3 || 0)}g <small>${Math.round(((m.omega3 || 0) / F.DAILY.omega3) * 100)}%</small></b></div>`;
+  ${raw(nutBar('satFat', 'Saturated fat', m.satFat || 0, F.DAILY.satFat, 'g', true))}
+  ${raw(nutBar('omega3', 'Omega-3', m.omega3 || 0, F.DAILY.omega3, 'g'))}`;
+}
+
+// One nutrient: name, amount and % of the daily value, a bar, and (v61) two small
+// buttons: Why (what it does) and Foods (where to get it naturally).
+function nutBar(key, label, v, ref, unit, limit) {
+  const pct = ref ? (v / ref) * 100 : 0;
+  return html`<div class="nut"><span>${label}</span><b class="mono">${fmt(v)}${unit} <small>${Math.round(pct)}%</small></b>
+    ${raw(INFO[key] ? html`<span class="nut-acts"><button class="nut-btn" data-why="${key}" aria-label="Why ${label} matters">Why</button><button class="nut-btn" data-foods="${key}" aria-label="Foods with ${label}">Foods</button></span>` : '<span></span>')}
+    <div class="bar"><div class="${raw(limit && pct > 100 ? 'over' : '')}" style="width:${raw(Math.min(100, pct).toFixed(1))}%"></div></div></div>`;
+}
+
+// The guide for one nutrient, opened on Why or Foods; the two tabs switch in place.
+const LABELS = Object.fromEntries([['fiber', 'Fiber'], ['sugar', 'Sugar'], ['sodium', 'Sodium'], ...F.FATS.map(f => [f[0], f[1]]), ...F.MICROS.map(m => [m[0], m[1]])]);
+export function nutrientSheet(key, tab = 'why') {
+  const info = INFO[key];
+  if (!info) return;
+  const ref = F.DAILY[key], unit = [...F.FATS, ...F.MICROS].find(x => x[0] === key)?.[2] || (key === 'sodium' ? 'mg' : 'g');
+  const limit = ['sugar', 'sodium', 'satFat', 'caffeine'].includes(key);
+  const wrap = document.createElement('div');
+  wrap.className = 'sheet-wrap';
+  const close = () => { wrap.classList.remove('open'); setTimeout(() => wrap.remove(), 250); };
+  const draw = () => {
+    wrap.innerHTML = html`<div class="sheet tall nutrient-sheet" role="dialog" aria-label="${LABELS[key]}">
+      <div class="grabber"></div>
+      <h2>${LABELS[key]}</h2>
+      <p class="small muted">${ref ? `${limit ? 'Daily limit' : 'Daily value'}: ${ref.toLocaleString('en')} ${unit}` : ''}</p>
+      <div class="chips tabs">${raw([['why', 'Why it matters'], ['foods', 'Where to get it']].map(([k, l]) => `<button class="chip ${k === tab ? 'on' : ''}" data-tab-n="${k}">${l}</button>`).join(''))}</div>
+      ${raw(tab === 'why' ? html`<p>${info.why}</p>
+        <h4>Benefits</h4><ul class="nut-list">${raw(info.benefits.map(b => html`<li>${b}</li>`).join(''))}</ul>
+        <h4>${limit ? 'Too much' : 'Too little'}</h4><p class="small">${info.low}</p>`
+        : html`<ul class="food-src">${raw(info.foods.map(([food, amount, gives]) => html`<li><span>${food}${raw(amount ? html` <small class="muted">${amount}</small>` : '')}</span>${raw(gives ? html`<b class="mono">${gives}</b>` : '')}</li>`).join(''))}</ul>
+        <p class="small muted">Amounts are typical values (USDA). Real food first; take supplements only after a blood test or a doctor's advice.</p>`)}
+      <div class="sheet-actions"><button class="btn ghost" data-ask-n>${raw(icon('sparkle'))} Ask Yaver</button><button class="btn primary" data-close>Done</button></div>
+    </div>`;
+    wrap.querySelectorAll('[data-tab-n]').forEach(b => (b.onclick = () => { tab = b.dataset.tabN; draw(); }));
+    wrap.querySelector('[data-close]').onclick = close;
+    wrap.querySelector('[data-ask-n]').onclick = () => { close(); openAssistant(`Tell me about ${LABELS[key]} for me: how much I have been getting (diet_history), why it matters for my goal, and which foods I eat or can easily get here would cover it.`); };
+    dragToClose(wrap, close);
+  };
+  wrap.addEventListener('click', e => { if (e.target === wrap) close(); });
+  draw();
+  document.body.append(wrap);
+  requestAnimationFrame(() => wrap.classList.add('open'));
 }
 const fmt = v => (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleString('en');
 
@@ -249,7 +293,7 @@ function diary() {
     <div class="card-head"><p class="label">food diary</p>
       <div class="chips">${raw([7, 30].map(n => `<button class="chip ${n === span ? 'on' : ''}" data-span="${n}">${n} days</button>`).join(''))}</div></div>
     <p class="small">${r.loggedDays} of ${r.days} days logged${raw(r.loggedDays ? html` · average <b class="mono">${Math.round(kc.avg)}</b> kcal (${kc.pct}%) and <b class="mono">${Math.round(pr.avg)}g</b> protein (${pr.pct}%)` : '')}.</p>
-    ${raw(r.low.length ? html`<p class="small"><span class="muted">Running low:</span> ${r.low.slice(0, 6).map(x => `${x.label} ${x.pct}%`).join(' · ')}</p>` : r.detailedDays ? '<p class="small muted">Nothing running low on the days with vitamin data.</p>' : '')}
+    ${raw(r.low.length ? html`<p class="small"><span class="muted">Running low:</span> ${raw(r.low.slice(0, 6).map(x => INFO[x.key] ? html`<button class="nut-link" data-foods="${x.key}">${x.label} ${x.pct}%</button>` : html`${x.label} ${x.pct}%`).join(' · '))}</p>` : r.detailedDays ? '<p class="small muted">Nothing running low on the days with vitamin data.</p>' : '')}
     ${raw(r.high.length ? html`<p class="small"><span class="muted">Above the limit:</span> ${r.high.map(x => `${x.label} ${x.pct}%`).join(' · ')}</p>` : '')}
     ${raw(r.lowCalorieDays.length ? html`<p class="small muted">Thin days (under 70% of your calories): ${r.lowCalorieDays.length}</p>` : '')}
     ${raw(r.timing ? html`<p class="small"><span class="muted">When you eat:</span> first meal around <b class="mono">${r.timing.first}</b>, last around <b class="mono">${r.timing.last}</b> (${r.timing.window} h). Late eating (a third of the day's food from 21:00): ${r.timing.lateDays.length} of ${r.timing.days} days.</p>` : '')}
