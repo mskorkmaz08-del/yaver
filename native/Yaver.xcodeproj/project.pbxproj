@@ -49,6 +49,7 @@
 		3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */; };
 		AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77411BB78A8B5995B4E292F7 /* DataSim.swift */; };
 		C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DA942E930ECC00CDCED190 /* GraphSim.swift */; };
+		140A6071CF64819ED2559516 /* MemorySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04E68DF4863F69746EF6E3D /* MemorySim.swift */; };
 		B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */; };
 		711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */; };
 		6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524444987769A68465B9C6B5 /* SimKit.swift */; };
@@ -102,6 +103,7 @@
 		BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculusSim.swift; sourceTree = "<group>"; };
 		77411BB78A8B5995B4E292F7 /* DataSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSim.swift; sourceTree = "<group>"; };
 		E1DA942E930ECC00CDCED190 /* GraphSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSim.swift; sourceTree = "<group>"; };
+		C04E68DF4863F69746EF6E3D /* MemorySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySim.swift; sourceTree = "<group>"; };
 		C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProbabilitySim.swift; sourceTree = "<group>"; };
 		9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellGitSims.swift; sourceTree = "<group>"; };
 		524444987769A68465B9C6B5 /* SimKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimKit.swift; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 				BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */,
 				77411BB78A8B5995B4E292F7 /* DataSim.swift */,
 				E1DA942E930ECC00CDCED190 /* GraphSim.swift */,
+				C04E68DF4863F69746EF6E3D /* MemorySim.swift */,
 				C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */,
 				9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */,
 				524444987769A68465B9C6B5 /* SimKit.swift */,
@@ -333,6 +336,7 @@
 				3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */,
 				AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */,
 				C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */,
+				140A6071CF64819ED2559516 /* MemorySim.swift in Sources */,
 				B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */,
 				711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */,
 				6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */,
