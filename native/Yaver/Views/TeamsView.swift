@@ -6,6 +6,7 @@ struct TeamsView: View {
     @EnvironmentObject var store: Store
     @State private var addingPerson = false
     @State private var logging = false
+    @State private var editing: WeighEditRow?
 
     var body: some View {
         let _ = store.revision
@@ -16,7 +17,7 @@ struct TeamsView: View {
                     if people.isEmpty { Text("Nobody yet.").foregroundStyle(Theme.dim) }
                     ForEach(people, id: \.id) { p in
                         let s = store.status(p)
-                        HStack {
+                        Button { editing = WeighEditRow(row: p) } label: { HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(p.str("name"))
                                 if !p.str("role").isEmpty { Text(p.str("role")).font(.caption).foregroundStyle(Theme.dim) }
@@ -24,10 +25,15 @@ struct TeamsView: View {
                             Spacer()
                             Text(s.days.map { $0 == 0 ? "met today" : $0 == 1 ? "met yesterday" : "met \($0) days ago" } ?? "never met")
                                 .font(.callout).foregroundStyle(s.overdue ? Theme.warn : Theme.muted)
-                        }
+                        }.contentShape(Rectangle()) }.buttonStyle(.plain)
                     }
                 }
             }
+
+            Button {
+                ChatModel.shared.open = true
+                ChatModel.shared.send(store, "Who should I meet this week from my dev team and students (team_status)? Look at who is overdue, my free slots (list_meetings) and suggest when to meet each, briefly.")
+            } label: { Label("Who should I meet this week?", systemImage: "sparkles") }.buttonStyle(.bordered)
 
             let acts = store.activities().prefix(20)
             Card(title: "Recent activities") {
@@ -47,12 +53,18 @@ struct TeamsView: View {
             Button { logging = true } label: { Label("Log activity", systemImage: "plus") }
         }
         .sheet(isPresented: $addingPerson) { NavigationStack { PersonForm() }.sheetSize() }
+        .sheet(item: $editing) { e in NavigationStack { PersonForm(existing: e.row) }.sheetSize() }
         .sheet(isPresented: $logging) { NavigationStack { ActivityForm() }.sheetSize() }
     }
 }
 
+struct WeighEditRow: Identifiable { let id = UUID(); let row: Row }
+
 struct PersonForm: View {
     @EnvironmentObject var store: Store
+    @Environment(\.dismiss) private var dismiss
+    var existing: Row? = nil
+    @State private var notes = ""
     @State private var name = ""
     @State private var team = "student"
     @State private var role = ""
@@ -69,11 +81,24 @@ struct PersonForm: View {
                 Text("Every 2 weeks").tag(14)
                 Text("Every month").tag(30)
             }
+            TextField("Notes", text: $notes, axis: .vertical).lineLimit(1...5)
+            if let existing {
+                Button("Remove", role: .destructive) { store.remove("people", existing.id); dismiss() }
+            }
         }
-        .navigationTitle("Add person")
+        .navigationTitle(existing == nil ? "Add person" : "Person")
         .sheetButtons(canSave: !name.trimmingCharacters(in: .whitespaces).isEmpty) {
-            store.put("people", ["name": .string(name.trimmingCharacters(in: .whitespaces)), "team": .string(team), "role": .string(role),
-                                 "contact": "", "notes": "", "meetEvery": .number(Double(every))])
+            var row = existing ?? ["contact": ""]
+            row["name"] = .string(name.trimmingCharacters(in: .whitespaces)); row["team"] = .string(team); row["role"] = .string(role)
+            row["notes"] = .string(notes); row["meetEvery"] = .number(Double(every))
+            store.put("people", row)
+        }
+        .onAppear {
+            if let e = existing {
+                name = e.str("name"); team = e.str("team").isEmpty ? "student" : e.str("team"); role = e.str("role"); notes = e.str("notes")
+                every = Int(e.num("meetEvery"))
+                if ![0, 7, 14, 30].contains(every) { every = 14 }
+            }
         }
     }
 }
