@@ -184,6 +184,8 @@ def main():
         "INFOPLIST_KEY_CFBundleDisplayName": "Yaver",
         "INFOPLIST_KEY_ITSAppUsesNonExemptEncryption": "NO",
         "INFOPLIST_KEY_NSCameraUsageDescription": "Yaver uses the camera to photograph meals for the food diary.",
+        "INFOPLIST_KEY_NSLocationWhenInUseUsageDescription": "Yaver uses your location to find places near you.",
+        "INFOPLIST_KEY_NSLocationUsageDescription": "Yaver uses your location to find places near you.",
         "INFOPLIST_KEY_NSMicrophoneUsageDescription": "Yaver uses the microphone for voice chat with the assistant.",
         "INFOPLIST_KEY_NSPhotoLibraryUsageDescription": "Yaver opens photos of meals you pick for the food diary.",
         "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.productivity",

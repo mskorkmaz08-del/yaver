@@ -7,15 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */; };
+		93988ECD1D36AC4245F6D45F /* Body.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAAFD8DEB413CF014F1158E /* Body.swift */; };
 		0EAA129059691A5CF1E83408 /* Course.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE87ABE23957568D0252F54 /* Course.swift */; };
 		884CDFF6190E5899CE9D541F /* Domain.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAC57A141719DDCC411FD3D /* Domain.swift */; };
 		029D6802AEDF944ABD4A9F67 /* Food.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF7EFE946A1A6F9F772C81 /* Food.swift */; };
 		D5D578183B501E8F768AE399 /* Gemini.swift in Sources */ = {isa = PBXBuildFile; fileRef = 949F3FA75B1FBD62B7DD511A /* Gemini.swift */; };
+		4CDF8C02F897935C03A9D00F /* Insights.swift in Sources */ = {isa = PBXBuildFile; fileRef = C960952C61FB35427E3149DF /* Insights.swift */; };
 		3162C7EA7D24850184EB1B1C /* JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC230045C2ECE297E1134B1A /* JSON.swift */; };
 		5C192840ECB73CEA8D7A99FA /* NutrientInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925821986D057863CCEBB /* NutrientInfo.swift */; };
+		71844FE83145718BA2406685 /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E7988773AE22BEFC18A0E6 /* Places.swift */; };
 		DEED4083D65D31963088AEF8 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCC5636F084DAB4C36DCFD2 /* Store.swift */; };
 		172701E2072693599725EA3D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51C56BBD949E8F304C7FF8D /* Sync.swift */; };
 		EA7E4E569C84DA0BD799AEA0 /* SyncCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA31A850779D2C61C6F447D /* SyncCrypto.swift */; };
+		FD730692C2EC84988B153CE7 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF1628F5F9529314557C542 /* Tools.swift */; };
+		F8179356C6B5056C5DE424C7 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792509D8A47C594DF58868E8 /* TrainingData.swift */; };
 		7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6AC813D0408758AD19E46D /* Updater.swift */; };
 		39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189C0F9BA8D0D94F679AD767 /* BodyView.swift */; };
 		89E285E9744758950890D588 /* CeteleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33782A6F548AC0635A1C01DD /* CeteleView.swift */; };
@@ -35,15 +41,21 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDefs.swift; sourceTree = "<group>"; };
+		BFAAFD8DEB413CF014F1158E /* Body.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Body.swift; sourceTree = "<group>"; };
 		BCE87ABE23957568D0252F54 /* Course.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Course.swift; sourceTree = "<group>"; };
 		FBAC57A141719DDCC411FD3D /* Domain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain.swift; sourceTree = "<group>"; };
 		83FF7EFE946A1A6F9F772C81 /* Food.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Food.swift; sourceTree = "<group>"; };
 		949F3FA75B1FBD62B7DD511A /* Gemini.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gemini.swift; sourceTree = "<group>"; };
+		C960952C61FB35427E3149DF /* Insights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Insights.swift; sourceTree = "<group>"; };
 		DC230045C2ECE297E1134B1A /* JSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSON.swift; sourceTree = "<group>"; };
 		F3D925821986D057863CCEBB /* NutrientInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutrientInfo.swift; sourceTree = "<group>"; };
+		22E7988773AE22BEFC18A0E6 /* Places.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Places.swift; sourceTree = "<group>"; };
 		5BCC5636F084DAB4C36DCFD2 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		B51C56BBD949E8F304C7FF8D /* Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		AAA31A850779D2C61C6F447D /* SyncCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCrypto.swift; sourceTree = "<group>"; };
+		FDF1628F5F9529314557C542 /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
+		792509D8A47C594DF58868E8 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		4A6AC813D0408758AD19E46D /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
 		189C0F9BA8D0D94F679AD767 /* BodyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyView.swift; sourceTree = "<group>"; };
 		33782A6F548AC0635A1C01DD /* CeteleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CeteleView.swift; sourceTree = "<group>"; };
@@ -104,15 +116,21 @@
 		647E7164A06FF71518326D10 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */,
+				BFAAFD8DEB413CF014F1158E /* Body.swift */,
 				BCE87ABE23957568D0252F54 /* Course.swift */,
 				FBAC57A141719DDCC411FD3D /* Domain.swift */,
 				83FF7EFE946A1A6F9F772C81 /* Food.swift */,
 				949F3FA75B1FBD62B7DD511A /* Gemini.swift */,
+				C960952C61FB35427E3149DF /* Insights.swift */,
 				DC230045C2ECE297E1134B1A /* JSON.swift */,
 				F3D925821986D057863CCEBB /* NutrientInfo.swift */,
+				22E7988773AE22BEFC18A0E6 /* Places.swift */,
 				5BCC5636F084DAB4C36DCFD2 /* Store.swift */,
 				B51C56BBD949E8F304C7FF8D /* Sync.swift */,
 				AAA31A850779D2C61C6F447D /* SyncCrypto.swift */,
+				FDF1628F5F9529314557C542 /* Tools.swift */,
+				792509D8A47C594DF58868E8 /* TrainingData.swift */,
 				4A6AC813D0408758AD19E46D /* Updater.swift */,
 			);
 			path = Core;
@@ -208,15 +226,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */,
+				93988ECD1D36AC4245F6D45F /* Body.swift in Sources */,
 				0EAA129059691A5CF1E83408 /* Course.swift in Sources */,
 				884CDFF6190E5899CE9D541F /* Domain.swift in Sources */,
 				029D6802AEDF944ABD4A9F67 /* Food.swift in Sources */,
 				D5D578183B501E8F768AE399 /* Gemini.swift in Sources */,
+				4CDF8C02F897935C03A9D00F /* Insights.swift in Sources */,
 				3162C7EA7D24850184EB1B1C /* JSON.swift in Sources */,
 				5C192840ECB73CEA8D7A99FA /* NutrientInfo.swift in Sources */,
+				71844FE83145718BA2406685 /* Places.swift in Sources */,
 				DEED4083D65D31963088AEF8 /* Store.swift in Sources */,
 				172701E2072693599725EA3D /* Sync.swift in Sources */,
 				EA7E4E569C84DA0BD799AEA0 /* SyncCrypto.swift in Sources */,
+				FD730692C2EC84988B153CE7 /* Tools.swift in Sources */,
+				F8179356C6B5056C5DE424C7 /* TrainingData.swift in Sources */,
 				7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */,
 				39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */,
 				89E285E9744758950890D588 /* CeteleView.swift in Sources */,
@@ -292,6 +316,8 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Yaver uses the camera to photograph meals for the food diary.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Yaver uses your location to find places near you.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yaver uses the microphone for voice chat with the assistant.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Yaver opens photos of meals you pick for the food diary.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -326,6 +352,8 @@
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Yaver uses the camera to photograph meals for the food diary.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Yaver uses your location to find places near you.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yaver uses the microphone for voice chat with the assistant.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Yaver opens photos of meals you pick for the food diary.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

@@ -179,92 +179,11 @@ struct CourseView: View {
             }
             TodayCard()
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 10)], spacing: 10) {
-                ForEach(tracks.filter { $0.total > 0 || $0.done > 0 }) { t in
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 6) { Circle().fill(Color(css: t.color)).frame(width: 8, height: 8); Text(t.name).font(.caption.weight(.semibold)) }
-                        HStack {
-                            Text("\(t.done)").font(.title3.weight(.semibold).monospacedDigit()) + Text(" / \(t.total)").font(.caption).foregroundColor(Theme.dim)
-                            Spacer()
-                            Text(t.pace).font(.caption2.weight(.semibold))
-                                .foregroundStyle(t.paceColor == "green" ? Theme.ok : t.paceColor == "yellow" ? Theme.gold : Theme.red)
-                        }
-                        Bar(value: t.total > 0 ? Double(t.done) / Double(t.total) : 0, color: Color(css: t.color))
-                        Text((t.mastery.map { "mastery \($0)%" } ?? "no scores yet") + (t.flagged.isEmpty ? "" : " · \(t.flagged.count) flagged"))
-                            .font(.caption2.monospaced()).foregroundStyle(Theme.dim)
-                    }
-                    .padding(12)
-                    .background(Theme.plate, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
-                }
-            }
-
-            if let wk {
-                let n = Int(wk["week"]?.double ?? 0)
-                Card(title: "Week \(n)\(wk["consolidation"]?.bool == true ? " · consolidation" : "")") {
-                    HStack {
-                        Button { shownWeek = max(0, wn - 1) } label: { Image(systemName: "chevron.left") }
-                        Spacer()
-                        Text("\(String((wk["start"]?.string ?? "").suffix(5))) → \(String((wk["end"]?.string ?? "").suffix(5)))").font(.caption.monospaced())
-                        Spacer()
-                        Button { shownWeek = min(63, wn + 1) } label: { Image(systemName: "chevron.right") }
-                    }
-                    .buttonStyle(.borderless)
-                    Text(wk["theme"]?.string ?? "").font(.callout).foregroundStyle(Theme.muted)
-                    WeekCalendar(week: n, start: wk["start"]?.string ?? "")
-                    if n >= 16 && wk["consolidation"]?.bool != true && !C.hasWeek(store, n) {
-                        NavigationLink { PrepareView(week: n) } label: { Label("Prepare week \(n)", systemImage: "sparkles") }.buttonStyle(.bordered)
-                    }
-                }
-            }
-
-            Card(title: "Teaching deadlines") {
-                if dl.isEmpty {
-                    Text("No teaching dates set. Add the dates you teach each topic, and lessons close to their date and not prepared turn red.").font(.callout).foregroundStyle(Theme.muted)
-                }
-                ForEach(dl, id: \.lesson.id) { x in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(String(x.teachBy.suffix(5))).font(.callout.monospacedDigit()).foregroundStyle(x.days <= 7 ? Theme.red : Theme.text)
-                            Text(x.days < 0 ? "\(-x.days)d ago" : "in \(x.days)d").font(.caption2).foregroundStyle(Theme.dim)
-                        }.frame(width: 60, alignment: .leading)
-                        VStack(alignment: .leading) {
-                            Text(x.lesson.str("title")).font(.callout.weight(.semibold))
-                            Text(x.days <= 7 ? "not prepared yet" : "prepare before then").font(.caption).foregroundStyle(Theme.dim)
-                        }
-                    }
-                }
-                Button("Edit dates") { editingTeach = true }.buttonStyle(.borderless)
-            }
-
-            Card(title: "Tests") {
-                if tests.isEmpty { Text("The weekly test runs on Sundays at 05:50.").font(.callout).foregroundStyle(Theme.muted) }
-                ForEach(tests, id: \.id) { t in
-                    HStack(alignment: .top) {
-                        Text("wk \(Int(t.num("week")))").font(.callout.monospacedDigit()).frame(width: 50, alignment: .leading)
-                        Text((t["scores"]?.array ?? []).map { "\(C.trackName($0["track"]?.string)) \(Int(((($0["right"]?.double ?? 0) / max(1, $0["total"]?.double ?? 1)) * 100).rounded()))%" }.joined(separator: " · "))
-                            .font(.caption).foregroundStyle(Theme.muted)
-                    }
-                }
-                let diag = C.diagnosticHistory(store)
-                if !diag.isEmpty {
-                    Text("diagnostic: " + diag.map { "\(String(($0["date"]?.string ?? "").suffix(5))) \(fmt($0["results"]?["score"]?.double ?? 0, 1))/7" }.joined(separator: " → "))
-                        .font(.caption.monospaced()).foregroundStyle(Theme.dim)
-                }
-            }
-
-            Card(title: "How pace works") {
-                Text("Behind: the track continues where you are; nothing is skipped, and the Friday buffer goes to the most-behind track. Ahead: next week's lessons come forward; no new subjects are added. Consolidation weeks (\(C.consolidationWeeks.prefix(6).map(String.init).joined(separator: ", ")), …) run at about 60% and don't count toward pace.")
-                    .font(.callout).foregroundStyle(Theme.muted)
-            }
-
-            Card(title: "Course settings") {
-                HStack {
-                    Button("Slot times") { editingTimes = true }.buttonStyle(.bordered)
-                    Button("Start date & work blocks") { editingOptions = true }.buttonStyle(.bordered)
-                }
-                Button("Reset progress", role: .destructive) { confirmReset = true }.buttonStyle(.bordered)
-            }
+            tracksGrid(tracks)
+            weekCard(wn)
+            deadlinesCard(dl)
+            testsCard(tests)
+            infoCards()
         }
         .sheet(isPresented: $editingTeach) { NavigationStack { TeachDatesForm() }.sheetSize() }
         .sheet(isPresented: $editingTimes) { NavigationStack { SlotTimesForm() }.sheetSize() }
@@ -274,6 +193,107 @@ struct CourseView: View {
                 for st in ["courseProgress", "cards", "courseTests"] { for r in store.all(st) { store.remove(st, r.id) } }
             }
         } message: { Text("Lesson progress, review cards and test results are deleted. Study sessions already logged stay.") }
+    }
+
+    @ViewBuilder private func tracksGrid(_ tracks: [Course.TrackSummary]) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 10)], spacing: 10) {
+            ForEach(tracks.filter { $0.total > 0 || $0.done > 0 }) { t in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) { Circle().fill(Color(css: t.color)).frame(width: 8, height: 8); Text(t.name).font(.caption.weight(.semibold)) }
+                    HStack {
+                        Text("\(t.done)").font(.title3.weight(.semibold).monospacedDigit()) + Text(" / \(t.total)").font(.caption).foregroundColor(Theme.dim)
+                        Spacer()
+                        Text(t.pace).font(.caption2.weight(.semibold))
+                            .foregroundStyle(t.paceColor == "green" ? Theme.ok : t.paceColor == "yellow" ? Theme.gold : Theme.red)
+                    }
+                    Bar(value: t.total > 0 ? Double(t.done) / Double(t.total) : 0, color: Color(css: t.color))
+                    Text((t.mastery.map { "mastery \($0)%" } ?? "no scores yet") + (t.flagged.isEmpty ? "" : " · \(t.flagged.count) flagged"))
+                        .font(.caption2.monospaced()).foregroundStyle(Theme.dim)
+                }
+                .padding(12)
+                .background(Theme.plate, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.line))
+            }
+        }
+    }
+
+    @ViewBuilder private func weekCard(_ wn: Int) -> some View {
+        let C = Course.shared
+        let wk = C.weekMeta(wn) ?? C.weekMeta(0)
+        if let wk {
+            let n = Int(wk["week"]?.double ?? 0)
+            Card(title: "Week \(n)\(wk["consolidation"]?.bool == true ? " · consolidation" : "")") {
+                HStack {
+                    Button { shownWeek = max(0, wn - 1) } label: { Image(systemName: "chevron.left") }
+                    Spacer()
+                    Text("\(String((wk["start"]?.string ?? "").suffix(5))) → \(String((wk["end"]?.string ?? "").suffix(5)))").font(.caption.monospaced())
+                    Spacer()
+                    Button { shownWeek = min(63, wn + 1) } label: { Image(systemName: "chevron.right") }
+                }
+                .buttonStyle(.borderless)
+                Text(wk["theme"]?.string ?? "").font(.callout).foregroundStyle(Theme.muted)
+                WeekCalendar(week: n, start: wk["start"]?.string ?? "")
+                if n >= 16 && wk["consolidation"]?.bool != true && !C.hasWeek(store, n) {
+                    NavigationLink { PrepareView(week: n) } label: { Label("Prepare week \(n)", systemImage: "sparkles") }.buttonStyle(.bordered)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func deadlinesCard(_ dl: [(lesson: Row, teachBy: String, days: Int)]) -> some View {
+        Card(title: "Teaching deadlines") {
+            if dl.isEmpty {
+                Text("No teaching dates set. Add the dates you teach each topic, and lessons close to their date and not prepared turn red.").font(.callout).foregroundStyle(Theme.muted)
+            }
+            ForEach(dl, id: \.lesson.id) { x in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(String(x.teachBy.suffix(5))).font(.callout.monospacedDigit()).foregroundStyle(x.days <= 7 ? Theme.red : Theme.text)
+                        Text(x.days < 0 ? "\(-x.days)d ago" : "in \(x.days)d").font(.caption2).foregroundStyle(Theme.dim)
+                    }.frame(width: 60, alignment: .leading)
+                    VStack(alignment: .leading) {
+                        Text(x.lesson.str("title")).font(.callout.weight(.semibold))
+                        Text(x.days <= 7 ? "not prepared yet" : "prepare before then").font(.caption).foregroundStyle(Theme.dim)
+                    }
+                }
+            }
+            Button("Edit dates") { editingTeach = true }.buttonStyle(.borderless)
+        }
+    }
+
+    @ViewBuilder private func testsCard(_ tests: [Row]) -> some View {
+        let C = Course.shared
+        Card(title: "Tests") {
+            if tests.isEmpty { Text("The weekly test runs on Sundays at 05:50.").font(.callout).foregroundStyle(Theme.muted) }
+            ForEach(tests, id: \.id) { t in
+                HStack(alignment: .top) {
+                    Text("wk \(Int(t.num("week")))").font(.callout.monospacedDigit()).frame(width: 50, alignment: .leading)
+                    Text((t["scores"]?.array ?? []).map { "\(C.trackName($0["track"]?.string)) \(Int(((($0["right"]?.double ?? 0) / max(1, $0["total"]?.double ?? 1)) * 100).rounded()))%" }.joined(separator: " · "))
+                        .font(.caption).foregroundStyle(Theme.muted)
+                }
+            }
+            let diag = C.diagnosticHistory(store)
+            if !diag.isEmpty {
+                Text("diagnostic: " + diag.map { "\(String(($0["date"]?.string ?? "").suffix(5))) \(fmt($0["results"]?["score"]?.double ?? 0, 1))/7" }.joined(separator: " → "))
+                    .font(.caption.monospaced()).foregroundStyle(Theme.dim)
+            }
+        }
+    }
+
+    @ViewBuilder private func infoCards() -> some View {
+        let C = Course.shared
+        Card(title: "How pace works") {
+            Text("Behind: the track continues where you are; nothing is skipped, and the Friday buffer goes to the most-behind track. Ahead: next week's lessons come forward; no new subjects are added. Consolidation weeks (\(C.consolidationWeeks.prefix(6).map(String.init).joined(separator: ", ")), …) run at about 60% and don't count toward pace.")
+                .font(.callout).foregroundStyle(Theme.muted)
+        }
+
+        Card(title: "Course settings") {
+            HStack {
+                Button("Slot times") { editingTimes = true }.buttonStyle(.bordered)
+                Button("Start date & work blocks") { editingOptions = true }.buttonStyle(.bordered)
+            }
+            Button("Reset progress", role: .destructive) { confirmReset = true }.buttonStyle(.bordered)
+        }
     }
 }
 
