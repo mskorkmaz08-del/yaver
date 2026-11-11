@@ -47,6 +47,7 @@
 		99736B22A0B4F1BAA266570C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD1DE2BCE8A31745B752BA5 /* Theme.swift */; };
 		25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4095B8D96AF22C0401BF934D /* YaverApp.swift */; };
 		3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */; };
+		82381DAB592F36E24C4A3660 /* CircuitSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */; };
 		AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77411BB78A8B5995B4E292F7 /* DataSim.swift */; };
 		C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DA942E930ECC00CDCED190 /* GraphSim.swift */; };
 		140A6071CF64819ED2559516 /* MemorySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04E68DF4863F69746EF6E3D /* MemorySim.swift */; };
@@ -101,6 +102,7 @@
 		5AD1DE2BCE8A31745B752BA5 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		4095B8D96AF22C0401BF934D /* YaverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YaverApp.swift; sourceTree = "<group>"; };
 		BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculusSim.swift; sourceTree = "<group>"; };
+		CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircuitSim.swift; sourceTree = "<group>"; };
 		77411BB78A8B5995B4E292F7 /* DataSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSim.swift; sourceTree = "<group>"; };
 		E1DA942E930ECC00CDCED190 /* GraphSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSim.swift; sourceTree = "<group>"; };
 		C04E68DF4863F69746EF6E3D /* MemorySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySim.swift; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 			isa = PBXGroup;
 			children = (
 				BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */,
+				CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */,
 				77411BB78A8B5995B4E292F7 /* DataSim.swift */,
 				E1DA942E930ECC00CDCED190 /* GraphSim.swift */,
 				C04E68DF4863F69746EF6E3D /* MemorySim.swift */,
@@ -334,6 +337,7 @@
 				99736B22A0B4F1BAA266570C /* Theme.swift in Sources */,
 				25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */,
 				3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */,
+				82381DAB592F36E24C4A3660 /* CircuitSim.swift in Sources */,
 				AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */,
 				C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */,
 				140A6071CF64819ED2559516 /* MemorySim.swift in Sources */,
