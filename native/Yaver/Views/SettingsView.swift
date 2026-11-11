@@ -43,6 +43,8 @@ struct SettingsView: View {
                 if !message.isEmpty { Text(message).font(.callout).foregroundStyle(Theme.gold) }
             }
 
+            AISettingsCard()
+
             Card(title: "Your data") {
                 Text("Import merges a backup from the web app (Settings → Export backup) or from this app: for each record the newer version wins, so nothing newer is lost.")
                     .font(.callout).foregroundStyle(Theme.muted)
@@ -156,5 +158,38 @@ struct BackupFile: FileDocument {
     }
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: try json.encoded())
+    }
+}
+
+/// Settings → AI: the Gemini key for this device (never synced, never in backups).
+struct AISettingsCard: View {
+    @EnvironmentObject var store: Store
+    @State private var key = ""
+    @State private var testing = false
+    @State private var result = ""
+    var body: some View {
+        let have = !Gemini.key(store).isEmpty
+        Card(title: "AI", trailing: have ? "Gemini key saved" : "no key") {
+            Text("Food photos, typed meals and food tips use Gemini (free). Make a key at aistudio.google.com/apikey and paste it here. It stays on this device only, like in the web app.")
+                .font(.callout).foregroundStyle(Theme.muted)
+            SecureField(have ? "Paste a new key to replace it" : "Gemini key (AIza…)", text: $key).textFieldStyle(.roundedBorder)
+            HStack {
+                Button("Paste") { key = Clipboard.read().trimmingCharacters(in: .whitespacesAndNewlines) }.buttonStyle(.bordered)
+                Button("Save") { store.setSetting("geminiKey", .string(key.trimmingCharacters(in: .whitespacesAndNewlines))); store.setSetting("foodModels", .null); key = ""; result = "Saved." }
+                    .buttonStyle(.borderedProminent).disabled(key.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button(testing ? "Testing…" : "Test") {
+                    testing = true; result = ""
+                    Task {
+                        do {
+                            let r = try await Gemini.ask(store, parts: [.object(["text": "Reply with the single word: ready"])])
+                            result = "Gemini answered (\(r.model.replacingOccurrences(of: "gemini-", with: ""))): \(Gemini.text(r.out).trimmingCharacters(in: .whitespacesAndNewlines))"
+                        } catch { result = error.localizedDescription }
+                        testing = false
+                    }
+                }
+                .buttonStyle(.bordered).disabled(!have || testing)
+            }
+            if !result.isEmpty { Text(result).font(.callout).foregroundStyle(Theme.gold) }
+        }
     }
 }

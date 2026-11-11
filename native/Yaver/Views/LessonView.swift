@@ -29,7 +29,7 @@ final class LessonState: ObservableObject {
 }
 
 struct TextFileDoc: FileDocument {
-    static var readableContentTypes: [UTType] { [.plainText] }
+    static var readableContentTypes: [UTType] { [.plainText, .commaSeparatedText, .cPlusPlusSource, .pythonScript] }
     var text: String
     init(text: String) { self.text = text }
     init(configuration: ReadConfiguration) throws { text = String(data: configuration.file.regularFileContents ?? Data(), encoding: .utf8) ?? "" }
@@ -319,7 +319,7 @@ struct LessonView: View {
                             let f = Course.shared.starterFile(l, t, i, j)
                             exportDoc = TextFileDoc(text: f.text)
                             exportName = f.name
-                            exportType = f.name.hasSuffix(".cpp") ? .cPlusPlusSource : (UTType(filenameExtension: "py") ?? .plainText)
+                            exportType = f.name.hasSuffix(".cpp") ? .cPlusPlusSource : .pythonScript
                             exporting = true
                         }
                     }
