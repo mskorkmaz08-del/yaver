@@ -6,11 +6,11 @@ import SwiftUI
 /// A live animation driven by the display clock: tick() returns whether it still moves.
 class LiveSim: ObservableObject {
     @Published var live = true
-    var last: Date?
-    func kick() { last = nil; if !live { live = true } }
+    var lastTick: Date?
+    func kick() { lastTick = nil; if !live { live = true } }
     func frame(_ now: Date) -> Double {
-        let dt = last.map { min(0.05, now.timeIntervalSince($0)) } ?? 0.016
-        last = now
+        let dt = lastTick.map { min(0.05, now.timeIntervalSince($0)) } ?? 0.016
+        lastTick = now
         return dt
     }
     func stop() { DispatchQueue.main.async { if self.live { self.live = false } } }
