@@ -103,6 +103,13 @@ final class Store: ObservableObject {
         changed(store, id, local: true)
     }
 
+    /// Replaces a device-only store (applecal) in one go: no tombstones, no sync.
+    func replaceLocal(_ store: String, _ rows: [Row]) {
+        guard Store.localStores.contains(store) else { return }
+        mem[store] = Dictionary(rows.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        changed(store, "", local: true)
+    }
+
     private func changed(_ store: String, _ id: String, local: Bool) {
         save()
         revision &+= 1

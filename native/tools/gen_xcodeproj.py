@@ -183,6 +183,8 @@ def main():
         "GENERATE_INFOPLIST_FILE": "YES",
         "INFOPLIST_KEY_CFBundleDisplayName": "Yaver",
         "INFOPLIST_KEY_ITSAppUsesNonExemptEncryption": "NO",
+        "INFOPLIST_KEY_NSCalendarsUsageDescription": "Yaver shows your Apple Calendar events next to your meetings (read only).",
+        "INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription": "Yaver shows your Apple Calendar events next to your meetings (read only).",
         "INFOPLIST_KEY_NSCameraUsageDescription": "Yaver uses the camera to photograph meals for the food diary.",
         "INFOPLIST_KEY_NSLocationWhenInUseUsageDescription": "Yaver uses your location to find places near you.",
         "INFOPLIST_KEY_NSLocationUsageDescription": "Yaver uses your location to find places near you.",

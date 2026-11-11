@@ -31,7 +31,7 @@ struct YaverApp: App {
 }
 
 enum Pane: String, CaseIterable, Identifiable {
-    case home, assistant, cetele, course, diet, money, study, skills, teams, body, settings
+    case home, assistant, cetele, course, diet, meet, money, study, skills, teams, body, map, settings
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -42,6 +42,8 @@ enum Pane: String, CaseIterable, Identifiable {
         case .diet: return "Diet"
         case .money: return "Money"
         case .study: return "Study"
+        case .meet: return "Meet"
+        case .map: return "Map"
         case .skills: return "Skills"
         case .teams: return "Teams"
         case .body: return "Body"
@@ -57,6 +59,8 @@ enum Pane: String, CaseIterable, Identifiable {
         case .diet: return "fork.knife"
         case .money: return "creditcard"
         case .study: return "book"
+        case .meet: return "calendar"
+        case .map: return "map"
         case .skills: return "hexagon"
         case .teams: return "person.2"
         case .body: return "figure.strengthtraining.traditional"
@@ -72,6 +76,8 @@ enum Pane: String, CaseIterable, Identifiable {
         case .diet: DietView()
         case .money: MoneyView()
         case .study: StudyView()
+        case .meet: MeetView()
+        case .map: MapView()
         case .skills: SkillsView()
         case .teams: TeamsView()
         case .body: BodyView()
@@ -91,11 +97,20 @@ struct RootView: View {
 
     var body: some View {
         content
-            .onAppear { sync.syncNow(); checkUpdate() }
+            .onAppear { sync.syncNow(); checkUpdate(); refreshDevice() }
             .onChange(of: phase) { p in
-                if p == .active { sync.syncNow(); checkUpdate() } else { store.flush() }
+                if p == .active { sync.syncNow(); checkUpdate(); refreshDevice() } else { store.flush() }
             }
             .onReceive(tick) { _ in sync.syncNow() }
+    }
+
+    /// Apple Calendar copy and this device's notifications.
+    private func refreshDevice() {
+        Task {
+            if AppleCalendar.enabled(store) { await AppleCalendar.sync(store) }
+            await Notifications.requestIfNeeded()
+            await Notifications.reschedule(store)
+        }
     }
 
     private func checkUpdate() {
@@ -138,7 +153,7 @@ struct RootView: View {
 struct MoreView: View {
     var body: some View {
         List {
-            ForEach([Pane.money, .study, .skills, .teams, .body, .settings], id: \.self) { s in
+            ForEach([Pane.meet, .money, .study, .skills, .teams, .body, .map, .settings], id: \.self) { s in
                 NavigationLink { s.screen } label: { Label(s.title, systemImage: s.icon) }
             }
         }

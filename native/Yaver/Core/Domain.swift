@@ -222,7 +222,7 @@ extension Store {
     }
     func upcomingEvents(_ n: Int = 5) -> [Row] {
         let now = Store.isoNow()
-        return all("events").filter { $0.str("end") >= now }.sorted { $0.str("start") < $1.str("start") }.prefix(n).map { $0 }
+        return (all("events") + all("applecal")).filter { $0.str("end") >= now }.sorted { $0.str("start") < $1.str("start") }.prefix(n).map { $0 }
     }
 }
 

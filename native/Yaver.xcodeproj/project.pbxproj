@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		F967B8ACD8198CD69F7BEF64 /* AnatomyData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E19944878305F6A8BD81091E /* AnatomyData.swift */; };
+		489B89CFF951B5C60FEFF29C /* AppleCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BBF45EB210C0A8B56FFE73 /* AppleCalendar.swift */; };
 		C597C1581AC8CE89415EA75C /* Assistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7692BF7A697809659F5B932A /* Assistant.swift */; };
 		13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */; };
 		93988ECD1D36AC4245F6D45F /* Body.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAAFD8DEB413CF014F1158E /* Body.swift */; };
@@ -19,6 +20,7 @@
 		3162C7EA7D24850184EB1B1C /* JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC230045C2ECE297E1134B1A /* JSON.swift */; };
 		5C192840ECB73CEA8D7A99FA /* NutrientInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925821986D057863CCEBB /* NutrientInfo.swift */; };
 		71844FE83145718BA2406685 /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E7988773AE22BEFC18A0E6 /* Places.swift */; };
+		E4995200E3459D9F6E2FC703 /* Reminders.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E52323D61C962BD68B6429 /* Reminders.swift */; };
 		B8466F199703F339A2753049 /* Skills.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F9FCBCE1C32E8DB243A926 /* Skills.swift */; };
 		DEED4083D65D31963088AEF8 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCC5636F084DAB4C36DCFD2 /* Store.swift */; };
 		172701E2072693599725EA3D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51C56BBD949E8F304C7FF8D /* Sync.swift */; };
@@ -33,7 +35,9 @@
 		680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FE564553A1108BD68B341D /* DietView.swift */; };
 		C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56835FADD746563E249C8753 /* HomeView.swift */; };
 		FD7FC251EDE2624DB19B5BFC /* LessonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAA94763149CFB488C45DC9C /* LessonView.swift */; };
+		FC63892720C3251777EEE065 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BE36984BDF96B037F37AE /* MapView.swift */; };
 		2C9408DC5B7A076400B4074C /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 658E7797F5027A8BDF0E86D8 /* Markdown.swift */; };
+		F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03937AB139431E05973AA9AC /* MeetView.swift */; };
 		BB9EEDC3D9253C3E8C079E6A /* MoneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E2FEECBF28AAFE14871629 /* MoneyView.swift */; };
 		863CF718D69D21C5AEE3B32F /* MuscleMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C72806109784EC7AA81F190 /* MuscleMap.swift */; };
 		4E02172161AFD767C10AE2F6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */; };
@@ -48,6 +52,7 @@
 
 /* Begin PBXFileReference section */
 		E19944878305F6A8BD81091E /* AnatomyData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyData.swift; sourceTree = "<group>"; };
+		59BBF45EB210C0A8B56FFE73 /* AppleCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleCalendar.swift; sourceTree = "<group>"; };
 		7692BF7A697809659F5B932A /* Assistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assistant.swift; sourceTree = "<group>"; };
 		1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDefs.swift; sourceTree = "<group>"; };
 		BFAAFD8DEB413CF014F1158E /* Body.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Body.swift; sourceTree = "<group>"; };
@@ -59,6 +64,7 @@
 		DC230045C2ECE297E1134B1A /* JSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSON.swift; sourceTree = "<group>"; };
 		F3D925821986D057863CCEBB /* NutrientInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutrientInfo.swift; sourceTree = "<group>"; };
 		22E7988773AE22BEFC18A0E6 /* Places.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Places.swift; sourceTree = "<group>"; };
+		E3E52323D61C962BD68B6429 /* Reminders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reminders.swift; sourceTree = "<group>"; };
 		42F9FCBCE1C32E8DB243A926 /* Skills.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Skills.swift; sourceTree = "<group>"; };
 		5BCC5636F084DAB4C36DCFD2 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		B51C56BBD949E8F304C7FF8D /* Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
@@ -73,7 +79,9 @@
 		24FE564553A1108BD68B341D /* DietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DietView.swift; sourceTree = "<group>"; };
 		56835FADD746563E249C8753 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CAA94763149CFB488C45DC9C /* LessonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonView.swift; sourceTree = "<group>"; };
+		AC2BE36984BDF96B037F37AE /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		658E7797F5027A8BDF0E86D8 /* Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markdown.swift; sourceTree = "<group>"; };
+		03937AB139431E05973AA9AC /* MeetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetView.swift; sourceTree = "<group>"; };
 		B4E2FEECBF28AAFE14871629 /* MoneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyView.swift; sourceTree = "<group>"; };
 		3C72806109784EC7AA81F190 /* MuscleMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleMap.swift; sourceTree = "<group>"; };
 		C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -129,6 +137,7 @@
 			isa = PBXGroup;
 			children = (
 				E19944878305F6A8BD81091E /* AnatomyData.swift */,
+				59BBF45EB210C0A8B56FFE73 /* AppleCalendar.swift */,
 				7692BF7A697809659F5B932A /* Assistant.swift */,
 				1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */,
 				BFAAFD8DEB413CF014F1158E /* Body.swift */,
@@ -140,6 +149,7 @@
 				DC230045C2ECE297E1134B1A /* JSON.swift */,
 				F3D925821986D057863CCEBB /* NutrientInfo.swift */,
 				22E7988773AE22BEFC18A0E6 /* Places.swift */,
+				E3E52323D61C962BD68B6429 /* Reminders.swift */,
 				42F9FCBCE1C32E8DB243A926 /* Skills.swift */,
 				5BCC5636F084DAB4C36DCFD2 /* Store.swift */,
 				B51C56BBD949E8F304C7FF8D /* Sync.swift */,
@@ -161,7 +171,9 @@
 				24FE564553A1108BD68B341D /* DietView.swift */,
 				56835FADD746563E249C8753 /* HomeView.swift */,
 				CAA94763149CFB488C45DC9C /* LessonView.swift */,
+				AC2BE36984BDF96B037F37AE /* MapView.swift */,
 				658E7797F5027A8BDF0E86D8 /* Markdown.swift */,
+				03937AB139431E05973AA9AC /* MeetView.swift */,
 				B4E2FEECBF28AAFE14871629 /* MoneyView.swift */,
 				3C72806109784EC7AA81F190 /* MuscleMap.swift */,
 				C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */,
@@ -245,6 +257,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F967B8ACD8198CD69F7BEF64 /* AnatomyData.swift in Sources */,
+				489B89CFF951B5C60FEFF29C /* AppleCalendar.swift in Sources */,
 				C597C1581AC8CE89415EA75C /* Assistant.swift in Sources */,
 				13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */,
 				93988ECD1D36AC4245F6D45F /* Body.swift in Sources */,
@@ -256,6 +269,7 @@
 				3162C7EA7D24850184EB1B1C /* JSON.swift in Sources */,
 				5C192840ECB73CEA8D7A99FA /* NutrientInfo.swift in Sources */,
 				71844FE83145718BA2406685 /* Places.swift in Sources */,
+				E4995200E3459D9F6E2FC703 /* Reminders.swift in Sources */,
 				B8466F199703F339A2753049 /* Skills.swift in Sources */,
 				DEED4083D65D31963088AEF8 /* Store.swift in Sources */,
 				172701E2072693599725EA3D /* Sync.swift in Sources */,
@@ -270,7 +284,9 @@
 				680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */,
 				C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */,
 				FD7FC251EDE2624DB19B5BFC /* LessonView.swift in Sources */,
+				FC63892720C3251777EEE065 /* MapView.swift in Sources */,
 				2C9408DC5B7A076400B4074C /* Markdown.swift in Sources */,
+				F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */,
 				BB9EEDC3D9253C3E8C079E6A /* MoneyView.swift in Sources */,
 				863CF718D69D21C5AEE3B32F /* MuscleMap.swift in Sources */,
 				4E02172161AFD767C10AE2F6 /* SettingsView.swift in Sources */,
@@ -339,6 +355,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Yaver;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Yaver uses the camera to photograph meals for the food diary.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Yaver uses your location to find places near you.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
@@ -375,6 +393,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Yaver;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Yaver uses the camera to photograph meals for the food diary.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "Yaver uses your location to find places near you.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";

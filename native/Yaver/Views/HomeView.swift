@@ -22,6 +22,18 @@ struct HomeView: View {
                 ForEach(cetele) { row in CeteleLine(row: row, day: Day.today) }
             }
 
+            let rem = Reminders.list(store)
+            if !rem.isEmpty {
+                Card(title: "Reminders") {
+                    ForEach(rem) { r in
+                        HStack(alignment: .top, spacing: 8) {
+                            Circle().fill(r.kind == "cetele" ? Theme.gold : r.kind == "task" ? Theme.warn : Theme.steel).frame(width: 6, height: 6).padding(.top, 7)
+                            Text(r.text).font(.callout)
+                        }
+                    }
+                }
+            }
+
             InsightsCard()
 
             Card(title: "Today") {
