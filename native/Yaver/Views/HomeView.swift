@@ -22,6 +22,8 @@ struct HomeView: View {
                 ForEach(cetele) { row in CeteleLine(row: row, day: Day.today) }
             }
 
+            InsightsCard()
+
             Card(title: "Today") {
                 HStack(alignment: .top) {
                     Stat(value: "\(fmt(diet.calories))", label: "of \(fmt(store.calorieGoal)) kcal")
@@ -83,6 +85,20 @@ struct HomeView: View {
                     }
                 }
             }
+
+            let sk = Skills.summary(store)
+            NavigationLink { SkillsView() } label: {
+                Card(title: "Skills", trailing: "level \(sk.level)") {
+                    HStack(spacing: 14) {
+                        SkillHexagon(sum: sk, labels: false).frame(width: 90, height: 90)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(sk.overall) overall").font(.title3.weight(.semibold).monospacedDigit()).foregroundStyle(Theme.gold)
+                            Text(sk.areas.map { "\($0.area.short) \($0.rating)" }.joined(separator: " · ")).font(.caption.monospacedDigit()).foregroundStyle(Theme.muted)
+                        }
+                    }
+                }
+            }
+            .buttonStyle(.plain)
 
             Text(sync.summary).font(.caption).foregroundStyle(Theme.dim)
         }

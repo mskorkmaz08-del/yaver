@@ -218,7 +218,7 @@ struct CourseView: View {
 
     @ViewBuilder private func weekCard(_ wn: Int) -> some View {
         let C = Course.shared
-        if let wk {
+        if let wk = C.weekMeta(wn) ?? C.weekMeta(0) {
             let n = Int(wk["week"]?.double ?? 0)
             Card(title: "Week \(n)\(wk["consolidation"]?.bool == true ? " · consolidation" : "")") {
                 HStack {
