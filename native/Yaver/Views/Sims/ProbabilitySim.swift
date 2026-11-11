@@ -117,7 +117,7 @@ final class ProbModel: LiveSim {
     func tick(_ dt: Double) -> Bool {
         var busy = false
         var landed: [() -> Void] = []
-        balls = balls.compactMap { b0 in
+        balls = balls.compactMap { (b0: Ball) -> Ball? in
             var b = b0
             busy = true
             if b.delay > 0 { b.delay -= dt; return b }

@@ -55,7 +55,8 @@ struct ShellSim: View {
         var groups: [(id: Int, t: String, n: Int)] = []
         for l in sorted { if let g = groups.firstIndex(where: { $0.t == l.t }) { groups[g].n += 1 } else { groups.append((l.id, l.t, 1)) } }
         let counted = groups.map { ShellLine(id: $0.id, t: String(repeating: " ", count: max(0, 3 - String($0.n).count)) + "\($0.n) \($0.t)") }
-        let top = counted.sorted { Int($0.t.trimmingCharacters(in: .whitespaces).split(separator: " ").first ?? "0") ?? 0 > Int($1.t.trimmingCharacters(in: .whitespaces).split(separator: " ").first ?? "0") ?? 0 }
+        func count(_ l: ShellLine) -> Int { Int(l.t.trimmingCharacters(in: .whitespaces).split(separator: " ").first.map(String.init) ?? "0") ?? 0 }
+        let top = counted.sorted { count($0) > count($1) }
         return [
             ShellFrame(cmd: "cat app.log", left: [], right: log, note: "cat prints the file: nine lines"),
             ShellFrame(cmd: "cat app.log | grep ERROR", left: log, right: grep, note: "grep keeps only the lines containing ERROR"),
@@ -135,7 +136,7 @@ struct ShellSim: View {
     private func terminal(_ c: inout GraphicsContext, _ w: Double, _ h: Double, _ cwd: String, _ cmd: String, _ out: String) {
         let ty = h - 54
         c.fill(Sim.roundRect(8, ty, w - 16, 46), with: .color(.black.opacity(0.4)))
-        let short = cwd.hasPrefix("~/projects/") ? "…/" + cwd.dropFirst(11) : cwd
+        let short: String = cwd.hasPrefix("~/projects/") ? "…/" + String(cwd.dropFirst(11)) : cwd
         Sim.text(&c, "\(short) $ \(cmd)", 16, ty + 18, size: 11.5, color: SimColor.green, mono: true)
         if !out.isEmpty { Sim.text(&c, out, 16, ty + 36, size: 11.5, color: SimColor.ink, mono: true) }
     }

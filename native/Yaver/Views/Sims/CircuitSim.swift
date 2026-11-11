@@ -63,7 +63,7 @@ struct CircuitSim: View {
                 Canvas { c, size in
                     let dt = M.frame(tl.date)
                     Sim.plate(&c, size)
-                    frame(&c, Double(size.width), Double(size.height), dt)
+                    drawFrame(&c, Double(size.width), Double(size.height), dt)
                 }
             }
             .frame(height: height)
@@ -105,7 +105,7 @@ struct CircuitSim: View {
             Picker("Program", selection: Binding(get: { M.sub }, set: { M.sub = $0; M.phase = 0 })) { Text("Blink").tag("blink"); Text("Button + pull-up").tag("button"); Text("Potentiometer + PWM").tag("analog") }.labelsHidden().fixedSize()
             slider("delay", $M.delay, 100...1500, step: 50, "\(Int(M.delay)) ms")
         } else {
-            slider("V", $M.V, (md == "transistor" ? 3 : 0)...12, step: 0.5, "\(Sim.fmt(M.V)) V")
+            slider("V", $M.V, (md == "transistor" ? 3.0 : 0.0)...12.0, step: 0.5, "\(Sim.fmt(M.V)) V")
             if md == "rc" {
                 slider("R", $M.R, 1...100, step: 1, "\(Int(M.R)) kΩ")
                 slider("C", $M.C, 10...470, step: 10, "\(Int(M.C)) µF")
@@ -215,7 +215,7 @@ struct CircuitSim: View {
 
     // MARK: frame
 
-    private func frame(_ c: inout GraphicsContext, _ w: Double, _ h: Double, _ dt: Double) {
+    private func drawFrame(_ c: inout GraphicsContext, _ w: Double, _ h: Double, _ dt: Double) {
         let r = M.solve()
         M.t += dt
         func speed(_ I: Double) -> Double { Sim.clamp(I * 900, 0, 260) }
@@ -288,9 +288,9 @@ struct CircuitSim: View {
             let heat = md == "power" ? Sim.clamp((Pw - M.rating) / M.rating, 0, 1) : 0
             resistor(&c, right, top + 10, right, bot - 10, "\(Int(M.R))Ω", w, heat: heat)
             if md == "power" && Pw > M.rating { Sim.text(&c, "over its \(Sim.fmt(M.rating)) W rating", right - 12, top + 22, size: 13, color: SimColor.red, align: .right) }
-            meters(&c, w, h, md == "power"
-                   ? [(M.V, 12, "V", "V", SimColor.amber), (r.I * 1000, 120, "I", "mA", SimColor.glow), (Pw, 1, "P", "W", Pw > M.rating ? SimColor.red : SimColor.glow)]
-                   : [(M.V, 12, "V", "V", SimColor.amber), (r.I * 1000, 120, "I", "mA", SimColor.glow), (M.R, 1000, "R", "Ω", SimColor.brassHi)])
+            var items: [(Double, Double, String, String, Color)] = [(M.V, 12, "V", "V", SimColor.amber), (r.I * 1000, 120, "I", "mA", SimColor.glow)]
+            if md == "power" { items.append((Pw, 1, "P", "W", Pw > M.rating ? SimColor.red : SimColor.glow)) } else { items.append((M.R, 1000, "R", "Ω", SimColor.brassHi)) }
+            meters(&c, w, h, items)
         }
     }
 
