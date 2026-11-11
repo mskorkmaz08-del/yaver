@@ -246,4 +246,16 @@ export function initSync() {
   window.addEventListener('online', kick);
   setTimeout(kick, 1500);
   setInterval(paintDot, 60000);
+  joinFromNative();
+}
+
+// Inside the native Swift app (v63) the lessons and the assistant run this web app in a
+// web view. The app hands over its sync code (window.yaverNative), so this copy joins the
+// same encrypted sync by itself and shows the same data. Nothing to set up by hand.
+async function joinFromNative() {
+  const n = window.yaverNative;
+  if (!n?.syncCode || !parseCode(n.syncCode)) return;
+  const c = parseCode(n.syncCode);
+  if (configured() && S('syncToken', '') === c.token && S('syncPass', '') === c.pass) return;
+  try { await join(n.syncCode, n.deviceName || 'Native app'); } catch (e) { console.warn('native sync join', e); }
 }

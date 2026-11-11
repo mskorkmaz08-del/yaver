@@ -53,7 +53,7 @@ struct StudyView: View {
                     Stat(value: "\(course.flagged)", label: "to redo", color: course.flagged > 0 ? Theme.warn : Theme.text)
                     Stat(value: "\(course.cardsDue)", label: "cards due")
                 }
-                Text("Lessons, review cards and tests open in the web app; your progress syncs here.").font(.caption).foregroundStyle(Theme.dim)
+                Text("Lessons, review cards and tests are in the Lessons & AI tab; your progress syncs here.").font(.caption).foregroundStyle(Theme.dim)
             }
 
             let subjects = store.all("subjects").map { s in (s, store.all("sessions").filter { $0.str("subjectId") == s.id }.reduce(0) { $0 + $1.num("minutes") }) }

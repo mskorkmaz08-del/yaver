@@ -1,6 +1,7 @@
 # Builds the native Swift app on a Mac build server, checks that its sync
 # encryption matches the web app's, and (on main) publishes a Mac app and an
-# unsigned iPhone app to the "native-latest" release.
+# unsigned iPhone app to the "native-latest" release (also from the native
+# app's working branch while it is being tried out).
 name: Native app
 
 on:
@@ -74,7 +75,7 @@ jobs:
             ${{ runner.temp }}/Yaver-iPhone-unsigned.ipa
 
       - name: Publish to the native-latest release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/project-thread-vmx37z'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

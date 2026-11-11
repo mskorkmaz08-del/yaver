@@ -29,12 +29,13 @@ struct YaverApp: App {
 }
 
 enum Pane: String, CaseIterable, Identifiable {
-    case home, cetele, diet, money, study, teams, body, settings
+    case home, cetele, lessons, diet, money, study, teams, body, settings
     var id: String { rawValue }
     var title: String {
         switch self {
         case .home: return "Home"
         case .cetele: return "Çetele"
+        case .lessons: return "Lessons & AI"
         case .diet: return "Diet"
         case .money: return "Money"
         case .study: return "Study"
@@ -47,6 +48,7 @@ enum Pane: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "house"
         case .cetele: return "moon.stars"
+        case .lessons: return "graduationcap"
         case .diet: return "fork.knife"
         case .money: return "creditcard"
         case .study: return "book"
@@ -59,6 +61,7 @@ enum Pane: String, CaseIterable, Identifiable {
         switch self {
         case .home: HomeView()
         case .cetele: CeteleView()
+        case .lessons: LessonsView()
         case .diet: DietView()
         case .money: MoneyView()
         case .study: StudyView()
@@ -100,7 +103,7 @@ struct RootView: View {
         }
         #else
         TabView {
-            ForEach([Pane.home, .cetele, .diet, .money], id: \.self) { s in
+            ForEach([Pane.home, .cetele, .lessons, .diet], id: \.self) { s in
                 NavigationStack { s.screen }.tabItem { Label(s.title, systemImage: s.icon) }
             }
             NavigationStack { MoreView() }.tabItem { Label("More", systemImage: "ellipsis") }
@@ -112,7 +115,7 @@ struct RootView: View {
 struct MoreView: View {
     var body: some View {
         List {
-            ForEach([Pane.study, .teams, .body, .settings], id: \.self) { s in
+            ForEach([Pane.money, .study, .teams, .body, .settings], id: \.self) { s in
                 NavigationLink { s.screen } label: { Label(s.title, systemImage: s.icon) }
             }
         }
