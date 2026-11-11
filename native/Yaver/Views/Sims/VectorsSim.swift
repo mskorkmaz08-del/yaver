@@ -8,7 +8,11 @@ typealias V2 = (Double, Double)
 
 final class VecModel: LiveSim {
     @Published var kind = "transform"
-    @Published var ca = 1.0, cb = 1.0, rx = -0.5, ry = 0.6, cross = false
+    @Published var ca = 1.0
+    @Published var cb = 1.0
+    @Published var rx = -0.5
+    @Published var ry = 0.6
+    @Published var cross = false
     @Published var preset = "custom"
     var a: V2 = (2, 1), b: V2 = (-1, 2), i: V2 = (1, 0.5), j: V2 = (-0.5, 1), x: V2 = (1.5, 1), p: V2 = (2, 1.5)
     var t = 1.0, tt = 1.0, yaw = 0.6, pitch = -0.4, spin = 0.0, dragging3 = false

@@ -28,7 +28,12 @@ final class ProbModel: LiveSim {
     static let sample = [3.1, 4.7, 2.2, 5.9, 4.1, 3.8, 6.4, 2.9, 5.2, 4.4, 7.1, 3.5]
 
     @Published var kind = "dice"
-    @Published var dice = 2.0, pop = "skewed", n = 5.0, prev = 0.05, sens = 0.9, fpr = 0.08
+    @Published var dice = 2.0
+    @Published var pop = "skewed"
+    @Published var n = 5.0
+    @Published var prev = 0.05
+    @Published var sens = 0.9
+    @Published var fpr = 0.08
     var H = Hist(1.5, 12.5, 11), P = Hist(0, 10, 30), Mh = Hist(0, 10, 40)
     var last: [(f: Int, spin: Double)] = [], picks: [(x: Double, i: Int, life: Double)] = [], means: [Double] = []
     var balls: [Ball] = [], tested = 0.0, testing = false
