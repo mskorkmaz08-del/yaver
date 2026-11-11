@@ -62,7 +62,7 @@ struct DataSim: View {
         let D = data
         F.append(TFrame(items: [header()] + D.enumerated().map { row($1, Double($0)) }, query: q.joined(separator: "\n"), note: "The whole table: one strip per row"))
         q.append("WHERE min >= 30")
-        F.append(TFrame(items: [header()] + D.enumerated().map { i, r in row(r, Double(i)) { (r.min ?? 0) < 30 ? ($0.ring = SimColor.red, $0.fill = SimColor.red.opacity(0.18)) : ($0.ring = SimColor.green, ()) } }, query: q.joined(separator: "\n"), note: "WHERE checks each row: Erlan and Zhan studied under 30 minutes"))
+        F.append(TFrame(items: [header()] + D.enumerated().map { i, r in row(r, Double(i)) { it in if (r.min ?? 0) < 30 { it.ring = SimColor.red; it.fill = SimColor.red.opacity(0.18) } else { it.ring = SimColor.green } } }, query: q.joined(separator: "\n"), note: "WHERE checks each row: Erlan and Zhan studied under 30 minutes"))
         let kept = D.filter { ($0.min ?? 0) >= 30 }
         var items = [header()] + kept.enumerated().map { row($1, Double($0)) }
         for (i, r) in D.enumerated() where (r.min ?? 0) < 30 { items.append(row(r, Double(i)) { $0.x = VW + 20; $0.a = 0 }) }
