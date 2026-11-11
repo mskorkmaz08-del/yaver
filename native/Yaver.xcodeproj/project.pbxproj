@@ -45,6 +45,7 @@
 		6AC8400C91C2C07B981B8407 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EEE94709B10165AF4198BC /* StudyView.swift */; };
 		FA594A7A246EE88E7D6F7A2E /* TeamsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A927B7AF539CA43361C17B4 /* TeamsView.swift */; };
 		99736B22A0B4F1BAA266570C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD1DE2BCE8A31745B752BA5 /* Theme.swift */; };
+		33C7AC9104D298EC1980DA31 /* Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35BC8800968D2B7D4D11016 /* Voice.swift */; };
 		25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4095B8D96AF22C0401BF934D /* YaverApp.swift */; };
 		3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */; };
 		82381DAB592F36E24C4A3660 /* CircuitSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */; };
@@ -102,6 +103,7 @@
 		98EEE94709B10165AF4198BC /* StudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyView.swift; sourceTree = "<group>"; };
 		5A927B7AF539CA43361C17B4 /* TeamsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamsView.swift; sourceTree = "<group>"; };
 		5AD1DE2BCE8A31745B752BA5 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		D35BC8800968D2B7D4D11016 /* Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voice.swift; sourceTree = "<group>"; };
 		4095B8D96AF22C0401BF934D /* YaverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YaverApp.swift; sourceTree = "<group>"; };
 		BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculusSim.swift; sourceTree = "<group>"; };
 		CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircuitSim.swift; sourceTree = "<group>"; };
@@ -208,6 +210,7 @@
 				98EEE94709B10165AF4198BC /* StudyView.swift */,
 				5A927B7AF539CA43361C17B4 /* TeamsView.swift */,
 				5AD1DE2BCE8A31745B752BA5 /* Theme.swift */,
+				D35BC8800968D2B7D4D11016 /* Voice.swift */,
 				4095B8D96AF22C0401BF934D /* YaverApp.swift */,
 			);
 			path = Views;
@@ -341,6 +344,7 @@
 				6AC8400C91C2C07B981B8407 /* StudyView.swift in Sources */,
 				FA594A7A246EE88E7D6F7A2E /* TeamsView.swift in Sources */,
 				99736B22A0B4F1BAA266570C /* Theme.swift in Sources */,
+				33C7AC9104D298EC1980DA31 /* Voice.swift in Sources */,
 				25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */,
 				3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */,
 				82381DAB592F36E24C4A3660 /* CircuitSim.swift in Sources */,
@@ -422,6 +426,7 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yaver uses the microphone for voice chat with the assistant.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Yaver opens photos of meals you pick for the food diary.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Yaver turns what you say into text for the assistant.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -460,6 +465,7 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yaver uses the microphone for voice chat with the assistant.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Yaver opens photos of meals you pick for the food diary.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Yaver turns what you say into text for the assistant.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

@@ -57,11 +57,19 @@ final class ChatModel: ObservableObject {
 
     func stop() { task?.cancel() }
 
-    func send(_ s: Store, _ textIn: String, image: Data? = nil) {
+    /// A plain note from Yaver in the chat (voice problems and the like).
+    func notice(_ text: String) { lines.append(ChatLine(role: "bot", text: text, error: true)) }
+
+    func send(_ s: Store, _ textIn: String, image: Data? = nil, voice: Bool = false) {
         let text = textIn.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !busy, !text.isEmpty || image != nil else { return }
         load(s)
-        let prompt = text.isEmpty ? "What do you see? If it is food, log it as a meal; if it is a receipt, log the expense." : text
+        let asked = text.isEmpty ? "What do you see? If it is food, log it as a meal; if it is a receipt, log the expense." : text
+        // In voice chat the answer is heard, not read: ask for short, plain sentences.
+        let prompt = voice ? VoiceText.prompt(asked, jarvis: s.setting("jarvis")?.bool ?? true) : asked
+        let talk = voice || (s.setting("speak")?.bool ?? false)
+        let V = VoiceChat.shared
+        if talk { V.beginReply() } else { V.hush() }
         lines.append(ChatLine(role: "user", text: text, hadImage: image != nil))
         lines.append(ChatLine(role: "bot", text: ""))
         let idx = lines.count - 1
@@ -70,7 +78,7 @@ final class ChatModel: ObservableObject {
         task = Task { [weak self] in
             guard let self else { return }
             let cb = TurnCallbacks(
-                onText: { t in self.lines[idx].text = t },
+                onText: { t in self.lines[idx].text = t; if talk { V.feed(s, t, final: false) } },
                 onAction: { a in self.lines[idx].actions.append(a) },
                 onStatus: { t in self.status = t })
             var routes: [String] = []
@@ -80,7 +88,7 @@ final class ChatModel: ObservableObject {
                 #else
                 let tryMac = AI.macConfigured(s)
                 #endif
-                if tryMac { self.status = "Checking your Mac…"; if await AI.macOnline(s) { routes.append("mac") } }
+                if tryMac && (!voice || (s.setting("voiceMac")?.bool ?? false)) { self.status = "Checking your Mac…"; if await AI.macOnline(s) { routes.append("mac") } }
             }
             routes.append(AI.provider(s))
             routeLoop: for route in routes {
@@ -95,7 +103,7 @@ final class ChatModel: ObservableObject {
                     case "gemini":
                         var h = self.gapi
                         h.append(AI.geminiUser(prompt, image: image))
-                        out = try await AI.runGemini(s, &h, cb)
+                        out = try await AI.runGemini(s, &h, fast: voice, cb)
                         self.gapi = h
                     default:
                         var h = self.api
@@ -108,11 +116,13 @@ final class ChatModel: ObservableObject {
                     }
                     self.lines[idx].text = out.isEmpty ? (self.lines[idx].actions.isEmpty ? "…" : "Done.") : out
                     self.lines[idx].via = route
+                    if talk { V.feed(s, self.lines[idx].text, final: true) }
                     break routeLoop
                 } catch {
                     let e = error as? AIError
                     if route == "mac", e?.code == "offline", self.lines[idx].actions.isEmpty { self.lines[idx].text = ""; continue }
                     let aborted = e?.code == "abort" || Task.isCancelled
+                    if talk { V.replyFailed() }
                     self.lines[idx].error = !aborted
                     self.lines[idx].text = aborted ? (self.lines[idx].text.isEmpty ? "Stopped." : self.lines[idx].text) : error.localizedDescription
                     break routeLoop
@@ -128,6 +138,7 @@ final class ChatModel: ObservableObject {
             }
             self.busy = false
             self.status = ""
+            if talk { V.afterReply() }
             self.save(s)
         }
     }
@@ -136,6 +147,7 @@ final class ChatModel: ObservableObject {
 struct AssistantView: View {
     @EnvironmentObject var store: Store
     @ObservedObject var chat = ChatModel.shared
+    @ObservedObject var voice = VoiceChat.shared
     var sheet = false
     @State private var input = ""
     @State private var photo: PhotosPickerItem?
@@ -146,11 +158,14 @@ struct AssistantView: View {
     var body: some View {
         VStack(spacing: 0) {
             log
-            inputBar
+            if voice.on { orb } else { inputBar }
         }
         .background(Theme.bg.ignoresSafeArea())
         .navigationTitle("Yaver")
         .toolbar {
+            ToolbarItem(placement: .automatic) {
+                Button { voice.toggle(store) } label: { Label("Voice chat", systemImage: voice.on ? "waveform.circle.fill" : "waveform") }
+            }
             ToolbarItem(placement: .automatic) {
                 Button { chat.newChat(store) } label: { Label("New chat", systemImage: "square.and.pencil") }.disabled(chat.busy)
             }
@@ -159,6 +174,7 @@ struct AssistantView: View {
             #endif
         }
         .onAppear { chat.load(store) }
+        .onDisappear { if !sheet || !chat.open { voice.end() } }
         .onChange(of: photo) { item in
             guard let item else { return }
             Task { if let d = try? await item.loadTransferable(type: Data.self) { image = shrinkJPEG(d) }; photo = nil }
@@ -241,6 +257,11 @@ struct AssistantView: View {
                     .background(Theme.plate, in: RoundedRectangle(cornerRadius: 10))
                     .focused($focused)
                     .onSubmit(send)
+                Button { voice.state == "listening" ? voice.stopListening() : voice.listen(store) } label: {
+                    Image(systemName: voice.state == "listening" ? "mic.fill" : "mic").padding(6).foregroundStyle(voice.state == "listening" ? Theme.gold : Theme.muted)
+                }
+                .buttonStyle(.plain)
+                .disabled(chat.busy)
                 Button { chat.busy ? chat.stop() : send() } label: {
                     Image(systemName: chat.busy ? "stop.circle.fill" : "arrow.up.circle.fill").font(.title2)
                 }
@@ -251,6 +272,38 @@ struct AssistantView: View {
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
         .frame(maxWidth: 760)
+        .frame(maxWidth: .infinity)
+        .background(Theme.bg)
+    }
+
+    /// Voice chat: one big button. Tap to talk; tap while it speaks to interrupt.
+    private var orb: some View {
+        let label = ["listening": "listening…", "thinking": "thinking…", "voicing": "getting the voice…", "speaking": "speaking · tap to interrupt"][voice.state] ?? "tap to talk"
+        return VStack(spacing: 8) {
+            if !voice.heard.isEmpty { Text(voice.heard).font(.callout).foregroundStyle(Theme.muted).lineLimit(3).multilineTextAlignment(.center) }
+            Button {
+                if voice.state == "listening" { voice.stopListening() }
+                else if voice.speaking { voice.hush(); voice.listen(store) }
+                else if chat.busy { chat.stop() }
+                else { voice.listen(store) }
+            } label: {
+                TimelineView(.animation(paused: voice.state.isEmpty)) { tl in
+                    let t = tl.date.timeIntervalSinceReferenceDate
+                    let pulse = voice.state.isEmpty ? 1 : 1 + 0.08 * Foundation.sin(t * (voice.state == "listening" ? 6 : 3))
+                    ZStack {
+                        Circle().fill(RadialGradient(colors: [Theme.gold.opacity(0.9), Theme.gold.opacity(0.15)], center: .center, startRadius: 4, endRadius: 46))
+                        Circle().stroke(Theme.gold.opacity(0.6), lineWidth: 2)
+                        Image(systemName: voice.state == "listening" ? "waveform" : voice.state == "speaking" ? "speaker.wave.2.fill" : "mic.fill").font(.title2).foregroundStyle(Theme.bg)
+                    }
+                    .frame(width: 84, height: 84)
+                    .scaleEffect(pulse)
+                }
+            }
+            .buttonStyle(.plain)
+            Text(label).font(.callout.weight(.semibold)).foregroundStyle(Theme.text)
+            Text("voice chat · tap the wave icon at the top to end").font(.caption2).foregroundStyle(Theme.dim)
+        }
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
         .background(Theme.bg)
     }

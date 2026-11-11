@@ -189,6 +189,7 @@ def main():
         "INFOPLIST_KEY_NSLocationWhenInUseUsageDescription": "Yaver uses your location to find places near you.",
         "INFOPLIST_KEY_NSLocationUsageDescription": "Yaver uses your location to find places near you.",
         "INFOPLIST_KEY_NSMicrophoneUsageDescription": "Yaver uses the microphone for voice chat with the assistant.",
+        "INFOPLIST_KEY_NSSpeechRecognitionUsageDescription": "Yaver turns what you say into text for the assistant.",
         "INFOPLIST_KEY_NSPhotoLibraryUsageDescription": "Yaver opens photos of meals you pick for the food diary.",
         "INFOPLIST_KEY_LSApplicationCategoryType": "public.app-category.productivity",
         "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",

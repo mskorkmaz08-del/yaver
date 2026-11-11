@@ -44,6 +44,7 @@ struct SettingsView: View {
             }
 
             AISettingsCard()
+            VoiceSettingsCard()
 
             Card(title: "Your data") {
                 Text("Import merges a backup from the web app (Settings → Export backup) or from this app: for each record the newer version wins, so nothing newer is lost.")
@@ -239,5 +240,47 @@ struct AISettingsCard: View {
     private func macTest() {
         macResult = "Checking…"
         Task { do { macResult = try await AI.testMac(store) } catch { macResult = error.localizedDescription } }
+    }
+}
+
+
+/// Voice: how replies sound and which language Yaver listens for.
+struct VoiceSettingsCard: View {
+    @EnvironmentObject var store: Store
+    @State private var note = ""
+    private func str(_ k: String, _ d: String) -> Binding<String> { Binding(get: { store.setting(k)?.string ?? d }, set: { store.setSetting(k, .string($0)) }) }
+    private func flag(_ k: String, _ d: Bool) -> Binding<Bool> { Binding(get: { store.setting(k)?.bool ?? d }, set: { store.setSetting(k, .bool($0)) }) }
+
+    var body: some View {
+        Card(title: "Voice") {
+            Picker("Reply voice", selection: str("voiceStyle", "device")) {
+                Text("Device voice · instant, offline (recommended)").tag("device"); Text("Gemini voice · slower, can crackle").tag("natural")
+            }
+            Picker("Device voice", selection: str("deviceVoice", "")) {
+                Text("Auto · \(VoiceChat.pickVoice(store, "en-GB")?.name ?? "British male, best installed")").tag("")
+                ForEach(VoiceChat.deviceVoices(), id: \.identifier) { v in Text("\(v.name) · \(v.language)").tag(v.identifier) }
+            }
+            #if os(iOS)
+            Text("For a Jarvis-like voice, download a better one once: iPhone Settings → Accessibility → Spoken Content → Voices → English → English (UK) → Arthur (Premium) or Daniel (Enhanced). Then reopen Yaver.")
+                .font(.caption).foregroundStyle(Theme.dim)
+            #else
+            Text("For a Jarvis-like voice, download one once: System Settings → Accessibility → Spoken Content → System voice → Manage Voices → English (UK) → Arthur or Daniel.")
+                .font(.caption).foregroundStyle(Theme.dim)
+            #endif
+            Picker("Gemini voice", selection: str("ttsVoice", "Charon")) { ForEach(VoiceText.geminiVoices, id: \.0) { Text($0.1).tag($0.0) } }
+            Button("Hear this voice") {
+                Task { do { note = ""; try await VoiceChat.shared.tryVoice(store) } catch { note = "Could not get the Gemini voice. Check your Gemini key, or the free voice limit may be used up for today." } }
+            }.buttonStyle(.bordered)
+            Toggle("Jarvis style (calm, measured British delivery)", isOn: flag("jarvis", true))
+            Toggle("Use Claude on the Mac in voice chat (smarter, a few seconds slower)", isOn: flag("voiceMac", false))
+            Toggle("Voice chat listens again by itself", isOn: flag("voiceAuto", true))
+            Toggle("Read every reply aloud", isOn: flag("speak", false))
+            Picker("Voice input language", selection: str("voiceLang", Locale.preferredLanguages.first ?? "en-US")) {
+                ForEach(VoiceText.languages + (VoiceText.languages.contains { $0.0 == (store.setting("voiceLang")?.string ?? Locale.preferredLanguages.first ?? "en-US") } ? [] : [(store.setting("voiceLang")?.string ?? Locale.preferredLanguages.first ?? "en-US", "This device's language")]), id: \.0) { Text($0.1).tag($0.0) }
+            }
+            Text("Yaver listens only when you tap the microphone or start voice chat (the wave icon in the chat). Speech is recognised on this device when it can be.")
+                .font(.caption).foregroundStyle(Theme.dim)
+            if !note.isEmpty { Text(note).font(.callout).foregroundStyle(Theme.warn) }
+        }
     }
 }
