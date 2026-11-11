@@ -52,6 +52,7 @@
 		6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524444987769A68465B9C6B5 /* SimKit.swift */; };
 		08C946464297D3DF1CD8E3DA /* SortSearchSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508519008A1A7F3FAE90B170 /* SortSearchSims.swift */; };
 		8633C50ED4FB0DE499F82A25 /* StructuresSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */; };
+		CE48D687F16C404D9833E7AA /* VectorsSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854FA523B07D67B5F048513F /* VectorsSim.swift */; };
 		B0237D3616875AAE4DBEE4A3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */; };
 		5CB165E78DA2D2B8C230D113 /* course in Resources */ = {isa = PBXBuildFile; fileRef = BABED1E9680B950F4C07DC5D /* course */; };
 /* End PBXBuildFile section */
@@ -102,6 +103,7 @@
 		524444987769A68465B9C6B5 /* SimKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimKit.swift; sourceTree = "<group>"; };
 		508519008A1A7F3FAE90B170 /* SortSearchSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortSearchSims.swift; sourceTree = "<group>"; };
 		8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuresSim.swift; sourceTree = "<group>"; };
+		854FA523B07D67B5F048513F /* VectorsSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorsSim.swift; sourceTree = "<group>"; };
 		D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BABED1E9680B950F4C07DC5D /* course */ = {isa = PBXFileReference; lastKnownFileType = folder; name = course; path = ../data/course; sourceTree = SOURCE_ROOT; };
 		F5BF48AA40CAD7891EB709FC /* Yaver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yaver.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -208,6 +210,7 @@
 				524444987769A68465B9C6B5 /* SimKit.swift */,
 				508519008A1A7F3FAE90B170 /* SortSearchSims.swift */,
 				8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */,
+				854FA523B07D67B5F048513F /* VectorsSim.swift */,
 			);
 			path = Sims;
 			sourceTree = "<group>";
@@ -327,6 +330,7 @@
 				6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */,
 				08C946464297D3DF1CD8E3DA /* SortSearchSims.swift in Sources */,
 				8633C50ED4FB0DE499F82A25 /* StructuresSim.swift in Sources */,
+				CE48D687F16C404D9833E7AA /* VectorsSim.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -263,6 +263,7 @@ struct SimHost: View {
         case "shell": ShellSim(mode: pick.mode, height: max(height, 300))
         case "git": GitSim(height: max(height, 270))
         case "calculus": CalculusSim(mode: pick.mode, height: max(height, 300))
+        case "vectors": VectorsSim(mode: pick.mode, height: max(height, 300))
         default: SimLater(name: SimPicker.names[pick.sim] ?? pick.sim)
         }
     }
