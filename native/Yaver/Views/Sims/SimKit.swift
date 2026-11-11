@@ -265,6 +265,7 @@ struct SimHost: View {
         case "calculus": CalculusSim(mode: pick.mode, height: max(height, 300))
         case "vectors": VectorsSim(mode: pick.mode, height: max(height, 300))
         case "probability": ProbabilitySim(mode: pick.mode, height: max(height, 300))
+        case "data": DataSim(mode: pick.mode, height: max(height, 310))
         default: SimLater(name: SimPicker.names[pick.sim] ?? pick.sim)
         }
     }

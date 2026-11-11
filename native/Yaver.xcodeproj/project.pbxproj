@@ -47,6 +47,7 @@
 		99736B22A0B4F1BAA266570C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD1DE2BCE8A31745B752BA5 /* Theme.swift */; };
 		25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4095B8D96AF22C0401BF934D /* YaverApp.swift */; };
 		3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */; };
+		AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77411BB78A8B5995B4E292F7 /* DataSim.swift */; };
 		C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DA942E930ECC00CDCED190 /* GraphSim.swift */; };
 		B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */; };
 		711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */; };
@@ -99,6 +100,7 @@
 		5AD1DE2BCE8A31745B752BA5 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		4095B8D96AF22C0401BF934D /* YaverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YaverApp.swift; sourceTree = "<group>"; };
 		BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculusSim.swift; sourceTree = "<group>"; };
+		77411BB78A8B5995B4E292F7 /* DataSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSim.swift; sourceTree = "<group>"; };
 		E1DA942E930ECC00CDCED190 /* GraphSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSim.swift; sourceTree = "<group>"; };
 		C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProbabilitySim.swift; sourceTree = "<group>"; };
 		9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellGitSims.swift; sourceTree = "<group>"; };
@@ -207,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */,
+				77411BB78A8B5995B4E292F7 /* DataSim.swift */,
 				E1DA942E930ECC00CDCED190 /* GraphSim.swift */,
 				C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */,
 				9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */,
@@ -328,6 +331,7 @@
 				99736B22A0B4F1BAA266570C /* Theme.swift in Sources */,
 				25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */,
 				3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */,
+				AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */,
 				C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */,
 				B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */,
 				711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */,
