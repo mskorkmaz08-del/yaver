@@ -54,7 +54,7 @@ enum GeminiVoice {
         var req = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200")!)
         req.setValue(key, forHTTPHeaderField: "x-goog-api-key")
         var names: [String] = []
-        if let (d, r) = try? await URLSession.shared.data(for: req), (r as? HTTPURLResponse)?.statusCode == 200, let j = JSON.decode(d) {
+        if let (d, r) = try? await URLSession.shared.data(for: req), (r as? HTTPURLResponse)?.statusCode == 200, let j = try? JSON.decode(d) {
             names = (j["models"]?.array ?? []).compactMap { $0["name"]?.string?.replacingOccurrences(of: "models/", with: "") }.filter { $0.contains("tts") }
         }
         func ver(_ n: String) -> Double { Double(n.range(of: "gemini-([\\d.]+)", options: .regularExpression).map { String(n[$0].dropFirst(7)) } ?? "0") ?? 0 }
@@ -76,11 +76,11 @@ enum GeminiVoice {
             let contents: JSON = .array([.object(["role": "user", "parts": .array([part])])])
             let speech: JSON = .object(["voiceConfig": .object(["prebuiltVoiceConfig": .object(["voiceName": .string(voice)])])])
             let body: JSON = .object(["contents": contents, "generationConfig": .object(["responseModalities": .array(["AUDIO"]), "speechConfig": speech])])
-            req.httpBody = body.encoded()
+            req.httpBody = try? body.encoded()
             guard let (d, r) = try? await URLSession.shared.data(for: req) else { continue }
             let code = (r as? HTTPURLResponse)?.statusCode ?? 0
             if code != 200 { if [400, 403, 404, 429].contains(code) { models?.removeAll { $0 == model } }; continue }
-            guard let j = JSON.decode(d),
+            guard let j = try? JSON.decode(d),
                   let part = j["candidates"]?.array?.first?["content"]?["parts"]?.array?.first(where: { $0["inlineData"] != nil })?["inlineData"],
                   let b64 = part["data"]?.string, let pcm = Data(base64Encoded: b64) else { continue }
             let mime = part["mimeType"]?.string ?? ""
