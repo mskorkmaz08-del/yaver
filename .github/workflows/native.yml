@@ -45,6 +45,7 @@ jobs:
           set -o pipefail
           xcodebuild -project native/Yaver.xcodeproj -scheme Yaver -configuration Release \
             -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/ios" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build | tail -40
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           cp -R "$RUNNER_TEMP/ios/Build/Products/Release-iphoneos/Yaver.app" "$RUNNER_TEMP/ipa/Payload/"
@@ -62,10 +63,13 @@ jobs:
           set -o pipefail
           xcodebuild -project native/Yaver.xcodeproj -scheme Yaver -configuration Release \
             -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/mac" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             ARCHS="x86_64 arm64" ONLY_ACTIVE_ARCH=NO CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" DEVELOPMENT_TEAM="" build | tail -40
           APP="$RUNNER_TEMP/mac/Build/Products/Release/Yaver.app"
           lipo -info "$APP/Contents/MacOS/Yaver"
           ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/Yaver-Mac.zip"
+          # The Mac app's updater compares this build number with its own.
+          echo "{\"build\": ${{ github.run_number }}, \"sha\": \"${GITHUB_SHA::7}\"}" > "$RUNNER_TEMP/version.json"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -81,3 +85,5 @@ jobs:
         run: |
           gh release view native-latest >/dev/null 2>&1 || gh release create native-latest --prerelease --title "Yaver native (latest build)" --notes "Built from main by the Native app workflow. Mac: unzip, move Yaver to Applications, open it. iPhone: see native/README.md."
           gh release upload native-latest "$RUNNER_TEMP/Yaver-Mac.zip" "$RUNNER_TEMP/Yaver-iPhone-unsigned.ipa" --clobber
+          # Last, so a Mac never sees the new number before the new app is there.
+          gh release upload native-latest "$RUNNER_TEMP/version.json" --clobber

@@ -7,6 +7,7 @@ import SwiftUI
 struct YaverApp: App {
     @StateObject private var store: Store
     @StateObject private var sync: Sync
+    @StateObject private var updater = Updater()
 
     init() {
         let s = Store()
@@ -19,6 +20,7 @@ struct YaverApp: App {
             RootView()
                 .environmentObject(store)
                 .environmentObject(sync)
+                .environmentObject(updater)
                 .preferredColorScheme(.dark)
                 .tint(Theme.gold)
         }
@@ -75,17 +77,24 @@ enum Pane: String, CaseIterable, Identifiable {
 struct RootView: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var sync: Sync
+    @EnvironmentObject var updater: Updater
     @Environment(\.scenePhase) private var phase
     @State private var section: Pane? = .home
     private let tick = Timer.publish(every: 120, on: .main, in: .common).autoconnect()
 
     var body: some View {
         content
-            .onAppear { sync.syncNow() }
+            .onAppear { sync.syncNow(); checkUpdate() }
             .onChange(of: phase) { p in
-                if p == .active { sync.syncNow() } else { store.flush() }
+                if p == .active { sync.syncNow(); checkUpdate() } else { store.flush() }
             }
             .onReceive(tick) { _ in sync.syncNow() }
+    }
+
+    private func checkUpdate() {
+        #if os(macOS)
+        Task { await updater.check() }
+        #endif
     }
 
     @ViewBuilder private var content: some View {
@@ -96,7 +105,11 @@ struct RootView: View {
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
             .safeAreaInset(edge: .bottom) {
-                Text(sync.summary).font(.caption).foregroundStyle(Theme.dim).padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 8) {
+                    UpdateBanner()
+                    Text(sync.summary).font(.caption).foregroundStyle(Theme.dim)
+                }
+                .padding(10).frame(maxWidth: .infinity, alignment: .leading)
             }
         } detail: {
             NavigationStack { (section ?? Pane.home).screen }
@@ -122,5 +135,30 @@ struct MoreView: View {
         .scrollContentBackground(.hidden)
         .background(Theme.bg.ignoresSafeArea())
         .navigationTitle("More")
+    }
+}
+
+/// Mac only: "Update available" with one button that installs and reopens Yaver.
+struct UpdateBanner: View {
+    @EnvironmentObject var updater: Updater
+    @EnvironmentObject var store: Store
+    var body: some View {
+        #if os(macOS)
+        switch updater.state {
+        case .available:
+            Button { Task { await updater.install { store.flush() } } } label: {
+                Label("Update Yaver", systemImage: "arrow.down.circle.fill").frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+        case .installing:
+            HStack { ProgressView().controlSize(.small); Text("Updating…").font(.caption) }
+        case .failed(let why):
+            Text(why).font(.caption).foregroundStyle(Theme.warn)
+        case .idle:
+            EmptyView()
+        }
+        #else
+        EmptyView()
+        #endif
     }
 }

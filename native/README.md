@@ -24,6 +24,11 @@ Pick one:
    System Settings → Privacy & Security, scroll down, click **Open Anyway**.
    (Or run once in Terminal: `xattr -dr com.apple.quarantine /Applications/Yaver.app`)
 
+After that the Mac app updates itself: when a new build is out, an **Update Yaver**
+button appears at the bottom of the sidebar; one click downloads it, swaps the app and
+reopens it. Keep Yaver in Applications for this to work. The Lessons & AI tab is the
+live web app, so it is always current on both devices.
+
 ## iPhone
 
 Apple only lets apps onto an iPhone that are signed for it. Two ways:

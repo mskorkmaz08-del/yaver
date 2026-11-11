@@ -12,6 +12,7 @@
 		DEED4083D65D31963088AEF8 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCC5636F084DAB4C36DCFD2 /* Store.swift */; };
 		172701E2072693599725EA3D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51C56BBD949E8F304C7FF8D /* Sync.swift */; };
 		EA7E4E569C84DA0BD799AEA0 /* SyncCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA31A850779D2C61C6F447D /* SyncCrypto.swift */; };
+		7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6AC813D0408758AD19E46D /* Updater.swift */; };
 		39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189C0F9BA8D0D94F679AD767 /* BodyView.swift */; };
 		89E285E9744758950890D588 /* CeteleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33782A6F548AC0635A1C01DD /* CeteleView.swift */; };
 		680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FE564553A1108BD68B341D /* DietView.swift */; };
@@ -32,6 +33,7 @@
 		5BCC5636F084DAB4C36DCFD2 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		B51C56BBD949E8F304C7FF8D /* Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
 		AAA31A850779D2C61C6F447D /* SyncCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCrypto.swift; sourceTree = "<group>"; };
+		4A6AC813D0408758AD19E46D /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
 		189C0F9BA8D0D94F679AD767 /* BodyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyView.swift; sourceTree = "<group>"; };
 		33782A6F548AC0635A1C01DD /* CeteleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CeteleView.swift; sourceTree = "<group>"; };
 		24FE564553A1108BD68B341D /* DietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DietView.swift; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 				5BCC5636F084DAB4C36DCFD2 /* Store.swift */,
 				B51C56BBD949E8F304C7FF8D /* Sync.swift */,
 				AAA31A850779D2C61C6F447D /* SyncCrypto.swift */,
+				4A6AC813D0408758AD19E46D /* Updater.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -188,6 +191,7 @@
 				DEED4083D65D31963088AEF8 /* Store.swift in Sources */,
 				172701E2072693599725EA3D /* Sync.swift in Sources */,
 				EA7E4E569C84DA0BD799AEA0 /* SyncCrypto.swift in Sources */,
+				7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */,
 				39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */,
 				89E285E9744758950890D588 /* CeteleView.swift in Sources */,
 				680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */,

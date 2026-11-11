@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @EnvironmentObject var store: Store
     @EnvironmentObject var sync: Sync
+    @EnvironmentObject var updater: Updater
     @State private var code = ""
     @State private var name = ""
     @State private var busy = false
@@ -66,7 +67,15 @@ struct SettingsView: View {
 
             Card(title: "About") {
                 let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-                Text("Yaver Mark II · native \(v)").foregroundStyle(Theme.muted)
+                Text("Yaver Mark II · native \(v) (build \(updater.currentBuild))").foregroundStyle(Theme.muted)
+                #if os(macOS)
+                UpdateBanner()
+                if updater.state == .idle {
+                    Button("Check for updates") { Task { await updater.check() } }.buttonStyle(.bordered)
+                }
+                #else
+                Text("Lessons & AI update by themselves. The rest of the iPhone app updates when you install it again with Sideloadly.").font(.caption).foregroundStyle(Theme.dim)
+                #endif
                 Text("Data file: \(store.fileURL.path)").font(.caption).foregroundStyle(Theme.dim).textSelection(.enabled)
             }
         }
