@@ -23,6 +23,8 @@ struct StudyView: View {
                 Bar(value: today / max(1, store.dailyStudyGoal))
             }
 
+            StudyTimerCard()
+
             if let plan = store.plan() {
                 Card(title: plan.title, trailing: "week \(plan.week)") {
                     Text(plan.phase).font(.headline)
@@ -93,5 +95,79 @@ struct StudyForm: View {
             let s = store.subject(named: subject)
             store.put("sessions", ["subjectId": .string(s.id), "minutes": .number(number(minutes) ?? 0), "date": .string(Day.today), "note": .string(note)])
         }
+    }
+}
+
+/// The study stopwatch (web Study tab's timer): pick a subject and minutes, it runs in
+/// focus mode; Stop logs the minutes as a session.
+struct StudyTimerCard: View {
+    @EnvironmentObject var store: Store
+    @Environment(\.focusActive) private var inFocus
+    @State private var subject = ""
+    @State private var undo: JSON?
+
+    var body: some View {
+        let _ = store.revision
+        let t = StudyTimer.get(store)
+        Card(title: "Timer", trailing: t.map { "\($0.subject) · \(Int($0.planned)) min" } ?? "") {
+            if let t {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    let sec = Int(StudyTimer.elapsed(t))
+                    let remain = Int(t.planned) * 60 - sec
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(String(format: "%02d:%02d", sec / 60, sec % 60)).font(.system(size: 40, weight: .light, design: .monospaced))
+                            .foregroundStyle(t.pausedAt != nil ? Theme.muted : Theme.gold)
+                        Bar(value: Double(sec) / max(60, t.planned * 60))
+                        Text((t.pausedAt != nil ? "paused · " : "") + (remain > 0 ? "\(Int((Double(remain) / 60).rounded(.up))) min left of \(Int(t.planned))" : "\(Int(t.planned)) min done · stop when ready"))
+                            .font(.caption).foregroundStyle(Theme.muted)
+                    }
+                }
+                HStack {
+                    if t.pausedAt != nil {
+                        Button("Resume") { StudyTimer.resume(store) }.buttonStyle(.borderedProminent)
+                    } else {
+                        Button("Pause") { StudyTimer.pause(store) }.buttonStyle(.bordered)
+                    }
+                    Button("Stop and log") {
+                        if let r = StudyTimer.stop(store) { Nav.shared.show("Logged \(r.0) min · \(r.1)") }
+                    }
+                    .buttonStyle(.bordered)
+                    Button("Reset") {
+                        let before = store.setting("timer")
+                        StudyTimer.save(store, nil)
+                        if let b = before { Nav.shared.show("Timer reset") { store.setSetting("timer", b) } }
+                    }
+                    .buttonStyle(.borderless)
+                    if !inFocus {
+                        Spacer()
+                        Button { focus() } label: { Label("Focus", systemImage: "scope") }.buttonStyle(.bordered)
+                    }
+                }
+            } else {
+                TextField("Subject, e.g. Algorithms", text: $subject)
+                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    ForEach([25, 45, 60, 90], id: \.self) { m in
+                        Button("\(m)m") {
+                            StudyTimer.start(store, subject: subject.trimmingCharacters(in: .whitespaces), planned: Double(m))
+                            focus()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                Text("Starts a stopwatch in focus mode. Stop logs the minutes.").font(.caption).foregroundStyle(Theme.dim)
+            }
+        }
+        .onAppear {
+            if subject.isEmpty {
+                if let p = store.plan(), let n = store.all("subjects").first(where: { $0.id == p.subjectId })?.str("name") { subject = n }
+                else { subject = store.all("subjects").first?.str("name") ?? "" }
+            }
+        }
+    }
+
+    private func focus() {
+        if StudyTimer.get(store)?.pausedAt != nil { StudyTimer.resume(store) }
+        if let f = StudyTimer.focus(store) { Nav.shared.startFocus(f) }
     }
 }

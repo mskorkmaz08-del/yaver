@@ -27,7 +27,36 @@ struct YaverApp: App {
         #if os(macOS)
         .defaultSize(width: 1100, height: 760)
         #endif
+        .commands { YaverCommands() }
     }
+}
+
+/// Keyboard shortcuts (twin of js/keys.js), listed in the menu bar on the Mac:
+/// ⌘K command bar, ⌘1–8 screens, ⌘/ ask Yaver, ⌘⇧ letters for forms and screens.
+struct YaverCommands: Commands {
+    var body: some Commands {
+        CommandMenu("Go") {
+            Button("Command bar…") { Nav.shared.command = true }.keyboardShortcut("k", modifiers: .command)
+            Button("Ask Yaver") { Nav.shared.go(.assistant) }.keyboardShortcut("/", modifiers: .command)
+            Divider()
+            ForEach(Array(YaverCommands.numbered.enumerated()), id: \.offset) { i, p in
+                Button(p.title) { Nav.shared.go(p) }.keyboardShortcut(KeyEquivalent(Character(String(i + 1))), modifiers: .command)
+            }
+            Button("Course") { Nav.shared.go(.course) }.keyboardShortcut("c", modifiers: [.command, .shift])
+            Button("Teams") { Nav.shared.go(.teams) }.keyboardShortcut("t", modifiers: [.command, .shift])
+            Button("Body") { Nav.shared.go(.body) }.keyboardShortcut("b", modifiers: [.command, .shift])
+            Button("Settings") { Nav.shared.go(.settings) }.keyboardShortcut(",", modifiers: .command)
+        }
+        CommandMenu("Log") {
+            Button("Expense…") { Nav.shared.present(.expense) }.keyboardShortcut("e", modifiers: [.command, .shift])
+            Button("Meal…") { Nav.shared.present(.meal) }.keyboardShortcut("m", modifiers: [.command, .shift])
+            Button("Study time…") { Nav.shared.present(.study) }.keyboardShortcut("s", modifiers: [.command, .shift])
+            Button("Meeting…") { Nav.shared.present(.meeting) }.keyboardShortcut("n", modifiers: [.command, .shift])
+            Button("To-do…") { Nav.shared.present(.task) }.keyboardShortcut("d", modifiers: [.command, .shift])
+            Button("Review cards") { Nav.shared.present(.review) }.keyboardShortcut("r", modifiers: [.command, .shift])
+        }
+    }
+    static let numbered: [Pane] = [.home, .cetele, .study, .meet, .money, .diet, .map, .skills]
 }
 
 enum Pane: String, CaseIterable, Identifiable {
@@ -91,8 +120,8 @@ struct RootView: View {
     @EnvironmentObject var sync: Sync
     @EnvironmentObject var updater: Updater
     @Environment(\.scenePhase) private var phase
-    @State private var section: Pane? = .home
     @ObservedObject private var chat = ChatModel.shared
+    @ObservedObject private var nav = Nav.shared
     private let tick = Timer.publish(every: 120, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -102,6 +131,24 @@ struct RootView: View {
                 if p == .active { sync.syncNow(); checkUpdate(); refreshDevice() } else { store.flush() }
             }
             .onReceive(tick) { _ in sync.syncNow() }
+            .sheet(isPresented: $nav.command) { CommandBar().environmentObject(store) }
+            .sheet(item: $nav.sheet) { s in sheet(s).environmentObject(store) }
+            .overlay(alignment: .bottom) { ToastView().padding(.bottom, 90).animation(.easeOut(duration: 0.2), value: nav.toast) }
+            .overlay { if let f = nav.focus { FocusView(spec: f).environmentObject(store).transition(.opacity) } }
+            .animation(.easeInOut(duration: 0.25), value: nav.focus?.id)
+    }
+
+    @ViewBuilder private func sheet(_ s: CmdSheet) -> some View {
+        switch s {
+        case .expense: NavigationStack { ExpenseForm(expense: nil) }.sheetSize()
+        case .meal: NavigationStack { MealForm(day: Day.today, meal: nil) }.sheetSize()
+        case .study: NavigationStack { StudyForm() }.sheetSize()
+        case .meeting: MeetingForm(existing: nil, day: Day.today, presetStart: nil)
+        case .task: NavigationStack { TaskForm() }.sheetSize()
+        case .review: SheetScreen { ReviewView() }
+        case .lesson(let id): SheetScreen { LessonView(lessonId: id) }
+        case .pane(let p): SheetScreen { p.screen }
+        }
     }
 
     /// Apple Calendar copy and this device's notifications.
@@ -122,27 +169,31 @@ struct RootView: View {
     @ViewBuilder private var content: some View {
         #if os(macOS)
         NavigationSplitView {
-            List(Pane.allCases, selection: $section) { s in
+            List(Pane.allCases, selection: Binding<Pane?>(get: { nav.pane }, set: { if let p = $0 { nav.pane = p } })) { s in
                 Label(s.title, systemImage: s.icon).tag(s)
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
             .safeAreaInset(edge: .bottom) {
                 VStack(alignment: .leading, spacing: 8) {
+                    Button { nav.command = true } label: {
+                        HStack { Image(systemName: "magnifyingglass"); Text("Command bar"); Spacer(); Text("⌘K").foregroundStyle(Theme.dim) }
+                    }
+                    .buttonStyle(.plain).font(.callout).foregroundStyle(Theme.muted)
                     UpdateBanner()
                     Text(sync.summary).font(.caption).foregroundStyle(Theme.dim)
                 }
                 .padding(10).frame(maxWidth: .infinity, alignment: .leading)
             }
         } detail: {
-            NavigationStack { (section ?? Pane.home).screen }
+            NavigationStack { nav.pane.screen }.id(nav.pane)
         }
-        .onChange(of: chat.open) { o in if o { section = .assistant; chat.open = false } }
+        .onChange(of: chat.open) { o in if o { nav.pane = .assistant; chat.open = false } }
         #else
-        TabView {
-            ForEach([Pane.home, .cetele, .course, .diet], id: \.self) { s in
-                NavigationStack { s.screen }.tabItem { Label(s.title, systemImage: s.icon) }
+        TabView(selection: $nav.tab) {
+            ForEach(Nav.tabs, id: \.self) { s in
+                NavigationStack { s.screen }.tabItem { Label(s.title, systemImage: s.icon) }.tag(s.rawValue)
             }
-            NavigationStack { MoreView() }.tabItem { Label("More", systemImage: "ellipsis") }
+            NavigationStack { MoreView() }.tabItem { Label("More", systemImage: "ellipsis") }.tag("more")
         }
         .overlay(alignment: .bottomTrailing) { AssistantButton().padding(.trailing, 16).padding(.bottom, 64) }
         .sheet(isPresented: $chat.open) { NavigationStack { AssistantView(sheet: true) }.environmentObject(store) }

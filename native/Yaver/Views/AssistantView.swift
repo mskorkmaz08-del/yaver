@@ -320,15 +320,26 @@ struct AssistantView: View {
 struct AssistantButton: View {
     @ObservedObject var chat = ChatModel.shared
     var body: some View {
-        Button { chat.open = true } label: {
-            Image(systemName: "sparkles")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(Theme.bg)
-                .frame(width: 54, height: 54)
-                .background(Theme.gold, in: Circle())
-                .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Ask Yaver")
+        // A tap opens the chat; a long press opens the command bar.
+        Image(systemName: "sparkles")
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(Theme.bg)
+            .frame(width: 54, height: 54)
+            .background(Theme.gold, in: Circle())
+            .shadow(color: .black.opacity(0.4), radius: 6, y: 3)
+            .contentShape(Circle())
+            .onTapGesture { chat.open = true }
+            .onLongPressGesture(minimumDuration: 0.45) {
+                #if os(iOS)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                #endif
+                Nav.shared.command = true
+            }
+            .accessibilityElement()
+            .accessibilityLabel("Ask Yaver")
+            .accessibilityHint("Long press for the command bar")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { chat.open = true }
+            .accessibilityAction(named: "Command bar") { Nav.shared.command = true }
     }
 }

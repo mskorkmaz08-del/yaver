@@ -31,6 +31,7 @@
 		4240701B124A78CFF50530F8 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A695CCE5297581FB41A4C7 /* AssistantView.swift */; };
 		39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189C0F9BA8D0D94F679AD767 /* BodyView.swift */; };
 		89E285E9744758950890D588 /* CeteleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33782A6F548AC0635A1C01DD /* CeteleView.swift */; };
+		46EC1F89084438E903328D6E /* CommandBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFB4CB52595F6E51C622B5D5 /* CommandBar.swift */; };
 		E1042BE156F4D1415D6DF410 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383E53F788E950A086E8F48F /* CourseView.swift */; };
 		680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FE564553A1108BD68B341D /* DietView.swift */; };
 		C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56835FADD746563E249C8753 /* HomeView.swift */; };
@@ -40,6 +41,7 @@
 		F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03937AB139431E05973AA9AC /* MeetView.swift */; };
 		BB9EEDC3D9253C3E8C079E6A /* MoneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E2FEECBF28AAFE14871629 /* MoneyView.swift */; };
 		863CF718D69D21C5AEE3B32F /* MuscleMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C72806109784EC7AA81F190 /* MuscleMap.swift */; };
+		899CD3AF9DE5374C57F7382C /* Nav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BECEEE355DA086A1B5B1BF9 /* Nav.swift */; };
 		4E02172161AFD767C10AE2F6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */; };
 		95C52078A01E4AD73692EC43 /* SkillsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 721488ECC1B9B22C069A4914 /* SkillsView.swift */; };
 		6AC8400C91C2C07B981B8407 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EEE94709B10165AF4198BC /* StudyView.swift */; };
@@ -89,6 +91,7 @@
 		02A695CCE5297581FB41A4C7 /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
 		189C0F9BA8D0D94F679AD767 /* BodyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyView.swift; sourceTree = "<group>"; };
 		33782A6F548AC0635A1C01DD /* CeteleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CeteleView.swift; sourceTree = "<group>"; };
+		FFB4CB52595F6E51C622B5D5 /* CommandBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandBar.swift; sourceTree = "<group>"; };
 		383E53F788E950A086E8F48F /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
 		24FE564553A1108BD68B341D /* DietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DietView.swift; sourceTree = "<group>"; };
 		56835FADD746563E249C8753 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -98,6 +101,7 @@
 		03937AB139431E05973AA9AC /* MeetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetView.swift; sourceTree = "<group>"; };
 		B4E2FEECBF28AAFE14871629 /* MoneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyView.swift; sourceTree = "<group>"; };
 		3C72806109784EC7AA81F190 /* MuscleMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleMap.swift; sourceTree = "<group>"; };
+		8BECEEE355DA086A1B5B1BF9 /* Nav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nav.swift; sourceTree = "<group>"; };
 		C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		721488ECC1B9B22C069A4914 /* SkillsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsView.swift; sourceTree = "<group>"; };
 		98EEE94709B10165AF4198BC /* StudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyView.swift; sourceTree = "<group>"; };
@@ -196,6 +200,7 @@
 				02A695CCE5297581FB41A4C7 /* AssistantView.swift */,
 				189C0F9BA8D0D94F679AD767 /* BodyView.swift */,
 				33782A6F548AC0635A1C01DD /* CeteleView.swift */,
+				FFB4CB52595F6E51C622B5D5 /* CommandBar.swift */,
 				383E53F788E950A086E8F48F /* CourseView.swift */,
 				24FE564553A1108BD68B341D /* DietView.swift */,
 				56835FADD746563E249C8753 /* HomeView.swift */,
@@ -205,6 +210,7 @@
 				03937AB139431E05973AA9AC /* MeetView.swift */,
 				B4E2FEECBF28AAFE14871629 /* MoneyView.swift */,
 				3C72806109784EC7AA81F190 /* MuscleMap.swift */,
+				8BECEEE355DA086A1B5B1BF9 /* Nav.swift */,
 				C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */,
 				721488ECC1B9B22C069A4914 /* SkillsView.swift */,
 				98EEE94709B10165AF4198BC /* StudyView.swift */,
@@ -330,6 +336,7 @@
 				4240701B124A78CFF50530F8 /* AssistantView.swift in Sources */,
 				39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */,
 				89E285E9744758950890D588 /* CeteleView.swift in Sources */,
+				46EC1F89084438E903328D6E /* CommandBar.swift in Sources */,
 				E1042BE156F4D1415D6DF410 /* CourseView.swift in Sources */,
 				680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */,
 				C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */,
@@ -339,6 +346,7 @@
 				F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */,
 				BB9EEDC3D9253C3E8C079E6A /* MoneyView.swift in Sources */,
 				863CF718D69D21C5AEE3B32F /* MuscleMap.swift in Sources */,
+				899CD3AF9DE5374C57F7382C /* Nav.swift in Sources */,
 				4E02172161AFD767C10AE2F6 /* SettingsView.swift in Sources */,
 				95C52078A01E4AD73692EC43 /* SkillsView.swift in Sources */,
 				6AC8400C91C2C07B981B8407 /* StudyView.swift in Sources */,

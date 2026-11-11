@@ -425,6 +425,7 @@ struct TimerCard: View {
     let steps: [[String: JSON]]
     let status: String
     @EnvironmentObject var store: Store
+    @Environment(\.focusActive) private var inFocus
     @State private var undo: JSON?
 
     var body: some View {
@@ -453,6 +454,14 @@ struct TimerCard: View {
                 }
                 if let u = undo, t == nil {
                     Button("Undo reset") { store.setSetting("lessonTimer", u); undo = nil }.buttonStyle(.borderless)
+                }
+                if !inFocus {
+                    Spacer()
+                    Button {
+                        if t == nil || t?.pausedAt != nil { C.startLesson(store, lesson.id) }
+                        Nav.shared.startFocus(C.focusSpec(store, lesson: lesson))
+                    } label: { Label("Focus", systemImage: "scope") }
+                    .buttonStyle(.bordered)
                 }
             }
         }
