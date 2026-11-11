@@ -109,7 +109,7 @@ struct SortSim: View {
     }
 
     private func draw(_ c: inout GraphicsContext, _ size: CGSize, _ A: SortFrame, _ B: SortFrame, _ t: Double) {
-        let w = size.width, h = size.height, count = Double(A.order.count)
+        let w = Double(size.width), h = Double(size.height), count = Double(A.order.count)
         let pad = 16.0, top = 40.0, base = h - 26, bw = (w - pad * 2) / max(1, count)
         var posA: [Int: Int] = [:], posB: [Int: Int] = [:]
         for (i, id) in A.order.enumerated() { posA[id] = i }
@@ -218,7 +218,7 @@ struct SearchSim: View {
     }
 
     private func draw(_ c: inout GraphicsContext, _ size: CGSize, _ A: SearchFrame, _ B: SearchFrame, _ t: Double) {
-        let w = size.width, h = size.height, n = Double(arr.count)
+        let w = Double(size.width), h = Double(size.height), n = Double(arr.count)
         guard n > 0 else { return }
         let pad = 12.0, cw = min(46, (w - pad * 2) / n), x0 = (w - cw * n) / 2, y = 92.0, ch = cw * 0.95
         let F = t < 0.5 ? A : B

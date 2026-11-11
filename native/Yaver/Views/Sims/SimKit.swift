@@ -29,11 +29,12 @@ enum Sim {
         let r = CGRect(origin: .zero, size: size)
         c.fill(Path(r), with: .linearGradient(Gradient(colors: [SimColor.bg2, SimColor.bg]), startPoint: .zero, endPoint: CGPoint(x: size.width, y: size.height)))
         var g = Path()
-        var x = 0.5; while x < size.width { g.move(to: CGPoint(x: x, y: 0)); g.addLine(to: CGPoint(x: x, y: size.height)); x += 20 }
-        var y = 0.5; while y < size.height { g.move(to: CGPoint(x: 0, y: y)); g.addLine(to: CGPoint(x: size.width, y: y)); y += 20 }
+        let W = Double(size.width), H = Double(size.height)
+        var x = 0.5; while x < W { g.move(to: CGPoint(x: x, y: 0)); g.addLine(to: CGPoint(x: x, y: H)); x += 20 }
+        var y = 0.5; while y < H { g.move(to: CGPoint(x: 0, y: y)); g.addLine(to: CGPoint(x: W, y: y)); y += 20 }
         c.stroke(g, with: .color(SimColor.grid), lineWidth: 1)
         var m = Path()
-        let w = size.width, h = size.height
+        let w = Double(size.width), h = Double(size.height)
         for (px, py, sx, sy) in [(6.0, 6.0, 1.0, 1.0), (w - 6, 6, -1, 1), (6, h - 6, 1, -1), (w - 6, h - 6, -1, -1)] {
             m.move(to: CGPoint(x: px, y: py + 14 * sy)); m.addLine(to: CGPoint(x: px, y: py)); m.addLine(to: CGPoint(x: px + 14 * sx, y: py))
         }

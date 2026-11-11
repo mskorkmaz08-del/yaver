@@ -118,7 +118,7 @@ struct GraphSim: View {
     }
 
     private func draw(_ c: inout GraphicsContext, _ size: CGSize, _ A: GraphFrame, _ B: GraphFrame, _ t: Double) {
-        let w = size.width, h = size.height
+        let w = Double(size.width), h = Double(size.height)
         let F = t < 0.5 ? A : B
         if kind == "bst" { drawTree(&c, w, h, A, B, t); return }
         func P(_ i: Int) -> CGPoint { CGPoint(x: 26 + Self.nodes[i].0 * (w - 52), y: 46 + Self.nodes[i].1 * (h - 92)) }
