@@ -259,22 +259,38 @@ struct CourseView: View {
         }
     }
 
-    @ViewBuilder private func testsCard(_ tests: [Row]) -> some View {
+    private static func scoreLine(_ t: Row) -> String {
         let C = Course.shared
+        var parts: [String] = []
+        for x in t["scores"]?.array ?? [] {
+            let right: Double = x["right"]?.double ?? 0
+            let total: Double = max(1, x["total"]?.double ?? 1)
+            let pct: Int = Int((right / total * 100).rounded())
+            parts.append("\(C.trackName(x["track"]?.string)) \(pct)%")
+        }
+        return parts.joined(separator: " · ")
+    }
+    private func diagLine() -> String {
+        var parts: [String] = []
+        for d in Course.shared.diagnosticHistory(store) {
+            let date: String = String((d["date"]?.string ?? "").suffix(5))
+            let score: Double = d["results"]?["score"]?.double ?? 0
+            parts.append("\(date) \(fmt(score, 1))/7")
+        }
+        return parts.isEmpty ? "" : "diagnostic: " + parts.joined(separator: " → ")
+    }
+
+    @ViewBuilder private func testsCard(_ tests: [Row]) -> some View {
         Card(title: "Tests") {
             if tests.isEmpty { Text("The weekly test runs on Sundays at 05:50.").font(.callout).foregroundStyle(Theme.muted) }
-            ForEach(tests, id: \.id) { t in
+            ForEach(tests, id: \.id) { (t: Row) in
                 HStack(alignment: .top) {
                     Text("wk \(Int(t.num("week")))").font(.callout.monospacedDigit()).frame(width: 50, alignment: .leading)
-                    Text((t["scores"]?.array ?? []).map { "\(C.trackName($0["track"]?.string)) \(Int(((($0["right"]?.double ?? 0) / max(1, $0["total"]?.double ?? 1)) * 100).rounded()))%" }.joined(separator: " · "))
-                        .font(.caption).foregroundStyle(Theme.muted)
+                    Text(Self.scoreLine(t)).font(.caption).foregroundStyle(Theme.muted)
                 }
             }
-            let diag = C.diagnosticHistory(store)
-            if !diag.isEmpty {
-                Text("diagnostic: " + diag.map { "\(String(($0["date"]?.string ?? "").suffix(5))) \(fmt($0["results"]?["score"]?.double ?? 0, 1))/7" }.joined(separator: " → "))
-                    .font(.caption.monospaced()).foregroundStyle(Theme.dim)
-            }
+            let diag = diagLine()
+            if !diag.isEmpty { Text(diag).font(.caption.monospaced()).foregroundStyle(Theme.dim) }
         }
     }
 

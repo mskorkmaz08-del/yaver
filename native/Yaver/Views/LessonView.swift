@@ -113,11 +113,9 @@ struct LessonView: View {
                 if !l.str("safety").isEmpty {
                     Label(l.str("safety"), systemImage: "bolt.fill").font(.callout).foregroundStyle(Theme.warn)
                 }
-                if l["sim"] != nil && l["sim"]?.isNull == false {
-                    Text("This lesson has an interactive simulator. It comes to the native app in a later update; it is in the web app meanwhile.")
-                        .font(.caption).foregroundStyle(Theme.dim)
-                }
             }
+
+            SimCard(lesson: l)
 
             ForEach(Array(steps.enumerated()), id: \.offset) { i, s in
                 stepCard(l, s, i, done: doneSteps.contains(i))
