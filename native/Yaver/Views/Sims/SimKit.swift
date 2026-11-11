@@ -268,6 +268,7 @@ struct SimHost: View {
         case "data": DataSim(mode: pick.mode, height: max(height, 310))
         case "memory": MemorySim(mode: pick.mode, height: max(height, 330))
         case "circuit": CircuitSim(mode: pick.mode, height: max(height, 300))
+        case "trace": TraceSim(code: pick.code, height: max(height, 240))
         default: SimLater(name: SimPicker.names[pick.sim] ?? pick.sim)
         }
     }

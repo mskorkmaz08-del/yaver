@@ -52,10 +52,12 @@
 		C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DA942E930ECC00CDCED190 /* GraphSim.swift */; };
 		140A6071CF64819ED2559516 /* MemorySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04E68DF4863F69746EF6E3D /* MemorySim.swift */; };
 		B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */; };
+		263A22A07C5835C9C11850E0 /* PyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4734B1FE75A3E2F9246DE5EB /* PyEngine.swift */; };
 		711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */; };
 		6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524444987769A68465B9C6B5 /* SimKit.swift */; };
 		08C946464297D3DF1CD8E3DA /* SortSearchSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508519008A1A7F3FAE90B170 /* SortSearchSims.swift */; };
 		8633C50ED4FB0DE499F82A25 /* StructuresSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */; };
+		978232AAF1ECA905ECE50DAD /* TraceSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBC220D44FD562608EBF0F8 /* TraceSim.swift */; };
 		CE48D687F16C404D9833E7AA /* VectorsSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854FA523B07D67B5F048513F /* VectorsSim.swift */; };
 		B0237D3616875AAE4DBEE4A3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */; };
 		5CB165E78DA2D2B8C230D113 /* course in Resources */ = {isa = PBXBuildFile; fileRef = BABED1E9680B950F4C07DC5D /* course */; };
@@ -107,10 +109,12 @@
 		E1DA942E930ECC00CDCED190 /* GraphSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSim.swift; sourceTree = "<group>"; };
 		C04E68DF4863F69746EF6E3D /* MemorySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySim.swift; sourceTree = "<group>"; };
 		C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProbabilitySim.swift; sourceTree = "<group>"; };
+		4734B1FE75A3E2F9246DE5EB /* PyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PyEngine.swift; sourceTree = "<group>"; };
 		9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellGitSims.swift; sourceTree = "<group>"; };
 		524444987769A68465B9C6B5 /* SimKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimKit.swift; sourceTree = "<group>"; };
 		508519008A1A7F3FAE90B170 /* SortSearchSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortSearchSims.swift; sourceTree = "<group>"; };
 		8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuresSim.swift; sourceTree = "<group>"; };
+		EFBC220D44FD562608EBF0F8 /* TraceSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TraceSim.swift; sourceTree = "<group>"; };
 		854FA523B07D67B5F048513F /* VectorsSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorsSim.swift; sourceTree = "<group>"; };
 		D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BABED1E9680B950F4C07DC5D /* course */ = {isa = PBXFileReference; lastKnownFileType = folder; name = course; path = ../data/course; sourceTree = SOURCE_ROOT; };
@@ -218,10 +222,12 @@
 				E1DA942E930ECC00CDCED190 /* GraphSim.swift */,
 				C04E68DF4863F69746EF6E3D /* MemorySim.swift */,
 				C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */,
+				4734B1FE75A3E2F9246DE5EB /* PyEngine.swift */,
 				9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */,
 				524444987769A68465B9C6B5 /* SimKit.swift */,
 				508519008A1A7F3FAE90B170 /* SortSearchSims.swift */,
 				8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */,
+				EFBC220D44FD562608EBF0F8 /* TraceSim.swift */,
 				854FA523B07D67B5F048513F /* VectorsSim.swift */,
 			);
 			path = Sims;
@@ -342,10 +348,12 @@
 				C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */,
 				140A6071CF64819ED2559516 /* MemorySim.swift in Sources */,
 				B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */,
+				263A22A07C5835C9C11850E0 /* PyEngine.swift in Sources */,
 				711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */,
 				6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */,
 				08C946464297D3DF1CD8E3DA /* SortSearchSims.swift in Sources */,
 				8633C50ED4FB0DE499F82A25 /* StructuresSim.swift in Sources */,
+				978232AAF1ECA905ECE50DAD /* TraceSim.swift in Sources */,
 				CE48D687F16C404D9833E7AA /* VectorsSim.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
