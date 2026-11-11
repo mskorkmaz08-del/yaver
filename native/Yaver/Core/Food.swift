@@ -90,27 +90,19 @@ enum Food {
         """
     }
 
-    static var schema: JSON {
-        var itemProps: [String: JSON] = [
-            "name": .object(["type": "string"]),
-            "grams": .object(["type": "number", "description": "Weight of the portion in grams (ml for drinks)"]),
-            "basis": .object(["type": "string", "description": "How the amount was judged, a few words: \"26 cm plate, about a third covered\", \"2 slices\", \"250 ml mug, 3/4 full\", \"label: 45 g bar\""]),
-            "source": .object(["type": "string", "description": "Where the nutrition values came from, a few words: brand label, a site found, or standard food tables"]),
-        ]
-        for k in nums { itemProps[k] = .object(["type": "number"]) }
-        return .object([
-            "type": "object",
-            "properties": .object([
-                "dish": .object(["type": "string", "description": "Short name for the whole meal or drink"]),
-                "meal": .object(["type": "string", "enum": .array(Meals.types.map { .string($0) })]),
-                "confidence": .object(["type": "string", "enum": ["low", "medium", "high"]]),
-                "note": .object(["type": "string", "description": "One short line on what was hard to judge (hidden oil, sauce, portion), or empty"]),
-                "items": .object(["type": "array", "items": .object(["type": "object", "properties": .object(itemProps),
-                                                                     "required": ["name", "grams", "calories", "protein", "carbs", "fat"]])]),
-            ]),
-            "required": ["dish", "items", "confidence"],
-        ])
-    }
+    /// The answer's JSON schema (same as SCHEMA in js/foodscan.js). Built from text so it compiles fast.
+    static let schema: JSON = {
+        var props = (try? JSON.decode(Data(#"""
+{"name": {"type": "string"}, "grams": {"type": "number", "description": "Weight of the portion in grams (ml for drinks)"}, "basis": {"type": "string", "description": "How the amount was judged, a few words: \"26 cm plate, about a third covered\", \"2 slices\", \"250 ml mug, 3/4 full\", \"label: 45 g bar\""}, "source": {"type": "string", "description": "Where the nutrition values came from, a few words: brand label, a site found, or standard food tables"}}
+"""#.utf8)))?.object ?? [:]
+        for k in nums { props[k] = .object(["type": "number"]) }
+        let base = (try? JSON.decode(Data(#"""
+{"type": "object", "properties": {"dish": {"type": "string", "description": "Short name for the whole meal or drink"}, "meal": {"type": "string", "enum": ["Breakfast", "Lunch", "Dinner", "Snack"]}, "confidence": {"type": "string", "enum": ["low", "medium", "high"]}, "note": {"type": "string", "description": "One short line on what was hard to judge (hidden oil, sauce, portion), or empty"}, "items": {"type": "array", "items": {"type": "object", "properties": {}, "required": ["name", "grams", "calories", "protein", "carbs", "fat"]}}}, "required": ["dish", "items", "confidence"]}
+"""#.utf8))) ?? .null
+        guard var o = base.object, var p = o["properties"]?.object, var items = p["items"]?.object, var item = items["items"]?.object else { return base }
+        item["properties"] = .object(props); items["items"] = .object(item); p["items"] = .object(items); o["properties"] = .object(p)
+        return .object(o)
+    }()
 
     /// image is JPEG data, or nil for a typed meal (then note is what they ate).
     @MainActor
@@ -321,22 +313,9 @@ enum FoodGaps {
         return Gaps(day: day, forWhen: late ? "tomorrow" : "today", lines: lines, recent: Array(recent), key: "\(day)|\(late ? "t" : "d")|\(d.meals.count)|\(Int(d.calories.rounded()))")
     }
 
-    private static var schema: JSON {
-        .object([
-            "type": "object",
-            "properties": .object([
-                "summary": .object(["type": "string", "description": "One or two plain sentences: the main gaps and the idea of the plan"]),
-                "items": .object(["type": "array", "items": .object(["type": "object", "properties": .object([
-                    "food": .object(["type": "string", "description": "A real food or drink, e.g. \"Baked mackerel\""]),
-                    "amount": .object(["type": "string", "description": "How much, e.g. \"150 g fillet\", \"1 glass (250 ml)\""]),
-                    "when": .object(["type": "string", "description": "Which meal, e.g. \"Dinner\", \"Tomorrow breakfast\", \"Snack\""]),
-                    "why": .object(["type": "string", "description": "What it covers, in a few words with rough numbers, e.g. \"omega-3 2 g, protein 30 g, vitamin D\""]),
-                ]), "required": ["food", "amount", "why"]])]),
-                "ease_off": .object(["type": "string", "description": "What to have less of, one short line, or empty"]),
-            ]),
-            "required": ["summary", "items"],
-        ])
-    }
+    private static let schema: JSON = (try? JSON.decode(Data(#"""
+{"type": "object", "properties": {"summary": {"type": "string", "description": "One or two plain sentences: the main gaps and the idea of the plan"}, "items": {"type": "array", "items": {"type": "object", "properties": {"food": {"type": "string", "description": "A real food or drink, e.g. \"Baked mackerel\""}, "amount": {"type": "string", "description": "How much, e.g. \"150 g fillet\", \"1 glass (250 ml)\""}, "when": {"type": "string", "description": "Which meal, e.g. \"Dinner\", \"Tomorrow breakfast\", \"Snack\""}, "why": {"type": "string", "description": "What it covers, in a few words with rough numbers, e.g. \"omega-3 2 g, protein 30 g, vitamin D\""}}, "required": ["food", "amount", "why"]}}, "ease_off": {"type": "string", "description": "What to have less of, one short line, or empty"}}, "required": ["summary", "items"]}
+"""#.utf8))) ?? .null
 
     private static func prompt(_ s: Store, _ g: Gaps) -> String {
         """
