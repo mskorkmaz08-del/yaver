@@ -259,6 +259,7 @@ struct SimHost: View {
         case "sort": SortSim(mode: pick.mode, height: height)
         case "search": SearchSim(mode: pick.mode, height: height)
         case "graph": GraphSim(mode: pick.mode, height: max(height, 290))
+        case "structures": StructuresSim(mode: pick.mode, height: max(height, 260))
         default: SimLater(name: SimPicker.names[pick.sim] ?? pick.sim)
         }
     }
