@@ -9,8 +9,9 @@ struct Radar: Shape {
         var p = Path()
         let c = CGPoint(x: rect.midX, y: rect.midY), r = min(rect.width, rect.height) / 2
         for (i, v) in values.enumerated() {
-            let a = (-90 + 360 / Double(values.count) * Double(i)) * .pi / 180
-            let pt = CGPoint(x: c.x + r * v * cos(a), y: c.y + r * v * sin(a))
+            let a: CGFloat = CGFloat((-90 + 360 / Double(values.count) * Double(i)) * Double.pi / 180)
+            let rv: CGFloat = r * CGFloat(v)
+            let pt = CGPoint(x: c.x + rv * CoreGraphics.cos(a), y: c.y + rv * CoreGraphics.sin(a))
             if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
         }
         p.closeSubpath()
@@ -35,12 +36,12 @@ struct SkillHexagon: View {
                 Radar(values: sum.areas.map { max(0.1, Double($0.rating) / 99) }).stroke(Theme.gold, lineWidth: 2).frame(width: r * 2, height: r * 2)
                 if labels {
                     ForEach(sum.areas.indices, id: \.self) { i in
-                        let a = (-90 + 60 * Double(i)) * .pi / 180
+                        let a: CGFloat = CGFloat((-90 + 60 * Double(i)) * Double.pi / 180)
                         VStack(spacing: 0) {
                             Text("\(sum.areas[i].rating)").font(.headline.monospacedDigit()).foregroundStyle(Theme.text)
                             Text(sum.areas[i].area.short).font(.caption2).foregroundStyle(Theme.dim)
                         }
-                        .position(x: c.x + (r + 26) * cos(a), y: c.y + (r + 22) * sin(a))
+                        .position(x: c.x + (r + 26) * CoreGraphics.cos(a), y: c.y + (r + 22) * CoreGraphics.sin(a))
                     }
                 }
             }
