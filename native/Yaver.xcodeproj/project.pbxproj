@@ -36,6 +36,7 @@
 		680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FE564553A1108BD68B341D /* DietView.swift */; };
 		C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56835FADD746563E249C8753 /* HomeView.swift */; };
 		FD7FC251EDE2624DB19B5BFC /* LessonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAA94763149CFB488C45DC9C /* LessonView.swift */; };
+		10435769A16B4CBB9ECE9534 /* LiveVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9857ACE6298A7CBADE0B80CC /* LiveVoice.swift */; };
 		FC63892720C3251777EEE065 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BE36984BDF96B037F37AE /* MapView.swift */; };
 		2C9408DC5B7A076400B4074C /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 658E7797F5027A8BDF0E86D8 /* Markdown.swift */; };
 		F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03937AB139431E05973AA9AC /* MeetView.swift */; };
@@ -96,6 +97,7 @@
 		24FE564553A1108BD68B341D /* DietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DietView.swift; sourceTree = "<group>"; };
 		56835FADD746563E249C8753 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		CAA94763149CFB488C45DC9C /* LessonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonView.swift; sourceTree = "<group>"; };
+		9857ACE6298A7CBADE0B80CC /* LiveVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoice.swift; sourceTree = "<group>"; };
 		AC2BE36984BDF96B037F37AE /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		658E7797F5027A8BDF0E86D8 /* Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markdown.swift; sourceTree = "<group>"; };
 		03937AB139431E05973AA9AC /* MeetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetView.swift; sourceTree = "<group>"; };
@@ -205,6 +207,7 @@
 				24FE564553A1108BD68B341D /* DietView.swift */,
 				56835FADD746563E249C8753 /* HomeView.swift */,
 				CAA94763149CFB488C45DC9C /* LessonView.swift */,
+				9857ACE6298A7CBADE0B80CC /* LiveVoice.swift */,
 				AC2BE36984BDF96B037F37AE /* MapView.swift */,
 				658E7797F5027A8BDF0E86D8 /* Markdown.swift */,
 				03937AB139431E05973AA9AC /* MeetView.swift */,
@@ -341,6 +344,7 @@
 				680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */,
 				C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */,
 				FD7FC251EDE2624DB19B5BFC /* LessonView.swift in Sources */,
+				10435769A16B4CBB9ECE9534 /* LiveVoice.swift in Sources */,
 				FC63892720C3251777EEE065 /* MapView.swift in Sources */,
 				2C9408DC5B7A076400B4074C /* Markdown.swift in Sources */,
 				F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */,

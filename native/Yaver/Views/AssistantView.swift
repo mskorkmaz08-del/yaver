@@ -60,6 +60,12 @@ final class ChatModel: ObservableObject {
     /// A plain note from Yaver in the chat (voice problems and the like).
     func notice(_ text: String) { lines.append(ChatLine(role: "bot", text: text, error: true)) }
 
+    /// A finished turn from live voice, kept in the chat like any other.
+    func addLine(_ s: Store, role: String, text: String, actions: [String] = [], via: String = "") {
+        lines.append(ChatLine(role: role, text: text, actions: actions, via: via))
+        save(s)
+    }
+
     func send(_ s: Store, _ textIn: String, image: Data? = nil, voice: Bool = false) {
         let text = textIn.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !busy, !text.isEmpty || image != nil else { return }
@@ -278,22 +284,24 @@ struct AssistantView: View {
 
     /// Voice chat: one big button. Tap to talk; tap while it speaks to interrupt.
     private var orb: some View {
-        let label = ["listening": "listening…", "thinking": "thinking…", "voicing": "getting the voice…", "speaking": "speaking · tap to interrupt"][voice.state] ?? "tap to talk"
+        let label = ["listening": "listening…", "thinking": "thinking…", "voicing": "getting the voice…", "speaking": "speaking · tap to interrupt",
+                     "live": "live · just talk", "connecting": "connecting…", "reconnecting": "reconnecting…", "claude": "asking Claude on your Mac…"][voice.state] ?? "tap to talk"
         return VStack(spacing: 8) {
             if !voice.heard.isEmpty { Text(voice.heard).font(.callout).foregroundStyle(Theme.muted).lineLimit(3).multilineTextAlignment(.center) }
             Button {
-                if voice.state == "listening" { voice.stopListening() }
+                if voice.live { if voice.state == "speaking" { LiveVoice.shared.interrupt() } }
+                else if voice.state == "listening" { voice.stopListening() }
                 else if voice.speaking { voice.hush(); voice.listen(store) }
                 else if chat.busy { chat.stop() }
                 else { voice.listen(store) }
             } label: {
                 TimelineView(.animation(paused: voice.state.isEmpty)) { tl in
                     let t = tl.date.timeIntervalSinceReferenceDate
-                    let pulse = voice.state.isEmpty ? 1 : 1 + 0.08 * Foundation.sin(t * (voice.state == "listening" ? 6 : 3))
+                    let pulse = voice.state.isEmpty ? 1 : 1 + 0.08 * Foundation.sin(t * (voice.state == "listening" || voice.state == "live" ? 6 : 3))
                     ZStack {
                         Circle().fill(RadialGradient(colors: [Theme.gold.opacity(0.9), Theme.gold.opacity(0.15)], center: .center, startRadius: 4, endRadius: 46))
                         Circle().stroke(Theme.gold.opacity(0.6), lineWidth: 2)
-                        Image(systemName: voice.state == "listening" ? "waveform" : voice.state == "speaking" ? "speaker.wave.2.fill" : "mic.fill").font(.title2).foregroundStyle(Theme.bg)
+                        Image(systemName: voice.state == "listening" || voice.state == "live" ? "waveform" : voice.state == "speaking" ? "speaker.wave.2.fill" : "mic.fill").font(.title2).foregroundStyle(Theme.bg)
                     }
                     .frame(width: 84, height: 84)
                     .scaleEffect(pulse)

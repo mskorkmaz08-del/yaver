@@ -128,8 +128,41 @@ final class VoiceChat: NSObject, ObservableObject, AVSpeechSynthesizerDelegate, 
     var speaking: Bool { running || synth.isSpeaking || player?.isPlaying == true }
 
     func toggle(_ s: Store) { on ? end() : start(s) }
-    func start(_ s: Store) { store = s; on = true; listen(s) }
-    func end() { on = false; stopListening(); hush(); state = "" }
+    func start(_ s: Store) {
+        store = s; on = true
+        if LiveVoice.wanted(s) { startLive(s) } else { listen(s) }
+    }
+    func end() { on = false; LiveVoice.shared.stop(silent: true); live = false; stopListening(); hush(); state = "" }
+
+    /// True while the live Gemini engine runs the conversation.
+    @Published var live = false
+    private var liveActions: [String] = []
+
+    /// Live engine: the model hears and speaks directly; each finished turn is added to the chat.
+    private func startLive(_ s: Store) {
+        live = true
+        liveActions = []
+        let chat = ChatModel.shared
+        chat.load(s)
+        var cb = LiveVoice.Callbacks()
+        cb.onState = { [weak self] st in self?.state = st == "ended" ? "" : st }
+        cb.onUser = { t in chat.addLine(s, role: "user", text: t) }
+        cb.onModel = { [weak self] t in chat.addLine(s, role: "bot", text: t, actions: self?.liveActions ?? [], via: "live"); self?.liveActions = [] }
+        cb.onAction = { [weak self] a in self?.liveActions.append(a) }
+        cb.onIdle = { [weak self] in self?.end() }
+        cb.onError = { [weak self] msg, fatal in
+            guard let self else { return }
+            self.live = false
+            if fatal && self.on { chat.notice("\(msg) Using standard voice chat."); self.listen(s) } else { chat.notice(msg) }
+        }
+        Task {
+            do { try await LiveVoice.shared.start(s, cb) } catch {
+                live = false
+                chat.notice("\((error as? AIError)?.message ?? error.localizedDescription) Using standard voice chat.")
+                if on { listen(s) }
+            }
+        }
+    }
 
     // MARK: listening
 

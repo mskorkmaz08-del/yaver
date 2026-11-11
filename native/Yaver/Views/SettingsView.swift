@@ -253,6 +253,10 @@ struct VoiceSettingsCard: View {
 
     var body: some View {
         Card(title: "Voice") {
+            Picker("Voice chat engine", selection: str("voiceEngine", "live")) {
+                Text("Live · talks directly, fastest (Gemini, free)").tag("live"); Text("Standard · listen, write, read aloud (works with the Mac)").tag("standard")
+            }
+            Text("Live needs a Gemini key; without one, voice chat uses Standard.").font(.caption).foregroundStyle(Theme.dim)
             Picker("Reply voice", selection: str("voiceStyle", "device")) {
                 Text("Device voice · instant, offline (recommended)").tag("device"); Text("Gemini voice · slower, can crackle").tag("natural")
             }
