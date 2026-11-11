@@ -31,11 +31,12 @@ struct YaverApp: App {
 }
 
 enum Pane: String, CaseIterable, Identifiable {
-    case home, cetele, course, diet, money, study, teams, body, settings
+    case home, assistant, cetele, course, diet, money, study, teams, body, settings
     var id: String { rawValue }
     var title: String {
         switch self {
         case .home: return "Home"
+        case .assistant: return "Yaver"
         case .cetele: return "Çetele"
         case .course: return "Course"
         case .diet: return "Diet"
@@ -49,6 +50,7 @@ enum Pane: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .home: return "house"
+        case .assistant: return "sparkles"
         case .cetele: return "moon.stars"
         case .course: return "graduationcap"
         case .diet: return "fork.knife"
@@ -62,6 +64,7 @@ enum Pane: String, CaseIterable, Identifiable {
     @ViewBuilder var screen: some View {
         switch self {
         case .home: HomeView()
+        case .assistant: AssistantView()
         case .cetele: CeteleView()
         case .course: CourseView()
         case .diet: DietView()
@@ -80,6 +83,7 @@ struct RootView: View {
     @EnvironmentObject var updater: Updater
     @Environment(\.scenePhase) private var phase
     @State private var section: Pane? = .home
+    @ObservedObject private var chat = ChatModel.shared
     private let tick = Timer.publish(every: 120, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -121,6 +125,8 @@ struct RootView: View {
             }
             NavigationStack { MoreView() }.tabItem { Label("More", systemImage: "ellipsis") }
         }
+        .overlay(alignment: .bottomTrailing) { AssistantButton().padding(.trailing, 16).padding(.bottom, 64) }
+        .sheet(isPresented: $chat.open) { NavigationStack { AssistantView(sheet: true) }.environmentObject(store) }
         #endif
     }
 }

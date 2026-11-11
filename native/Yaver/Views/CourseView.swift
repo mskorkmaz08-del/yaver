@@ -155,7 +155,6 @@ struct CourseView: View {
         let C = Course.shared
         let cur = max(0, C.weekOf(store))
         let wn = shownWeek ?? cur
-        let wk = C.weekMeta(wn) ?? C.weekMeta(0)
         let tracks = C.trackSummaries(store)
         let tests = C.testResults(store)
         let dl = C.deadlines(store, within: 30)
@@ -219,7 +218,6 @@ struct CourseView: View {
 
     @ViewBuilder private func weekCard(_ wn: Int) -> some View {
         let C = Course.shared
-        let wk = C.weekMeta(wn) ?? C.weekMeta(0)
         if let wk {
             let n = Int(wk["week"]?.double ?? 0)
             Card(title: "Week \(n)\(wk["consolidation"]?.bool == true ? " · consolidation" : "")") {

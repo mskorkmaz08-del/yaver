@@ -165,31 +165,79 @@ struct BackupFile: FileDocument {
 struct AISettingsCard: View {
     @EnvironmentObject var store: Store
     @State private var key = ""
+    @State private var code = ""
     @State private var testing = false
     @State private var result = ""
+    @State private var macResult = ""
     var body: some View {
-        let have = !Gemini.key(store).isEmpty
-        Card(title: "AI", trailing: have ? "Gemini key saved" : "no key") {
-            Text("Food photos, typed meals and food tips use Gemini (free). Make a key at aistudio.google.com/apikey and paste it here. It stays on this device only, like in the web app.")
+        let gem = !Gemini.key(store).isEmpty
+        let cla = !(store.setting("apiKey")?.string ?? "").isEmpty
+        let p = AI.provider(store)
+        Card(title: "AI", trailing: p == "gemini" ? (gem ? "Gemini · free" : "no key") : "Claude · paid") {
+            Text("Paste a Gemini key (free, aistudio.google.com/apikey) or a Claude key (sk-ant-…). Yaver files it under the right AI by its prefix. Keys stay on this device only.")
                 .font(.callout).foregroundStyle(Theme.muted)
-            SecureField(have ? "Paste a new key to replace it" : "Gemini key (AIza…)", text: $key).textFieldStyle(.roundedBorder)
+            SecureField("Paste a key", text: $key).textFieldStyle(.roundedBorder)
             HStack {
                 Button("Paste") { key = Clipboard.read().trimmingCharacters(in: .whitespacesAndNewlines) }.buttonStyle(.bordered)
-                Button("Save") { store.setSetting("geminiKey", .string(key.trimmingCharacters(in: .whitespacesAndNewlines))); store.setSetting("foodModels", .null); key = ""; result = "Saved." }
-                    .buttonStyle(.borderedProminent).disabled(key.trimmingCharacters(in: .whitespaces).isEmpty)
-                Button(testing ? "Testing…" : "Test") {
-                    testing = true; result = ""
-                    Task {
-                        do {
-                            let r = try await Gemini.ask(store, parts: [.object(["text": "Reply with the single word: ready"])])
-                            result = "Gemini answered (\(r.model.replacingOccurrences(of: "gemini-", with: ""))): \(Gemini.text(r.out).trimmingCharacters(in: .whitespacesAndNewlines))"
-                        } catch { result = error.localizedDescription }
-                        testing = false
-                    }
+                Button("Save") {
+                    do { try AI.saveKey(store, key); key = ""; result = "Saved. Tap Test to check it." } catch { result = error.localizedDescription }
                 }
-                .buttonStyle(.bordered).disabled(!have || testing)
+                .buttonStyle(.borderedProminent).disabled(key.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button(testing ? "Testing…" : "Test") { test() }.buttonStyle(.bordered).disabled(!(gem || cla) || testing)
+            }
+            if gem && cla {
+                Picker("Assistant uses", selection: Binding(get: { p }, set: { store.setSetting("provider", .string($0)) })) {
+                    Text("Gemini · free").tag("gemini"); Text("Claude · paid").tag("anthropic")
+                }.pickerStyle(.segmented)
+            }
+            if cla {
+                Picker("Claude model", selection: Binding(get: { store.setting("model")?.string ?? "claude-opus-5-5" }, set: { store.setSetting("model", .string($0)) })) {
+                    ForEach(AI.models, id: \.id) { Text($0.label).tag($0.id) }
+                }
+                Toggle("Web search (Claude)", isOn: Binding(get: { store.setting("webSearch")?.bool ?? true }, set: { store.setSetting("webSearch", .bool($0)) }))
             }
             if !result.isEmpty { Text(result).font(.callout).foregroundStyle(Theme.gold) }
+            Divider()
+            Text("CLAUDE ON YOUR MAC").font(.caption.weight(.semibold)).tracking(1.2).foregroundStyle(Theme.dim)
+            #if os(macOS)
+            Text("When the bridge runs on this Mac, the assistant uses Claude under your subscription and falls back to the key above. Set it up once in Terminal:")
+                .font(.callout).foregroundStyle(Theme.muted)
+            Text(AI.bridgeCommand).font(.caption.monospaced()).textSelection(.enabled).padding(8).background(Theme.plate2, in: RoundedRectangle(cornerRadius: 8))
+            Button("Copy the command") { Clipboard.copy(AI.bridgeCommand) }.buttonStyle(.bordered)
+            #else
+            Text("Paste the connection code the bridge prints on your Mac. When the Mac answers, the assistant uses Claude under your subscription; otherwise the key above.")
+                .font(.callout).foregroundStyle(Theme.muted)
+            TextField("yaver1.…", text: $code).textFieldStyle(.roundedBorder)
+            Button("Paste and connect") {
+                let c = code.isEmpty ? Clipboard.read() : code
+                do { try AI.useCode(store, c); code = ""; macTest() } catch { macResult = error.localizedDescription }
+            }.buttonStyle(.bordered)
+            #endif
+            Picker("Mac model", selection: Binding(get: { store.setting("macModel")?.string ?? "sonnet" }, set: { store.setSetting("macModel", .string($0)) })) {
+                Text("Sonnet").tag("sonnet"); Text("Opus").tag("opus"); Text("Haiku").tag("haiku")
+            }
+            Button("Test the Mac") { macTest() }.buttonStyle(.bordered)
+            if !macResult.isEmpty { Text(macResult).font(.callout).foregroundStyle(Theme.gold) }
         }
+    }
+
+    private func test() {
+        testing = true; result = ""
+        Task {
+            do {
+                if AI.provider(store) == "gemini" {
+                    let r = try await Gemini.ask(store, parts: [.object(["text": "Reply with the single word: ready"])])
+                    result = "Key works. Gemini answered (\(r.model.replacingOccurrences(of: "gemini-", with: "")))."
+                } else {
+                    try await AI.testClaude(store)
+                    result = "Key works. Yaver is using Claude."
+                }
+            } catch { result = error.localizedDescription }
+            testing = false
+        }
+    }
+    private func macTest() {
+        macResult = "Checking…"
+        Task { do { macResult = try await AI.testMac(store) } catch { macResult = error.localizedDescription } }
     }
 }

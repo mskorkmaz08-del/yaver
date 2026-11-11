@@ -339,7 +339,13 @@ enum Tools {
                             "deadlines": .array(C.deadlines(s, within: 30).map { .object(["lessonId": .string($0.lesson.id), "teachBy": .string($0.teachBy)]) })])
         case "record_test_result":
             let w = Int(i["week"]?.double ?? Double(C.weekOf(s)))
-            let scores = (i["scores"]?.array ?? []).map { (track: $0["track"]?.string ?? "", right: Int($0["right"]?.double ?? 0), total: Int($0["total"]?.double ?? 0)) }
+            var scores: [(track: String, right: Int, total: Int)] = []
+            for x in i["scores"]?.array ?? [] {
+                let track: String = x["track"]?.string ?? ""
+                let right: Int = Int(x["right"]?.double ?? 0)
+                let total: Int = Int(x["total"]?.double ?? 0)
+                scores.append((track: track, right: right, total: total))
+            }
             let weak = C.recordTest(s, week: w, scores: scores)
             return .object(["saved": true, "weakTracks": strs(weak)])
         case "save_week_lessons":

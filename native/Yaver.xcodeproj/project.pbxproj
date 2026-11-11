@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C597C1581AC8CE89415EA75C /* Assistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7692BF7A697809659F5B932A /* Assistant.swift */; };
 		13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */; };
 		93988ECD1D36AC4245F6D45F /* Body.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAAFD8DEB413CF014F1158E /* Body.swift */; };
 		0EAA129059691A5CF1E83408 /* Course.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE87ABE23957568D0252F54 /* Course.swift */; };
@@ -23,6 +24,7 @@
 		FD730692C2EC84988B153CE7 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF1628F5F9529314557C542 /* Tools.swift */; };
 		F8179356C6B5056C5DE424C7 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792509D8A47C594DF58868E8 /* TrainingData.swift */; };
 		7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6AC813D0408758AD19E46D /* Updater.swift */; };
+		4240701B124A78CFF50530F8 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A695CCE5297581FB41A4C7 /* AssistantView.swift */; };
 		39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189C0F9BA8D0D94F679AD767 /* BodyView.swift */; };
 		89E285E9744758950890D588 /* CeteleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33782A6F548AC0635A1C01DD /* CeteleView.swift */; };
 		E1042BE156F4D1415D6DF410 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383E53F788E950A086E8F48F /* CourseView.swift */; };
@@ -41,6 +43,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7692BF7A697809659F5B932A /* Assistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assistant.swift; sourceTree = "<group>"; };
 		1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDefs.swift; sourceTree = "<group>"; };
 		BFAAFD8DEB413CF014F1158E /* Body.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Body.swift; sourceTree = "<group>"; };
 		BCE87ABE23957568D0252F54 /* Course.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Course.swift; sourceTree = "<group>"; };
@@ -57,6 +60,7 @@
 		FDF1628F5F9529314557C542 /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
 		792509D8A47C594DF58868E8 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
 		4A6AC813D0408758AD19E46D /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
+		02A695CCE5297581FB41A4C7 /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
 		189C0F9BA8D0D94F679AD767 /* BodyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyView.swift; sourceTree = "<group>"; };
 		33782A6F548AC0635A1C01DD /* CeteleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CeteleView.swift; sourceTree = "<group>"; };
 		383E53F788E950A086E8F48F /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
@@ -116,6 +120,7 @@
 		647E7164A06FF71518326D10 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				7692BF7A697809659F5B932A /* Assistant.swift */,
 				1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */,
 				BFAAFD8DEB413CF014F1158E /* Body.swift */,
 				BCE87ABE23957568D0252F54 /* Course.swift */,
@@ -139,6 +144,7 @@
 		785A62F6730D915597ED2079 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				02A695CCE5297581FB41A4C7 /* AssistantView.swift */,
 				189C0F9BA8D0D94F679AD767 /* BodyView.swift */,
 				33782A6F548AC0635A1C01DD /* CeteleView.swift */,
 				383E53F788E950A086E8F48F /* CourseView.swift */,
@@ -226,6 +232,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C597C1581AC8CE89415EA75C /* Assistant.swift in Sources */,
 				13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */,
 				93988ECD1D36AC4245F6D45F /* Body.swift in Sources */,
 				0EAA129059691A5CF1E83408 /* Course.swift in Sources */,
@@ -242,6 +249,7 @@
 				FD730692C2EC84988B153CE7 /* Tools.swift in Sources */,
 				F8179356C6B5056C5DE424C7 /* TrainingData.swift in Sources */,
 				7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */,
+				4240701B124A78CFF50530F8 /* AssistantView.swift in Sources */,
 				39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */,
 				89E285E9744758950890D588 /* CeteleView.swift in Sources */,
 				E1042BE156F4D1415D6DF410 /* CourseView.swift in Sources */,
