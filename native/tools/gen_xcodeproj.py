@@ -60,6 +60,8 @@ def main():
         w(f"\t\t{oid('build', p)} /* {os.path.basename(p)} in Sources */ = {{isa = PBXBuildFile; fileRef = {oid('ref', p)} /* {os.path.basename(p)} */; }};\n")
     if assets:
         w(f"\t\t{oid('build', assets)} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {oid('ref', assets)} /* Assets.xcassets */; }};\n")
+    # The course content (data/course, shared with the web app) is bundled as a folder named "course".
+    w(f"\t\t{oid('build', 'course')} /* course in Resources */ = {{isa = PBXBuildFile; fileRef = {oid('ref', 'course')} /* course */; }};\n")
     w("/* End PBXBuildFile section */\n")
 
     w("\n/* Begin PBXFileReference section */\n")
@@ -68,6 +70,7 @@ def main():
         w(f"\t\t{oid('ref', p)} /* {n} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {q(n)}; sourceTree = \"<group>\"; }};\n")
     if assets:
         w(f"\t\t{oid('ref', assets)} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = \"<group>\"; }};\n")
+    w(f"\t\t{oid('ref', 'course')} /* course */ = {{isa = PBXFileReference; lastKnownFileType = folder; name = course; path = ../data/course; sourceTree = SOURCE_ROOT; }};\n")
     w(f"\t\t{product} /* Yaver.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yaver.app; sourceTree = BUILT_PRODUCTS_DIR; }};\n")
     w("/* End PBXFileReference section */\n")
 
@@ -78,7 +81,7 @@ def main():
 
     main_group, products_group = oid("group", "<main>"), oid("group", "<products>")
     w("\n/* Begin PBXGroup section */\n")
-    w(f"\t\t{main_group} = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{oid('group', 'Yaver')} /* Yaver */,\n\t\t\t\t{products_group} /* Products */,\n\t\t\t);\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n")
+    w(f"\t\t{main_group} = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{oid('group', 'Yaver')} /* Yaver */,\n\t\t\t\t{oid('ref', 'course')} /* course */,\n\t\t\t\t{products_group} /* Products */,\n\t\t\t);\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n")
     w(f"\t\t{products_group} /* Products */ = {{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = (\n\t\t\t\t{product} /* Yaver.app */,\n\t\t\t);\n\t\t\tname = Products;\n\t\t\tsourceTree = \"<group>\";\n\t\t}};\n")
     for rel in sorted(groups):
         gid = oid("group", "Yaver" if rel == "" else rel)
@@ -146,6 +149,7 @@ def main():
 
     w("\n/* Begin PBXResourcesBuildPhase section */\n")
     res = f"\t\t\t\t{oid('build', assets)} /* Assets.xcassets in Resources */,\n" if assets else ""
+    res += f"\t\t\t\t{oid('build', 'course')} /* course in Resources */,\n"
     w(f"\t\t{resources} /* Resources */ = {{\n\t\t\tisa = PBXResourcesBuildPhase;\n\t\t\tbuildActionMask = 2147483647;\n\t\t\tfiles = (\n{res}\t\t\t);\n\t\t\trunOnlyForDeploymentPostprocessing = 0;\n\t\t}};\n")
     w("/* End PBXResourcesBuildPhase section */\n")
 

@@ -2,7 +2,7 @@
 // (version.json, written by the build server), downloads Yaver-Mac.zip, swaps the app
 // in place and opens the new one. Your data lives in Application Support, so it stays.
 // The iPhone can't do this (Apple only allows installs through signing tools), but the
-// Lessons & AI tab is the live web app and updates by itself on both.
+// iPhone app is reinstalled with Sideloadly.
 import Foundation
 import Combine
 #if os(macOS)

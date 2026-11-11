@@ -26,8 +26,7 @@ Pick one:
 
 After that the Mac app updates itself: when a new build is out, an **Update Yaver**
 button appears at the bottom of the sidebar; one click downloads it, swaps the app and
-reopens it. Keep Yaver in Applications for this to work. The Lessons & AI tab is the
-live web app, so it is always current on both devices.
+reopens it. Keep Yaver in Applications for this to work.
 
 ## iPhone
 
@@ -56,7 +55,8 @@ Your data is not lost when the app expires: it is on the phone and in the synced
   kept), `Store.swift` (twin of `js/db.js`: stamps, tombstones, merge),
   `SyncCrypto.swift` (twin of `js/crypto.js`: PBKDF2 + AES-GCM + gzip, byte-compatible),
   `Sync.swift` (twin of `js/sync.js`: the gist protocol and sync code),
-  `Domain.swift` (Çetele, diet, money, study, teams, body rules).
+  `Domain.swift` (Çetele, diet, money, study, teams, body rules),
+  `Course.swift` (twin of `js/course.js`; reads the bundled `data/course` files).
 - `Yaver/Views/`: SwiftUI screens. Tabs on the iPhone, a sidebar on the Mac.
 - `Yaver.xcodeproj` is generated: after adding or renaming a Swift file run
   `python3 native/tools/gen_xcodeproj.py`.
@@ -65,6 +65,7 @@ Your data is not lost when the app expires: it is on the phone and in the synced
 - `.github/workflows/native.yml` builds everything on a Mac server on every push and
   publishes the Mac app and the iPhone .ipa from main.
 
+The course (lessons, review cards, weekly tests) is native, with all lesson files built in.
 Not in the native app yet (still in the web app, all synced): AI chat and voice,
-course lessons and review cards, food photo / typed estimates, the body muscle map
-and plan, the calendar, the map, Insights.
+food photo / typed estimates, the body muscle map and plan, the calendar, the map,
+Insights, lesson simulators. They are being rebuilt natively one batch at a time.

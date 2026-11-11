@@ -74,7 +74,7 @@ struct SettingsView: View {
                     Button("Check for updates") { Task { await updater.check() } }.buttonStyle(.bordered)
                 }
                 #else
-                Text("Lessons & AI update by themselves. The rest of the iPhone app updates when you install it again with Sideloadly.").font(.caption).foregroundStyle(Theme.dim)
+                Text("The iPhone app updates when you install it again with Sideloadly.").font(.caption).foregroundStyle(Theme.dim)
                 #endif
                 Text("Data file: \(store.fileURL.path)").font(.caption).foregroundStyle(Theme.dim).textSelection(.enabled)
             }

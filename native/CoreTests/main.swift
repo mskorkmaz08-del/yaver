@@ -66,6 +66,22 @@ if args.count >= 3 {
     check((try? fresh.importBackup(backup)) == 1 && fresh.get("kv", "syncToken") == nil, "imports a backup, skipping sync secrets")
 }
 
+// Course: content loads from data/course, completing a lesson stores progress and cards.
+let course = Course(directory: URL(fileURLWithPath: "data/course"))
+check(course.ready && course.lesson(store, "python-w01-1") != nil, "course content loads (week files)")
+check(course.allLessons(store).count > 100, "course has all bundled lessons")
+let cday = course.day(store, "2026-10-20")
+check(cday.week == 1 && cday.slots.contains { $0.lesson != nil }, "a week 1 Tuesday has lesson slots")
+let done = course.completeLesson(store, lessonId: "python-w01-1", minutes: 50, score: 1)
+check(done.mastered && course.status(store, "python-w01-1") == "done" && store.all("cards").contains { $0.str("lessonId") == "python-w01-1" }, "completing a lesson marks it done and adds cards")
+let flagged = course.completeLesson(store, lessonId: "python-w01-2", minutes: 40, score: 0.5)
+check(!flagged.mastered && course.status(store, "python-w01-2") == "flagged", "under 80% flags the lesson")
+if let c = store.all("cards").first {
+    course.gradeCard(store, c.id, "good")
+    check(store.get("cards", c.id)!.str("due") > Day.today, "grading a card moves its due date")
+}
+check(course.testQuestions(store, week: course.weekOf(store, Day.today)).count >= 0 && course.mixedLesson(store, "2026-10-25").str("id") == "mixed-2026-10-25", "mixed practice and weekly test build")
+
 store.flush()
 check(Store(directory: tmp).count("tombstones") >= 1, "data survives a restart")
 try? FileManager.default.removeItem(at: tmp)

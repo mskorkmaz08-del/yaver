@@ -1,5 +1,5 @@
 // Study: minutes and streak, the ML plan's current phase with its milestones,
-// and course progress. Lessons themselves stay in the web app for now.
+// and course progress (the course itself is CourseView).
 import SwiftUI
 
 struct StudyView: View {
@@ -53,7 +53,7 @@ struct StudyView: View {
                     Stat(value: "\(course.flagged)", label: "to redo", color: course.flagged > 0 ? Theme.warn : Theme.text)
                     Stat(value: "\(course.cardsDue)", label: "cards due")
                 }
-                Text("Lessons, review cards and tests are in the Lessons & AI tab; your progress syncs here.").font(.caption).foregroundStyle(Theme.dim)
+                NavigationLink { CourseView() } label: { Label("Open the course", systemImage: "graduationcap") }.buttonStyle(.bordered)
             }
 
             let subjects = store.all("subjects").map { s in (s, store.all("sessions").filter { $0.str("subjectId") == s.id }.reduce(0) { $0 + $1.num("minutes") }) }
