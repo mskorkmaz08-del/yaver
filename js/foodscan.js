@@ -193,6 +193,19 @@ export function totals(items) {
 
 // What gets stored on the meal row: whole-number macros as before, plus the extras.
 // Fat quality is kept with the micros, so the day sums and the diary pick it up.
+// Didn't finish it: keep only the part eaten (f = 0.5 for half). Every amount scales,
+// and portion records how much of the original plate was eaten.
+export function scaleMeal(m, f) {
+  const k = Math.max(0, Math.min(1, Number(f) || 0));
+  const out = { ...m };
+  for (const key of ['calories', 'protein', 'carbs', 'fat', 'sodium']) if (m[key] != null) out[key] = Math.round((Number(m[key]) || 0) * k);
+  for (const key of ['fiber', 'sugar']) if (m[key] != null) out[key] = round(m[key] * k);
+  if (m.micros) out.micros = Object.fromEntries(Object.entries(m.micros).map(([key, v]) => [key, round(v * k)]));
+  if (m.items) out.items = m.items.map(i => ({ ...i, grams: Math.round((i.grams || 0) * k), calories: Math.round((i.calories || 0) * k), protein: round((i.protein || 0) * k) }));
+  out.portion = round((m.portion ?? 1) * k, 2);
+  return out;
+}
+
 export function mealRow({ dish, items, meal, date, confidence, source = 'photo', sources = [] }) {
   const t = totals(items);
   const micros = Object.fromEntries([...FATS, ...MICROS].map(([k]) => [k, round(t[k], 1)]));
