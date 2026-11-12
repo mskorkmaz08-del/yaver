@@ -148,6 +148,30 @@ enum Food {
     private static func r1(_ x: Double) -> Double { (x * 10).rounded() / 10 }
 
     /// The stored meal row: whole-number macros, plus fiber, sugar, sodium, micros and items.
+    /// Didn't finish it: keep only the part eaten (0.5 for half). Every amount scales,
+    /// and portion records how much of the original plate was eaten (twin of scaleMeal in foodscan.js).
+    static func scaleMeal(_ m: Row, _ f: Double) -> Row {
+        let k = max(0, min(1, f))
+        var out = m
+        for key in ["calories", "protein", "carbs", "fat", "sodium"] where m[key] != nil { out[key] = .number((m.num(key) * k).rounded()) }
+        for key in ["fiber", "sugar"] where m[key] != nil { out[key] = .number(r1(m.num(key) * k)) }
+        if let mic = m["micros"]?.object { out["micros"] = .object(mic.mapValues { .number(r1(($0.double ?? 0) * k)) }) }
+        if let items = m["items"]?.array {
+            out["items"] = .array(items.map { i in
+                guard var o = i.object else { return i }
+                o["grams"] = .number(((i["grams"]?.double ?? 0) * k).rounded())
+                o["calories"] = .number(((i["calories"]?.double ?? 0) * k).rounded())
+                o["protein"] = .number(r1((i["protein"]?.double ?? 0) * k))
+                return .object(o)
+            })
+        }
+        out["portion"] = .number(((m["portion"]?.double ?? 1) * k * 100).rounded() / 100)
+        return out
+    }
+
+    /// What part of a logged meal was eaten, for "I didn't finish it".
+    static let eaten: [(String, Double)] = [("All of it", 1), ("Three quarters", 0.75), ("Two thirds", 2.0 / 3), ("Half", 0.5), ("A third", 1.0 / 3), ("A quarter", 0.25), ("A few bites", 0.1)]
+
     static func mealRow(dish: String, items: [Item], meal: String, date: String, time: String, confidence: String, source: String, sources: [[String: String]]) -> Row {
         let t = totals(items)
         var micro: [String: JSON] = [:]

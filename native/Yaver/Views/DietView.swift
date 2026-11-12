@@ -14,6 +14,7 @@ struct DietView: View {
     @State private var span = 7
     @State private var scan: ScanStart?
     @State private var photo: PhotosPickerItem?
+    @State private var shot: Data?
     @State private var camera = false
     @State private var nutrient: NutrientPick?
     @State private var tipsBusy = false
@@ -83,16 +84,28 @@ struct DietView: View {
         .sheet(item: $scan) { s in NavigationStack { FoodScanSheet(image: s.image, day: day) }.sheetSize() }
         .sheet(item: $nutrient) { n in NavigationStack { NutrientSheet(key: n.key, tab: n.tab) }.sheetSize() }
         #if os(iOS)
-        .fullScreenCover(isPresented: $camera) { CameraPicker { data in camera = false; if let data { scan = ScanStart(image: shrinkJPEG(data)) } }.ignoresSafeArea() }
+        .fullScreenCover(isPresented: $camera, onDismiss: openShot) { CameraPicker { data in shot = data.flatMap { shrinkJPEG($0) }; camera = false }.ignoresSafeArea() }
         #endif
         .onChange(of: photo) { item in
             guard let item else { return }
             Task {
-                if let data = try? await item.loadTransferable(type: Data.self) { scan = ScanStart(image: shrinkJPEG(data)) }
+                let data = try? await item.loadTransferable(type: Data.self)
                 photo = nil
+                guard let data else { return }
+                // Wait for the photo library to finish closing: a sheet asked for while
+                // it closes is dropped, which made the first photo do nothing.
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                scan = ScanStart(image: shrinkJPEG(data))
             }
         }
         .fileExporter(isPresented: $exportingCSV, document: csvDoc, contentType: .commaSeparatedText, defaultFilename: "yaver-food-diary-\(Day.today).csv") { _ in }
+    }
+
+    /// The camera has fully closed: now the check sheet can open.
+    private func openShot() {
+        guard let d = shot else { return }
+        shot = nil
+        scan = ScanStart(image: d)
     }
 
     private func kind(_ m: Row) -> String {
@@ -509,6 +522,7 @@ struct MealForm: View {
     @State private var protein = ""
     @State private var carbs = ""
     @State private var fat = ""
+    @State private var ate = 1.0
 
     var body: some View {
         Form {
@@ -519,7 +533,12 @@ struct MealForm: View {
             TextField("Protein (g)", text: $protein).numberKeyboard()
             TextField("Carbs (g)", text: $carbs).numberKeyboard()
             TextField("Fat (g)", text: $fat).numberKeyboard()
-            if meal != nil {
+            if let m = meal {
+                SwiftUI.Section {
+                    Picker("How much did you eat?", selection: $ate) { ForEach(Food.eaten.indices, id: \.self) { i in Text(Food.eaten[i].0).tag(Food.eaten[i].1) } }
+                } header: { Text("Didn't finish it?") } footer: {
+                    Text(ate < 1 ? "Saving keeps \(Int((ate * 100).rounded()))% of every amount: \(Int((number(kcal) ?? m.num("calories")) * ate)) kcal." : "Pick the part you ate and every amount scales down.")
+                }
                 Button("Delete meal", role: .destructive) {
                     if let m = meal { store.remove("meals", m.id) }
                     dismiss()
@@ -544,6 +563,11 @@ struct MealForm: View {
         if t.range(of: #"^([01]\d|2[0-3]):[0-5]\d$"#, options: .regularExpression) != nil { row["time"] = .string(t) }
         let n = { (s: String) in number(s) ?? 0 }
         row["calories"] = .number(n(kcal)); row["protein"] = .number(n(protein)); row["carbs"] = .number(n(carbs)); row["fat"] = .number(n(fat))
+        if let before = meal, ate < 1 {
+            store.put("meals", Food.scaleMeal(row, ate))
+            Nav.shared.show("Kept \(Int((ate * 100).rounded()))% of \(row.str("name"))") { store.put("meals", before) }
+            return
+        }
         store.put("meals", row)
     }
 }
