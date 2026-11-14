@@ -48,8 +48,72 @@ function rebuildIndex() {
   indexedAt = db.all('courseLessons').length;
 }
 function idx() { if (indexedAt !== db.all('courseLessons').length) rebuildIndex(); }
-export const lesson = id => { idx(); return byId.get(id) || virtualLesson(id); };
-export const laneLessons = lane => { idx(); return byLane.get(lane) || []; };
+export const lesson = id => { idx(); return shaped(byId.get(id)) || virtualLesson(id); };
+export const laneLessons = lane => { idx(); return (byLane.get(lane) || []).map(shaped); };
+/** The lesson exactly as written, whatever the lesson style. */
+export const rawLesson = id => { idx(); return byId.get(id) || null; };
+
+// ---------- Learn by doing (v64) ----------
+// The default lesson style. Research on learners who already know the basics (the
+// expertise reversal effect, retrieval practice, deliberate practice) says explanation
+// should be short and the time should go to solving: so the lecture steps of a lesson
+// (learn, read, summary) fold into one "In short" step made of the lesson's key facts
+// and one example, the doing steps stay as they are, and the full text moves to an
+// optional last step for when you are stuck. Nothing is deleted; "full" shows the
+// lesson as written.
+const LECTURE = new Set(['learn', 'read', 'summary']);
+const doCache = new WeakMap();
+export const lessonMode = () => (settings().mode === 'full' ? 'full' : 'do');
+const shaped = l => (l && lessonMode() === 'do' ? doLesson(l) : l);
+export function doLesson(l) {
+  if (!l || l.virtual || l.kind === 'diagnostic' || l.week === 0) return l;
+  if (doCache.has(l)) return doCache.get(l);
+  const steps = l.steps || [];
+  const lecture = steps.filter(s => LECTURE.has(s.kind) && s.body);
+  const facts = (l.cards || []).slice(0, 7).map(c => `- **${c.front}** ${c.back}`);
+  const points = facts.length ? facts : (l.objectives || []).map(o => `- ${o}`);
+  let out = l;
+  if (lecture.length && points.length) {
+    let body = `Know these, then do. The full explanation is the last step: open it only if you get stuck.\n\n${points.join('\n')}`;
+    if (!steps.some(s => s.kind === 'example')) {
+      const code = lecture.map(s => s.body.match(/```[\s\S]*?```/)?.[0]).find(Boolean);
+      if (code && code.split('\n').length <= 32) body += `\n\n**One example**\n\n${code}`;
+    }
+    const brief = { kind: 'learn', minutes: 5, title: 'In short', body, brief: true };
+    const reference = { kind: 'read', minutes: 0, title: 'Full explanation (only if stuck)', optional: true, body: lecture.map(s => `**${s.title}**\n\n${s.body}`).join('\n\n') };
+    const first = steps.findIndex(s => LECTURE.has(s.kind) && s.body);
+    const kept = steps.flatMap((s, i) => (i === first ? [brief] : LECTURE.has(s.kind) && s.body ? [] : [s]));
+    // A reading-only lesson still ends with doing: answer its key facts from memory.
+    const DOING = new Set(['practice', 'build', 'exit', 'simulate', 'measure', 'test']);
+    const recall = !kept.some(s => DOING.has(s.kind)) && (l.cards || []).length >= 2
+      ? [{ kind: 'exit', minutes: 5, title: 'Answer from memory', recall: true, questions: l.cards.slice(0, 5).map(c => ({ q: c.front, a: c.back })) }] : [];
+    const all = [...kept, ...recall, reference];
+    out = { ...l, steps: all, minutes: all.reduce((a, s) => a + (s.minutes || 0), 0), fullMinutes: l.minutes, style: 'do' };
+  }
+  doCache.set(l, out);
+  return out;
+}
+
+// "I know this": the lesson counts as done without sitting through it. Its review
+// cards are still scheduled, so anything you don't actually know shows up in review.
+export async function skipLesson(id) {
+  const l = lesson(id);
+  if (!l || l.virtual) throw new Error('No lesson with that id');
+  const p = progress(id) || {};
+  const row = { ...p, id, lessonId: id, track: l.track, lane: l.lane, week: l.week, status: 'done', skipped: true, mastered: true, score: p.score ?? null,
+    startedAt: p.startedAt || new Date().toISOString(), completedAt: new Date().toISOString(), minutes: p.minutes || 0 };
+  await db.put('courseProgress', row);
+  await addCards(l);
+  if (db.setting('lessonTimer', null)?.lessonId === id) await db.setSetting('lessonTimer', null);
+  return { before: Object.keys(p).length ? p : null, next: nextInLane(l.lane) };
+}
+/** Lessons on things a working programmer already knows (course.json "basics"), not yet done. */
+export const basicsLeft = () => (META?.basics || []).map(id => rawLesson(id)).filter(l => l && !completed(l.id));
+export async function skipBasics() {
+  const list = basicsLeft();
+  for (const l of list) await skipLesson(l.id);
+  return list.length;
+}
 export const track = id => META.tracks.find(t => t.id === id) || { id, name: id, color: 'var(--dim)' };
 export const trackName = id => track(id).name;
 export const weekMeta = n => META.weeks.find(w => w.week === n);

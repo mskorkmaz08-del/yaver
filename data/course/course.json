@@ -3567,5 +3567,16 @@
  "rosVersion": {
   "default": "Lyrical Luth",
   "fallback": "Jazzy Jalisco"
- }
+ },
+ "basics": [
+  "python-w01-1",
+  "python-w01-2",
+  "python-w01-3",
+  "python-w02-1",
+  "python-w02-3",
+  "python-w03-2",
+  "python-w03-3",
+  "tools-w01-1",
+  "tools-w01-2"
+ ]
 }

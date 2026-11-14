@@ -1,0 +1,523 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F967B8ACD8198CD69F7BEF64 /* AnatomyData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E19944878305F6A8BD81091E /* AnatomyData.swift */; };
+		489B89CFF951B5C60FEFF29C /* AppleCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BBF45EB210C0A8B56FFE73 /* AppleCalendar.swift */; };
+		C597C1581AC8CE89415EA75C /* Assistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7692BF7A697809659F5B932A /* Assistant.swift */; };
+		13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */; };
+		93988ECD1D36AC4245F6D45F /* Body.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFAAFD8DEB413CF014F1158E /* Body.swift */; };
+		0EAA129059691A5CF1E83408 /* Course.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCE87ABE23957568D0252F54 /* Course.swift */; };
+		884CDFF6190E5899CE9D541F /* Domain.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAC57A141719DDCC411FD3D /* Domain.swift */; };
+		029D6802AEDF944ABD4A9F67 /* Food.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF7EFE946A1A6F9F772C81 /* Food.swift */; };
+		D5D578183B501E8F768AE399 /* Gemini.swift in Sources */ = {isa = PBXBuildFile; fileRef = 949F3FA75B1FBD62B7DD511A /* Gemini.swift */; };
+		4CDF8C02F897935C03A9D00F /* Insights.swift in Sources */ = {isa = PBXBuildFile; fileRef = C960952C61FB35427E3149DF /* Insights.swift */; };
+		3162C7EA7D24850184EB1B1C /* JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC230045C2ECE297E1134B1A /* JSON.swift */; };
+		5C192840ECB73CEA8D7A99FA /* NutrientInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3D925821986D057863CCEBB /* NutrientInfo.swift */; };
+		71844FE83145718BA2406685 /* Places.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E7988773AE22BEFC18A0E6 /* Places.swift */; };
+		E4995200E3459D9F6E2FC703 /* Reminders.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3E52323D61C962BD68B6429 /* Reminders.swift */; };
+		B8466F199703F339A2753049 /* Skills.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F9FCBCE1C32E8DB243A926 /* Skills.swift */; };
+		DEED4083D65D31963088AEF8 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCC5636F084DAB4C36DCFD2 /* Store.swift */; };
+		172701E2072693599725EA3D /* Sync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51C56BBD949E8F304C7FF8D /* Sync.swift */; };
+		EA7E4E569C84DA0BD799AEA0 /* SyncCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA31A850779D2C61C6F447D /* SyncCrypto.swift */; };
+		FD730692C2EC84988B153CE7 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF1628F5F9529314557C542 /* Tools.swift */; };
+		F8179356C6B5056C5DE424C7 /* TrainingData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 792509D8A47C594DF58868E8 /* TrainingData.swift */; };
+		7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A6AC813D0408758AD19E46D /* Updater.swift */; };
+		4240701B124A78CFF50530F8 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A695CCE5297581FB41A4C7 /* AssistantView.swift */; };
+		39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189C0F9BA8D0D94F679AD767 /* BodyView.swift */; };
+		89E285E9744758950890D588 /* CeteleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33782A6F548AC0635A1C01DD /* CeteleView.swift */; };
+		46EC1F89084438E903328D6E /* CommandBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFB4CB52595F6E51C622B5D5 /* CommandBar.swift */; };
+		E1042BE156F4D1415D6DF410 /* CourseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 383E53F788E950A086E8F48F /* CourseView.swift */; };
+		680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FE564553A1108BD68B341D /* DietView.swift */; };
+		C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56835FADD746563E249C8753 /* HomeView.swift */; };
+		FD7FC251EDE2624DB19B5BFC /* LessonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAA94763149CFB488C45DC9C /* LessonView.swift */; };
+		10435769A16B4CBB9ECE9534 /* LiveVoice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9857ACE6298A7CBADE0B80CC /* LiveVoice.swift */; };
+		FC63892720C3251777EEE065 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC2BE36984BDF96B037F37AE /* MapView.swift */; };
+		2C9408DC5B7A076400B4074C /* Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 658E7797F5027A8BDF0E86D8 /* Markdown.swift */; };
+		F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03937AB139431E05973AA9AC /* MeetView.swift */; };
+		BB9EEDC3D9253C3E8C079E6A /* MoneyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4E2FEECBF28AAFE14871629 /* MoneyView.swift */; };
+		863CF718D69D21C5AEE3B32F /* MuscleMap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C72806109784EC7AA81F190 /* MuscleMap.swift */; };
+		899CD3AF9DE5374C57F7382C /* Nav.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BECEEE355DA086A1B5B1BF9 /* Nav.swift */; };
+		4E02172161AFD767C10AE2F6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */; };
+		95C52078A01E4AD73692EC43 /* SkillsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 721488ECC1B9B22C069A4914 /* SkillsView.swift */; };
+		6AC8400C91C2C07B981B8407 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98EEE94709B10165AF4198BC /* StudyView.swift */; };
+		FA594A7A246EE88E7D6F7A2E /* TeamsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A927B7AF539CA43361C17B4 /* TeamsView.swift */; };
+		99736B22A0B4F1BAA266570C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD1DE2BCE8A31745B752BA5 /* Theme.swift */; };
+		33C7AC9104D298EC1980DA31 /* Voice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35BC8800968D2B7D4D11016 /* Voice.swift */; };
+		25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4095B8D96AF22C0401BF934D /* YaverApp.swift */; };
+		3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */; };
+		82381DAB592F36E24C4A3660 /* CircuitSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */; };
+		AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77411BB78A8B5995B4E292F7 /* DataSim.swift */; };
+		C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DA942E930ECC00CDCED190 /* GraphSim.swift */; };
+		140A6071CF64819ED2559516 /* MemorySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04E68DF4863F69746EF6E3D /* MemorySim.swift */; };
+		B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */; };
+		263A22A07C5835C9C11850E0 /* PyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4734B1FE75A3E2F9246DE5EB /* PyEngine.swift */; };
+		711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */; };
+		6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 524444987769A68465B9C6B5 /* SimKit.swift */; };
+		08C946464297D3DF1CD8E3DA /* SortSearchSims.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508519008A1A7F3FAE90B170 /* SortSearchSims.swift */; };
+		8633C50ED4FB0DE499F82A25 /* StructuresSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */; };
+		978232AAF1ECA905ECE50DAD /* TraceSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBC220D44FD562608EBF0F8 /* TraceSim.swift */; };
+		CE48D687F16C404D9833E7AA /* VectorsSim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854FA523B07D67B5F048513F /* VectorsSim.swift */; };
+		B0237D3616875AAE4DBEE4A3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */; };
+		5CB165E78DA2D2B8C230D113 /* course in Resources */ = {isa = PBXBuildFile; fileRef = BABED1E9680B950F4C07DC5D /* course */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		E19944878305F6A8BD81091E /* AnatomyData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnatomyData.swift; sourceTree = "<group>"; };
+		59BBF45EB210C0A8B56FFE73 /* AppleCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleCalendar.swift; sourceTree = "<group>"; };
+		7692BF7A697809659F5B932A /* Assistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assistant.swift; sourceTree = "<group>"; };
+		1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantDefs.swift; sourceTree = "<group>"; };
+		BFAAFD8DEB413CF014F1158E /* Body.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Body.swift; sourceTree = "<group>"; };
+		BCE87ABE23957568D0252F54 /* Course.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Course.swift; sourceTree = "<group>"; };
+		FBAC57A141719DDCC411FD3D /* Domain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain.swift; sourceTree = "<group>"; };
+		83FF7EFE946A1A6F9F772C81 /* Food.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Food.swift; sourceTree = "<group>"; };
+		949F3FA75B1FBD62B7DD511A /* Gemini.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gemini.swift; sourceTree = "<group>"; };
+		C960952C61FB35427E3149DF /* Insights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Insights.swift; sourceTree = "<group>"; };
+		DC230045C2ECE297E1134B1A /* JSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSON.swift; sourceTree = "<group>"; };
+		F3D925821986D057863CCEBB /* NutrientInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutrientInfo.swift; sourceTree = "<group>"; };
+		22E7988773AE22BEFC18A0E6 /* Places.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Places.swift; sourceTree = "<group>"; };
+		E3E52323D61C962BD68B6429 /* Reminders.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reminders.swift; sourceTree = "<group>"; };
+		42F9FCBCE1C32E8DB243A926 /* Skills.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Skills.swift; sourceTree = "<group>"; };
+		5BCC5636F084DAB4C36DCFD2 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		B51C56BBD949E8F304C7FF8D /* Sync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sync.swift; sourceTree = "<group>"; };
+		AAA31A850779D2C61C6F447D /* SyncCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncCrypto.swift; sourceTree = "<group>"; };
+		FDF1628F5F9529314557C542 /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
+		792509D8A47C594DF58868E8 /* TrainingData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingData.swift; sourceTree = "<group>"; };
+		4A6AC813D0408758AD19E46D /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
+		02A695CCE5297581FB41A4C7 /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
+		189C0F9BA8D0D94F679AD767 /* BodyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyView.swift; sourceTree = "<group>"; };
+		33782A6F548AC0635A1C01DD /* CeteleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CeteleView.swift; sourceTree = "<group>"; };
+		FFB4CB52595F6E51C622B5D5 /* CommandBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandBar.swift; sourceTree = "<group>"; };
+		383E53F788E950A086E8F48F /* CourseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseView.swift; sourceTree = "<group>"; };
+		24FE564553A1108BD68B341D /* DietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DietView.swift; sourceTree = "<group>"; };
+		56835FADD746563E249C8753 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CAA94763149CFB488C45DC9C /* LessonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonView.swift; sourceTree = "<group>"; };
+		9857ACE6298A7CBADE0B80CC /* LiveVoice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoice.swift; sourceTree = "<group>"; };
+		AC2BE36984BDF96B037F37AE /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		658E7797F5027A8BDF0E86D8 /* Markdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Markdown.swift; sourceTree = "<group>"; };
+		03937AB139431E05973AA9AC /* MeetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetView.swift; sourceTree = "<group>"; };
+		B4E2FEECBF28AAFE14871629 /* MoneyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyView.swift; sourceTree = "<group>"; };
+		3C72806109784EC7AA81F190 /* MuscleMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuscleMap.swift; sourceTree = "<group>"; };
+		8BECEEE355DA086A1B5B1BF9 /* Nav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nav.swift; sourceTree = "<group>"; };
+		C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		721488ECC1B9B22C069A4914 /* SkillsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillsView.swift; sourceTree = "<group>"; };
+		98EEE94709B10165AF4198BC /* StudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyView.swift; sourceTree = "<group>"; };
+		5A927B7AF539CA43361C17B4 /* TeamsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamsView.swift; sourceTree = "<group>"; };
+		5AD1DE2BCE8A31745B752BA5 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		D35BC8800968D2B7D4D11016 /* Voice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Voice.swift; sourceTree = "<group>"; };
+		4095B8D96AF22C0401BF934D /* YaverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YaverApp.swift; sourceTree = "<group>"; };
+		BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculusSim.swift; sourceTree = "<group>"; };
+		CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircuitSim.swift; sourceTree = "<group>"; };
+		77411BB78A8B5995B4E292F7 /* DataSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSim.swift; sourceTree = "<group>"; };
+		E1DA942E930ECC00CDCED190 /* GraphSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphSim.swift; sourceTree = "<group>"; };
+		C04E68DF4863F69746EF6E3D /* MemorySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySim.swift; sourceTree = "<group>"; };
+		C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProbabilitySim.swift; sourceTree = "<group>"; };
+		4734B1FE75A3E2F9246DE5EB /* PyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PyEngine.swift; sourceTree = "<group>"; };
+		9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellGitSims.swift; sourceTree = "<group>"; };
+		524444987769A68465B9C6B5 /* SimKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimKit.swift; sourceTree = "<group>"; };
+		508519008A1A7F3FAE90B170 /* SortSearchSims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortSearchSims.swift; sourceTree = "<group>"; };
+		8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuresSim.swift; sourceTree = "<group>"; };
+		EFBC220D44FD562608EBF0F8 /* TraceSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TraceSim.swift; sourceTree = "<group>"; };
+		854FA523B07D67B5F048513F /* VectorsSim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VectorsSim.swift; sourceTree = "<group>"; };
+		D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BABED1E9680B950F4C07DC5D /* course */ = {isa = PBXFileReference; lastKnownFileType = folder; name = course; path = ../data/course; sourceTree = SOURCE_ROOT; };
+		F5BF48AA40CAD7891EB709FC /* Yaver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yaver.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8A2934BF8E67675297A3835F = {
+			isa = PBXGroup;
+			children = (
+				4EEE1803E573533848402378 /* Yaver */,
+				BABED1E9680B950F4C07DC5D /* course */,
+				71B6FF482B986799E916D014 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		71B6FF482B986799E916D014 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F5BF48AA40CAD7891EB709FC /* Yaver.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4EEE1803E573533848402378 /* Yaver */ = {
+			isa = PBXGroup;
+			children = (
+				647E7164A06FF71518326D10 /* Core */,
+				785A62F6730D915597ED2079 /* Views */,
+				D0D4344AB022A0DCEEAB2CF0 /* Assets.xcassets */,
+			);
+			path = Yaver;
+			sourceTree = "<group>";
+		};
+		647E7164A06FF71518326D10 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				E19944878305F6A8BD81091E /* AnatomyData.swift */,
+				59BBF45EB210C0A8B56FFE73 /* AppleCalendar.swift */,
+				7692BF7A697809659F5B932A /* Assistant.swift */,
+				1FCAFB58EE8D38CF94A1D2CD /* AssistantDefs.swift */,
+				BFAAFD8DEB413CF014F1158E /* Body.swift */,
+				BCE87ABE23957568D0252F54 /* Course.swift */,
+				FBAC57A141719DDCC411FD3D /* Domain.swift */,
+				83FF7EFE946A1A6F9F772C81 /* Food.swift */,
+				949F3FA75B1FBD62B7DD511A /* Gemini.swift */,
+				C960952C61FB35427E3149DF /* Insights.swift */,
+				DC230045C2ECE297E1134B1A /* JSON.swift */,
+				F3D925821986D057863CCEBB /* NutrientInfo.swift */,
+				22E7988773AE22BEFC18A0E6 /* Places.swift */,
+				E3E52323D61C962BD68B6429 /* Reminders.swift */,
+				42F9FCBCE1C32E8DB243A926 /* Skills.swift */,
+				5BCC5636F084DAB4C36DCFD2 /* Store.swift */,
+				B51C56BBD949E8F304C7FF8D /* Sync.swift */,
+				AAA31A850779D2C61C6F447D /* SyncCrypto.swift */,
+				FDF1628F5F9529314557C542 /* Tools.swift */,
+				792509D8A47C594DF58868E8 /* TrainingData.swift */,
+				4A6AC813D0408758AD19E46D /* Updater.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		785A62F6730D915597ED2079 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C01C16D25A746FFA5875BFE9 /* Sims */,
+				02A695CCE5297581FB41A4C7 /* AssistantView.swift */,
+				189C0F9BA8D0D94F679AD767 /* BodyView.swift */,
+				33782A6F548AC0635A1C01DD /* CeteleView.swift */,
+				FFB4CB52595F6E51C622B5D5 /* CommandBar.swift */,
+				383E53F788E950A086E8F48F /* CourseView.swift */,
+				24FE564553A1108BD68B341D /* DietView.swift */,
+				56835FADD746563E249C8753 /* HomeView.swift */,
+				CAA94763149CFB488C45DC9C /* LessonView.swift */,
+				9857ACE6298A7CBADE0B80CC /* LiveVoice.swift */,
+				AC2BE36984BDF96B037F37AE /* MapView.swift */,
+				658E7797F5027A8BDF0E86D8 /* Markdown.swift */,
+				03937AB139431E05973AA9AC /* MeetView.swift */,
+				B4E2FEECBF28AAFE14871629 /* MoneyView.swift */,
+				3C72806109784EC7AA81F190 /* MuscleMap.swift */,
+				8BECEEE355DA086A1B5B1BF9 /* Nav.swift */,
+				C7C62918E0E8C0DB1AC452D1 /* SettingsView.swift */,
+				721488ECC1B9B22C069A4914 /* SkillsView.swift */,
+				98EEE94709B10165AF4198BC /* StudyView.swift */,
+				5A927B7AF539CA43361C17B4 /* TeamsView.swift */,
+				5AD1DE2BCE8A31745B752BA5 /* Theme.swift */,
+				D35BC8800968D2B7D4D11016 /* Voice.swift */,
+				4095B8D96AF22C0401BF934D /* YaverApp.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C01C16D25A746FFA5875BFE9 /* Sims */ = {
+			isa = PBXGroup;
+			children = (
+				BA60A0F66D625FF2CBECB1E0 /* CalculusSim.swift */,
+				CE4FACC4959B9572D51D49D9 /* CircuitSim.swift */,
+				77411BB78A8B5995B4E292F7 /* DataSim.swift */,
+				E1DA942E930ECC00CDCED190 /* GraphSim.swift */,
+				C04E68DF4863F69746EF6E3D /* MemorySim.swift */,
+				C3D908B5F2FF608874D06337 /* ProbabilitySim.swift */,
+				4734B1FE75A3E2F9246DE5EB /* PyEngine.swift */,
+				9F1C9F88BF04DE538BBBCCBE /* ShellGitSims.swift */,
+				524444987769A68465B9C6B5 /* SimKit.swift */,
+				508519008A1A7F3FAE90B170 /* SortSearchSims.swift */,
+				8C55E3C82E80AB65280AEDC2 /* StructuresSim.swift */,
+				EFBC220D44FD562608EBF0F8 /* TraceSim.swift */,
+				854FA523B07D67B5F048513F /* VectorsSim.swift */,
+			);
+			path = Sims;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		42AEFBAE01D2DFD981F7DA7D /* Yaver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 29882049412AAAB7D4EAF143 /* Build configuration list for PBXNativeTarget "Yaver" */;
+			buildPhases = (
+				F2AB5FB218DA8B84623F4557 /* Sources */,
+				4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */,
+				55B558C7EF820E6E00E5993B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Yaver;
+			productName = Yaver;
+			productReference = F5BF48AA40CAD7891EB709FC /* Yaver.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46F86FAA6BBF9AC94A7E4595 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1400;
+				LastUpgradeCheck = 1400;
+				TargetAttributes = {
+					42AEFBAE01D2DFD981F7DA7D = {
+						CreatedOnToolsVersion = 14.0;
+					};
+				};
+			};
+			buildConfigurationList = E927D79AB6D30FC183D2F3B9 /* Build configuration list for PBXProject "Yaver" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 8A2934BF8E67675297A3835F;
+			productRefGroup = 71B6FF482B986799E916D014 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				42AEFBAE01D2DFD981F7DA7D /* Yaver */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		55B558C7EF820E6E00E5993B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B0237D3616875AAE4DBEE4A3 /* Assets.xcassets in Resources */,
+				5CB165E78DA2D2B8C230D113 /* course in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F2AB5FB218DA8B84623F4557 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F967B8ACD8198CD69F7BEF64 /* AnatomyData.swift in Sources */,
+				489B89CFF951B5C60FEFF29C /* AppleCalendar.swift in Sources */,
+				C597C1581AC8CE89415EA75C /* Assistant.swift in Sources */,
+				13CBFAF20317092351ECBE57 /* AssistantDefs.swift in Sources */,
+				93988ECD1D36AC4245F6D45F /* Body.swift in Sources */,
+				0EAA129059691A5CF1E83408 /* Course.swift in Sources */,
+				884CDFF6190E5899CE9D541F /* Domain.swift in Sources */,
+				029D6802AEDF944ABD4A9F67 /* Food.swift in Sources */,
+				D5D578183B501E8F768AE399 /* Gemini.swift in Sources */,
+				4CDF8C02F897935C03A9D00F /* Insights.swift in Sources */,
+				3162C7EA7D24850184EB1B1C /* JSON.swift in Sources */,
+				5C192840ECB73CEA8D7A99FA /* NutrientInfo.swift in Sources */,
+				71844FE83145718BA2406685 /* Places.swift in Sources */,
+				E4995200E3459D9F6E2FC703 /* Reminders.swift in Sources */,
+				B8466F199703F339A2753049 /* Skills.swift in Sources */,
+				DEED4083D65D31963088AEF8 /* Store.swift in Sources */,
+				172701E2072693599725EA3D /* Sync.swift in Sources */,
+				EA7E4E569C84DA0BD799AEA0 /* SyncCrypto.swift in Sources */,
+				FD730692C2EC84988B153CE7 /* Tools.swift in Sources */,
+				F8179356C6B5056C5DE424C7 /* TrainingData.swift in Sources */,
+				7170FC7C7B557C03755D9E4C /* Updater.swift in Sources */,
+				4240701B124A78CFF50530F8 /* AssistantView.swift in Sources */,
+				39BE001C2BF297E86D9AA4A2 /* BodyView.swift in Sources */,
+				89E285E9744758950890D588 /* CeteleView.swift in Sources */,
+				46EC1F89084438E903328D6E /* CommandBar.swift in Sources */,
+				E1042BE156F4D1415D6DF410 /* CourseView.swift in Sources */,
+				680EF0261AE4F2B394EE9A15 /* DietView.swift in Sources */,
+				C45334068B2EC881FD08D5E0 /* HomeView.swift in Sources */,
+				FD7FC251EDE2624DB19B5BFC /* LessonView.swift in Sources */,
+				10435769A16B4CBB9ECE9534 /* LiveVoice.swift in Sources */,
+				FC63892720C3251777EEE065 /* MapView.swift in Sources */,
+				2C9408DC5B7A076400B4074C /* Markdown.swift in Sources */,
+				F39BBDBC533F9FD6A084FFBB /* MeetView.swift in Sources */,
+				BB9EEDC3D9253C3E8C079E6A /* MoneyView.swift in Sources */,
+				863CF718D69D21C5AEE3B32F /* MuscleMap.swift in Sources */,
+				899CD3AF9DE5374C57F7382C /* Nav.swift in Sources */,
+				4E02172161AFD767C10AE2F6 /* SettingsView.swift in Sources */,
+				95C52078A01E4AD73692EC43 /* SkillsView.swift in Sources */,
+				6AC8400C91C2C07B981B8407 /* StudyView.swift in Sources */,
+				FA594A7A246EE88E7D6F7A2E /* TeamsView.swift in Sources */,
+				99736B22A0B4F1BAA266570C /* Theme.swift in Sources */,
+				33C7AC9104D298EC1980DA31 /* Voice.swift in Sources */,
+				25B8A74F9D14941FFB9023C7 /* YaverApp.swift in Sources */,
+				3A02584ECDF845EDA9643B0A /* CalculusSim.swift in Sources */,
+				82381DAB592F36E24C4A3660 /* CircuitSim.swift in Sources */,
+				AAC3E59F88A0A094DA9BB466 /* DataSim.swift in Sources */,
+				C30B7067A0C1F9D3D1044788 /* GraphSim.swift in Sources */,
+				140A6071CF64819ED2559516 /* MemorySim.swift in Sources */,
+				B01EB9DCA1E5C964FE81DAA6 /* ProbabilitySim.swift in Sources */,
+				263A22A07C5835C9C11850E0 /* PyEngine.swift in Sources */,
+				711D06E2ECE7CF4A9DD84E62 /* ShellGitSims.swift in Sources */,
+				6EB5B6C6FCD3D9AB080FCA28 /* SimKit.swift in Sources */,
+				08C946464297D3DF1CD8E3DA /* SortSearchSims.swift in Sources */,
+				8633C50ED4FB0DE499F82A25 /* StructuresSim.swift in Sources */,
+				978232AAF1ECA905ECE50DAD /* TraceSim.swift in Sources */,
+				CE48D687F16C404D9833E7AA /* VectorsSim.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		732093E0B8899CA02F1CCA7B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		26AB4D56D1E8428B67C2305E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		27F2D6D88F9BAB40A8A1E456 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Yaver;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Yaver uses the camera to photograph meals for the food diary.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Yaver uses your location to find places near you.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yaver uses the microphone for voice chat with the assistant.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Yaver opens photos of meals you pick for the food diary.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Yaver turns what you say into text for the assistant.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.mskorkmaz08.yaver;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CA5B7CCFC1C33C39EB45E6D5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Yaver;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Yaver shows your Apple Calendar events next to your meetings (read only).";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Yaver uses the camera to photograph meals for the food diary.";
+				INFOPLIST_KEY_NSLocationUsageDescription = "Yaver uses your location to find places near you.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Yaver uses your location to find places near you.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yaver uses the microphone for voice chat with the assistant.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Yaver opens photos of meals you pick for the food diary.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Yaver turns what you say into text for the assistant.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.mskorkmaz08.yaver;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E927D79AB6D30FC183D2F3B9 /* Build configuration list for PBXProject "Yaver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				732093E0B8899CA02F1CCA7B /* Debug */,
+				26AB4D56D1E8428B67C2305E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		29882049412AAAB7D4EAF143 /* Build configuration list for PBXNativeTarget "Yaver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				27F2D6D88F9BAB40A8A1E456 /* Debug */,
+				CA5B7CCFC1C33C39EB45E6D5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+}

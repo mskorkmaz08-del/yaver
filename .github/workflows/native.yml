@@ -1,0 +1,89 @@
+# Builds the native Swift app on a Mac build server, checks that its sync
+# encryption matches the web app's, and (on main) publishes a Mac app and an
+# unsigned iPhone app to the "native-latest" release (also from the native
+# app's working branch while it is being tried out).
+name: Native app
+
+on:
+  push:
+    paths:
+      - 'native/**'
+      - 'js/crypto.js'
+      - 'tests/native-interop.mjs'
+      - '.github/workflows/native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tools
+        run: xcodebuild -version && swift --version
+
+      - name: Core checks and web-app interop
+        run: |
+          set -euo pipefail
+          node tests/native-interop.mjs make "$RUNNER_TEMP/fixture.json"
+          swiftc -O native/Yaver/Core/*.swift native/CoreTests/main.swift -o "$RUNNER_TEMP/coretests"
+          "$RUNNER_TEMP/coretests" "$RUNNER_TEMP/fixture.json" "$RUNNER_TEMP/from-swift.json"
+          node tests/native-interop.mjs check "$RUNNER_TEMP/from-swift.json"
+
+      - name: Project file is up to date
+        run: |
+          python3 native/tools/gen_xcodeproj.py
+          git diff --exit-code native/Yaver.xcodeproj
+
+      - name: Build for iPhone
+        run: |
+          set -o pipefail
+          xcodebuild -project native/Yaver.xcodeproj -scheme Yaver -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/ios" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build > "$RUNNER_TEMP/build.log" || { grep -E "error:" -A3 "$RUNNER_TEMP/build.log" | head -80; exit 1; }; tail -5 "$RUNNER_TEMP/build.log"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$RUNNER_TEMP/ios/Build/Products/Release-iphoneos/Yaver.app" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry ../Yaver-iPhone-unsigned.ipa Payload)
+
+      - name: Build for the iPhone simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project native/Yaver.xcodeproj -scheme Yaver -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/sim" \
+            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/build.log" || { grep -E "error:" -A3 "$RUNNER_TEMP/build.log" | head -80; exit 1; }; tail -5 "$RUNNER_TEMP/build.log"
+
+      - name: Build for Mac (Intel and Apple silicon)
+        run: |
+          set -o pipefail
+          xcodebuild -project native/Yaver.xcodeproj -scheme Yaver -configuration Release \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/mac" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            ARCHS="x86_64 arm64" ONLY_ACTIVE_ARCH=NO CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-" DEVELOPMENT_TEAM="" build > "$RUNNER_TEMP/build.log" || { grep -E "error:" -A3 "$RUNNER_TEMP/build.log" | head -80; exit 1; }; tail -5 "$RUNNER_TEMP/build.log"
+          APP="$RUNNER_TEMP/mac/Build/Products/Release/Yaver.app"
+          lipo -info "$APP/Contents/MacOS/Yaver"
+          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/Yaver-Mac.zip"
+          # The Mac app's updater compares this build number with its own.
+          echo "{\"build\": ${{ github.run_number }}, \"sha\": \"${GITHUB_SHA::7}\"}" > "$RUNNER_TEMP/version.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yaver-native
+          path: |
+            ${{ runner.temp }}/Yaver-Mac.zip
+            ${{ runner.temp }}/Yaver-iPhone-unsigned.ipa
+
+      - name: Publish to the native-latest release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/claude/project-thread-vmx37z'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view native-latest >/dev/null 2>&1 || gh release create native-latest --prerelease --title "Yaver native (latest build)" --notes "Built from main by the Native app workflow. Mac: unzip, move Yaver to Applications, open it. iPhone: see native/README.md."
+          gh release upload native-latest "$RUNNER_TEMP/Yaver-Mac.zip" "$RUNNER_TEMP/Yaver-iPhone-unsigned.ipa" --clobber
+          # Last, so a Mac never sees the new number before the new app is there.
+          gh release upload native-latest "$RUNNER_TEMP/version.json" --clobber

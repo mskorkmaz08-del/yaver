@@ -246,4 +246,7 @@ export function initSync() {
   window.addEventListener('online', kick);
   setTimeout(kick, 1500);
   setInterval(paintDot, 60000);
+  // While Yaver stays open, look for the other devices' changes every two minutes
+  // (lesson progress logged in the native app shows up without reopening).
+  setInterval(() => { if (!document.hidden && navigator.onLine !== false) kick(); }, 120000);
 }

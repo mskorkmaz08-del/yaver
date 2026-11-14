@@ -104,6 +104,7 @@ function lessonView(root, go, l, { retake = false } = {}) {
       <div class="btn-row wrap">
         <button class="btn ghost" data-tutor>${raw(icon('sparkle'))} Tutor me</button>
         <button class="btn primary" data-complete>${raw(icon('check'))} ${retake ? 'Save retake' : st === 'done' ? 'Complete again' : 'Complete'}</button>
+        ${raw(!retake && !diag && !l.virtual && st !== 'done' ? html`<button class="btn ghost" data-skip-lesson>I know this · skip</button>` : '')}
       </div>
       <p class="small dim mono desk-only">keys: s timer · f focus · n next step · h hint · t tutor · esc back · ? all</p>
     </aside>`;
@@ -181,6 +182,13 @@ function lessonView(root, go, l, { retake = false } = {}) {
   bindStepContent(root, l);
   const tutor = () => tutorMe(l, currentStep(l, steps));
   root.querySelectorAll('[data-tutor], [data-bar-tutor]').forEach(b => (b.onclick = tutor));
+  const skip = root.querySelector('[data-skip-lesson]');
+  if (skip) skip.onclick = async () => {
+    const r = await C.skipLesson(l.id);
+    haptic();
+    toast('Skipped. Its review cards will still check you.', { action: { label: 'Undo', run: () => (r.before ? db.put('courseProgress', r.before) : db.remove('courseProgress', l.id)) } });
+    go(r.next ? `lesson/${r.next.id}` : 'course');
+  };
   root.querySelectorAll('[data-complete], [data-bar-complete]').forEach(b => (b.onclick = () => complete(l, root, go, { retake, diag })));
 
   onKeys({
@@ -234,7 +242,7 @@ const STEP_LABEL = { warmup: 'recall', example: 'first example' };
 
 function stepHTML(l, s, i, done) {
   let inner = '';
-  if (s.body) inner += mdDoc(s.body);
+  if (s.body) inner += s.optional ? html`<details class="full-text"><summary class="chip">Open the full explanation</summary>${raw(mdDoc(s.body))}</details>` : mdDoc(s.body);
   if (s.kind === 'warmup') inner += warmupHTML(l, s, i);
   else if (s.questions?.length) inner += questionsHTML(s, i, s.kind === 'exit');
   if (s.tasks?.length) inner += s.tasks.map((t, j) => taskHTML(l, t, `${i}-${j}`, l.kind === 'diagnostic')).join('');
@@ -242,7 +250,7 @@ function stepHTML(l, s, i, done) {
   return html`
     <section class="card step ${raw(done ? 'done' : '')}" data-stepcard="${i + 1}">
       <div class="card-head">
-        <p class="label">${raw(icon(STEP_ICON[s.kind] || 'book'))} ${roman(i + 1)} · ${STEP_LABEL[s.kind] || s.kind} · ${s.minutes} min</p>
+        <p class="label">${raw(icon(STEP_ICON[s.kind] || 'book'))} ${roman(i + 1)} · ${s.brief ? 'In short' : s.optional ? 'Reference' : STEP_LABEL[s.kind] || s.kind} · ${s.optional ? 'optional' : `${s.minutes} min`}</p>
         <button class="step-check ${raw(done ? 'on' : '')}" data-step-done="${i}" aria-label="Mark step done">${raw(icon('check'))}</button>
       </div>
       <h3 class="step-title">${s.title}</h3>
@@ -452,7 +460,7 @@ Lesson: ${l.title} (${l.track === 'mixed' ? 'mixed practice' : C.trackName(l.tra
 Objectives: ${(l.objectives || []).join('; ')}
 Current step: ${step ? `${step.kind}: ${step.title}` : 'start'}
 ${content ? `Step content:\n${content}\n` : ''}
-Rules: (1) Start with the warm-up: one recall question at a time, only about lessons I have finished (each question names its lesson; skip any I haven't done), wait, correct briefly. (2) Never ask me to predict or guess something the lesson hasn't taught yet. Teach first: explain each idea with a small concrete example, then ask me to apply it. If I say I don't know, teach it from the start instead of hinting. (3) Keep to one path: today's lesson, in order, without detours into topics I haven't met. (4) In practice use a hint ladder: nudge, hint, partial solution; a full solution only if I ask after attempting. Review my code by pointing at the problem, not rewriting it. (5) At the end run the exit ticket one question at a time, then ask for the teach-back, then call complete_lesson with my score. Use get_lesson for the full lesson.`;
+Rules: (1) Start with the warm-up: one recall question at a time, only about lessons I have finished (each question names its lesson; skip any I haven't done), wait, correct briefly. (2) Never ask me to predict or guess something the lesson hasn't taught yet. Teach first, but briefly: a few sentences and one small concrete example per idea, then straight to a task where I apply it; I learn by doing, so keep explanations short and spend the time on my attempts. If I say I don't know, teach it from the start instead of hinting. (3) Keep to one path: today's lesson, in order, without detours into topics I haven't met. (4) In practice use a hint ladder: nudge, hint, partial solution; a full solution only if I ask after attempting. Review my code by pointing at the problem, not rewriting it. (5) At the end run the exit ticket one question at a time, then ask for the teach-back, then call complete_lesson with my score. Use get_lesson for the full lesson.`;
   if (matchMedia('(min-width: 1400px)').matches) document.body.classList.add('lesson-docked');
   openAssistant(prompt);
 }

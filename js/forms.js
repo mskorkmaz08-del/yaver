@@ -4,6 +4,7 @@ import * as D from './data.js';
 import { sheet, today, localInput, toast, haptic, html, raw, timeHM, fmtDay, dayKey } from './util.js';
 import { openInCalendar } from './ics.js';
 import * as T from './teams.js';
+import { scaleMeal } from './foodscan.js';
 
 export async function expenseForm(existing) {
   const e = existing || {};
@@ -98,6 +99,9 @@ export async function studyForm(subjectName) {
   toast(`+${v.minutes} XP · streak ${D.studyStreak().current}d`);
 }
 
+// What part of a logged meal was eaten, for "I didn't finish it".
+const EATEN = [['All of it', 1], ['Three quarters', 0.75], ['Two thirds', 2 / 3], ['Half', 0.5], ['A third', 1 / 3], ['A quarter', 0.25], ['A few bites', 0.1]];
+
 export async function mealForm(existing, day = today(), preset = {}) {
   const m = existing || preset;
   const hour = new Date().getHours();
@@ -115,11 +119,24 @@ export async function mealForm(existing, day = today(), preset = {}) {
       { name: 'fat', label: 'Fat (g)', type: 'number', value: m.fat },
       { name: 'date', label: 'Date', type: 'date', value: m.date || day },
       { name: 'time', label: 'Eaten at', type: 'time', value: m.time || (existing ? D.mealTime(m)?.time || '' : (m.date || day) === today() ? D.nowHM() : '') },
+      ...(existing ? [{ name: 'ate', label: 'Didn\'t finish it? How much did you eat', type: 'select', options: EATEN.map(e => e[0]), value: EATEN[0][0] }] : []),
     ],
   });
   if (!v) return;
   if (v.__danger) { await db.remove('meals', m.id); haptic(); toast('Meal deleted', { action: { label: 'Undo', run: () => db.put('meals', m) } }); return; }
-  if (existing) await db.put('meals', { ...m, ...v, time: D.cleanTime(v.time) || undefined });
+  if (existing) {
+    const { ate, ...rest } = v;
+    const f = EATEN.find(e => e[0] === ate)?.[1] ?? 1;
+    const edited = { ...m, ...rest, time: D.cleanTime(v.time) || undefined };
+    for (const k of ['calories', 'protein', 'carbs', 'fat']) edited[k] = Number(edited[k]) || 0;
+    if (f < 1) {
+      await db.put('meals', scaleMeal(edited, f));
+      haptic();
+      toast(`Kept ${Math.round(f * 100)}% of ${edited.name}`, { action: { label: 'Undo', run: () => db.put('meals', m) } });
+      return;
+    }
+    await db.put('meals', edited);
+  }
   else await D.logMeal(v);
   toast('Meal logged');
 }

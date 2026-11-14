@@ -188,9 +188,14 @@ const fmt = v => (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleSt
 
 // ---------- Food photo or typed meal: photo (+ note) or words → Gemini estimate → check → log ----------
 function pickPhoto(day) {
-  const input = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*' });
+  // The input is put in the page while the picker is open: Safari on the iPhone can
+  // drop a detached input before the photo comes back, so the first pick did nothing.
+  document.querySelector('input.photo-pick')?.remove();
+  const input = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*', className: 'photo-pick', hidden: true });
+  document.body.append(input);
   input.onchange = async () => {
     const file = input.files?.[0];
+    input.remove();
     if (!file) return;
     try { photoSheet(await shrinkImage(file, 1024), day); } catch { toast('Could not open that photo.'); }
   };
