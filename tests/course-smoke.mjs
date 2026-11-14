@@ -79,7 +79,11 @@ const ev = (page, fn, arg) => page.evaluate(fn, arg);
   await page.waitForSelector('[data-start-course]');
   await page.click('[data-start-course]');
   await page.waitForTimeout(500);
-  let s = await ev(page, async () => { const C = await import('./js/course.js'); const d = C.day(); return { active: C.active(), week: d.week, slots: d.slots.map(x => x.lesson?.id || x.id) }; });
+  // This file tests the optional timetable; self-paced (the default) is covered by self-paced.mjs.
+  await ev(page, async () => { const C = await import('./js/course.js'); await C.saveSettings({ pacing: 'schedule' }); });
+  await page.reload();
+  await ready(page);
+  let s = await ev(page, async () => { const C = await import('./js/course.js'); await C.init(); const d = C.day(); return { active: C.active(), week: d.week, slots: d.slots.map(x => x.lesson?.id || x.id) }; });
   check(s.active && s.week === 0, 'Oct 15 is Week 0 and the course is active', JSON.stringify(s.slots));
   check(await page.isVisible('.today-card'), 'Study shows the Today card');
   await page.screenshot({ path: `${shots}/c1-phone-week0.png`, fullPage: true });
@@ -181,7 +185,7 @@ const ev = (page, fn, arg) => page.evaluate(fn, arg);
   await ev(page, async () => {
     const db = await import('./js/db.js'); const C = await import('./js/course.js');
     await db.setSetting('onboarded', true); await db.setSetting('apiKey', 'sk-ant-test'); await db.setSetting('provider', 'anthropic');
-    await C.init(); await C.activate();
+    await C.init(); await C.activate(); await C.saveSettings({ pacing: 'schedule' });
   });
   await page.reload();
   await ready(page);

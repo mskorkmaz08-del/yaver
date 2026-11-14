@@ -167,20 +167,21 @@ struct CourseView: View {
             }
             Card {
                 HStack(alignment: .top) {
-                    Stat(value: C.weekOf(store) < 0 ? "–" : "\(C.weekOf(store))", label: "week / 63")
+                    if C.selfPaced(store) { Stat(value: "\(C.totals(store).left)", label: "lessons left") }
+                    else { Stat(value: C.weekOf(store) < 0 ? "–" : "\(C.weekOf(store))", label: "week / 63") }
                     Stat(value: "\(C.dueCount(store))", label: "cards due")
                     Stat(value: "\(tracks.reduce(0) { $0 + $1.done })", label: "lessons done")
                 }
                 HStack {
                     NavigationLink { ReviewView() } label: { Label("Review cards", systemImage: "rectangle.stack") }.buttonStyle(.bordered)
-                    NavigationLink { WeeklyTestView() } label: { Label("Weekly test", systemImage: "checklist") }.buttonStyle(.bordered)
+                    NavigationLink { WeeklyTestView() } label: { Label(C.selfPaced(store) ? "Test yourself" : "Weekly test", systemImage: "checklist") }.buttonStyle(.bordered)
                 }
             }
-            TodayCard()
+            if C.selfPaced(store) { ContinueCard() } else { TodayCard() }
 
             tracksGrid(tracks)
             DoingCard()
-            weekCard(wn)
+            if !C.selfPaced(store) { weekCard(wn) }
             deadlinesCard(dl)
             testsCard(tests)
             infoCards()
@@ -203,8 +204,10 @@ struct CourseView: View {
                     HStack {
                         Text("\(t.done)").font(.title3.weight(.semibold).monospacedDigit()) + Text(" / \(t.total)").font(.caption).foregroundColor(Theme.dim)
                         Spacer()
-                        Text(t.pace).font(.caption2.weight(.semibold))
-                            .foregroundStyle(t.paceColor == "green" ? Theme.ok : t.paceColor == "yellow" ? Theme.gold : Theme.red)
+                        if !Course.shared.selfPaced(store) {
+                            Text(t.pace).font(.caption2.weight(.semibold))
+                                .foregroundStyle(t.paceColor == "green" ? Theme.ok : t.paceColor == "yellow" ? Theme.gold : Theme.red)
+                        }
                     }
                     Bar(value: t.total > 0 ? Double(t.done) / Double(t.total) : 0, color: Color(css: t.color))
                     Text((t.mastery.map { "mastery \($0)%" } ?? "no scores yet") + (t.flagged.isEmpty ? "" : " · \(t.flagged.count) flagged"))
@@ -297,14 +300,16 @@ struct CourseView: View {
 
     @ViewBuilder private func infoCards() -> some View {
         let C = Course.shared
-        Card(title: "How pace works") {
-            Text("Behind: the track continues where you are; nothing is skipped, and the Friday buffer goes to the most-behind track. Ahead: next week's lessons come forward; no new subjects are added. Consolidation weeks (\(C.consolidationWeeks.prefix(6).map(String.init).joined(separator: ", ")), …) run at about 60% and don't count toward pace.")
-                .font(.callout).foregroundStyle(Theme.muted)
+        if !C.selfPaced(store) {
+            Card(title: "How pace works") {
+                Text("Behind: the track continues where you are; nothing is skipped, and the Friday buffer goes to the most-behind track. Ahead: next week's lessons come forward; no new subjects are added. Consolidation weeks (\(C.consolidationWeeks.prefix(6).map(String.init).joined(separator: ", ")), …) run at about 60% and don't count toward pace.")
+                    .font(.callout).foregroundStyle(Theme.muted)
+            }
         }
 
         Card(title: "Course settings") {
             HStack {
-                Button("Slot times") { editingTimes = true }.buttonStyle(.bordered)
+                if !C.selfPaced(store) { Button("Slot times") { editingTimes = true }.buttonStyle(.bordered) }
                 Button("Start date & work blocks") { editingOptions = true }.buttonStyle(.bordered)
             }
             Button("Reset progress", role: .destructive) { confirmReset = true }.buttonStyle(.bordered)
@@ -462,6 +467,12 @@ struct DoingCard: View {
             .pickerStyle(.segmented)
             Text(mode == "do" ? "Each lesson opens with the few facts you need and one example, then goes straight to the tasks. The full explanation is the last step, for when you get stuck."
                  : "Lessons show every explanation before the tasks, as written.").font(.caption).foregroundStyle(Theme.muted)
+            Picker("Pacing", selection: Binding(get: { C.selfPaced(store) ? "self" : "schedule" }, set: { C.saveSettings(store, ["pacing": .string($0)]) })) {
+                Text("Self-paced").tag("self"); Text("Timetable").tag("schedule")
+            }
+            .pickerStyle(.segmented)
+            Text(C.selfPaced(store) ? "No set times and nothing to fall behind on. Open the course any day, after any break, and take the next lesson."
+                 : "Day-by-day blocks at set times, with pace per subject.").font(.caption).foregroundStyle(Theme.muted)
             if !basics.isEmpty {
                 Button("I know basic programming: skip \(basics.count) basics lessons") {
                     let before = C.skipBasics(store)
@@ -490,5 +501,42 @@ struct DoingCard: View {
                 }
             }
         }
+    }
+}
+
+/// Self-paced: no clock. What you started, then the next lesson of each subject; pick any.
+struct ContinueCard: View {
+    @EnvironmentObject var store: Store
+    var compact = false
+    var body: some View {
+        let _ = store.revision
+        let C = Course.shared
+        let list = C.upNext(store, compact ? 3 : 6)
+        let t = C.totals(store)
+        let due = C.dueCount(store)
+        let resuming = list.first.map { C.status(store, $0.id) == "in progress" } ?? false
+        Card(title: resuming ? "Continue" : "Next up", trailing: "\(t.done) of \(t.total) lessons") {
+            if list.isEmpty { Text("Every lesson is done.").foregroundStyle(Theme.muted) }
+            ForEach(Array(list.enumerated()), id: \.element.id) { i, l in
+                let st = C.status(store, l.id)
+                NavigationLink { LessonView(lessonId: l.id) } label: {
+                    HStack(spacing: 10) {
+                        Circle().fill(Color(css: C.trackColor(l.str("track")))).frame(width: 8, height: 8)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(l.str("title")).font(i == 0 ? .body.weight(.semibold) : .body).foregroundStyle(Theme.text).multilineTextAlignment(.leading)
+                            Text("\(C.trackName(l.str("track"))) · \(Int(l.num("minutes"))) min\(st == "in progress" ? " · started" : st == "flagged" ? " · redo" : "")").font(.caption).foregroundStyle(Theme.dim)
+                        }
+                        Spacer()
+                        if i == 0 { Text(st == "in progress" ? "Resume" : "Start").font(.caption.weight(.semibold)).foregroundStyle(Theme.gold) }
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.dim)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+            }
+            Text("No timetable: start any of these whenever you sit down." + (due > 0 ? " \(due) review card\(due > 1 ? "s" : "") waiting, a few minutes' warm-up." : ""))
+                .font(.caption).foregroundStyle(Theme.muted)
+        }
+        .onAppear { C.dropStaleTimer(store) }
     }
 }

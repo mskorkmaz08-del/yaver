@@ -94,6 +94,38 @@ export function doLesson(l) {
   return out;
 }
 
+// ---------- Self-paced (v65) ----------
+// The default: no timetable. The course is a queue you pick up whenever you sit down,
+// today or after a month away; nothing is "behind" and no block has a clock time.
+// "schedule" brings back the day-by-day timetable with slots, pace and alerts.
+export const selfPaced = () => settings().pacing !== 'schedule';
+// What to do next, best first: lessons you started (latest first), then the next
+// unfinished lesson of each lane, earliest in the course first, one per track.
+export function upNext(n = 6) {
+  idx();
+  const out = [], seen = new Set(), tracks = new Set();
+  const started = db.all('courseProgress').filter(p => p.status === 'in progress' && byId.has(p.lessonId)).sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || ''));
+  for (const p of started) { const l = shaped(byId.get(p.lessonId)); out.push(l); seen.add(l.id); tracks.add(l.track); }
+  const heads = [...byLane.entries()].filter(([lane]) => lane !== 'mixed')
+    .map(([, list]) => list.find(l => !completed(l.id) && (l.week > 0 || l.lane === 'setup')) || null).filter(Boolean)
+    .sort((a, b) => a.week - b.week || a.seq - b.seq);
+  for (const l of heads) { if (seen.has(l.id) || tracks.has(l.track)) continue; out.push(shaped(l)); seen.add(l.id); tracks.add(l.track); }
+  for (const l of heads) { if (!seen.has(l.id)) { out.push(shaped(l)); seen.add(l.id); } }
+  return out.slice(0, n);
+}
+/** A stopwatch left running for hours is from a sitting that ended: pause it where a lesson would have. */
+export async function dropStaleTimer() {
+  const t = db.setting('lessonTimer', null);
+  if (t && !t.pausedAt && Date.now() - t.start > 4 * 3600000) await db.setSetting('lessonTimer', null);
+}
+/** Lessons finished and left in the whole course. */
+export function totals() {
+  idx();
+  const all = [...byId.values()].filter(l => l.lane !== 'setup' && l.kind !== 'diagnostic');
+  const done = all.filter(l => completed(l.id)).length;
+  return { done, total: all.length, left: all.length - done };
+}
+
 // "I know this": the lesson counts as done without sitting through it. Its review
 // cards are still scheduled, so anything you don't actually know shows up in review.
 export async function skipLesson(id) {
@@ -263,6 +295,7 @@ export function weeklySessions(trackId, w = Math.max(1, weekOf())) {
 }
 export function pace(at = new Date()) {
   const out = {};
+  const self = selfPaced();
   for (const [lane, def] of Object.entries(META.lanes)) {
     if (lane === 'setup') continue;
     const e = expected(lane, at), d = doneInLane(lane);
@@ -271,9 +304,10 @@ export function pace(at = new Date()) {
     t.expected += e; t.done += d; t.lanes[lane] = { expected: e, done: d };
   }
   for (const t of Object.values(out)) {
-    t.behind = Math.max(0, t.expected - t.done);
-    t.ahead = Math.max(0, t.done - t.expected);
-    t.label = t.behind ? `${t.behind} behind` : t.ahead ? `${t.ahead} ahead` : 'on plan';
+    // Self-paced: there is no plan to be behind.
+    t.behind = self ? 0 : Math.max(0, t.expected - t.done);
+    t.ahead = self ? 0 : Math.max(0, t.done - t.expected);
+    t.label = self ? 'your pace' : t.behind ? `${t.behind} behind` : t.ahead ? `${t.ahead} ahead` : 'on plan';
     t.color = !t.behind ? 'green' : t.behind < weeklySessions(t.track) ? 'yellow' : 'red';
   }
   return out;
@@ -368,6 +402,10 @@ function consolidationSlot(s, kind, w, key) {
 
 // The slot that is on now or next (for Home).
 export function nextBlock(at = new Date()) {
+  if (selfPaced()) {
+    const l = upNext(1)[0];
+    return l ? { id: 'next', type: 'lesson', selfPaced: true, lesson: l, track: l.track, lane: l.lane, minutes: l.minutes, start: '', end: '', label: 'next lesson', status: status(l.id), date: dayKey(at) } : null;
+  }
   for (let i = 0; i < 3; i++) {
     const k = addDays(dayKey(at), i);
     const d = day(k);

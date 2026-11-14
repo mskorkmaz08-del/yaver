@@ -65,7 +65,7 @@ function nextPlate() {
   if (!nb) return '';
   const l = nb.lesson ? C.lesson(nb.lesson.id) : null;
   const target = l ? `lesson/${l.id}` : nb.type === 'review' || nb.type === 'plan' ? 'lesson/review' : nb.special === 'test' ? 'lesson/test' : nb.special === 'ship' ? 'lesson/ship' : null;
-  const when = nb.date === today() ? nb.start : nb.date === addDays(today(), 1) ? `tomorrow ${nb.start}` : `${fmtDay(nb.date)} ${nb.start}`;
+  const when = nb.selfPaced ? (nb.status === 'in progress' ? 'continue' : 'next up') : nb.date === today() ? nb.start : nb.date === addDays(today(), 1) ? `tomorrow ${nb.start}` : `${fmtDay(nb.date)} ${nb.start}`;
   nextTarget = target;
   const p = l ? C.progress(l.id) || {} : {};
   const done = new Set(p.stepsDone || []);

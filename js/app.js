@@ -210,7 +210,7 @@ async function start() {
   ask.innerHTML = `${icon('sparkle')}<span>Ask Yaver</span><kbd>/</kbd>`;
   ask.onclick = () => openAssistant();
   // Course content loads in the background; screens that need it redraw when it arrives.
-  C.init().catch(() => {});
+  C.init().then(() => C.dropStaleTimer()).catch(() => {});
   window.addEventListener('course-ready', () => { if (current !== 'map') draw(); });
   matchMedia('(min-width: 1100px)').addEventListener?.('change', sideGauge);
   initShortcuts(go);

@@ -172,6 +172,46 @@ final class Course {
         return out
     }
 
+    // MARK: Self-paced (twin of selfPaced / upNext in js/course.js)
+    // The default: no timetable. The course is a queue to pick up whenever you sit
+    // down; nothing is behind and no block has a clock time. "schedule" brings back
+    // the day-by-day timetable.
+
+    func selfPaced(_ s: Store) -> Bool { settings(s)["pacing"]?.string != "schedule" }
+    /// What to do next, best first: started lessons (latest first), then the next
+    /// unfinished lesson of each lane, earliest in the course first, one per track.
+    func upNext(_ s: Store, _ n: Int = 6) -> [Row] {
+        idx(s)
+        var out: [Row] = []
+        var seen = Set<String>(), tracks = Set<String>()
+        let started = s.all("courseProgress").filter { $0.str("status") == "in progress" && byId[$0.str("lessonId")] != nil }
+            .sorted { $0.str("startedAt") > $1.str("startedAt") }
+        for p in started {
+            guard let raw = byId[p.str("lessonId")] else { continue }
+            let l = shaped(s, raw)
+            out.append(l); seen.insert(l.id); tracks.insert(l.str("track"))
+        }
+        let heads: [Row] = byLane.filter { $0.key != "mixed" }.values
+            .compactMap { list in list.first { !self.completed(s, $0.id) && ($0.num("week") > 0 || $0.str("lane") == "setup") } }
+            .sorted { $0.num("week") != $1.num("week") ? $0.num("week") < $1.num("week") : $0.num("seq") < $1.num("seq") }
+        for l in heads where !seen.contains(l.id) && !tracks.contains(l.str("track")) {
+            out.append(shaped(s, l)); seen.insert(l.id); tracks.insert(l.str("track"))
+        }
+        for l in heads where !seen.contains(l.id) { out.append(shaped(s, l)); seen.insert(l.id) }
+        return Array(out.prefix(n))
+    }
+    /// A stopwatch left running for hours is from a sitting that ended.
+    func dropStaleTimer(_ s: Store) {
+        if let t = timer(s), t.pausedAt == nil, Date().timeIntervalSince1970 * 1000 - t.start > 4 * 3_600_000 { resetTimer(s) }
+    }
+    /// Lessons finished and left in the whole course.
+    func totals(_ s: Store) -> (done: Int, total: Int, left: Int) {
+        idx(s)
+        let all = byId.values.filter { $0.str("lane") != "setup" && $0.str("kind") != "diagnostic" }
+        let done = all.filter { completed(s, $0.id) }.count
+        return (done, all.count, all.count - done)
+    }
+
     /// "I know this": done without sitting through it. Its review cards are still
     /// scheduled, so anything not actually known shows up in review.
     @discardableResult
@@ -379,6 +419,8 @@ final class Course {
             t.expected += e; t.done += d; t.lanes[lane] = (e, d)
             out[tr] = t
         }
+        // Self-paced: there is no plan to be behind.
+        if selfPaced(s) { for k in Array(out.keys) { let d = out[k]?.done ?? 0; out[k]?.expected = d } }
         return out
     }
     /// green on plan, yellow less than a week behind, red more.
@@ -500,6 +542,10 @@ final class Course {
 
     /// The block that is on now or next (Home).
     func nextBlock(_ s: Store, at: Date = Date()) -> (slot: Slot, date: String)? {
+        if selfPaced(s) {
+            guard let l = upNext(s, 1).first else { return nil }
+            return (Slot(id: "next", start: "", end: "", label: "next lesson", type: "lesson", minutes: Int(l.num("minutes")), lane: l.str("lane"), track: l.str("track"), lesson: l, status: status(s, l.id)), Day.key(at))
+        }
         for i in 0..<3 {
             let k = Day.add(Day.key(at), i)
             for sl in day(s, k).slots where sl.type != "info" && sl.type != "fixed" {

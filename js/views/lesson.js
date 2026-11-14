@@ -476,13 +476,15 @@ function notify(msg) {
 
 // ---------- Review cards (evening slot) ----------
 function review(root, go) {
-  const due = C.dueCards({ limit: 200 });
+  // Self-paced: after a break the pile can be big, so a sitting is at most 20 cards.
+  const all = C.dueCards({ limit: 500 });
+  const due = C.selfPaced() ? all.slice(0, Math.max(0, 20 - (state.reviewed || 0))) : all;
   const card = due[0];
   const tomorrow = addDays(today(), 1);
   const log = C.dayLog() || {};
   root.innerHTML = html`
     ${raw(head('review', 'Review'))}
-    <p class="small muted mono">${due.length} due · space reveals · 1 again · 2 hard · 3 good · 4 easy</p>
+    <p class="small muted mono">${due.length}${all.length > due.length ? ` now · ${all.length - due.length} more for later` : ' due'} · space reveals · 1 again · 2 hard · 3 good · 4 easy</p>
     ${raw(card ? html`
       <section class="card flash ${raw(state.flipped ? 'flipped' : '')}">
         <p class="small mono muted"><span class="dot" style="background:${raw(dotColor(card.track))}"></span> ${C.trackName(card.track)} · box ${card.box}</p>
@@ -501,7 +503,7 @@ function review(root, go) {
     </section>`;
   root.querySelector('[data-back]').onclick = () => go('study');
   const flip = () => { if (card) { state.flipped = true; render(root, go, 'review'); } };
-  const grade = async g => { if (!card || !state.flipped) return; state.flipped = false; await C.gradeCard(card.id, g); haptic(); };
+  const grade = async g => { if (!card || !state.flipped) return; state.flipped = false; state.reviewed = (state.reviewed || 0) + 1; await C.gradeCard(card.id, g); haptic(); };
   root.querySelector('[data-flip]')?.addEventListener('click', flip);
   root.querySelectorAll('[data-g]').forEach(b => (b.onclick = () => grade(b.dataset.g)));
   root.querySelector('[data-confirm]').onclick = async () => {
