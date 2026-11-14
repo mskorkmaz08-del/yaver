@@ -131,6 +131,8 @@ export function render(root, go) {
         </div>`).join(''))}
     </div>
 
+    ${raw(doingCard())}
+
     <section class="card">
       <div class="card-head">
         <p class="label">week ${wk.week}${wk.consolidation ? ' · consolidation' : ''}</p>
@@ -176,6 +178,14 @@ export function render(root, go) {
   bindToday(root, go);
   root.querySelectorAll('[data-wk]').forEach(b => (b.onclick = () => { shownWeek = Math.max(0, Math.min(63, shownWeek + Number(b.dataset.wk))); render(root, go); }));
   root.querySelectorAll('[data-prepare]').forEach(b => (b.onclick = () => go(`lesson/prepare-${b.dataset.prepare}`)));
+  root.querySelectorAll('[data-mode]').forEach(b => (b.onclick = async () => { await C.saveSettings({ mode: b.dataset.mode }); toast(b.dataset.mode === 'do' ? 'Lessons: short, tasks first' : 'Lessons: full text'); }));
+  const sb = root.querySelector('[data-skip-basics]');
+  if (sb) sb.onclick = async () => {
+    const before = C.basicsLeft().map(l => [l.id, C.progress(l.id)]);
+    const n = await C.skipBasics();
+    toast(`Skipped ${n} basics lessons. Their review cards still check you.`, { action: { label: 'Undo', run: async () => { for (const [id, p] of before) { if (p) await db.put('courseProgress', p); else await db.remove('courseProgress', id); } } } });
+  };
+  root.querySelectorAll('[data-algo]').forEach(b => (b.onclick = () => go(`lesson/${b.dataset.algo}`)));
   root.querySelector('[data-teach]').onclick = () => editTeachDates();
   root.querySelector('[data-times]').onclick = () => editTimes();
   root.querySelector('[data-opts]').onclick = () => editOptions();
@@ -191,6 +201,27 @@ export function render(root, go) {
     for (const st of ['courseProgress', 'cards', 'courseTests']) for (const r of db.all(st)) await db.remove(st, r.id);
     toast('Course progress reset');
   };
+}
+
+// Learn by doing: the lesson style, skipping what you already know, and the algorithm
+// problem sets, which can be done in any order ahead of the weekly plan.
+function doingCard() {
+  const mode = C.lessonMode();
+  const basics = C.basicsLeft();
+  const sets = C.laneLessons('algo').filter(l => l.kind !== 'diagnostic' && l.week > 0);
+  const next = sets.filter(l => !C.finished(l.id)).slice(0, 4);
+  const done = sets.filter(l => C.finished(l.id)).length;
+  return html`
+    <section class="card">
+      <div class="card-head"><p class="label">learn by doing</p><span class="small mono muted">${mode === 'do' ? 'short lessons' : 'full lessons'}</span></div>
+      <div class="chips"><button class="chip ${raw(mode === 'do' ? 'on' : '')}" data-mode="do" aria-pressed="${raw(String(mode === 'do'))}">By doing</button><button class="chip ${raw(mode === 'full' ? 'on' : '')}" data-mode="full" aria-pressed="${raw(String(mode === 'full'))}">Full text</button></div>
+      <p class="small muted">${mode === 'do' ? 'Each lesson opens with the few facts you need and one example, then goes straight to the tasks. The full explanation is the last step, for when you get stuck.' : 'Lessons show every explanation before the tasks, as written.'}</p>
+      ${raw(basics.length ? html`<button class="btn ghost" data-skip-basics>I know basic programming: skip ${basics.length} basics lessons</button>` : '')}
+      ${raw(sets.length ? html`
+        <p class="label">algorithm practice · ${done} of ${sets.length} sets done</p>
+        <p class="small muted">Problem sets by pattern. Do one whenever you have 30 minutes; they don't have to wait for their week.</p>
+        ${raw(next.map(l => html`<button class="slot" data-algo="${l.id}"><span class="slot-t">wk ${l.week}<small>${l.minutes}m</small></span><span class="dot" style="background:${raw(dotColor('algo'))}"></span><span class="slot-main"><b>${l.title}</b><small>${C.status(l.id)}</small></span></button>`).join(''))}` : '')}
+    </section>`;
 }
 
 function weekCalendar(wk) {

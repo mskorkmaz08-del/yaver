@@ -179,6 +179,7 @@ struct CourseView: View {
             TodayCard()
 
             tracksGrid(tracks)
+            DoingCard()
             weekCard(wn)
             deadlinesCard(dl)
             testsCard(tests)
@@ -436,6 +437,56 @@ struct CourseOptionsForm: View {
                     if Course.dow(Day.key(start)) != 0 { problem = "Week 1 has to start on a Monday."; return }
                     C.saveSettings(store, ["start": .string(Day.key(start)), "showWork": .bool(showWork)])
                     dismiss()
+                }
+            }
+        }
+    }
+}
+
+/// Learn by doing: the lesson style, skipping what you already know, and the algorithm
+/// problem sets, which can be done in any order ahead of the weekly plan.
+struct DoingCard: View {
+    @EnvironmentObject var store: Store
+    var body: some View {
+        let _ = store.revision
+        let C = Course.shared
+        let mode = C.lessonMode(store)
+        let basics = C.basicsLeft(store)
+        let sets = C.laneLessons(store, "algo").filter { $0.str("kind") != "diagnostic" && $0.num("week") > 0 }
+        let next = Array(sets.filter { !C.completed(store, $0.id) }.prefix(4))
+        let done = sets.filter { C.completed(store, $0.id) }.count
+        Card(title: "Learn by doing", trailing: mode == "do" ? "short lessons" : "full lessons") {
+            Picker("Lesson style", selection: Binding(get: { mode }, set: { C.saveSettings(store, ["mode": .string($0)]) })) {
+                Text("By doing").tag("do"); Text("Full text").tag("full")
+            }
+            .pickerStyle(.segmented)
+            Text(mode == "do" ? "Each lesson opens with the few facts you need and one example, then goes straight to the tasks. The full explanation is the last step, for when you get stuck."
+                 : "Lessons show every explanation before the tasks, as written.").font(.caption).foregroundStyle(Theme.muted)
+            if !basics.isEmpty {
+                Button("I know basic programming: skip \(basics.count) basics lessons") {
+                    let before = C.skipBasics(store)
+                    Nav.shared.show("Skipped \(before.count) basics lessons. Their review cards still check you.") {
+                        for (id, p) in before { if let p { store.put("courseProgress", p) } else { store.remove("courseProgress", id) } }
+                    }
+                }
+                .buttonStyle(.bordered)
+            }
+            if !sets.isEmpty {
+                Text("ALGORITHM PRACTICE · \(done) OF \(sets.count) SETS DONE").font(.caption2.weight(.semibold)).foregroundStyle(Theme.dim).padding(.top, 4)
+                Text("Problem sets by pattern. Do one whenever you have 30 minutes; they don't have to wait for their week.").font(.caption).foregroundStyle(Theme.muted)
+                ForEach(next, id: \.id) { l in
+                    NavigationLink { LessonView(lessonId: l.id) } label: {
+                        HStack {
+                            Text("wk \(Int(l.num("week")))").font(.caption.monospaced()).foregroundStyle(Theme.dim).frame(width: 44, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(l.str("title")).foregroundStyle(Theme.text).multilineTextAlignment(.leading)
+                                Text("\(Int(l.num("minutes"))) min · \(C.status(store, l.id))").font(.caption).foregroundStyle(Theme.dim)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.dim)
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

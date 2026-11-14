@@ -139,6 +139,16 @@ struct LessonView: View {
                 Label(retake ? "Save retake" : status == "done" ? "Complete again" : "Complete", systemImage: "checkmark").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent).controlSize(.large)
+            if !retake && status != "done" && !l.flag("virtual") && l.str("kind") != "diagnostic" {
+                Button("I know this · skip") {
+                    let r = C.skipLesson(store, l.id)
+                    Nav.shared.show("Skipped. Its review cards will still check you.") {
+                        if let b = r.before { store.put("courseProgress", b) } else { store.remove("courseProgress", l.id) }
+                    }
+                    dismiss()
+                }
+                .buttonStyle(.bordered).frame(maxWidth: .infinity)
+            }
         }
         .fileExporter(isPresented: $exporting, document: exportDoc, contentType: exportType, defaultFilename: exportName) { _ in }
         .alert("Exit ticket not marked", isPresented: $askUnmarked) {
@@ -165,7 +175,7 @@ struct LessonView: View {
         let kind = s.str("kind")
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("\(roman(i + 1)) · \(stepLabel[kind] ?? kind) · \(Int(s.num("minutes"))) min", systemImage: stepIcon[kind] ?? "book")
+                Label("\(roman(i + 1)) · \(s.flag("brief") ? "In short" : s.flag("optional") ? "Reference" : stepLabel[kind] ?? kind) · \(s.flag("optional") ? "optional" : "\(Int(s.num("minutes"))) min")", systemImage: stepIcon[kind] ?? "book")
                     .font(.caption.weight(.semibold)).foregroundStyle(Theme.dim)
                 Spacer()
                 Button { Course.shared.setStepDone(store, l.id, i, !done) } label: {
@@ -174,7 +184,9 @@ struct LessonView: View {
                 .buttonStyle(.borderless)
             }
             Text(s.str("title")).font(.title3.weight(.semibold))
-            if !s.str("body").isEmpty { MarkdownView(text: s.str("body")) }
+            if s.flag("optional") {
+                DisclosureGroup("Open the full explanation") { MarkdownView(text: s.str("body")).padding(.top, 6) }.tint(Theme.gold)
+            } else if !s.str("body").isEmpty { MarkdownView(text: s.str("body")) }
             if kind == "warmup" {
                 warmup(l, s, i)
             } else if let qs = s["questions"]?.array, !qs.isEmpty {

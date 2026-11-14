@@ -90,7 +90,7 @@ final class Course {
     // MARK: Index
 
     private func rebuild(_ s: Store) {
-        byId = [:]; byLane = [:]
+        byId = [:]; byLane = [:]; doCache = [:]
         var all: [Row] = bundled.values.flatMap { $0 }
         let bundledWeeks = Set(bundled.keys)
         for row in s.all("courseLessons") where !bundledWeeks.contains(Int(row.num("week"))) {
@@ -110,11 +110,98 @@ final class Course {
 
     func lesson(_ s: Store, _ id: String) -> Row? {
         idx(s)
-        if let l = byId[id] { return l }
+        if let l = byId[id] { return shaped(s, l) }
         if id.hasPrefix("mixed-") { return mixedLesson(s, String(id.dropFirst(6))) }
         return nil
     }
-    func laneLessons(_ s: Store, _ lane: String) -> [Row] { idx(s); return byLane[lane] ?? [] }
+    func laneLessons(_ s: Store, _ lane: String) -> [Row] { idx(s); return (byLane[lane] ?? []).map { shaped(s, $0) } }
+    /// The lesson exactly as written, whatever the lesson style.
+    func rawLesson(_ s: Store, _ id: String) -> Row? { idx(s); return byId[id] }
+
+    // MARK: Learn by doing (twin of doLesson in js/course.js)
+    // The default lesson style: the lecture steps (learn, read, summary) fold into one
+    // "In short" step made of the lesson's key facts and one example, the doing steps
+    // stay, and the full text moves to an optional last step. "full" shows it as written.
+
+    private static let lecture: Set<String> = ["learn", "read", "summary"]
+    private static let doing: Set<String> = ["practice", "build", "exit", "simulate", "measure", "test"]
+    private var doCache: [String: Row] = [:]
+    func lessonMode(_ s: Store) -> String { settings(s)["mode"]?.string == "full" ? "full" : "do" }
+    private func shaped(_ s: Store, _ l: Row) -> Row { lessonMode(s) == "do" ? doLesson(l) : l }
+    func doLesson(_ l: Row) -> Row {
+        if l.flag("virtual") || l.str("kind") == "diagnostic" || l.num("week") == 0 { return l }
+        if let c = doCache[l.id] { return c }
+        let steps = (l["steps"]?.array ?? []).compactMap { $0.object }
+        let isLecture = { (x: [String: JSON]) in Course.lecture.contains(x.str("kind")) && !x.str("body").isEmpty }
+        let lect = steps.filter(isLecture)
+        let cards = (l["cards"]?.array ?? []).compactMap { $0.object }
+        let facts = cards.prefix(7).map { "- **\($0.str("front"))** \($0.str("back"))" }
+        let points = facts.isEmpty ? (l["objectives"]?.array ?? []).compactMap { $0.string }.map { "- \($0)" } : Array(facts)
+        var out = l
+        if !lect.isEmpty && !points.isEmpty {
+            var body = "Know these, then do. The full explanation is the last step: open it only if you get stuck.\n\n" + points.joined(separator: "\n")
+            if !steps.contains(where: { $0.str("kind") == "example" }) {
+                for x in lect {
+                    let b = x.str("body")
+                    guard let r = b.range(of: "```[\\s\\S]*?```", options: .regularExpression) else { continue }
+                    let code = String(b[r])
+                    if code.components(separatedBy: "\n").count <= 32 { body += "\n\n**One example**\n\n" + code }
+                    break
+                }
+            }
+            let brief: [String: JSON] = ["kind": "learn", "minutes": 5, "title": "In short", "body": .string(body), "brief": true]
+            let reference: [String: JSON] = ["kind": "read", "minutes": 0, "title": "Full explanation (only if stuck)", "optional": true,
+                                             "body": .string(lect.map { "**\($0.str("title"))**\n\n\($0.str("body"))" }.joined(separator: "\n\n"))]
+            var kept: [[String: JSON]] = []
+            var placed = false
+            for x in steps {
+                if isLecture(x) { if !placed { kept.append(brief); placed = true } } else { kept.append(x) }
+            }
+            // A reading-only lesson still ends with doing: answer its key facts from memory.
+            if !kept.contains(where: { Course.doing.contains($0.str("kind")) }) && cards.count >= 2 {
+                let qs: [JSON] = cards.prefix(5).map { .object(["q": .string($0.str("front")), "a": .string($0.str("back"))]) }
+                kept.append(["kind": "exit", "minutes": 5, "title": "Answer from memory", "recall": true, "questions": .array(qs)])
+            }
+            kept.append(reference)
+            out["steps"] = .array(kept.map { .object($0) })
+            out["fullMinutes"] = l["minutes"] ?? .null
+            out["minutes"] = .number(kept.reduce(0) { $0 + $1.num("minutes") })
+            out["style"] = "do"
+        }
+        doCache[l.id] = out
+        return out
+    }
+
+    /// "I know this": done without sitting through it. Its review cards are still
+    /// scheduled, so anything not actually known shows up in review.
+    @discardableResult
+    func skipLesson(_ s: Store, _ id: String) -> (before: Row?, next: Row?) {
+        guard let l = lesson(s, id), !l.flag("virtual") else { return (nil, nil) }
+        let p = progress(s, id)
+        var row = p ?? [:]
+        row["id"] = .string(id); row["lessonId"] = .string(id); row["track"] = .string(l.str("track")); row["lane"] = .string(l.str("lane"))
+        row["week"] = l["week"] ?? .null
+        row["status"] = "done"; row["skipped"] = true; row["mastered"] = true
+        if row["score"] == nil { row["score"] = .null }
+        if row["startedAt"]?.string == nil { row["startedAt"] = .string(Store.isoNow()) }
+        row["completedAt"] = .string(Store.isoNow())
+        row["minutes"] = .number(p?.num("minutes") ?? 0)
+        s.put("courseProgress", row)
+        addCards(s, l)
+        if timer(s, for: id) != nil { resetTimer(s) }
+        return (p, nextInLane(s, l.str("lane")))
+    }
+    /// Lessons on things a working programmer already knows (course.json "basics"), not yet done.
+    func basicsLeft(_ s: Store) -> [Row] {
+        (meta["basics"]?.array ?? []).compactMap { $0.string }.compactMap { rawLesson(s, $0) }.filter { !completed(s, $0.id) }
+    }
+    @discardableResult
+    func skipBasics(_ s: Store) -> [(String, Row?)] {
+        let list = basicsLeft(s)
+        var before: [(String, Row?)] = []
+        for l in list { before.append((l.id, skipLesson(s, l.id).before)) }
+        return before
+    }
     func allLessons(_ s: Store) -> [Row] { idx(s); return Array(byId.values) }
 
     // MARK: Settings (kv "course")
