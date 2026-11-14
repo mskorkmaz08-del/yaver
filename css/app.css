@@ -1789,3 +1789,4 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 /* v64: learn by doing */
 .full-text > summary { list-style: none; cursor: pointer; display: inline-block; margin-bottom: 8px; }
 .full-text > summary::-webkit-details-marker { display: none; }
+.card[hidden] { display: none; }

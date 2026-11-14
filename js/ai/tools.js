@@ -201,6 +201,12 @@ const TOOLS = [
     input_schema: obj({ date }),
     run: async ({ date: k = today() }) => {
       await C.init();
+      if (C.selfPaced()) {
+        // No timetable: the plan is simply what comes next, in order of preference.
+        return { date: k, selfPaced: true, courseActive: C.active(), note: 'The course is self-paced: no set times, nothing is behind. Suggest the first of upNext; never mention schedules or being late.',
+          upNext: C.upNext(6).map(l => ({ lessonId: l.id, title: l.title, track: C.trackName(l.track), minutes: l.minutes, status: C.status(l.id) })),
+          lessons: C.totals(), cardsDue: C.dueCount(), deadlines: C.deadlines(14) };
+      }
       const d = C.day(k);
       return {
         date: k, week: d.week, phase: d.phaseName, consolidation: d.consolidation, courseActive: C.active(),

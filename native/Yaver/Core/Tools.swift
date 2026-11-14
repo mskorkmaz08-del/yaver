@@ -295,6 +295,18 @@ enum Tools {
             guard let p = s.plan() else { return .object(["plan": .null, "hint": "No plan loaded. The user can load the ML Engineer roadmap from the Study tab."]) }
             return .object(["title": .string(p.title), "week": num(Double(p.week)), "phase": .string(p.phase)])
 
+        case "get_course_today" where C.selfPaced(s):
+            // No timetable: the plan is simply what comes next, in order of preference.
+            let t = C.totals(s)
+            let next: [JSON] = C.upNext(s, 6).map { l in
+                .object(["lessonId": .string(l.id), "title": .string(l.str("title")), "track": .string(C.trackName(l.str("track"))), "minutes": num(l.num("minutes")), "status": .string(C.status(s, l.id))])
+            }
+            return .object(["date": .string(date), "selfPaced": true, "courseActive": .bool(C.active(s)),
+                            "note": "The course is self-paced: no set times, nothing is behind. Suggest the first of upNext; never mention schedules or being late.",
+                            "upNext": .array(next),
+                            "lessons": .object(["done": num(Double(t.done)), "total": num(Double(t.total)), "left": num(Double(t.left))]),
+                            "cardsDue": num(Double(C.dueCount(s))),
+                            "deadlines": .array(C.deadlines(s, within: 14).map { .object(["lessonId": .string($0.lesson.id), "title": .string($0.lesson.str("title")), "teachBy": .string($0.teachBy), "days": num(Double($0.days))]) })])
         case "get_course_today":
             let d = C.day(s, date)
             let slots: [JSON] = d.slots.filter { $0.type != "info" }.map { sl in

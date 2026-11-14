@@ -42,8 +42,12 @@ enum Reminders {
 
         let C = Course.shared
         if C.ready && C.active(s) {
-            if wd == 0 && C.weekOf(s) >= 1 { add("course", "Weekly test and ship today.") }
-            if let nb = C.nextBlock(s, at: now) {
+            if !C.selfPaced(s) && wd == 0 && C.weekOf(s) >= 1 { add("course", "Weekly test and ship today.") }
+            if C.selfPaced(s) {
+                if let nb = C.nextBlock(s, at: now) {
+                    add("course", "\(nb.slot.status == "in progress" ? "Continue" : "Next lesson"): \(C.slotTitle(nb.slot)) (\(nb.slot.minutes) min), whenever you're ready.")
+                }
+            } else if let nb = C.nextBlock(s, at: now) {
                 let when = nb.date == Day.today ? "" : nb.date == Day.add(Day.today, 1) ? "Tomorrow " : nb.date + " "
                 add("course", "\(when)\(nb.slot.start) · \(C.slotTitle(nb.slot))\(nb.slot.minutes > 0 ? " (\(nb.slot.minutes) min)" : "").")
             }
@@ -117,7 +121,8 @@ enum Notifications {
             if n >= 50 { break }
         }
         let C = Course.shared
-        if C.ready && C.active(s), let nb = C.nextBlock(s, at: now) {
+        // Self-paced: no block has a start time, so nothing to notify.
+        if C.ready && C.active(s) && !C.selfPaced(s), let nb = C.nextBlock(s, at: now) {
             let day = Day.date(nb.date)
             if let at = Day.cal.date(bySettingHour: Course.toMin(nb.slot.start) / 60, minute: Course.toMin(nb.slot.start) % 60, second: 0, of: day), at > now {
                 add(c, id: "course:next", title: C.slotTitle(nb.slot), body: "Starts now\(nb.slot.minutes > 0 ? " · \(nb.slot.minutes) min" : "").", at: at)

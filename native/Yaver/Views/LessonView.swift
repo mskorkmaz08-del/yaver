@@ -418,7 +418,8 @@ struct LessonView: View {
     }
 
     private func checkEarly(_ l: Row) {
-        if Double(pending.minutes ?? 0) < l.num("minutes") * 0.75 { askEarly = true } else { finish(l) }
+        // Self-paced: finishing fast is fine, no "are you sure".
+        if !Course.shared.selfPaced(store) && Double(pending.minutes ?? 0) < l.num("minutes") * 0.75 { askEarly = true } else { finish(l) }
     }
 
     private func finish(_ l: Row) {
@@ -526,6 +527,7 @@ extension View {
 struct ReviewView: View {
     @EnvironmentObject var store: Store
     @State private var flipped = false
+    @State private var reviewed = 0
     @State private var well = ""
     @State private var change = ""
     @State private var saved: String?
@@ -533,12 +535,14 @@ struct ReviewView: View {
     var body: some View {
         let _ = store.revision
         let C = Course.shared
-        let due = C.dueCards(store, limit: 200)
+        // Self-paced: after a break the pile can be big, so a sitting is at most 20 cards.
+        let all = C.dueCards(store, limit: 500)
+        let due = C.selfPaced(store) ? Array(all.prefix(max(0, 20 - reviewed))) : all
         let card = due.first
         let tomorrow = Day.add(Day.today, 1)
         let log = C.dayLog(store)
         Screen(title: "Review") {
-            Text("\(due.count) due · space reveals · 1 again · 2 hard · 3 good · 4 easy").font(.caption.monospaced()).foregroundStyle(Theme.muted)
+            Text("\(due.count)\(all.count > due.count ? " now · \(all.count - due.count) more for later" : " due") · space reveals · 1 again · 2 hard · 3 good · 4 easy").font(.caption.monospaced()).foregroundStyle(Theme.muted)
             if let card {
                 Card {
                     HStack(spacing: 6) {
@@ -550,7 +554,7 @@ struct ReviewView: View {
                         answerBox(card.str("back"))
                         HStack {
                             ForEach(Array(["again", "hard", "good", "easy"].enumerated()), id: \.offset) { n, g in
-                                Button { flipped = false; C.gradeCard(store, card.id, g) } label: {
+                                Button { flipped = false; reviewed += 1; C.gradeCard(store, card.id, g) } label: {
                                     Text("\(n + 1) \(g)").frame(maxWidth: .infinity)
                                 }
                                 .buttonStyle(.bordered)

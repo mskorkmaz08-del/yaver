@@ -52,9 +52,10 @@ export function reminders() {
 
   // Course: next block, cards, pace, teaching deadlines
   if (course) {
-    if (now.getDay() === 0 && C.weekOf() >= 1) out.push({ kind: 'course', text: 'Weekly test and ship today.' });
+    if (!C.selfPaced() && now.getDay() === 0 && C.weekOf() >= 1) out.push({ kind: 'course', text: 'Weekly test and ship today.' });
     const nb = C.nextBlock(now);
-    if (nb) out.push({ kind: 'course', text: `${nb.date === today() ? '' : nb.date === addDays(today(), 1) ? 'Tomorrow ' : nb.date + ' '}${nb.start} · ${C.slotTitle(nb)}${nb.minutes ? ` (${nb.minutes} min)` : ''}.`, open: nb.lesson ? `lesson/${nb.lesson.id}` : null });
+    if (nb?.selfPaced) out.push({ kind: 'course', text: `${nb.status === 'in progress' ? 'Continue' : 'Next lesson'}: ${C.slotTitle(nb)} (${nb.minutes} min), whenever you're ready.`, open: `lesson/${nb.lesson.id}` });
+    else if (nb) out.push({ kind: 'course', text: `${nb.date === today() ? '' : nb.date === addDays(today(), 1) ? 'Tomorrow ' : nb.date + ' '}${nb.start} · ${C.slotTitle(nb)}${nb.minutes ? ` (${nb.minutes} min)` : ''}.`, open: nb.lesson ? `lesson/${nb.lesson.id}` : null });
     const due = C.dueCount();
     if (due) out.push({ kind: 'course', text: `${due} review card${due > 1 ? 's' : ''} due.`, open: 'lesson/review' });
     for (const t of Object.values(C.pace()).filter(t => t.behind > 0).sort((a, b) => b.behind - a.behind).slice(0, 2)) {
