@@ -420,7 +420,7 @@ final class Course {
             out[tr] = t
         }
         // Self-paced: there is no plan to be behind.
-        if selfPaced(s) { for k in Array(out.keys) { out[k]?.expected = out[k]?.done ?? 0 } }
+        if selfPaced(s) { for k in Array(out.keys) { let d = out[k]?.done ?? 0; out[k]?.expected = d } }
         return out
     }
     /// green on plan, yellow less than a week behind, red more.
