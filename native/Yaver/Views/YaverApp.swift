@@ -122,7 +122,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var phase
     @ObservedObject private var chat = ChatModel.shared
     @ObservedObject private var nav = Nav.shared
-    private let tick = Timer.publish(every: 120, on: .main, in: .common).autoconnect()
+    private let tick = Timer.publish(every: 20, on: .main, in: .common).autoconnect()
 
     var body: some View {
         content
@@ -130,7 +130,7 @@ struct RootView: View {
             .onChange(of: phase) { p in
                 if p == .active { sync.syncNow(); checkUpdate(); refreshDevice() } else { store.flush() }
             }
-            .onReceive(tick) { _ in sync.syncNow() }
+            .onReceive(tick) { _ in sync.peek() }
             .sheet(isPresented: $nav.command) { CommandBar().environmentObject(store) }
             .sheet(item: $nav.sheet) { s in sheet(s).environmentObject(store) }
             .overlay(alignment: .bottom) { ToastView().padding(.bottom, 90).animation(.easeOut(duration: 0.2), value: nav.toast) }

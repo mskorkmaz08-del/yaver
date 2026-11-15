@@ -25,6 +25,11 @@ check(store.merge(["meals": [["id": "keep", "name": "Older", "updatedAt": "2001-
 check(store.merge(["meals": [["id": "keep", "name": "Newer", "updatedAt": "2999-01-01T00:00:00.000Z"]]]) == 1 && store.get("meals", "keep")?.str("name") == "Newer", "newer remote record wins")
 store.remove("meals", "keep")
 check(!store.syncPayload()["kv"]!.contains { $0.id == "deviceId" }, "deviceId stays on the device")
+let mine = store.syncPayload()
+check(!Sync.differs(mine, mine), "a copy equal to the synced one needs no upload")
+store.put("meals", ["id": "auto", "name": "Lunch", "date": "2026-11-15"])
+check(Sync.differs(store.syncPayload(), mine), "a new row on this device needs an upload")
+store.remove("meals", "auto")
 
 // 2. Dates: Monday week start.
 check(Day.weekStart("2026-11-11") == "2026-11-09" && Day.weekStart("2026-11-09") == "2026-11-09" && Day.weekStart("2026-11-15") == "2026-11-09", "weeks start on Monday")

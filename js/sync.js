@@ -74,6 +74,21 @@ function filesFor(text, existing = {}) {
   return files;
 }
 
+// Does this device hold anything the synced copy doesn't (a row or a delete with a
+// different stamp)? If not there is nothing to upload, and the gist stays untouched.
+export function differs(local, remote) {
+  for (const s of new Set([...Object.keys(local || {}), ...Object.keys(remote || {})])) {
+    const a = local?.[s] || [], b = remote?.[s] || [];
+    if (a.length !== b.length) return true;
+    const stamp = r => r.updatedAt || r.deletedAt || '';
+    const seen = new Map(b.map(r => [r.id, stamp(r)]));
+    for (const r of a) if (seen.get(r.id) !== stamp(r)) return true;
+  }
+  return false;
+}
+const version = g => g?.history?.[0]?.version || g?.updated_at || '';
+let seenVersion = '';
+
 const countRows = data => Object.entries(data || {}).reduce((a, [s, rows]) => a + (s === 'tombstones' ? 0 : rows.length), 0);
 
 async function autoBackup() {
@@ -118,6 +133,14 @@ async function run(confirmEmptyPush) {
       if (remote?.data && countRows(data) === 0 && countRows(remote.data) > 0) {
         if (!(await confirmEmptyPush?.())) { await setState('error', 'This device is empty and the synced copy is not. Nothing was uploaded.'); return { blocked: true }; }
       }
+      // Nothing new on this device: the pull was all there was to do.
+      if (g && remote?.data && !differs(data, remote.data)) {
+        seenVersion = version(g);
+        await db.setSetting('syncFirstDone', true);
+        await db.setSetting('syncLastAt', new Date().toISOString());
+        await setState('ok');
+        return { ok: true, pulled: true };
+      }
       const body = await encryptJSON({ app: 'yaver', deviceId: db.deviceId(), deviceName: deviceName(), at: new Date().toISOString(), data }, pass);
       if (!g) {
         g = await gh('/gists', { method: 'POST', body: JSON.stringify({ description: DESC, public: false, files: filesFor(body) }) });
@@ -128,6 +151,7 @@ async function run(confirmEmptyPush) {
         if (fresh.updated_at !== g.updated_at) continue;
         g = await gh(`/gists/${g.id}`, { method: 'PATCH', body: JSON.stringify({ files: filesFor(body, g.files) }) });
       }
+      seenVersion = version(g);
       await db.setSetting('syncFirstDone', true);
       await db.setSetting('syncLastAt', new Date().toISOString());
       await setState('ok');
@@ -232,6 +256,19 @@ export async function turnOff({ forget = false } = {}) {
   await setState('off');
 }
 
+// The cheap look: one tiny request asking for the gist's latest version. Only when
+// another device has uploaded since our last sync does a full sync run.
+export async function peek() {
+  const id = S('syncGistId', '');
+  if (!configured() || running || !id || !seenVersion) return syncNow();
+  const list = await gh(`/gists/${id}/commits?per_page=1`);
+  const v = list?.[0]?.version || '';
+  if (v && v !== seenVersion) return syncNow();
+  return { same: true };
+}
+
+const PUSH_AFTER = 2000;   // after a change on this device
+const LOOK_EVERY = 20000;  // look for the other devices' changes
 let timer;
 export function initSync() {
   paintDot();
@@ -240,13 +277,13 @@ export function initSync() {
     if (merging || !configured() || store === 'chats') return;
     if (store === 'kv' && db.isLocalKey(String(id))) return;
     clearTimeout(timer);
-    timer = setTimeout(kick, 10000);
+    timer = setTimeout(kick, PUSH_AFTER);
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(); });
   window.addEventListener('online', kick);
   setTimeout(kick, 1500);
   setInterval(paintDot, 60000);
-  // While Yaver stays open, look for the other devices' changes every two minutes
-  // (lesson progress logged in the native app shows up without reopening).
-  setInterval(() => { if (!document.hidden && navigator.onLine !== false) kick(); }, 120000);
+  // While Yaver is open, look for the other devices' changes every 20 seconds, so a
+  // meal typed on the phone or a lesson finished in the native app shows up by itself.
+  setInterval(() => { if (!document.hidden && navigator.onLine !== false && configured()) peek().catch(() => {}); }, LOOK_EVERY);
 }

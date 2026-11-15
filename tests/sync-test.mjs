@@ -14,13 +14,16 @@ const uploads = [];
 let n = 0;
 const TOKEN = 'github_pat_TESTTOKEN0123456789';
 const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS' };
-const view = g => ({ id: g.id, description: g.description, public: false, updated_at: g.updated_at, files: Object.fromEntries(Object.entries(g.files).map(([k, v]) => [k, { filename: k, content: v, truncated: false, raw_url: `https://gist.example/${g.id}/${k}` }])) });
+const view = g => ({ history: [{ version: g.updated_at }], id: g.id, description: g.description, public: false, updated_at: g.updated_at, files: Object.fromEntries(Object.entries(g.files).map(([k, v]) => [k, { filename: k, content: v, truncated: false, raw_url: `https://gist.example/${g.id}/${k}` }])) });
+let peeks = 0;
 async function github(route) {
   const req = route.request();
   const json = (status, body) => route.fulfill({ status, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(body) });
   if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
   if (req.headers().authorization !== `Bearer ${TOKEN}`) return json(401, { message: 'Bad credentials' });
   const url = new URL(req.url());
+  const cm = url.pathname.match(/^\/gists\/(\w+)\/commits$/);
+  if (cm) { peeks++; const g = gists.get(cm[1]); return g ? json(200, [{ version: g.updated_at }]) : json(404, { message: 'Not Found' }); }
   const m = url.pathname.match(/^\/gists(?:\/(\w+))?$/);
   if (!m) return json(404, { message: 'Not Found' });
   const stamp = () => new Date(Date.UTC(2026, 9, 20, 6, 0, ++n)).toISOString();
@@ -160,6 +163,24 @@ const phoneNotes = await run(phone, async () => (await import('./js/db.js')).all
 check(r?.ok && lapNotes.includes('Laptop tea') && phoneNotes.includes('Laptop tea') && lapNotes.join() === phoneNotes.join(), 'Joining with the code merges both ways', `${JSON.stringify(r)} ${lapNotes.join(',')}`);
 const bad = await run(lap, async () => { const s = await import('./js/sync.js'); try { await s.join('hello'); } catch (e) { return e.message; } });
 check(/not a Yaver sync code/.test(bad || ''), 'A wrong code is refused plainly');
+
+// Automatic sync: nothing new means nothing is uploaded; the cheap look pulls the other device's change by itself.
+await syncNow(lap); await syncNow(phone);
+let ups = uploads.length;
+r = await syncNow(phone);
+check(r?.ok && r.pulled && uploads.length === ups, 'A sync with nothing new on this device uploads nothing', JSON.stringify(r));
+const peek = d => run(d, async () => { const s = await import('./js/sync.js'); try { return await s.peek(); } catch (e) { return { error: e.message }; } });
+const p0 = peeks;
+r = await peek(phone);
+check(r?.same && peeks === p0 + 1 && uploads.length === ups, 'The background look is one small request when nothing changed', JSON.stringify(r));
+await run(lap, async () => { const D = await import('./js/data.js'); await D.addExpense({ amount: 7, category: 'Food', note: 'Auto lunch', date: '2026-10-21' }); });
+await syncNow(lap);
+ups = uploads.length;
+r = await peek(phone);
+const got = await run(phone, async () => (await import('./js/db.js')).all('expenses').some(e => e.note === 'Auto lunch'));
+check(r?.ok && got && uploads.length === ups, 'The background look brings in the other device\'s change with no upload', JSON.stringify(r));
+r = await peek(phone);
+check(r?.same, 'Then it is quiet again', JSON.stringify(r));
 
 // First-device setup with a new key (auto passphrase): an old copy it can't open is kept, renamed, never overwritten.
 const gistsBefore = gists.size;
