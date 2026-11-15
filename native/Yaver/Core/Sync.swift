@@ -24,6 +24,8 @@ final class Sync: ObservableObject {
     private let defaults: UserDefaults
     private var running: Task<Void, Never>?
     private var debounce: DispatchWorkItem?
+    /// The gist version this device last pulled or pushed (see peek()).
+    private var seenVersion = ""
 
     init(store: Store, defaults: UserDefaults = .standard) {
         self.store = store
@@ -138,12 +140,44 @@ final class Sync: ObservableObject {
     // MARK: Running a sync
 
     /// Sync in ten seconds (local edits come in bursts).
+    /// Does this device hold anything the synced copy doesn't (a row or a delete with
+    /// a different stamp)? If not there is nothing to upload and the gist stays untouched.
+    static func differs(_ local: [String: [Row]], _ remote: [String: [Row]]) -> Bool {
+        func stamp(_ r: Row) -> String { let u = r.str("updatedAt"); return u.isEmpty ? r.str("deletedAt") : u }
+        for s in Set(local.keys).union(remote.keys) {
+            let a = local[s] ?? []
+            let b = remote[s] ?? []
+            if a.count != b.count { return true }
+            var seen: [String: String] = [:]
+            for r in b { seen[r.id] = stamp(r) }
+            for r in a where seen[r.id] != stamp(r) { return true }
+        }
+        return false
+    }
+    private static func version(_ g: JSON?) -> String {
+        g?["history"]?.array?.first?["version"]?.string ?? g?["updated_at"]?.string ?? ""
+    }
+
+    /// The cheap look: one tiny request for the gist's latest version. Only when another
+    /// device has uploaded since our last sync does a full sync run.
+    func peek() {
+        guard configured, running == nil else { return }
+        let id = gistId
+        let seen = seenVersion
+        if id.isEmpty || seen.isEmpty { syncNow(); return }
+        Task { @MainActor in
+            guard let list = try? await self.gh("/gists/\(id)/commits?per_page=1") else { return }
+            let v = list.array?.first?["version"]?.string ?? ""
+            if !v.isEmpty && v != seen { self.syncNow() }
+        }
+    }
+
     func soon() {
         guard configured else { return }
         debounce?.cancel()
         let w = DispatchWorkItem { [weak self] in self?.syncNow() }
         debounce = w
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: w)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: w)
     }
 
     func syncNow() {
@@ -180,6 +214,16 @@ final class Sync: ObservableObject {
                     set(.error, "This device is empty and the synced copy is not. Nothing was uploaded.")
                     return
                 }
+                // Nothing new on this device: the pull was all there was to do.
+                if let gist = g, let r = remote, r["data"] != nil, !Sync.differs(data, Store.rows(from: r["data"])) {
+                    seenVersion = Sync.version(gist)
+                    defaults.set(true, forKey: "syncFirstDone")
+                    lastAt = Date()
+                    defaults.set(lastAt, forKey: "syncLastAt")
+                    store.flush()
+                    set(.ok)
+                    return
+                }
                 let payload: JSON = .object([
                     "app": "yaver", "deviceId": .string(store.deviceId), "deviceName": .string(deviceName), "at": .string(Store.isoNow()),
                     "data": .object(data.mapValues { .array($0.map { .object($0) }) }),
@@ -190,9 +234,11 @@ final class Sync: ObservableObject {
                     let fresh = try await gh("/gists/\(id)")
                     if fresh["updated_at"]?.string != gist["updated_at"]?.string { continue }
                     g = try await gh("/gists/\(id)", method: "PATCH", body: .object(["files": Sync.files(for: body, existing: gist["files"]?.object ?? [:])]))
+                    seenVersion = Sync.version(g)
                 } else {
                     let made = try await gh("/gists", method: "POST", body: .object(["description": .string(Sync.desc), "public": false, "files": Sync.files(for: body)]))
                     defaults.set(made["id"]?.string ?? "", forKey: "syncGistId")
+                    seenVersion = Sync.version(made)
                 }
                 defaults.set(true, forKey: "syncFirstDone")
                 lastAt = Date()
