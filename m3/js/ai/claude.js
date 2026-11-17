@@ -1,0 +1,188 @@
+// Talking to Claude. The phone calls the Anthropic API directly with the
+// user's own key: there is no Yaver server in between.
+//
+// The "agent loop": send the conversation + tool list -> Claude answers with
+// text and/or tool calls -> we run the tools on the phone -> send results back
+// -> repeat until Claude is done. Replies stream in word by word.
+import Anthropic from '../../../vendor/anthropic-sdk.js';
+import * as db from '../db.js';
+import { toolDefinitions, runTool, WRITE_TOOLS, describeAction } from './tools.js';
+
+export const MODELS = [
+  ['claude-opus-5-5', 'Claude Opus 5.5 · smartest'],
+  ['claude-sonnet-5-5', 'Claude Sonnet 5.5 · fast & smart'],
+  ['claude-haiku-5-5', 'Claude Haiku 5.5 · fastest & cheapest'],
+];
+
+export const STATIC_SYSTEM = `You are Yaver (Turkish for "aide"), a personal assistant inside the user's app (Yaver M III), on their phone, tablet or computer.
+The app tracks the user's study program, expenses, meetings, study sessions and streak, daily habits (the çetele list), diet and to-dos, body and training, the people they meet with, and finds places nearby. You can read and change all of it with your tools. When the user says they feel weak, tired or unwell, check diet_history for what they have been eating (with meal times and how they felt on following mornings; record how they feel with log_feeling): name likely gaps plainly, suggest foods, say what the data cannot show, and tell them to see a doctor for anything serious or lasting. For weight, body fat, muscle gain or "what will this do to my body", use body_status (estimates from standard formulas: say so), log_weight when they tell you their weight, and log_workout when they say they trained. When briefing them or asked how they are doing, check get_insights and say what the data shows, plainly, with the numbers. Meetings marked "from: Apple Calendar" come from the user's Mac Calendar app: count them for clashes and free time, but they are read only here.
+
+The study program is the user's own: they chose the subjects, topics, their level and priority, the days and times, and the session length (get_study_program). Each topic is one lesson. Lessons start as a simple plan (learn, do it yourself, exit ticket) and can be written in full with save_lessons. The program adapts: subjects with weak scores, lessons to redo or "too hard" ratings get more of the week. Help them learn, not just finish: use get_course_today, get_lesson, get_course_progress and get_review_cards to see what is next, their pace and weak spots. When they want to learn something new or change their plan, build it with them and save it with set_study_program; propose, then save once they agree. Never assume a goal, subject or schedule they did not choose.
+
+How to work:
+- Act when intent is clear: "spent 120 on lunch" means call add_expense now; "meeting with Ayşe tomorrow at 3" means check list_meetings for a clash, then add_meeting; "I finished the chapter on loops" means log it and complete the lesson or milestone.
+- Look before answering questions about the user's data (get_overview or the specific tool). Never invent numbers.
+- Habits: "read 4 pages", "did my workout", "drank 2 glasses" means call log_cetele now when the item exists. Respect whatever the user tracks; don't preach or add commentary about it unless asked.
+- A photo of food: estimate and log the meal. A receipt: log the expense. A page of notes or code: explain it or quiz on it.
+- For "where can I find / near me" questions use find_places and give the closest useful options with distance.
+- For questions about the wider world answer from knowledge, and use web search when recent information matters.
+- Tone: plain, direct and factual, like a sharp colleague. No hype, no cheerleading, no motivational slogans, no emojis. State the fact and the next step ("Streak is 6 days; 15 minutes today keeps it.").
+- You may be read on a phone: lead with the answer, keep it short, short bullet lists when listing, no tables. Code in fenced blocks.
+- Teach, don't do. Hints before answers; give a full solution only after they have made an attempt and ask for it. Pitch explanations at the level they set for the subject.
+- Never suggest cutting sleep to study more; sleep is when the day's learning is consolidated.
+- Reply in the language the user writes in.`;
+
+export function dynamicContext() {
+  const name = db.setting('userName', '');
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const d = new Date();
+  return `Current local date and time: ${d.toLocaleString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} (${tz}). Today is ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.
+User's name: ${name || 'unknown'}. Currency: ${db.setting('currency', 'TRY')}.${(p => (p?.title ? `\nStudy program: ${p.title}${p.goal ? ` (goal: ${p.goal})` : ''}, subjects: ${(p.subjects || []).map(s => s.name).join(', ')}.` : '\nNo study program yet.'))(db.setting('program', null))}${db.setting('aboutMe', '') ? `\nAbout the user, in their words: ${db.setting('aboutMe', '')}` : ''}`;
+}
+
+let client, clientKey;
+function getClient() {
+  const key = db.setting('apiKey', '');
+  if (!key) throw Object.assign(new Error('No Claude key yet. Paste your free Gemini key (or a Claude key) in Settings → AI.'), { code: 'nokey' });
+  if (!client || clientKey !== key) {
+    // The key never leaves this phone except to go to api.anthropic.com.
+    client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true, maxRetries: 2 });
+    clientKey = key;
+  }
+  return client;
+}
+
+// Optional features we turn off for the rest of the session if the account rejects them.
+const disabled = { fallbacks: false, webSearch: false };
+
+function buildParams(messages) {
+  const tools = [...toolDefinitions];
+  if (db.setting('webSearch', true) && !disabled.webSearch) {
+    tools.push({ type: 'web_search_20260209', name: 'web_search', max_uses: 3 });
+  }
+  const params = {
+    model: db.setting('model', 'claude-opus-5-5'),
+    max_tokens: 16000,
+    thinking: { type: 'adaptive' },
+    output_config: { effort: db.setting('effort', 'low') },
+    // Tools + the fixed instructions are cached (cheaper, faster); the clock and profile come after the cache point.
+    system: [
+      { type: 'text', text: STATIC_SYSTEM, cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: dynamicContext() },
+    ],
+    tools,
+    messages,
+  };
+  if (!disabled.fallbacks) {
+    // If a safety check declines a request, let Anthropic retry it on a fallback model automatically.
+    params.betas = ['server-side-fallback-2026-07-01'];
+    params.fallbacks = 'default';
+  }
+  return params;
+}
+
+/**
+ * Run one user turn. `messages` is the stored conversation (API format) and is
+ * appended to in place. Callbacks:
+ *   onText(fullTextSoFar)  – streaming text of the current reply
+ *   onAction(label)        – a tool changed data ("Added 120 · Food")
+ *   onStatus(text)         – what Yaver is doing ("Checking your calendar…")
+ */
+export async function runTurn(messages, { onText, onAction, onStatus, signal } = {}) {
+  const c = getClient();
+  let text = '';
+  for (let step = 0; step < 12; step++) {
+    let final;
+    try {
+      final = await streamOnce(c, messages, delta => { text += delta; onText?.(text); }, signal, onStatus);
+    } catch (e) {
+      throw friendlyError(e);
+    }
+    // Keep Claude's whole reply (thinking blocks included) exactly as returned.
+    messages.push({ role: 'assistant', content: final.content });
+
+    if (final.stop_reason === 'refusal') {
+      text += (text ? '\n\n' : '') + "I can't help with that one.";
+      onText?.(text);
+      return { text, changed: false };
+    }
+    if (final.stop_reason === 'pause_turn') continue; // long web search: let Claude carry on
+    if (final.stop_reason === 'max_tokens' && !final.content.some(b => b.type === 'tool_use')) break;
+
+    const calls = final.content.filter(b => b.type === 'tool_use');
+    if (!calls.length) break;
+
+    // Run every tool Claude asked for, then return all results in one message.
+    const results = [];
+    for (const call of calls) {
+      onStatus?.(statusFor(call.name));
+      const out = await runTool(call.name, call.input);
+      if (WRITE_TOOLS.has(call.name) && !out?.error) {
+        const label = describeAction(call.name, call.input);
+        if (label) onAction?.(label);
+      }
+      results.push({ type: 'tool_result', tool_use_id: call.id, content: JSON.stringify(out), ...(out?.error ? { is_error: true } : {}) });
+    }
+    messages.push({ role: 'user', content: results });
+    if (text && !text.endsWith('\n')) { text += '\n\n'; }
+  }
+  onStatus?.('');
+  return { text: text.trim() };
+}
+
+async function streamOnce(c, messages, onDelta, signal, onStatus) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const params = buildParams(messages);
+    try {
+      const stream = c.beta.messages.stream(params, { signal });
+      stream.on('text', d => { onStatus?.(''); onDelta(d); });
+      stream.on('streamEvent', ev => {
+        if (ev.type === 'content_block_start' && ev.content_block.type === 'server_tool_use') onStatus?.('Searching the web…');
+        if (ev.type === 'content_block_start' && ev.content_block.type === 'thinking') onStatus?.('Thinking…');
+      });
+      return await stream.finalMessage();
+    } catch (e) {
+      // Older accounts may not have every feature: drop it and retry once.
+      const msg = String(e?.message || '');
+      if (e instanceof Anthropic.BadRequestError) {
+        if (!disabled.fallbacks && /fallback|beta/i.test(msg)) { disabled.fallbacks = true; continue; }
+        if (!disabled.webSearch && /web_search|web search/i.test(msg)) { disabled.webSearch = true; continue; }
+      }
+      throw e;
+    }
+  }
+  throw new Error('Could not reach Claude.');
+}
+
+export function statusFor(name) {
+  if (name.includes('meeting')) return 'Checking your calendar…';
+  if (name.includes('expense')) return 'Updating your expenses…';
+  if (name.includes('study')) return 'Looking at your studies…';
+  if (name.includes('meal') || name.includes('diet')) return 'Updating your diet log…';
+  if (name.includes('task')) return 'Updating your tasks…';
+  if (name.includes('team') || name.includes('person')) return 'Checking your teams…';
+  return 'Looking at your day…';
+}
+
+function friendlyError(e) {
+  if (e?.code === 'nokey') return e;
+  if (e?.name === 'AbortError' || e instanceof Anthropic.APIUserAbortError) return Object.assign(new Error('Stopped.'), { code: 'abort' });
+  if (e instanceof Anthropic.AuthenticationError) return new Error('Your API key was rejected. Check it in Settings.');
+  if (e instanceof Anthropic.PermissionDeniedError) return new Error('This API key is not allowed to use that model. Try another model in Settings.');
+  if (e instanceof Anthropic.RateLimitError) return new Error('Too many requests right now (or your API credit ran out). Try again in a moment.');
+  if (e instanceof Anthropic.APIConnectionError) return new Error(navigator.onLine ? 'Could not reach Claude. Check your connection.' : 'You are offline. Your trackers still work; Yaver needs internet to think.');
+  if (e instanceof Anthropic.InternalServerError) return new Error('Claude is having a moment (server error). Try again.');
+  if (e instanceof Anthropic.APIError) return new Error(e.message || 'Claude returned an error.');
+  return e instanceof Error ? e : new Error(String(e));
+}
+
+// Quick key check for the Settings screen.
+export async function testKey() {
+  const c = getClient();
+  try {
+    await c.models.retrieve(db.setting('model', 'claude-opus-5-5'));
+    return true;
+  } catch (e) {
+    throw friendlyError(e);
+  }
+}
