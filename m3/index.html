@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>Yaver</title>
+  <meta name="description" content="Yaver M III: your study program, money, meetings, food, habits and an AI assistant, on phone, iPad and computer.">
+  <meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Yaver">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="modulepreload" href="../vendor/anthropic-sdk.js">
+  <script>
+    // Theme before first paint, so a light or dark choice never flashes the other one.
+    try { const t = localStorage.getItem('yaverTheme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; const a = localStorage.getItem('yaverAccent'); if (a) document.documentElement.dataset.accent = a; } catch {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#view">Skip to content</a>
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <button id="fab" class="fab" aria-label="Ask Yaver"><span class="fab-gear" data-gear="button" aria-hidden="true"></span></button>
+
+  <span id="sync-dot" class="sync-dot" hidden></span>
+
+  <div id="topbar" class="topbar" aria-hidden="true"><span></span></div>
+
+  <nav class="tabbar" aria-label="Sections">
+    <div class="side-brand wide-only"><span class="brand-gear" data-gear="button" aria-hidden="true"></span><b class="wordmark">Yaver</b><small class="edition">M III</small></div>
+    <i class="tab-mark" aria-hidden="true"></i>
+    <button data-tab="home"></button>
+    <button data-tab="study"></button>
+    <span class="fab-gap" aria-hidden="true"></span>
+    <button data-tab="calendar"></button>
+    <button class="wide-only" data-tab="money"></button>
+    <button class="wide-only" data-tab="diet"></button>
+    <button class="wide-only" data-tab="cetele"></button>
+    <button class="wide-only" data-tab="body"></button>
+    <button class="wide-only" data-tab="teams"></button>
+    <button class="wide-only" data-tab="map"></button>
+    <button class="wide-only" data-tab="skills"></button>
+    <button class="phone-only" data-more></button>
+    <div class="side-gauge side-only" data-gauge></div>
+    <button class="side-ask wide-only" data-ask></button>
+    <button class="side-cmd side-only" data-cmd></button>
+    <button class="wide-only nav-settings" data-tab="settings"></button>
+  </nav>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

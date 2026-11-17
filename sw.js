@@ -1,6 +1,6 @@
 // Service worker: keeps a copy of the app on the phone so Yaver opens
 // instantly and works offline. Bump VERSION whenever app files change.
-const VERSION = 'yaver-v66';
+const VERSION = 'yaver-v67';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js', 'js/applecal.js', 'js/teams.js', 'js/insights.js', 'js/nutrients.js', 'js/body.js', 'js/training.js', 'js/anatomy.js', 'js/foodscan.js', 'js/foodgaps.js', 'js/dietlog.js', 'js/views/teams.js', 'js/views/body.js',
@@ -22,7 +22,7 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && !k.startsWith('yaver-m3-')).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', e => {
@@ -32,6 +32,8 @@ self.addEventListener('fetch', e => {
   // Yaver Studio (/studio/) is a separate page with its own cache busting;
   // the fallback below ignores ?v= and could hand it stale files.
   if (url.pathname.includes('/studio/')) return;
+  // Yaver M III (/m3/) is a separate app with its own service worker and cache (v67).
+  if (url.pathname.includes('/m3/')) return;
   // Network first, so updates show up on the next open; the saved copy is the
   // offline fallback (and is used if the network takes longer than 3 seconds).
   e.respondWith(caches.open(VERSION).then(async cache => {
