@@ -127,9 +127,10 @@ await page.waitForSelector('.food-sheet [data-log]', { timeout: 10000 });
 const treq = research.body.contents[0].parts;
 check('typed meal sends only the words', treq.length === 1 && !treq[0].inlineData && /2 eggs and black tea with 1 sugar/.test(treq[0].text) && /The user wrote what they ate/.test(treq[0].text));
 const nMeals = await page.evaluate(async () => (await import('./js/db.js')).all('meals').length);
-await page.click('.food-sheet [data-log]');
-await page.waitForTimeout(400);
-check('typed meal is logged', await page.evaluate(async n => (await import('./js/db.js')).all('meals').length === n + 1, nMeals));
+// v68: tapping Log several times fast saves the meal once.
+await page.evaluate(() => { const b = document.querySelector('.food-sheet [data-log]'); for (let i = 0; i < 5; i++) b.click(); });
+await page.waitForTimeout(600);
+check('typed meal is logged once, even with repeated taps', await page.evaluate(async n => (await import('./js/db.js')).all('meals').length === n + 1, nMeals));
 check('suggestions offer an update after more food', /Update/.test(await page.textContent('[data-tips]')));
 
 // The chat also moves to a backup model when the main one is overloaded.

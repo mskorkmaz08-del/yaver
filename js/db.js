@@ -85,9 +85,12 @@ export async function put(store, row) {
   if (!row.createdAt) row.createdAt = now;
   row.updatedAt = now;
   row.deviceId = device;
+  // v68: the screen updates as soon as the row is in memory. On iPhone, IndexedDB can
+  // stall for a while; waiting on it before redrawing made saves look like they did nothing.
+  mem[store].set(row.id, row);
+  notify(store, row.id);
   await write(store, row);
   if (mem.tombstones.has(`${store}/${row.id}`)) await dropTombstone(`${store}/${row.id}`);
-  notify(store, row.id);
   return row;
 }
 
