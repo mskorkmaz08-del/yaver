@@ -1,0 +1,279 @@
+import * as db from '../db.js';
+import * as D from '../data.js';
+import * as CT from '../cetele.js';
+import { html, raw, money, timeHM, today, fmtDay, dayKey, addDays, weekStart, toast, haptic } from '../util.js';
+import { stepStrip, cetDial, arc } from '../ui.js';
+import * as C from '../course.js';
+import { icon } from '../icons.js';
+import { reminders } from '../reminders.js';
+import { expenseForm, meetingForm, openEvent, studyForm, mealForm, taskForm } from '../forms.js';
+import { openAssistant } from '../ai/assistant.js';
+import { hasKey as aiReady, saveKey } from '../ai/provider.js';
+import { openCommand, logCetele } from '../command.js';
+import { onComputer, macOnline, BRIDGE_CMD } from '../ai/mac.js';
+import * as SK from '../skills.js';
+import * as IN from '../insights.js';
+
+// The player card in small: the hexagon, the overall rating and what moved lately.
+// Insights (v60): only when the data shows something; the top three, most important first.
+function insightCard() {
+  const list = IN.all();
+  if (!list.length) return '';
+  return html`<section class="plate card insights">
+    <div class="card-head"><p class="eyebrow">Insights</p>${raw(list.length > 3 ? html`<span class="small muted">${list.length - 3} more · Ask Yaver</span>` : '')}</div>
+    ${raw(list.slice(0, 3).map(i => html`<div class="insight lv${i.level}">
+      <button class="in-main" data-go="${i.go}"><span class="in-area">${i.area}</span><span class="in-text">${i.text}</span></button>
+      <div class="in-acts">${raw(i.ask ? html`<button class="chip" data-in-ask="${i.id}">${raw(icon('sparkle'))} Why?</button>` : '')}<button class="icon-btn" data-in-hide="${i.id}" aria-label="Hide for today">${raw(icon('close'))}</button></div>
+    </div>`).join(''))}
+  </section>`;
+}
+
+function skillCard() {
+  const s = SK.summary();
+  const gain = s.overall - s.overallThen;
+  const up = s.areas.filter(a => a.form === 'up').map(a => a.name);
+  return html`<button class="plate sk-home" data-go="skills">
+    ${raw(SK.radar(s, { size: 150, labels: false }))}
+    <span class="sk-home-t"><span class="eyebrow">Skills · level ${s.level}</span><b><span class="mono">${s.overall}</span> overall</b><small>${gain > 0 ? `+${gain} in 4 weeks` : 'Every lesson and count adds up'}${up.length ? ` · rising: ${up.slice(0, 2).join(', ')}` : ''}</small></span>
+    ${raw(icon('chevronRight'))}
+  </button>`;
+}
+
+const greeting = h => (h >= 4 && h < 12 ? 'Good morning' : h < 18 && h >= 12 ? 'Good afternoon' : 'Good evening');
+// One line under the greeting: what's open today, in plain words.
+function dayLine(ct, nextMeet, due) {
+  const bits = [];
+  const left = ct.rows.filter(r => !r.met && r.per !== 'week').length;
+  if (ct.rows.length) bits.push(left ? `${left} habit${left > 1 ? 's' : ''} open` : 'Habits done');
+  if (nextMeet && dayKey(new Date(nextMeet.start)) === today()) bits.push(`${nextMeet.title} at ${timeHM(nextMeet.start)}`);
+  if (due) bits.push(`${due} card${due > 1 ? 's' : ''} to review`);
+  return bits.join(' · ') || 'Nothing urgent today.';
+}
+
+// The head line: weekday, date and a running clock, like the date window on a chronograph.
+export const headDate = (d = new Date()) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '').toUpperCase();
+
+const STEP_NAME = { warmup: 'Recall', example: 'Example', exit: 'Exit', teachnotes: 'Notes', reflect: 'Reflect' };
+export const stepName = s => STEP_NAME[s.kind] || (s.kind ? s.kind[0].toUpperCase() + s.kind.slice(1) : s.title);
+
+// No program yet: the one thing to do first.
+function studyHero() {
+  return html`
+    <button class="plate next hero-next" data-go="program/new">
+      <p class="meta"><b>Study</b><span>a few minutes to set up</span></p>
+      <h2>Build your study program</h2>
+      <p class="small">Pick what you want to learn and when. Yaver makes the lessons, plans your week and adapts as you go.</p>
+      <span class="btn primary">Start ${raw(icon('arrowRight'))}</span>
+    </button>`;
+}
+
+// The next study session: what, when, its steps, and a way in.
+let nextTarget = null;
+function nextPlate() {
+  nextTarget = null;
+  if (!C.ready() || !C.active()) return '';
+  const nb = C.nextBlock();
+  if (!nb) return '';
+  const l = nb.lesson ? C.lesson(nb.lesson.id) : null;
+  const target = l ? `lesson/${l.id}` : nb.type === 'review' || nb.type === 'plan' ? 'lesson/review' : nb.special === 'test' ? 'lesson/test' : nb.special === 'ship' ? 'lesson/ship' : null;
+  const when = nb.selfPaced ? (nb.status === 'in progress' ? 'continue' : 'next up') : nb.date === today() ? nb.start : nb.date === addDays(today(), 1) ? `tomorrow ${nb.start}` : `${fmtDay(nb.date)} ${nb.start}`;
+  nextTarget = target;
+  const p = l ? C.progress(l.id) || {} : {};
+  const done = new Set(p.stepsDone || []);
+  const steps = l?.steps || [];
+  const cur = steps.findIndex((_, i) => !done.has(i));
+  return html`
+    <section class="plate next">
+      <span class="next-train" data-train aria-hidden="true"></span>
+      <p class="meta"><b>Next · ${when}</b>${raw(l ? html`<span>${l.track === 'mixed' ? 'mixed' : C.trackName(l.track)} · ${l.minutes} min</span>` : '')}</p>
+      <h2>${l ? l.title : C.slotTitle(nb)}</h2>
+      ${raw(steps.length ? stepStrip(steps.map(stepName), done, { current: cur, names: true }) : '')}
+      ${raw(target ? html`<div class="btn-row"><button class="btn primary" data-go="${target}">${p.stepsDone?.length || p.status === 'in progress' ? 'Resume' : 'Begin'} ${raw(icon('arrowRight'))}</button>${raw(l ? html`<button class="btn ghost" data-focus-lesson="${target}">${raw(icon('target'))} Focus</button>` : '')}</div>` : '')}
+    </section>`;
+}
+
+export function weekSegments(perDay, goal) {
+  const ws = weekStart();
+  return `<div class="segs">${Array.from({ length: 7 }, (_, i) => {
+    const k = addDays(ws, i);
+    const v = perDay[k] || 0;
+    const cls = v >= goal ? 'on' : v > 0 ? 'part' : '';
+    return `<i class="${cls} ${k === today() ? 'today' : ''}">${'MTWTFSS'[i]}</i>`;
+  }).join('')}</div>`;
+}
+
+// Çetele: the dial, and each minimum as a line with its own small gauge.
+export function ceteleMins(ct, { limit = 8 } = {}) {
+  return ct.rows.slice(0, limit).map(r => {
+    const f = r.met ? 1 : r.target ? Math.min(1, r.progress / r.target) : 0;
+    return html`<div class="m ${raw(r.met ? 'met' : '')}" style="--w:${raw((f * 100).toFixed(1))}%"><span>${r.name}</span><span>${CT.isCheck(r) ? (r.met ? 'done' : 'open') : `${r.progress}/${r.target}${r.per === 'week' ? ' wk' : ''}`}</span><i></i></div>`;
+  }).join('');
+}
+
+export function render(root, go) {
+  const hasKey = aiReady();
+  const m = D.moneySummary();
+  const s = D.studySummary();
+  const d = D.dietDay();
+  const upcoming = D.upcomingEvents(4);
+  const tasks = D.openTasks().slice(0, 6);
+  const nx = nextPlate();
+  // Today lists only what the plates above don't already show (Çetele, the next lesson, the next meeting).
+  const notes = reminders().filter(n => n.kind !== 'cetele' && n.kind !== 'meeting' && !(nextTarget && n.kind === 'course' && n.open === nextTarget));
+  const SHOW = 3;
+  const ct = CT.day();
+  const cs = CT.streak();
+  const now = new Date();
+  const course = C.ready() && C.active();
+  const next = upcoming.find(e => new Date(e.end || e.start) > now);
+  const weekGoalH = Math.round(s.dailyGoalMin * 7 / 60);
+  const due = course ? C.dueCount() : 0;
+
+  // Morning is for the minimums, the rest of the day for the next lesson: whichever matters now
+  // comes first.
+  const hour = now.getHours();
+  const open = ct.rows.filter(r => !r.met).slice(0, 4);
+  const ctPlate = html`
+    <section class="ct-wrap">
+      <button class="plate ct-plate" data-go="cetele">
+        <span class="ct-train" data-train aria-hidden="true"></span>
+        ${raw(cetDial(ct.rows.filter(r => r.per !== 'week')))}
+        <div class="mins">
+          <div class="mins-h"><b>Habits</b><span class="eyebrow">${cs.current} day streak</span></div>
+          ${raw(ceteleMins(ct))}
+        </div>
+      </button>
+      ${raw(open.length ? html`<div class="ct-quick" aria-label="Log a minimum">${raw(open.map(r => html`<button class="chip" data-log="${r.id}">${raw(CT.isCheck(r) ? icon('check') : '')}${r.name}${raw(CT.isCheck(r) ? '' : html`<b>+${Number(r.step) || 1}</b>`)}</button>`).join(''))}</div>` : '')}
+    </section>`;
+
+  root.innerHTML = html`
+    <header class="home-head">
+      <span class="brand-gear" data-gear="button" aria-hidden="true"></span>
+      <b class="wordmark">Yaver</b>
+      <button class="icon-btn" data-go="settings" aria-label="Settings">${raw(icon('settings'))}</button>
+    </header>
+    <header class="hello">
+      <p class="clock" data-clock><i class="tick"></i>${headDate(now)} · <span data-hm>${timeHM(now)}</span></p>
+      <h1>${greeting(hour)}${db.setting('userName', '') ? `, ${db.setting('userName', '')}` : ''}</h1>
+      <p class="hello-sub">${dayLine(ct, next, due)}</p>
+    </header>
+
+    ${raw(nx || (C.active() ? '' : studyHero()))}
+    ${raw(ct.rows.length ? ctPlate : '')}
+
+    <div class="gauges">
+      <button class="plate g" data-go="study"><span class="eyebrow">Study</span>${raw(arc(weekGoalH ? s.weekMin / 60 / weekGoalH : 0, 'lume'))}<strong>${(s.weekMin / 60).toFixed(1)}<small>h</small></strong><small>of ${weekGoalH} h this week</small></button>
+      <button class="plate g" data-go="${course ? 'lesson/review' : 'program/new'}"><span class="eyebrow">Cards</span>${raw(arc(course ? Math.min(1, due / 30) : 0, due ? 'steel' : 'ok'))}<strong>${course ? due : '—'}</strong><small>${course ? (due ? 'due for review' : 'all reviewed') : 'no program yet'}</small></button>
+      <button class="plate g" data-go="money"><span class="eyebrow">Spent</span>${raw(arc(m.budget ? m.month / m.budget : 0, m.budget && m.month > m.budget ? 'over' : m.budget && m.month / m.budget > .85 ? 'warn' : 'steel'))}<strong>${money(m.today)}</strong><small>${m.budget ? `${money(Math.max(0, m.budgetLeft))} left this month` : `${money(m.month)} this month`}</small></button>
+      <button class="plate g" data-go="diet"><span class="eyebrow">Food</span>${raw(arc(d.goals.dailyCalories ? d.calories / d.goals.dailyCalories : 0, d.calories > d.goals.dailyCalories ? 'over' : 'ok'))}<strong>${Math.round(d.calories)}<small>kcal</small></strong><small>${Math.round(d.protein)}/${d.goals.dailyProtein} g protein</small></button>
+    </div>
+
+    ${raw(hasKey ? '' : html`
+      <section class="plate setup">
+        <h3>${raw(icon('key'))} Connect the AI</h3>
+        <ol>
+          <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"><b>aistudio.google.com/apikey</b></a> and sign in with Google.</li>
+          <li>Tap <b>Create API key</b>, copy it, paste it here. Free, no card needed.</li>
+        </ol>
+        <div class="key-row"><input type="password" data-key placeholder="AIza… (Gemini) or sk-ant-… (Claude)" autocomplete="off"><button class="btn primary" data-save-key>Save</button></div>
+        <p class="small muted">Stored only on this device. A Claude key also works here if you have one.</p>
+      </section>`)}
+
+    ${raw(insightCard())}
+
+    ${raw(skillCard())}
+
+    <section class="plate card mac-card" data-mac-card hidden></section>
+
+    <div class="plate ask" data-ask role="button" tabindex="0">
+      <span class="ask-gem" data-gem aria-hidden="true"></span>
+      <span class="ask-text"><b>Ask Yaver…</b><small>${hasKey ? '"log 45 min of algorithms" · "pharmacy near me"' : 'add your key above to start'}</small></span>
+      <button class="ask-cta" data-brief>Brief me</button>
+    </div>
+
+    ${raw(notes.length ? html`
+      <section class="plate card">
+        <p class="eyebrow">Today</p>
+        ${raw(notes.map((n, i) => html`<${raw(n.open ? 'button' : 'div')} class="agenda-row ${raw(i >= SHOW ? 'more-row' : '')}" ${raw(n.open ? `data-open="${n.open}"` : '')}><span class="dot" data-k="${n.kind}"></span><span class="what"><span>${n.text}</span></span></${raw(n.open ? 'button' : 'div')}>`).join(''))}
+        ${raw(notes.length > SHOW ? html`<button class="link more-toggle" data-more>${notes.length - SHOW} more</button>` : '')}
+      </section>` : '')}
+
+    <div class="quick" aria-label="Quick add">
+      <button data-q="expense">${raw(icon('wallet'))}Expense</button>
+      <button data-q="study">${raw(icon('book'))}Study</button>
+      <button data-q="meal">${raw(icon('leaf'))}Meal</button>
+      <button data-q="meeting">${raw(icon('calendar'))}Meeting</button>
+      <button data-go="map">${raw(icon('map'))}Map</button>
+      <button data-cmd>${raw(icon('search'))}More</button>
+    </div>
+
+    <section class="plate card">
+      <div class="card-head"><p class="eyebrow">Up next</p><button class="link" data-go="calendar">Calendar ${raw(icon('arrowRight'))}</button></div>
+      ${raw(upcoming.length ? upcoming.map(e => html`
+        <button class="agenda-row" data-ev="${e.id}">
+          <span class="when">${timeHM(e.start)}<small>${fmtDay(dayKey(new Date(e.start)))}</small></span>
+          <span class="what"><b>${e.title}</b>${raw(e.location ? html`<small>${e.location}</small>` : '')}</span>
+        </button>`).join('') : '<p class="small muted">Nothing scheduled.</p>')}
+    </section>
+
+    <section class="plate card">
+      <div class="card-head"><p class="eyebrow">To-do</p><button class="link" data-add-task>+ Add</button></div>
+      ${raw(tasks.length ? tasks.map(t => html`
+        <label class="task"><input type="checkbox" data-task="${t.id}"><span>${t.title}</span>${raw(t.due ? html`<small class="${t.due < today() ? 'overdue' : ''}">${fmtDay(t.due)}</small>` : '')}</label>`).join('') : '<p class="small muted">Empty.</p>')}
+    </section>
+  `;
+
+  const ask = root.querySelector('[data-ask]');
+  ask.onclick = e => {
+    if (e.target.closest('[data-brief]')) openAssistant('Brief me: what needs my attention today (çetele minimums, meetings, study and roadmap, tasks, money, diet), plus anything get_insights finds in my data. Facts and next steps only.');
+    else openAssistant();
+  };
+  ask.onkeydown = e => { if (e.key === 'Enter' && e.target === ask) openAssistant(); };
+  root.querySelectorAll('[data-go]').forEach(b => (b.onclick = () => go(b.dataset.go)));
+  root.querySelectorAll('[data-in-ask]').forEach(b => (b.onclick = () => { const i = IN.all({ hidden: false }).find(x => x.id === b.dataset.inAsk); if (i?.ask) openAssistant(i.ask); }));
+  root.querySelectorAll('[data-in-hide]').forEach(b => (b.onclick = () => IN.hide(b.dataset.inHide)));
+  // Focus from Home: open the lesson and go straight into focus mode.
+  root.querySelector('[data-focus-lesson]')?.addEventListener('click', e => { go(e.currentTarget.dataset.focusLesson); document.querySelector('#view [data-focus]')?.click(); });
+  root.querySelector('[data-more]')?.addEventListener('click', e => { e.target.closest('.card').classList.add('show-all'); e.target.remove(); });
+  root.querySelectorAll('[data-open]').forEach(b => (b.onclick = () => go(b.dataset.open)));
+  const q = { expense: () => expenseForm(), meeting: () => meetingForm(), study: () => studyForm(), meal: () => mealForm() };
+  root.querySelectorAll('[data-q]').forEach(b => (b.onclick = q[b.dataset.q]));
+  root.querySelectorAll('[data-ev]').forEach(b => (b.onclick = () => openEvent(b.dataset.ev)));
+  root.querySelector('[data-add-task]').onclick = taskForm;
+  root.querySelectorAll('[data-task]').forEach(cb => (cb.onchange = () => {
+    const t = db.get('tasks', cb.dataset.task);
+    cb.closest('.task').classList.add('done');
+    haptic();
+    setTimeout(() => db.put('tasks', { ...t, done: true, doneAt: new Date().toISOString() }), 350);
+    toast(`Done: ${t.title}`, { action: { label: 'Undo', run: () => db.put('tasks', t) } });
+  }));
+  root.querySelectorAll('[data-log]').forEach(b => (b.onclick = () => {
+    const r = ct.rows.find(x => x.id === b.dataset.log);
+    if (r) logCetele(r.id, CT.isCheck(r) ? 1 : Number(r.step) || 1, CT.isCheck(r));
+  }));
+  root.querySelector('[data-cmd]')?.addEventListener('click', () => openCommand());
+  root.querySelector('[data-save-key]')?.addEventListener('click', async () => {
+    try { toast(await saveKey(root.querySelector('[data-key]').value)); } catch (e) { toast(e.message, 4000); }
+  });
+  // On the Mac: if Claude isn't reachable here yet, offer the one-line setup (until it works,
+  // or until "Not now" hides it for a week).
+  const mc = root.querySelector('[data-mac-card]');
+  let snooze = 0; try { snooze = Number(localStorage.getItem('yaverMacSnooze') || 0); } catch { /* private mode */ }
+  if (mc && onComputer() && Date.now() > snooze) macOnline().then(ok => {
+    if (ok || !mc.isConnected) return;
+    mc.hidden = false;
+    mc.innerHTML = html`<div class="card-head"><h3>${raw(icon('terminal'))} Use your Claude subscription here</h3><button class="link" data-mac-later>Not now</button></div>
+      <p class="small muted">Paste this into Terminal on this Mac once and press Return. From then on it starts with the Mac and Yaver uses Claude by itself, with no API bill. Claude Code must be signed in (<code>claude</code>, then <code>/login</code>).</p>
+      <div class="cmd"><code>${BRIDGE_CMD}</code></div>
+      <div class="btn-row"><button class="btn primary" data-mac-copy>${raw(icon('copy'))} Copy</button><button class="btn ghost" data-mac-check>Check again</button></div>`;
+    mc.querySelector('[data-mac-copy]').onclick = async () => { try { await navigator.clipboard.writeText(BRIDGE_CMD); toast('Copied. Paste it into Terminal and press Return.'); } catch { toast('Select the command and copy it.', 4000); } };
+    mc.querySelector('[data-mac-check]').onclick = async () => { if (await macOnline(true)) { mc.hidden = true; haptic('success'); toast('Connected to Claude on this Mac.'); } else toast('Not found yet. Run the line in Terminal, then check again.', 4000); };
+    mc.querySelector('[data-mac-later]').onclick = () => { try { localStorage.setItem('yaverMacSnooze', String(Date.now() + 7 * 864e5)); } catch { /* private mode */ } mc.hidden = true; };
+  });
+  // The clock in the head line keeps time while Home is open.
+  clearInterval(clockTimer);
+  clockTimer = setInterval(() => { const el = root.querySelector('[data-hm]'); if (!el) return clearInterval(clockTimer); el.textContent = timeHM(new Date()); }, 15000);
+}
+
+let clockTimer;
+export function cleanup() { clearInterval(clockTimer); }
