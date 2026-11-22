@@ -7,6 +7,7 @@ import { PROVIDERS, provider, testCurrent, sortKeys, cleanKey } from '../ai/prov
 import { currencyOptions } from '../data.js';
 import { icon } from '../icons.js';
 import * as sync from '../sync.js';
+import * as CA from '../calisthenics.js';
 
 // Which groups are open survives redraws.
 const OPEN = new Set();
@@ -117,6 +118,7 @@ export function render(root, go) {
     </form>
     <div class="set-list">
       ${raw(group('sync', 'refresh', 'Sync', sync.configured() ? sync.describe() : 'Off · keep the iPhone and laptop together', syncSection()))}
+      ${raw(group('cali', 'body', 'CaliCoach', caliSub(), caliSection()))}
       ${raw(group('data', 'download', 'Your data', 'Export, import, erase', dataBody))}
       ${raw(standalone ? '' : group('install', 'plus', isPhone ? 'Install on iPhone' : 'Install on this computer', 'Open Yaver like an app, offline', installBody))}
       <a class="set-group set-link" href="handbook/"><span class="set-ic">${raw(icon('book'))}</span><span class="set-t"><b>System handbook</b><small>How Yaver works: architecture, files, data, AI tools ↗</small></span></a>
@@ -135,6 +137,7 @@ export function render(root, go) {
   });
   root.querySelector('[data-back]').onclick = () => go('home');
   bindSync(root, go);
+  bindCali(root, go);
   const inst = root.querySelector('[data-install]');
   if (inst) inst.onclick = async () => { const p = window.yaverInstall; window.yaverInstall = null; p.prompt(); const r = await p.userChoice.catch(() => null); if (r?.outcome === 'accepted') toast('Installed'); render(root, go); };
   const form = root.querySelector('[data-form]');
@@ -327,4 +330,64 @@ function bindSync(root, go) {
     const n = await db.importAll(b.backup);
     toast(`${n} records restored`);
   };
+}
+
+// ---------- CaliCoach (v67): read workouts from Yaver Mark II's form coach ----------
+function caliSub() {
+  const st = CA.status();
+  if (CA.signedIn()) return st?.ok ? `Connected · ${st.count} workouts` : 'Connected';
+  if (CA.has()) return `${db.all('calisthenics').length} workouts from this browser`;
+  return 'Not connected · training results from the camera coach';
+}
+function caliSection() {
+  const v = CA.server(), st = CA.status(), same = CA.sameBrowserServer();
+  const head = html`<p class="muted small">CaliCoach (in Yaver Mark II) records your calisthenics with the camera: reps, clean reps and a form score for every rep. Yaver reads those workouts for the Body screen, the muscle map, Insights and plans. Nothing is written back.</p>
+    <p class="small"><a href="${CA.APP_URL}" target="_blank" rel="noopener"><b>Open CaliCoach ↗</b></a></p>
+    ${raw(st ? html`<p class="small ${raw(st.ok ? '' : 'muted')}">${st.ok ? `Last check: ${st.count} workouts from ${(st.from || []).join(' and ')}.` : st.error || ''}</p>` : '')}`;
+  if (CA.signedIn()) return html`<div>${raw(head)}
+    <p class="small">Signed in to <b>${v.url.replace(/^https:\/\//, '')}</b> as <b>${CA.status()?.email || db.setting('caliAuth', {})?.email || v.email}</b>.</p>
+    <div class="btn-row wrap"><button class="btn primary" type="button" data-cali-now>Check for new workouts</button><button class="btn ghost" type="button" data-cali-out>Sign out</button></div></div>`;
+  return html`<div>${raw(head)}
+    <p class="small"><b>The server</b> (works on every device): use the same Supabase project as CaliCoach (CaliCoach → Settings → Server; set-up in its supabase/README.md). The anon key is public by design; your data stays private to your account.</p>
+    <form class="form" data-cali-form style="display:flex;flex-direction:column">
+      <label class="field"><span>Project URL</span><input name="url" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://xxxx.supabase.co" value="${v.url || same?.url || ''}"></label>
+      <label class="field"><span>Anon (public) key</span><input name="key" type="password" autocomplete="off" placeholder="eyJhbGciOi…" value="${v.key || same?.key || ''}"></label>
+      <label class="field"><span>Email (the one you use in CaliCoach)</span><input name="email" type="email" autocomplete="email" value="${v.email || same?.email || ''}"></label>
+      <button class="btn" type="button" data-cali-code>Email me a sign-in code</button>
+      <label class="field" data-cali-coderow hidden><span>6-digit code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+      <button class="btn primary" type="button" data-cali-verify hidden>Sign in</button>
+    </form>
+    <p class="small muted" style="margin-top:10px"><b>Without the server:</b> in a browser where you also use CaliCoach (Chrome on the laptop), Yaver reads its workouts directly. iPhone Home Screen apps keep separate storage, so the iPhone needs the server.</p>
+    <button class="btn ghost" type="button" data-cali-now>Check this browser now</button></div>`;
+}
+function bindCali(root, go) {
+  const f = root.querySelector('[data-cali-form]');
+  const save = async () => {
+    if (!f) return;
+    await db.setSetting('caliUrl', f.url.value.trim()); await db.setSetting('caliKey', f.key.value.trim()); await db.setSetting('caliEmail', f.email.value.trim());
+  };
+  root.querySelector('[data-cali-code]')?.addEventListener('click', async () => {
+    await save();
+    if (!CA.serverSet()) return toast('Add the project URL and anon key first.');
+    if (!f.email.value.trim()) return toast('Add your email.');
+    try {
+      await CA.sendCode(f.email.value.trim());
+      root.querySelector('[data-cali-coderow]').hidden = false; root.querySelector('[data-cali-verify]').hidden = false;
+      toast('Code sent. Check your email.');
+    } catch (e) { toast(`Could not send the code: ${e.message}`, 5000); }
+  });
+  root.querySelector('[data-cali-verify]')?.addEventListener('click', async () => {
+    try {
+      await CA.verifyCode(f.email.value.trim(), f.code.value);
+      const ok = await CA.refresh({ force: true });
+      toast(ok ? `Connected: ${CA.status()?.count || 0} CaliCoach workouts` : 'Signed in');
+      render(root, go);
+    } catch (e) { toast(`Sign-in failed: ${e.message}`, 5000); }
+  });
+  root.querySelectorAll('[data-cali-now]').forEach(b => b.addEventListener('click', async () => {
+    const ok = await CA.refresh({ force: true });
+    toast(ok ? `${CA.status()?.count || 0} CaliCoach workouts` : CA.status()?.error || 'Nothing found', 4000);
+    render(root, go);
+  }));
+  root.querySelector('[data-cali-out]')?.addEventListener('click', async () => { await CA.signOut(); render(root, go); });
 }

@@ -5,16 +5,17 @@
 // tombstone, so two devices can merge their copies record by record (sync.js).
 
 const DB_NAME = 'yaver';
-const DB_VERSION = 9;
+const DB_VERSION = 10;
 export const STORES = ['expenses', 'events', 'subjects', 'sessions', 'meals', 'tasks', 'milestones', 'chats', 'kv',
-  'courseProgress', 'cards', 'courseLessons', 'courseTests', 'ceteleItems', 'ceteleLog', 'applecal', 'people', 'activities', 'weighins', 'workouts', 'checkins', 'tombstones'];
+  'courseProgress', 'cards', 'courseLessons', 'courseTests', 'ceteleItems', 'ceteleLog', 'applecal', 'people', 'activities', 'weighins', 'workouts', 'checkins', 'calisthenics', 'tombstones'];
 
 // Settings that belong to this device only: never synced, never in backups' sync payload.
-export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'ttsVoice', 'voiceAuto', 'jarvis', 'voiceMac', 'deviceVoice', 'voiceV16', 'voiceEngine', 'liveModel', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel', 'sounds', 'sfx', 'sfxRec', 'music', 'appleCal', 'appleCalStatus', 'foodModel', 'foodModels', 'foodTips', 'insightsHidden']);
+export const LOCAL_KEYS = new Set(['apiKey', 'geminiKey', 'provider', 'model', 'effort', 'geminiModel', 'geminiModels', 'speak', 'voiceLang', 'voiceStyle', 'ttsVoice', 'voiceAuto', 'jarvis', 'voiceMac', 'deviceVoice', 'voiceV16', 'voiceEngine', 'liveModel', 'lastLoc', 'onboarded', 'webSearch', 'deviceId', 'deviceName', 'autoBackups', 'macUrl', 'macToken', 'macModel', 'sounds', 'sfx', 'sfxRec', 'music', 'appleCal', 'appleCalStatus', 'foodModel', 'foodModels', 'foodTips', 'insightsHidden', 'caliUrl', 'caliKey', 'caliEmail', 'caliAuth', 'caliStatus']);
 export const isLocalKey = id => LOCAL_KEYS.has(id) || id.startsWith('sync');
 // Stores that never leave the device (chat history can be large and holds photos;
-// applecal is a read-only copy of Apple Calendar that each device fetches itself).
-export const LOCAL_STORES = new Set(['chats', 'applecal']);
+// applecal is a read-only copy of Apple Calendar and calisthenics a read-only copy of
+// CaliCoach's workouts, both fetched by each device itself).
+export const LOCAL_STORES = new Set(['chats', 'applecal', 'calisthenics']);
 
 let idb;
 const mem = Object.fromEntries(STORES.map(s => [s, new Map()]));

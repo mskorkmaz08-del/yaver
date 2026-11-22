@@ -12,6 +12,7 @@
 //   60 seconds per stretch in total (ACSM); here a 10-minute mobility block every day.
 // The weekday template depends on days a week (3, 4 or 5).
 import * as db from './db.js';
+import * as CA from './calisthenics.js';
 import { today, addDays } from './util.js';
 
 // Exercise → muscles it trains: [primary..], [secondary..] (a secondary muscle counts half a set).
@@ -74,9 +75,9 @@ export function sessionOn(date = today()) {
   return key ? { key, ...SESSIONS[key] } : null;
 }
 export function week(date = today()) {
-  // Monday-first list of the week's days with their session.
+  // Monday-first list of the week's days with their session. A CaliCoach workout counts as training done.
   const d = dow(date), monday = addDays(date, -((d + 6) % 7));
-  return Array.from({ length: 7 }, (_, i) => { const day = addDays(monday, i); return { day, session: sessionOn(day), done: doneOn(day) }; });
+  return Array.from({ length: 7 }, (_, i) => { const day = addDays(monday, i); const cali = CA.onDay(day)[0]; return { day, session: sessionOn(day), done: doneOn(day) || (cali ? { date: day, session: 'calicoach', name: 'CaliCoach workout' } : null) }; });
 }
 
 // Logged sessions: { date, session (key), name }.
@@ -90,8 +91,9 @@ export async function markDone(date = today(), key = sessionOn(date)?.key || 'ot
 // Sessions a week over the last 14 days (null when nothing was logged).
 export function recentPerWeek(end = today()) {
   const from = addDays(end, -13);
-  const n = db.all('workouts').filter(w => w.date >= from && w.date <= end).length;
-  return n ? n / 2 : null;
+  // Days trained: planned sessions marked done plus days with a CaliCoach workout.
+  const days = new Set([...db.all('workouts'), ...db.all('calisthenics')].filter(w => w.date >= from && w.date <= end).map(w => w.date));
+  return days.size ? days.size / 2 : null;
 }
 
 // Hard sets per muscle from the sessions done in the last 7 days.
@@ -104,6 +106,8 @@ export function setsThisWeek(end = today()) {
       for (const m of side) sets[m] = (sets[m] || 0) + n / 2;
     }
   }
+  // Plus the calisthenics sets CaliCoach recorded (v67).
+  for (const [m, n] of Object.entries(CA.setsThisWeek(end))) sets[m] = (sets[m] || 0) + n;
   return sets;
 }
 // Muscles a session works (primary only), and the exercises that hit a muscle.

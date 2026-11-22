@@ -7,6 +7,7 @@ import * as db from '../db.js';
 import * as D from '../data.js';
 import * as B from '../body.js';
 import * as T from '../training.js';
+import * as CA from '../calisthenics.js';
 import { ANATOMY } from '../anatomy.js';
 import { html, raw, fmtDay, toast, haptic, today, sheet } from '../util.js';
 import { icon } from '../icons.js';
@@ -74,6 +75,8 @@ export function render(root, go) {
       <p class="small muscle-info">${raw(picked ? info(picked, sets, session) : '<span class="muted">Tap a muscle to see its sets and today\'s exercises for it.</span>')}</p>
     </section>
 
+    ${raw(caliCard())}
+
     <section class="card week">
       <div class="card-head"><p class="label">this week</p><span class="small muted">burn ≈ ${n0(p.tdee)} kcal a day</span></div>
       <div class="week-row">${raw(wk.map(x => day(x, balance.get(x.day))).join(''))}</div>
@@ -116,6 +119,10 @@ export function render(root, go) {
     await db.setSetting('dailyCalories', t.calories); await db.setSetting('dailyProtein', t.protein);
     haptic(); toast(`Diet goals: ${n0(t.calories)} kcal, ${t.protein} g protein`);
   };
+  root.querySelector('[data-cali-plan]')?.addEventListener('click', () => openAssistant('Look at my calisthenics results from CaliCoach (get_calisthenics) next to my body goal and plan (body_status). Tell me plainly how each exercise is going: reps, clean reps, form score and its trend, and the fault that matters most. Then give me a clear plan for my next 2 weeks of calisthenics: which days, exercises, variations, sets and reps, the one form cue per exercise, and when to move to a harder variation. Keep it short and concrete.'));
+  root.querySelector('[data-cali-refresh]')?.addEventListener('click', async e => { e.target.disabled = true; const ok = await CA.refresh({ force: true }); toast(ok ? 'CaliCoach workouts updated' : CA.status()?.error || 'Nothing new'); render(root, go); });
+  root.querySelector('[data-cali-connect]')?.addEventListener('click', () => go('settings'));
+  CA.refresh().then(ok => { if (ok) render(root, go); }).catch(() => {});
   root.querySelector('[data-ai]').onclick = () => openAssistant('Look at my body, goal, training plan and recent eating (body_status, diet_history). My goal is an athletic body: muscular, strong, fast and flexible. Check the plan against what I actually did this week and suggest plain adjustments for the next week: food (with foods easy to get in Kazakhstan) and training. Say what is an estimate.');
 }
 
@@ -152,7 +159,34 @@ function map(side, sets, todays) {
 function info(m, sets, session) {
   const n = Math.round((sets[m] || 0) * 10) / 10;
   const ex = T.exercisesFor(m, session);
-  return html`<b>${T.MUSCLE_NAMES[m] || m}</b>: ${n} hard set${n === 1 ? '' : 's'} this week${n < 10 ? ' (aim 10+)' : ''}.${raw(ex.length ? html` Today: ${ex.join(', ')}.` : '')}`;
+  const cali = CA.exercisesFor(m);
+  return html`<b>${T.MUSCLE_NAMES[m] || m}</b>: ${n} hard set${n === 1 ? '' : 's'} this week${n < 10 ? ' (aim 10+)' : ''}.${raw(cali.length ? html` From CaliCoach: ${cali.join(', ')}.` : '')}${raw(ex.length ? html` Today: ${ex.join(', ')}.` : '')}`;
+}
+
+// ---------- Calisthenics from CaliCoach (v67) ----------
+const ago = iso => { const m = Math.round((Date.now() - new Date(iso)) / 60000); return m < 2 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+function caliCard() {
+  const st = CA.status();
+  if (!CA.has()) return html`
+    <section class="card cali">
+      <div class="card-head"><p class="label">calisthenics · CaliCoach</p><a class="link-btn" href="${CA.APP_URL}" target="_blank" rel="noopener">Open CaliCoach ↗</a></div>
+      <p class="small">CaliCoach in Yaver Mark II watches your push-ups, pull-ups, dips, squats and more through the camera, counts the reps and scores the form of every rep. Connect it and your results show here, on the muscle map, in Insights and in Yaver's plans.</p>
+      ${raw(st?.error ? html`<p class="small muted">${st.error}</p>` : '')}
+      <div class="btn-row"><button class="btn ghost" data-cali-connect>${raw(icon('key'))} Connect</button><button class="btn ghost" data-cali-refresh>${raw(icon('refresh'))} Check again</button></div>
+    </section>`;
+  const list = CA.all().slice(0, 6);
+  const ws = CA.workouts(), last = ws[ws.length - 1];
+  const focus = list.find(e => e.next.kind === 'form') || list.find(e => e.next.kind === 'progress') || list[0];
+  const arrow = t => (t == null ? '' : t >= 4 ? ' <span class="good">▲</span>' : t <= -4 ? ' <span class="up">▼</span>' : '');
+  return html`
+    <section class="card cali">
+      <div class="card-head"><p class="label">calisthenics · CaliCoach</p><a class="link-btn" href="${CA.APP_URL}" target="_blank" rel="noopener">Open ↗</a></div>
+      <p class="small">Last workout ${fmtDay(last.date)}: ${last.sets.map(x => `${CA.exName(x.exercise)} ${x.kind === 'hold' ? `${x.hold} s` : `${x.reps}${x.clean !== x.reps ? ` (${x.clean} clean)` : ''}`}`).join(', ')}.</p>
+      <ul class="cali-list">${raw(list.map(e => html`<li><span class="cali-ex"><b>${e.name}</b><small>${e.sessions} session${e.sessions === 1 ? '' : 's'}${e.faults[0] ? ` · ${e.faults[0].label.toLowerCase()}` : ''}</small></span><span class="cali-n"><b class="mono">${e.lastBestSet}</b><small>${e.unit === 's' ? 'best s' : 'best clean set'}</small></span><span class="cali-n"><b class="mono">${e.lastScore}${raw(arrow(e.trend))}</b><small>form</small></span></li>`).join(''))}</ul>
+      <p class="small cali-next"><b>${focus.name}:</b> ${focus.next.text}</p>
+      <div class="btn-row"><button class="btn primary" data-cali-plan>${raw(icon('sparkle'))} Plan my next sessions</button><button class="icon-btn" data-cali-refresh aria-label="Refresh CaliCoach">${raw(icon('refresh'))}</button></div>
+      <p class="small dim">${(st?.from || []).join(' and ') || 'saved copy'}${st?.at ? ` · checked ${ago(st.at)}` : ''}${st?.error ? ` · ${st.error}` : ''}</p>
+    </section>`;
 }
 
 // ---------- Profile and weigh-ins ----------

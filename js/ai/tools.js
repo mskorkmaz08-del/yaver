@@ -14,6 +14,7 @@ import * as G from '../foodgaps.js';
 import * as B from '../body.js';
 import * as TR from '../training.js';
 import * as IN from '../insights.js';
+import * as CA from '../calisthenics.js';
 
 const date = { type: 'string', description: 'Day as YYYY-MM-DD in the user\'s local time. Defaults to today.' };
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
@@ -303,6 +304,12 @@ const TOOLS = [
     description: 'Record food the user ate. Estimate calories and macros (grams) yourself from the description or photo if the user does not give them, and say they are estimates.',
     input_schema: obj({ name: { type: 'string' }, meal: { type: 'string', enum: D.MEAL_TYPES }, calories: { type: 'number' }, protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' }, fiber: { type: 'number' }, sugar: { type: 'number' }, sodium_mg: { type: 'number' }, date, time: { type: 'string', description: 'When it was eaten, HH:MM 24-hour local time. Defaults to now for today; ask or infer ("last night", "an hour ago") when they log later.' } }, ['name', 'meal', 'calories']),
     run: async ({ sodium_mg, ...i }) => { await D.logMeal({ ...i, sodium: sodium_mg }); const d = D.dietDay(i.date || today()); return { logged: true, dayCalories: d.calories, calorieGoal: d.goals.dailyCalories, dayProtein: d.protein }; },
+  },
+  {
+    name: 'get_calisthenics',
+    description: 'The user\'s calisthenics results from CaliCoach, the camera form coach in Yaver Mark II: every workout with its sets, reps, clean reps (no major form fault) and form score 0-100; per exercise the trend, best clean set, most common faults with how to fix them, the next step (fix form, build, progress to a harder variation or use an easier one); reps by movement pattern (push, pull, legs, core) and hard sets per muscle this week. Use it for "how is my training going", form questions and to plan the next calisthenics sessions.',
+    input_schema: obj({}),
+    run: async () => { await CA.refresh().catch(() => {}); return CA.forAI(); },
   },
   {
     name: 'get_insights',

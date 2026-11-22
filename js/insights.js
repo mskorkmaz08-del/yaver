@@ -12,6 +12,7 @@ import * as L from './dietlog.js';
 import * as B from './body.js';
 import * as T from './training.js';
 import * as CT from './cetele.js';
+import * as CA from './calisthenics.js';
 import { today, addDays, monthKey } from './util.js';
 
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
@@ -137,6 +138,43 @@ const CHECKS = [
     if (!st.current && st.best >= 5 && !st.studiedToday) return { id: 'study-streak', area: 'Study', level: 1, go: 'study',
       text: `Your study streak ended (best: ${st.best} days). Today restarts it.`, ask: null };
     return null;
+  },
+  // Calisthenics from CaliCoach (v67): the fault that keeps coming back, ready to
+  // progress, form slipping, pushing far more than pulling, and stopping.
+  function caliFault() {
+    for (const e of CA.all()) {
+      const f = e.faults[0];
+      if (e.sessions >= 2 && f && e.unit !== 's' && f.share >= 30) return { id: `cali-fault-${e.exercise}-${f.key}`, area: 'Calisthenics', level: 2, go: 'body',
+        text: `${e.name}: ${f.label.toLowerCase()} in ${f.share}% of your recent reps (CaliCoach).`,
+        ask: `CaliCoach keeps flagging "${f.label}" on my ${e.name.toLowerCase()} (get_calisthenics). Explain what causes it, the one cue to fix it, and a short drill plan for my next sessions.` };
+    }
+    return null;
+  },
+  function caliProgress() {
+    const e = CA.all().find(x => x.next.kind === 'progress');
+    return e ? { id: `cali-up-${e.exercise}`, area: 'Calisthenics', level: 2, go: 'body',
+      text: `${e.name}: ${e.lastBestSet} clean ${e.unit === 's' ? 'seconds' : 'reps'} in a set with a ${e.lastScore} form score. Time for a harder variation.`,
+      ask: `I am ready to progress on ${e.name.toLowerCase()} (get_calisthenics). Which harder variation should I start with, how many sets and reps, and how do I work up to it over the next weeks?` } : null;
+  },
+  function caliSlipping() {
+    const e = CA.all().find(x => x.trend != null && x.trend <= -8 && x.sessions >= 6);
+    return e ? { id: `cali-slip-${e.exercise}`, area: 'Calisthenics', level: 2, go: 'body',
+      text: `${e.name}: form score down ${-e.trend} points over your last three sessions.`,
+      ask: `My ${e.name.toLowerCase()} form score is dropping (get_calisthenics). Is it fatigue, too much volume or a technique habit? What should I change this week?` } : null;
+  },
+  function caliBalance() {
+    const b = CA.balance(14);
+    if (b.push < 40 || b.pull >= b.push * 0.6) return null;
+    return { id: 'cali-balance', area: 'Calisthenics', level: 1, go: 'body',
+      text: `Last two weeks: ${b.push} pushing reps and ${b.pull} pulling reps. Add pull-ups or rows to keep the shoulders healthy.`,
+      ask: 'I push much more than I pull in my calisthenics (get_calisthenics). Plan how to add pulling work to my week without making the sessions longer.' };
+  },
+  function caliStopped() {
+    const ws = CA.workouts();
+    if (ws.length < 3) return null;
+    const last = ws[ws.length - 1].date, before = ws.filter(w => w.date > addDays(today(), -40)).length;
+    if (last > addDays(today(), -10) || before < 3) return null;
+    return { id: 'cali-stopped', area: 'Calisthenics', level: 1, go: 'body', text: `No CaliCoach workout since ${last}.`, ask: null };
   },
   // Spending on pace to go over the budget.
   function money() {
