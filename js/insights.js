@@ -14,6 +14,7 @@ import * as T from './training.js';
 import * as CT from './cetele.js';
 import { today, addDays, monthKey } from './util.js';
 
+const day = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
@@ -90,11 +91,11 @@ const CHECKS = [
     const past = T.week().filter(x => x.session && x.day < today());
     const missed = past.filter(x => !x.done);
     const any = T.workouts().some(w => w.date > addDays(today(), -14));
-    if (!any && T.workouts().length) return { id: 'train-stopped', area: 'Training', level: 2, go: 'body',
+    if (!any && T.workouts().length) return { id: 'train-stopped', area: 'Training', level: 2, go: 'training',
       text: 'No training logged in the last two weeks.',
       ask: 'I have not trained for two weeks. Give me a short, easy plan to restart this week without getting hurt.' };
     // Only once he logs training: the plan alone is no evidence he skipped it.
-    if (missed.length >= 2 && T.workouts().length) return { id: 'train-missed', area: 'Training', level: 2, go: 'body',
+    if (missed.length >= 2 && T.workouts().length) return { id: 'train-missed', area: 'Training', level: 2, go: 'training',
       text: `${plural(missed.length, 'planned session')} missed this week (${missed.map(x => new Date(x.day + 'T12:00').toLocaleDateString('en-GB', { weekday: 'short' })).join(', ')}).`,
       ask: 'I missed some planned training this week (body_status). How do I fit the important parts into the days left?' };
     return null;
@@ -115,6 +116,56 @@ const CHECKS = [
     return { id: 'weight-vs-logs', area: 'Body', level: 1, go: 'body',
       text: `Your weight changed ${actual > 0 ? '+' : ''}${actual.toFixed(1)} kg since ${first.date}, but your food logs predict ${predicted > 0 ? '+' : ''}${predicted.toFixed(1)} kg. ${actual > predicted ? 'Some food may be missing from the logs.' : 'You may burn more than estimated.'}`,
       ask: 'My weigh-ins and my food logs disagree (body_status, diet_history). What is the likely reason and how do I make the numbers more accurate?' };
+  },
+  // v67: weight moving at the wrong pace for the phase (fat loss 0.5-1% a week, lean gain 0.25-0.5%).
+  function weightPace() {
+    const p = B.profile(), tr = B.trend();
+    if (!p || !tr) return null;
+    const t = B.target(p), w = tr.pctWeek, kg = `${tr.kgWeek > 0 ? '+' : ''}${tr.kgWeek} kg a week (${w > 0 ? '+' : ''}${w}%)`;
+    const ask = 'My weight is changing at the wrong pace for my phase (body_status: weightTrend). Using my food logs too (diet_history), what should I change in calories and protein?';
+    if (t.mode === 'cut' && w < -1.05) return { id: 'pace-fast', area: 'Body', level: 3, go: 'body', text: `Losing ${kg}: faster than 1% a week, which costs muscle. Eat about 200-300 kcal more.`, ask };
+    if (t.mode === 'cut' && w > 0.1) return { id: 'pace-up', area: 'Body', level: 2, go: 'body', text: `Weight is going up (${kg}) while the plan is to lose fat.`, ask };
+    if (t.mode === 'gain' && w > 0.55) return { id: 'pace-gain-fast', area: 'Body', level: 2, go: 'body', text: `Gaining ${kg}: over 0.5% a week, so more of it is fat. Trim about 200 kcal.`, ask };
+    if (t.mode === 'gain' && w < -0.1) return { id: 'pace-gain-down', area: 'Body', level: 2, go: 'body', text: `Weight is going down (${kg}) while the plan is a lean gain.`, ask };
+    return null;
+  },
+  // Losing lean mass, or the waist growing while the plan is to lose fat.
+  function composition() {
+    const c = B.composition(), p = B.profile();
+    if (!c || !p) return null;
+    const weeks = (new Date(c.to) - new Date(c.from)) / 6048e5;
+    if (weeks < 3) return null;
+    if (c.lean <= -0.8) return { id: 'lean-down', area: 'Body', level: 2, go: 'body', text: `Lean mass is down about ${Math.abs(c.lean)} kg since ${day(c.from)} (fat ${c.fat > 0 ? '+' : ''}${c.fat} kg). More protein and keeping the heavy lifts hold muscle.`, ask: 'My estimated lean mass is dropping (body_status). Check my protein, calories and training and tell me what to change.' };
+    const w = B.lastTwo('waist');
+    if (B.target(p).mode === 'cut' && w.now && w.before && w.now.waist - w.before.waist >= 1.5) return { id: 'waist-up', area: 'Body', level: 2, go: 'body', text: `Waist up ${Math.round((w.now.waist - w.before.waist) * 10) / 10} cm since ${day(w.before.date)} while the plan is to lose fat.`, ask: 'My waist is growing during a fat-loss phase (body_status). What does that point to and what should I change?' };
+    return null;
+  },
+  // Resting pulse up and short sleep: the recovery signals coaches watch.
+  function recovery() {
+    const list = db.all('checkins').filter(c => c.date > addDays(today(), -3) && c.rhr > 0);
+    const base = B.baselineRHR(addDays(today(), -2));
+    const high = base ? list.filter(c => c.rhr >= base + 5) : [];
+    if (high.length >= 2) return { id: 'rhr-up', area: 'Recovery', level: 3, go: 'body', text: `Resting pulse is 5+ beats over your usual ${base} on ${plural(high.length, 'day')} in a row. Often fatigue, poor sleep or a cold coming: go light until it settles.`, ask: 'My resting pulse has been high for a few days (body_status readiness). What could it be, and how should I adjust training this week? Say when I should see a doctor.' };
+    const r = B.recovery(7);
+    if (r.sleepDays >= 4 && r.sleep < 7) return { id: 'sleep-short', area: 'Recovery', level: 2, go: 'body', text: `${r.sleep} h of sleep a night on average this week. Under 7 h slows muscle gain and fat loss and dulls speed and power.`, ask: 'I am sleeping under 7 hours (body_status recovery7Days). Give me a few plain changes to my evening that fit my day.' };
+    return null;
+  },
+  // Training load spikes (acute:chronic over 1.5) and a dropping jump (neuromuscular fatigue).
+  function trainingLoad() {
+    const L = B.load();
+    if (L.zone === 'spike') return { id: 'load-spike', area: 'Training', level: 3, go: 'training', text: `This week's training load is ${L.ratio}× your 4-week average. Spikes like this are when injuries happen; trim the volume a little.`, ask: 'My training load spiked this week (body_status trainingLoad). How should I adjust the rest of the week?' };
+    const j = B.lastTwo('jump');
+    if (j.now && j.before && j.now.date >= addDays(today(), -14) && j.now.jump <= j.before.jump * 0.92) return { id: 'jump-down', area: 'Training', level: 2, go: 'body', text: `Vertical jump fell from ${j.before.jump} to ${j.now.jump} cm. A falling jump is a classic sign of accumulated fatigue.`, ask: 'My vertical jump dropped (body_status tests). Is it fatigue, and how should I adjust training and recovery?' };
+    if (L.zone === 'low' && T.workouts().length) return { id: 'load-low', area: 'Training', level: 1, go: 'training', text: `Training load this week is ${L.ratio}× your usual. Fine for a recovery week.`, ask: null };
+    return null;
+  },
+  // No weigh-in for a while once the Body section is in use.
+  function bodyGap() {
+    const w = B.weighins().at(-1);
+    if (!w || !B.profile()) return null;
+    const days = Math.round((new Date(today()) - new Date(w.date)) / 864e5);
+    if (days < 14) return null;
+    return { id: 'weigh-gap', area: 'Body', level: 1, go: 'body', text: `No weigh-in for ${days} days. Two or three a week keep the trend and the body fat estimate honest.`, ask: null };
   },
   // Food logging too thin for the rest to mean much.
   function loggingGaps() {

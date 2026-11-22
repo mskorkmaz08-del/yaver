@@ -270,7 +270,8 @@ extension Store {
 // MARK: - Body
 
 extension Store {
-    func weighins() -> [Row] { all("weighins").sorted { $0.str("date") < $1.str("date") } }
+    // Since web v67 a body record can hold only measurements or tests (no kg): weigh-ins are the ones with a weight.
+    func weighins() -> [Row] { all("weighins").filter { $0.num("kg") > 0 }.sorted { $0.str("date") < $1.str("date") } }
     func logWeight(_ kg: Double, _ day: String = Day.today) {
         var row = all("weighins").first { $0.str("date") == day } ?? [:]
         row["date"] = .string(day)

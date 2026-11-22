@@ -11,6 +11,7 @@ import { ring } from '../ui.js';
 import { icon } from '../icons.js';
 import { mealForm } from '../forms.js';
 import { openAssistant } from '../ai/assistant.js';
+import { bodyTabs, wireBodyTabs } from './body.js';
 
 let day = today();
 let span = 7;
@@ -27,8 +28,9 @@ export function render(root, go) {
   root.innerHTML = html`
     <header class="page-head">
       <div><p class="path">Yaver <b>·</b> diet</p><h1><span class="num">${Math.max(0, g.dailyCalories - Math.round(d.calories))}</span> kcal left</h1></div>
-      <div class="head-btns"><button class="icon-btn" data-body aria-label="Body">${raw(icon('body'))}</button><button class="icon-btn primary" data-add aria-label="Log meal">${raw(icon('plus'))}</button></div>
+      <div class="head-btns"><button class="icon-btn primary" data-add aria-label="Log meal">${raw(icon('plus'))}</button></div>
     </header>
+    ${raw(bodyTabs('diet'))}
     <div class="switch"><button data-d="-1" aria-label="Previous day">${raw(icon('chevronLeft'))}</button><span>${fmtDay(day).toLowerCase()}</span><button data-d="1" ${raw(day === today() ? 'disabled' : '')} aria-label="Next day">${raw(icon('chevronRight'))}</button></div>
 
     <section class="card diet-top">
@@ -65,6 +67,7 @@ export function render(root, go) {
     ${raw(diary())}`;
 
   root.querySelector('[data-add]').onclick = () => mealForm(null, day);
+  wireBodyTabs(root, go);
   root.querySelectorAll('[data-body]').forEach(b => (b.onclick = () => go('body')));
   root.querySelectorAll('[data-type]').forEach(b => (b.onclick = () => mealForm(null, day, { meal: b.dataset.type })));
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = () => mealForm(db.get('meals', b.dataset.id))));
@@ -88,12 +91,18 @@ export function render(root, go) {
 }
 
 // What today's eating does to the body (v56), one line that opens the Body screen.
+// What eating does to the body: today, the last 7 days and, after three full days,
+// where eating like this leads (all from js/body.js; estimates).
 function bodyLine() {
   const s = B.status();
   if (!s) return html`<button class="card body-line" data-body><span class="label">body</span><span class="small">Add your height and weight: athletic target, and what each day does to fat and muscle.</span></button>`;
-  const t = s.today, r = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(Math.round(n))}`;
-  return html`<button class="card body-line" data-body><span class="label">body · ${s.profile.kg} kg → ${s.target.kg} kg</span>
-    <span class="small">${raw(t.counted ? html`Today ${r(t.balance)} kcal: fat <b class="mono">${r(t.fat)} g</b>, muscle <b class="mono">${r(t.muscle)} g</b>` : 'Log today\'s meals to see what they do to fat and muscle.')}</span></button>`;
+  const t = s.today, w = s.week, pr = s.projection, r = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(Math.round(n))}`, kg = n => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
+  return html`<section class="card body-line">
+    <div class="card-head"><p class="label">what it does · burn ≈ ${s.profile.tdee.toLocaleString('en')} kcal</p><button class="link-btn" data-body>Body ›</button></div>
+    <span class="small">${raw(t.counted ? html`Today ${r(t.balance)} kcal: fat <b class="mono">${r(t.fat)} g</b>, muscle <b class="mono">${r(t.muscle)} g</b>` : 'Log today\'s meals to see what they do to fat and muscle.')}</span>
+    ${raw(w.days ? html`<span class="small muted">Last 7 days (${w.days} counted): fat <b class="mono">${r(w.fat)} g</b>, muscle <b class="mono">${r(w.muscle)} g</b></span>` : '')}
+    ${raw(pr ? html`<span class="small">Eating like the last ${pr.from} full days: <b class="mono">${pr.month.kg} kg</b> in a month (fat ${kg(pr.month.fat)}, muscle ${kg(pr.month.muscle)}), <b class="mono">${pr.quarter.kg} kg</b> in 3.</span>` : '')}
+  </section>`;
 }
 
 // ---------- Fill the gaps (v55): foods for the rest of today or tomorrow ----------

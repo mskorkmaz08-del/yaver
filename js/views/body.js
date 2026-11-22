@@ -1,168 +1,183 @@
-// Body (v56, rebuilt in v57): the athletic goal (weight now → target, fat and lean
-// mass), today's food and training side by side, a front and back muscle map lit
-// by this week's training, the week and where eating like this leads, the plan
-// (diet numbers and the weekly training split) and weigh-ins. Every number is an
-// estimate (formulas in js/body.js, the plan in js/training.js).
+// Body (v67): one section, bottom right of the tab bar, with three parts:
+// Body (this screen), Training (views/training.js) and Diet (views/diet.js).
+// This screen: the morning readiness check, weight and composition with their
+// trend, the athletic goal and the food plan for it, tape measurements,
+// performance tests, what the data says, and every body record. The numbers
+// come from js/body.js; every estimate says so.
 import * as db from '../db.js';
-import * as D from '../data.js';
 import * as B from '../body.js';
-import * as T from '../training.js';
-import { ANATOMY } from '../anatomy.js';
+import * as IN from '../insights.js';
 import { html, raw, fmtDay, toast, haptic, today, sheet } from '../util.js';
 import { icon } from '../icons.js';
 import { openAssistant } from '../ai/assistant.js';
 
-let picked = '';
-
 const sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toLocaleString('en');
-const grams = g => `${sign(Math.round(g))} g`;
-const kgs = k => `${sign(Math.round(k * 10) / 10)} kg`;
 const n0 = n => Math.round(n).toLocaleString('en');
-const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const short = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+// The Body · Training · Diet switch at the top of all three screens.
+export function bodyTabs(active) {
+  return html`<nav class="body-tabs" aria-label="Body sections">${raw([['body', 'Body'], ['training', 'Training'], ['diet', 'Diet']].map(([k, l]) => html`<button data-btab="${k}" class="${raw(k === active ? 'on' : '')}" ${raw(k === active ? 'aria-current="page"' : '')}>${l}</button>`).join(''))}</nav>`;
+}
+export function wireBodyTabs(root, go) {
+  root.querySelectorAll('[data-btab]').forEach(b => (b.onclick = () => { if (!b.classList.contains('on')) go(b.dataset.btab); }));
+}
 
 export function render(root, go) {
   const s = B.status();
-  if (!s) { setup(root); return; }
-  const { profile: p, target: t, projection: pr } = s;
-  const d = D.dietDay(today());
-  const session = T.sessionOn();
-  const done = T.doneOn(today());
-  const sets = T.setsThisWeek();
-  const todays = T.musclesOf(session);
-  const wk = T.week();
-  const balance = new Map(s.week.list.map(x => [x.date, x]));
+  if (!s) { setup(root, go); return; }
+  const { profile: p, target: t } = s;
+  const a = B.analysis();
+  const r = a.readiness;
+  const tr = a.trend, comp = a.composition;
+  const prev = B.weighins().at(-2);
+  const finds = IN.all().filter(f => ['Body', 'Training', 'Recovery'].includes(f.area));
+  const meas = B.measurements();
+  const tests = B.tests(p.male);
+  const anyTest = tests.some(x => x.value != null);
+  const recs = B.records().slice().reverse();
 
   root.innerHTML = html`
     <header class="page-head">
       <div><p class="path">Yaver <b>·</b> body</p><h1><span class="num">${p.kg}</span> kg</h1></div>
-      <div class="head-btns"><button class="icon-btn" data-profile aria-label="Edit profile">${raw(icon('edit'))}</button><button class="icon-btn primary" data-weigh aria-label="Log weight">${raw(icon('plus'))}</button></div>
+      <div class="head-btns"><button class="icon-btn" data-profile aria-label="Edit profile">${raw(icon('edit'))}</button></div>
     </header>
+    ${raw(bodyTabs('body'))}
+
+    <div class="log-row">
+      <button data-log="weight">${raw(icon('scale'))}<span>Weight</span></button>
+      <button data-log="ready">${raw(icon('sun'))}<span>Morning</span></button>
+      <button data-log="measure">${raw(icon('ruler'))}<span>Measure</span></button>
+      <button data-log="test">${raw(icon('bolt'))}<span>Test</span></button>
+    </div>
+
+    <div class="bcols"><div class="bcol">
+    <section class="card ready ${raw(r ? 'r-' + r.call : '')}">
+      <div class="card-head"><p class="label">readiness today</p>${raw(r ? html`<button class="link-btn" data-log="ready">Edit</button>` : '')}</div>
+      ${raw(r ? html`
+        <div class="ready-top"><b class="mono">${r.score}</b><span><strong>${{ ready: 'Ready to push', normal: 'Normal day', easy: 'Take it easy' }[r.call]}</strong><small>${r.advice}</small></span></div>
+        <p class="small muted ready-facts">${[r.sleep ? `Sleep ${r.sleep} h` : '', r.rhr ? `pulse ${r.rhr}${r.base ? ` (usual ${r.base})` : ''}` : '', ...Object.entries(B.LEVELS).filter(([k]) => r.entry[k]).map(([k, [label, opts]]) => `${label.toLowerCase()} ${opts.find(o => o[0] === r.entry[k])?.[1].toLowerCase()}`)].filter(Boolean).join(' · ')}</p>`
+      : html`<p class="small">Thirty seconds after waking: sleep, resting pulse, soreness, energy and stress. Coaches use this to decide when to push and when to back off.</p>
+        <button class="btn primary wide" data-log="ready">${raw(icon('sun'))} Morning check</button>`)}
+    </section>
+
+    <section class="card bstats">
+      <div class="card-head"><p class="label">body now</p><span class="small muted">${fmtDay(p.weighedOn)}</span></div>
+      <div class="stat4">
+        <div><small>Weight</small><b class="mono">${p.kg}<i>kg</i></b>${raw(prev ? html`<em class="mono">${sign(Math.round((p.kg - prev.kg) * 10) / 10)}</em>` : '')}</div>
+        <div><small>Body fat</small><b class="mono">${p.bodyFat}<i>%</i></b><em>${{ measured: 'measured', tape: 'tape', waist: 'waist', BMI: 'rough' }[p.fatFrom]}</em></div>
+        <div><small>Lean mass</small><b class="mono">${p.lean}<i>kg</i></b><em class="mono">FFMI ${p.ffmi}</em></div>
+        <div><small>Waist / height</small><b class="mono">${a.waistHeight ?? '—'}</b><em>${a.waistHeight ? (a.waistHeight <= 0.45 ? 'athletic' : a.waistHeight < 0.5 ? 'healthy' : 'over 0.5') : 'add waist'}</em></div>
+      </div>
+      ${raw(chart(B.series(90)))}
+      <p class="small trend-line">${raw(tr ? html`<b class="mono">${sign(tr.kgWeek)} kg</b> a week (${sign(tr.pctWeek)}%): ${a.pace}.` : '<span class="muted">Weigh in 2-3 times a week, in the morning after the toilet, before eating. The trend appears after 10 days.</span>')}</p>
+      ${raw(comp ? html`<p class="small">Since ${short(comp.from)}: fat <b class="mono ${raw(comp.fat > 0 ? 'up' : 'good')}">${sign(comp.fat)} kg</b>, lean <b class="mono ${raw(comp.lean >= 0 ? 'good' : 'up')}">${sign(comp.lean)} kg</b>.</p>` : '')}
+      ${raw(p.fatFrom === 'BMI' || p.fatFrom === 'waist' ? html`<p class="small muted">Body fat is ${p.fatFrom === 'BMI' ? 'a rough guess from height and weight' : 'from the waist alone'}. Measure neck and waist${p.male ? '' : ' and hips'} for the tape formula coaches use.</p>` : '')}
+    </section>
 
     <section class="card goal">
       <div class="card-head"><p class="label">athletic goal</p><span class="chip-tag">${t.mode === 'cut' ? 'Phase 1: lose fat' : 'Lean gain'}</span></div>
-      <p class="goal-line"><b class="mono">${p.kg}</b><span class="arrow">→</span><b class="mono lume">${t.kg}</b><span class="unit">kg</span></p>
+      <p class="goal-line"><b class="mono">${p.kg}</b><span class="arrow">→</span><b class="mono lume">${t.kg}</b><span class="unit">kg at ${t.bodyFat}% fat</span></p>
       <p class="small">${[t.fatToLose ? `Lose about ${t.fatToLose} kg of fat` : '', t.muscle ? `${t.fatToLose ? 'gain' : 'Gain'} about ${t.muscle} kg of muscle` : ''].filter(Boolean).join(', then ')}${t.months ? `. Roughly ${t.months} month${t.months === 1 ? '' : 's'}.` : ''}</p>
-      ${raw(comp('Now', p.kg - p.fatKg, p.fatKg, Math.max(p.kg, t.kg)))}
-      ${raw(comp('Target', t.lean, t.kg - t.lean, Math.max(p.kg, t.kg)))}
-      <p class="small muted">Muscular, strong, fast and flexible: ${t.bodyFat}% body fat with the lean mass of a trained athlete your height (FFMI ${t.ffmi}). Body fat now ${p.fatFrom === 'measured' ? 'as measured' : p.fatFrom === 'waist' ? 'from your waist' : 'estimated from height and weight; add your waist at the next weigh-in for a better number'}.</p>
-    </section>
-
-    <div class="today-grid">
-      <section class="card eat">
-        <div class="card-head"><p class="label">eat today</p><button class="link-btn" data-diet>Diet ›</button></div>
-        ${raw(meter('Calories', d.calories, t.calories, 'kcal'))}
-        ${raw(meter('Protein', d.protein, t.protein, 'g'))}
-        ${raw(meter('Carbs', d.carbs, t.carbs, 'g'))}
-        ${raw(meter('Fat', d.fat, t.fat, 'g'))}
-        <p class="small effect-line">${raw(s.today.counted ? html`So far today: fat <b class="mono ${raw(s.today.fat > 0 ? 'up' : 'good')}">${grams(s.today.fat)}</b>, muscle <b class="mono ${raw(s.today.muscle > 0 ? 'good' : s.today.muscle < 0 ? 'up' : '')}">${grams(s.today.muscle)}</b>` : `<span class="muted">${s.today.logged ? 'Log the rest of today to see its effect on fat and muscle.' : 'Log what you eat to see its effect on fat and muscle.'}</span>`)}</p>
-      </section>
-
-      <section class="card train">
-        <div class="card-head"><p class="label">train today</p><span class="small muted">${DAYS[new Date().getDay()]}</span></div>
-        ${raw(session ? html`<p class="session">${session.name}</p>
-          <ol class="ex-list">${raw(session.items.map(([ex, n, reps]) => html`<li><span>${T.EX[ex][0]}</span><b class="mono">${n} × ${reps}</b></li>`).join(''))}</ol>`
-          : '<p class="session">Rest day</p><p class="small muted">Walk, and do the mobility block.</p>')}
-        <p class="small muted">${T.MOBILITY}</p>
-        ${raw(session ? html`<button class="btn ${raw(done ? 'ghost' : 'primary')} wide" data-done>${raw(icon('check'))} ${done ? 'Done today (undo)' : 'Mark session done'}</button>` : '')}
-      </section>
-    </div>
-
-    <section class="card muscles">
-      <div class="card-head"><p class="label">muscles this week</p><span class="small muted">hard sets, aim 10+</span></div>
-      <div class="anatomy">${raw(map('front', sets, todays))}${raw(map('back', sets, todays))}</div>
-      <div class="legend"><span><i class="m0"></i>0</span><span><i class="m1"></i>1-4</span><span><i class="m2"></i>5-9</span><span><i class="m3"></i>10+</span>${raw(session ? '<span><i class="tday"></i>today</span>' : '')}</div>
-      <p class="small muscle-info">${raw(picked ? info(picked, sets, session) : '<span class="muted">Tap a muscle to see its sets and today\'s exercises for it.</span>')}</p>
-    </section>
-
-    <section class="card week">
-      <div class="card-head"><p class="label">this week</p><span class="small muted">burn ≈ ${n0(p.tdee)} kcal a day</span></div>
-      <div class="week-row">${raw(wk.map(x => day(x, balance.get(x.day))).join(''))}</div>
-      <p class="small muted week-key"><i class="dot done"></i> trained <i class="dot planned"></i> planned <i class="dot missed"></i> missed · bars: <span class="up">over</span> or <span class="good">under</span> your burn</p>
-      ${raw(pr ? html`<p class="small">If you keep eating like your last ${pr.from} full days (${n0(pr.kcal)} kcal, ${pr.protein} g protein, ${sign(pr.balance)} kcal a day):</p>
-        <div class="proj">${raw([pr.month, pr.quarter].map(x => html`<div><small>${x.days === 30 ? 'In a month' : 'In 3 months'}</small><b class="mono">${x.kg} kg</b><span class="mono small">fat ${kgs(x.fat)} · muscle ${kgs(x.muscle)}</span></div>`).join(''))}</div>`
-        : '<p class="small muted">After three fully logged days, this shows where eating like that leads in a month and in three.</p>')}
-    </section>
-
-    <section class="card plan">
-      <div class="card-head"><p class="label">your plan</p></div>
-      <h4>Food a day</h4>
+      ${raw(compBar('Now', p.kg - p.fatKg, p.fatKg, Math.max(p.kg, t.kg)))}
+      ${raw(compBar('Target', t.lean, t.kg - t.lean, Math.max(p.kg, t.kg)))}
       <div class="macro-grid">
-        <div><small>Calories</small><b class="mono">${n0(t.calories)}</b></div><div><small>Protein</small><b class="mono">${t.protein} g</b></div>
+        <div><small>kcal a day</small><b class="mono">${n0(t.calories)}</b></div><div><small>Protein</small><b class="mono">${t.protein} g</b></div>
         <div><small>Carbs</small><b class="mono">${t.carbs} g</b></div><div><small>Fat</small><b class="mono">${t.fat} g</b></div>
       </div>
-      <p class="small muted">${t.mode === 'cut' ? 'About 450 kcal under your burn: fat comes off while the lifting and high protein keep the muscle.' : 'About 10% over your burn: enough to build muscle without much fat.'} Protein spread over 3-4 meals; carbs around training; fish twice a week for omega-3.</p>
+      <p class="small muted">${t.mode === 'cut' ? 'About 450 kcal under your burn' : 'About 10% over your burn'} (≈ ${n0(p.tdee)} kcal). The lean, strong look of gymnasts and fighters: FFMI ${t.ffmi}, lots of muscle for the weight.</p>
       <div class="btn-row"><button class="btn ghost" data-goals>${raw(icon('target'))} Use as my diet goals</button></div>
-      <h4>Training</h4>
-      <div class="chips days-pick">${raw([3, 4, 5].map(n => `<button class="chip ${n === T.daysAWeek() ? 'on' : ''}" data-days="${n}">${n} days</button>`).join(''))}</div>
-      <ul class="split">${raw(wk.map(x => html`<li class="${raw(x.day === today() ? 'now' : '')}"><span>${DAYS[new Date(x.day + 'T12:00').getDay()]}</span><b>${x.session ? x.session.name : 'Rest and mobility'}</b></li>`).join(''))}</ul>
-      <p class="small muted">Every muscle twice a week and 10+ hard sets; jumps, throws and sprints first while fresh; 10 minutes of mobility every day; sleep 7-9 hours. Add weight or a rep when the last set feels easy.</p>
-      <div class="btn-row"><button class="btn ghost" data-ai>${raw(icon('sparkle'))} Adjust with Yaver</button></div>
     </section>
 
-    <section class="list weighins">
-      <h4 class="list-day">Weigh-ins <span>${B.weighins().length}</span></h4>
-      ${raw(B.weighins().slice(-6).reverse().map((w, i, a) => html`<button class="row" data-w="${w.id}"><span class="row-main"><b>${fmtDay(w.date)}</b><small class="mono">${[w.waist ? `waist ${w.waist} cm` : '', w.fat ? `${w.fat}% fat` : ''].filter(Boolean).join(' · ')}</small></span><span class="row-amt">${w.kg} kg${raw(a[i + 1] ? ` <small class="muted">${kgs(w.kg - a[i + 1].kg)}</small>` : '')}</span></button>`).join(''))}
+    </div><div class="bcol">
+    <section class="card meas">
+      <div class="card-head"><p class="label">measurements</p><button class="link-btn" data-log="measure">Measure</button></div>
+      <table class="btable"><thead><tr><th></th><th>cm</th><th>change</th></tr></thead><tbody>
+        ${raw(meas.map(m => html`<tr class="${raw(m.value == null ? 'none' : '')}"><td>${m.label}</td><td class="mono">${m.value ?? '—'}</td><td class="mono ${raw(m.change == null ? 'muted' : (m.key === 'waist' || m.key === 'hips' ? m.change > 0 : m.change < 0) ? 'up' : m.change ? 'good' : 'muted')}">${m.change == null ? '' : sign(m.change)}</td></tr>`).join(''))}
+      </tbody></table>
+      <p class="small muted">Every 2-4 weeks, in the morning, relaxed. Waist down and arms, chest and thighs steady or up is fat off and muscle kept.</p>
     </section>
-    <p class="small muted body-note">Estimates from standard formulas and studies, not a medical measurement. Weigh in once a week at the same time of day; the numbers improve as real weigh-ins come in.</p>`;
 
-  root.querySelector('[data-weigh]').onclick = () => weighForm();
+    <section class="card tests">
+      <div class="card-head"><p class="label">performance tests</p><button class="link-btn" data-log="test">Test</button></div>
+      ${raw(anyTest ? '' : '<p class="small muted">The basics gymnastics, lifting and fight coaches test: pull-ups, push-ups, dips, dead hang, jumps, a 20 m sprint, core holds and reach. Test every 4-6 weeks, fresh, after a warm-up. Do the ones you can.</p>')}
+      <ul class="tlist">${raw(tests.map(x => html`<li class="${raw(x.value == null ? 'none' : x.met ? 'met' : '')}">
+        <span class="t-name">${x.label}<small>${x.group}</small></span>
+        <span class="t-bar"><i style="width:${raw((x.of * 100).toFixed(0))}%"></i></span>
+        <b class="mono">${x.value == null ? '—' : x.value}<small> / ${x.target} ${x.unit}</small></b>
+        <em class="mono ${raw(x.better == null ? '' : x.better ? 'good' : 'up')}">${x.change == null ? '' : sign(x.change)}</em></li>`).join(''))}</ul>
+    </section>
+
+    <section class="card finds">
+      <div class="card-head"><p class="label">what the data says</p></div>
+      ${raw(finds.length ? html`<ul class="find-list">${raw(finds.map(f => html`<li class="lv${f.level}"><span>${f.text}</span>${raw(f.ask ? html`<button class="link-btn" data-ask="${f.id}">Ask</button>` : '')}</li>`).join(''))}</ul>`
+        : '<p class="small muted">Nothing stands out. Findings show here when your weigh-ins, measurements, tests, mornings and training show a pattern.</p>')}
+      <div class="btn-row"><button class="btn ghost" data-ai>${raw(icon('sparkle'))} Review my body with Yaver</button></div>
+    </section>
+
+    </div></div>
+    <section class="list records">
+      <h4 class="list-day">Records <span>${recs.length}</span></h4>
+      ${raw(recs.slice(0, 8).map(w => html`<button class="row" data-w="${w.id}"><span class="row-main"><b>${fmtDay(w.date)}</b><small>${summary(w)}</small></span><span class="row-amt">${w.kg ? `${w.kg} kg` : ''}</span></button>`).join(''))}
+    </section>
+    <p class="small muted body-note">${p.height} cm · ${p.age} years · ${p.male ? 'male' : 'female'}. Estimates from standard formulas and studies, not a medical measurement.</p>`;
+
+  wireBodyTabs(root, go);
   root.querySelector('[data-profile]').onclick = () => profileForm();
-  root.querySelector('[data-diet]').onclick = () => go('diet');
-  root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => weighForm(db.get('weighins', b.dataset.w))));
-  root.querySelector('[data-done]')?.addEventListener('click', async () => { const r = await T.markDone(); haptic(); if (r) toast('Session done'); });
-  root.querySelectorAll('[data-days]').forEach(b => (b.onclick = () => db.setSetting('trainDays', Number(b.dataset.days))));
-  root.querySelectorAll('.anatomy [data-m]').forEach(g => (g.onclick = () => { picked = picked === g.dataset.m ? '' : g.dataset.m; render(root, go); }));
+  root.querySelectorAll('[data-log]').forEach(b => (b.onclick = () => ({ weight: () => weighForm(), ready: () => readyForm(), measure: () => measureForm(), test: () => testForm() })[b.dataset.log]()));
+  root.querySelectorAll('[data-w]').forEach(b => (b.onclick = () => recordForm(db.get('weighins', b.dataset.w))));
+  root.querySelectorAll('[data-ask]').forEach(b => (b.onclick = () => openAssistant(finds.find(f => f.id === b.dataset.ask)?.ask)));
   root.querySelector('[data-goals]').onclick = async () => {
     await db.setSetting('dailyCalories', t.calories); await db.setSetting('dailyProtein', t.protein);
     haptic(); toast(`Diet goals: ${n0(t.calories)} kcal, ${t.protein} g protein`);
   };
-  root.querySelector('[data-ai]').onclick = () => openAssistant('Look at my body, goal, training plan and recent eating (body_status, diet_history). My goal is an athletic body: muscular, strong, fast and flexible. Check the plan against what I actually did this week and suggest plain adjustments for the next week: food (with foods easy to get in Kazakhstan) and training. Say what is an estimate.');
+  root.querySelector('[data-ai]').onclick = () => openAssistant('Review my body data (body_status): weight trend and pace, body fat and lean mass change, measurements, performance tests against the targets, morning readiness and training load. My goal is the body of a gymnast or fighter: muscular, strong, fast and flexible. Tell me plainly what is going well, what is off, and the one or two changes to make next. Say what is an estimate.');
 }
 
-// A lean | fat bar, scaled to the heavier of now and target.
-function comp(label, lean, fat, max) {
+function summary(w) {
+  const parts = [];
+  const m = B.SITES.filter(([k]) => w[k] != null).length;
+  const t = B.TESTS.filter(([k]) => w[k] != null).length;
+  if (w.fat) parts.push(`${w.fat}% fat`);
+  if (m) parts.push(m === 1 ? `${B.SITES.find(([k]) => w[k] != null)[1].toLowerCase()} ${w[B.SITES.find(([k]) => w[k] != null)[0]]} cm` : `${m} measurements`);
+  if (t) parts.push(`${t} test${t === 1 ? '' : 's'}`);
+  return parts.join(' · ');
+}
+
+// Weight over 90 days: each weigh-in as a dot, the 7-day average as the line.
+function chart(list) {
+  if (list.length < 2) return '';
+  const W = 320, H = 110, pad = 6;
+  const t0 = new Date(list[0].date + 'T12:00').getTime(), t1 = new Date(list.at(-1).date + 'T12:00').getTime();
+  const vals = list.flatMap(x => [x.kg, x.avg]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi - lo < 2) { const m = (hi + lo) / 2; lo = m - 1; hi = m + 1; }
+  const X = d => pad + ((new Date(d + 'T12:00').getTime() - t0) / Math.max(1, t1 - t0)) * (W - pad * 2 - 30);
+  const Y = v => pad + (1 - (v - lo) / (hi - lo)) * (H - pad * 2 - 14);
+  const line = list.map((x, i) => `${i ? 'L' : 'M'}${X(x.date).toFixed(1)} ${Y(x.avg).toFixed(1)}`).join(' ');
+  return `<svg class="wchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight over the last 90 days">
+    <line x1="${pad}" x2="${W - 30}" y1="${Y(hi).toFixed(1)}" y2="${Y(hi).toFixed(1)}" class="grid"/><line x1="${pad}" x2="${W - 30}" y1="${Y(lo).toFixed(1)}" y2="${Y(lo).toFixed(1)}" class="grid"/>
+    <text x="${W - 26}" y="${(Y(hi) + 4).toFixed(1)}">${hi.toFixed(1)}</text><text x="${W - 26}" y="${(Y(lo) + 4).toFixed(1)}">${lo.toFixed(1)}</text>
+    ${list.map(x => `<circle cx="${X(x.date).toFixed(1)}" cy="${Y(x.kg).toFixed(1)}" r="2.2"/>`).join('')}
+    <path d="${line}"/>
+    <text x="${pad}" y="${H - 2}">${short(list[0].date)}</text><text x="${W - 30}" y="${H - 2}" text-anchor="end">${short(list.at(-1).date)}</text></svg>`;
+}
+
+function compBar(label, lean, fat, max) {
   const w = v => ((v / max) * 100).toFixed(1);
   return html`<div class="comp"><span>${label}</span><div class="comp-bar"><i class="lean" style="width:${raw(w(lean))}%"></i><i class="fat" style="width:${raw(w(fat))}%"></i></div><small class="mono">${Math.round(lean)} lean · ${Math.round(fat)} fat</small></div>`;
 }
-function meter(label, v, goal, unit) {
-  const pct = goal ? Math.min(100, (v / goal) * 100) : 0;
-  return html`<div class="meter"><div class="meter-top"><span>${label}</span><b class="mono">${n0(v)}<small> / ${n0(goal)} ${unit}</small></b></div><div class="bar"><div class="${raw(v > goal * 1.05 ? 'over' : '')}" style="width:${raw(pct.toFixed(1))}%"></div></div></div>`;
-}
-function day(x, b) {
-  const dn = DAYS[new Date(x.day + 'T12:00').getDay()][0];
-  const mark = x.done ? 'done' : x.session ? (x.day < today() ? 'missed' : 'planned') : 'rest';
-  const h = b?.counted ? Math.min(22, Math.abs(b.balance) / 30) : 0;
-  return `<div class="wd ${x.day === today() ? 'is-today' : ''}" title="${x.day}${b?.counted ? `: ${b.balance} kcal` : ''}">
-    <small>${dn}</small><i class="dot ${mark}"></i>
-    <span class="bal">${b?.counted ? `<i class="${b.balance >= 0 ? 'plus' : 'minus'}" style="height:${h.toFixed(1)}px"></i>` : ''}</span></div>`;
-}
 
-// ---------- The muscle map ----------
-const PARTS = new Set(['head', 'hair', 'hands', 'feet', 'ankles', 'knees']);
-const level = n => (!n ? 0 : n < 5 ? 1 : n < 10 ? 2 : 3);
-function map(side, sets, todays) {
-  const vb = side === 'front' ? '0 0 724 1448' : '724 0 724 1448';
-  const groups = Object.entries(ANATOMY[side]).map(([m, paths]) => {
-    const part = PARTS.has(m);
-    const cls = part ? 'part' : `mus m${level(sets[m])}${todays.has(m) ? ' tday' : ''}${picked === m ? ' picked' : ''}`;
-    return `<g class="${cls}"${part ? '' : ` data-m="${m}" role="button" aria-label="${T.MUSCLE_NAMES[m] || m}"`}>${paths.map(d => `<path d="${d}"/>`).join('')}</g>`;
-  }).join('');
-  return `<figure><svg viewBox="${vb}" class="muscle-map">${groups}<path class="outline" d="${ANATOMY.outline[side]}"/></svg><figcaption>${side === 'front' ? 'Front' : 'Back'}</figcaption></figure>`;
-}
-function info(m, sets, session) {
-  const n = Math.round((sets[m] || 0) * 10) / 10;
-  const ex = T.exercisesFor(m, session);
-  return html`<b>${T.MUSCLE_NAMES[m] || m}</b>: ${n} hard set${n === 1 ? '' : 's'} this week${n < 10 ? ' (aim 10+)' : ''}.${raw(ex.length ? html` Today: ${ex.join(', ')}.` : '')}`;
-}
-
-// ---------- Profile and weigh-ins ----------
-function setup(root) {
+// ---------- First run ----------
+function setup(root, go) {
   root.innerHTML = html`
     <header class="page-head"><div><p class="path">Yaver <b>·</b> body</p><h1>Your body</h1></div></header>
+    ${raw(bodyTabs('body'))}
     <section class="card body-setup">
-      <p>Your height and weight are all it needs. From them Yaver sets your athletic target weight, the food and training plan to reach it, and shows what each day of eating does to fat and muscle.</p>
+      <p>Height and weight are all it needs to start. From them Yaver sets an athletic target, the food and training plan for it, and tracks what changes. Measurements, tests and a morning check make it sharper later.</p>
       <button class="btn primary" data-setup>Start</button>
     </section>`;
+  wireBodyTabs(root, go);
   root.querySelector('[data-setup]').onclick = () => startForm();
 }
 
@@ -182,6 +197,7 @@ async function startForm() {
   haptic();
 }
 
+// ---------- Forms ----------
 export async function profileForm() {
   const v = await sheet({
     title: 'Your body',
@@ -191,7 +207,6 @@ export async function profileForm() {
       { name: 'birth', label: 'Year of birth', type: 'number', value: db.setting('bodyBirth', '') || '', placeholder: 'Age 30 is assumed' },
       { name: 'sex', label: 'Sex (for the formulas)', type: 'select', value: db.setting('bodySex', 'm'), options: [['m', 'Male'], ['f', 'Female']] },
       { name: 'activity', label: 'Day to day, training included', type: 'select', value: db.setting('bodyActivity', 'moderate'), options: B.ACTIVITY.map(a => [a[0], a[1]]) },
-      { name: 'days', label: 'Training days a week', type: 'select', value: T.daysAWeek(), options: [[3, '3 (full body)'], [4, '4 (upper / lower)'], [5, '5 (upper / lower + speed)']] },
       { name: 'experience', label: 'Lifting experience', type: 'select', value: db.setting('bodyExperience', 'new'), options: B.EXPERIENCE.map(e => [e[0], e[1]]) },
     ],
   });
@@ -201,27 +216,84 @@ export async function profileForm() {
   if (v.birth) await db.setSetting('bodyBirth', v.birth);
   await db.setSetting('bodySex', v.sex);
   await db.setSetting('bodyActivity', v.activity);
-  await db.setSetting('trainDays', Number(v.days));
   await db.setSetting('bodyExperience', v.experience);
   haptic(); toast('Saved');
 }
 
-export async function weighForm(existing) {
+const dateField = (value = today()) => ({ name: 'date', label: 'Date', type: 'date', value });
+
+export async function weighForm() {
   const v = await sheet({
-    title: existing ? `Weigh-in, ${fmtDay(existing.date)}` : 'Log weight',
-    danger: existing ? 'Delete' : null,
+    title: 'Weight',
+    body: '<p class="small muted">Morning, after the toilet, before food or drink. 2-3 times a week is enough; the trend matters, not one day.</p>',
     fields: [
-      { name: 'kg', label: 'Weight (kg)', type: 'number', value: existing?.kg ?? B.latest()?.kg ?? '', step: '0.1', required: true },
-      { name: 'date', label: 'Date', type: 'date', value: existing?.date || today() },
-      { name: 'waist', label: 'Waist at the navel, cm (optional, better body fat)', type: 'number', value: existing?.waist ?? '', step: '0.5' },
-      { name: 'fat', label: 'Body fat % if measured (optional)', type: 'number', value: existing?.fat ?? '', step: '0.1' },
+      { name: 'kg', label: 'Weight (kg)', type: 'number', value: B.latest()?.kg ?? '', step: '0.1', required: true },
+      { name: 'fat', label: 'Body fat % if measured by a scan or calipers (optional)', type: 'number', step: '0.1' },
+      dateField(),
     ],
   });
   if (!v) return;
-  if (v.__danger) { await db.remove('weighins', existing.id); toast('Weigh-in deleted', { action: { label: 'Undo', run: () => db.put('weighins', existing) } }); return; }
-  try {
-    if (existing && existing.date !== v.date) await db.remove('weighins', existing.id);
-    await B.logWeight({ kg: v.kg, date: v.date || today(), waist: v.waist, fat: v.fat });
-    haptic(); toast(`${v.kg} kg logged`);
-  } catch (e) { toast(e.message); }
+  try { await B.logBody({ kg: v.kg, fat: v.fat ?? '' }, v.date || today()); haptic(); toast(`${v.kg} kg logged`); } catch (e) { toast(e.message); }
+}
+
+export async function measureForm(date = today()) {
+  const have = db.all('weighins').find(w => w.date === date) || {};
+  const v = await sheet({
+    title: 'Measurements',
+    body: '<p class="small muted">Centimetres, tape level and snug, not tight. Fill only what you measured; leave the rest empty.</p>',
+    fields: [...B.SITES.map(([k, label, how]) => ({ name: k, label: `${label}: ${how.toLowerCase()}`, type: 'number', step: '0.5', value: have[k] ?? '', placeholder: String(B.lastTwo(k).now?.[k] ?? '') })), dateField(date)],
+  });
+  if (!v) return;
+  const { date: d, ...rest } = v;
+  if (!(await B.logBody(Object.fromEntries(Object.entries(rest).map(([k, x]) => [k, x ?? ''])), d || today()))) return;
+  haptic(); toast('Measurements saved');
+}
+
+export async function testForm(date = today()) {
+  const have = db.all('weighins').find(w => w.date === date) || {};
+  const male = db.setting('bodySex', 'm') !== 'f';
+  const v = await sheet({
+    title: 'Performance tests',
+    body: '<p class="small muted">Warm up first, rest fully between tries, and log the best. Fill only the tests you did.</p>',
+    fields: [...B.TESTS.map(([k, label, unit, , tm, tf, , how]) => ({ name: k, label: `${label} (${unit}, target ${male ? tm : tf}): ${how}`, type: 'number', step: unit === 's' && k === 'sprint20' ? '0.01' : unit === 'cm' ? '1' : '1', value: have[k] ?? '', placeholder: String(B.lastTwo(k).now?.[k] ?? '') })), dateField(date)],
+  });
+  if (!v) return;
+  const { date: d, ...rest } = v;
+  if (!(await B.logBody(Object.fromEntries(Object.entries(rest).map(([k, x]) => [k, x ?? ''])), d || today()))) return;
+  haptic(); toast('Tests saved');
+}
+
+export async function readyForm(date = today()) {
+  const c = B.readinessOn(date) || {};
+  const v = await sheet({
+    title: 'Morning check',
+    body: '<p class="small muted">Right after waking. Resting pulse: sitting still, count 30 seconds and double it, or read it from a watch.</p>',
+    fields: [
+      { name: 'sleep', label: 'Hours slept', type: 'number', step: '0.25', value: c.sleep ?? '', placeholder: '7.5' },
+      { name: 'rhr', label: 'Resting pulse (beats a minute, optional)', type: 'number', step: '1', value: c.rhr ?? '' },
+      ...Object.entries(B.LEVELS).map(([k, [label, opts]]) => ({ name: k, label, type: 'select', value: c[k] || opts[1][0], options: opts })),
+    ],
+  });
+  if (!v) return;
+  await B.logReadiness(v, date);
+  const r = B.readiness(date);
+  haptic(); toast(r ? `Readiness ${r.score}: ${{ ready: 'ready to push', normal: 'a normal day', easy: 'take it easy' }[r.call]}` : 'Saved');
+}
+
+// A past record: edit any of its parts, or delete it.
+async function recordForm(existing) {
+  if (!existing) return;
+  const v = await sheet({
+    title: fmtDay(existing.date),
+    danger: 'Delete',
+    body: html`<p class="small muted">${summary(existing) || 'Weight only'}</p>`,
+    fields: [{ name: 'kg', label: 'Weight (kg)', type: 'number', step: '0.1', value: existing.kg ?? '' }, { name: 'fat', label: 'Body fat % (measured)', type: 'number', step: '0.1', value: existing.fat ?? '' }],
+    submit: 'Save',
+  });
+  if (!v) return;
+  if (v.__danger) { await db.remove('weighins', existing.id); toast('Record deleted', { action: { label: 'Undo', run: () => db.put('weighins', existing) } }); return; }
+  try { await B.logBody({ kg: v.kg ?? null, fat: v.fat ?? null }, existing.date); haptic(); toast('Saved'); } catch (e) { toast(e.message); }
+  // Measurements and tests of that day open in their own forms.
+  if (B.SITES.some(([k]) => existing[k] != null)) await measureForm(existing.date);
+  if (B.TESTS.some(([k]) => existing[k] != null)) await testForm(existing.date);
 }

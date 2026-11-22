@@ -21,7 +21,7 @@ export function initShortcuts(go) {
     if (e.key === '/') { e.preventDefault(); openAssistant(); return; }
     if (e.key === 'g') { pendingG = Date.now(); return; }
     // Number keys open the sections in sidebar order; screens with their own number keys (review cards) take them first.
-    const tab = { 1: 'home', 2: 'cetele', 3: 'study', 4: 'calendar', 5: 'money', 6: 'diet', 7: 'map', 8: 'skills', ',': 'settings' }[e.key];
+    const tab = { 1: 'home', 2: 'cetele', 3: 'study', 4: 'calendar', 5: 'money', 6: 'body', 7: 'map', 8: 'skills', ',': 'settings' }[e.key];
     if (tab && !(e.key >= '1' && e.key <= '4' && document.body.dataset.view === 'lesson')) { e.preventDefault(); go(tab); return; }
     if (Date.now() - pendingG < 1200) {
       if (e.key === 't') { e.preventDefault(); e.stopImmediatePropagation(); go('study'); }
