@@ -82,10 +82,22 @@ export function week(date = today()) {
 // Logged sessions: { date, session (key), name }.
 export const workouts = () => db.all('workouts').sort((a, b) => a.date.localeCompare(b.date));
 export const doneOn = date => db.all('workouts').find(w => w.date === date) || null;
-export async function markDone(date = today(), key = sessionOn(date)?.key || 'other') {
+// v67: a session can carry how hard it felt (RPE 1-10) and its minutes, for the training load.
+export async function markDone(date = today(), key = sessionOn(date)?.key || 'other', extra = {}) {
   const have = doneOn(date);
   if (have) { await db.remove('workouts', have.id); return null; }
-  return db.put('workouts', { date, session: key, name: SESSIONS[key]?.name || 'Training' });
+  return db.put('workouts', { date, session: key, name: SESSIONS[key]?.name || 'Training', ...rated(extra) });
+}
+export async function rate(date, extra) {
+  const have = doneOn(date);
+  if (!have) return null;
+  return db.put('workouts', { ...have, ...rated(extra) });
+}
+function rated({ rpe, min } = {}) {
+  const out = {};
+  if (Number(rpe) >= 1 && Number(rpe) <= 10) out.rpe = Math.round(Number(rpe));
+  if (Number(min) > 0 && Number(min) < 600) out.min = Math.round(Number(min));
+  return out;
 }
 // Sessions a week over the last 14 days (null when nothing was logged).
 export function recentPerWeek(end = today()) {

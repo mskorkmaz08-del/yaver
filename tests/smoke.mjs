@@ -103,11 +103,15 @@ await page.click('.tabbar [data-tab=study]');
 await page.waitForTimeout(300);
 await page.click('[data-load-plan]');
 await page.waitForTimeout(800);
-for (const tab of ['money', 'calendar', 'study', 'diet']) {
+for (const tab of ['money', 'calendar', 'study', 'body']) {
   await page.click(`.tabbar [data-tab=${tab}]`);
   await page.waitForTimeout(400);
   await page.screenshot({ path: `shots/2-${tab}.png`, fullPage: true });
 }
+// v67: Diet lives inside the Body tab.
+await page.click('[data-btab=diet]');
+await page.waitForTimeout(400);
+await page.screenshot({ path: 'shots/2-diet.png', fullPage: true });
 // Map with nearby search
 // Map lives on Home's quick row on the phone (sidebar on a laptop).
 await page.click('.tabbar [data-tab=home]');

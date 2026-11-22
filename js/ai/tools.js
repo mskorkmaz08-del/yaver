@@ -278,10 +278,10 @@ const TOOLS = [
       return list.slice(0, 8).map(p => ({ name: p.name, distance: p.km != null ? Places.fmtDist(p.km) : undefined, address: p.address || undefined, hours: p.hours || undefined, directions: Places.directionsUrl(p) }));
     },
   },
-  // ----- Body (v56) -----
+  // ----- Body (v56; v67 adds measurements, tests, readiness and load) -----
   {
     name: 'body_status',
-    description: 'The user\'s body: weight, height, estimated body fat, lean mass, FFMI, energy burned a day, the athletic target weight and the plan to it (calories, protein, months), what today, the last 7 and 30 days of eating did (fat and muscle in grams), and a projection for the next month and 3 months if eating continues like the last 14 days. All estimates.',
+    description: 'The user\'s body: weight and its weekly trend against the right pace, body fat (measured, tape, waist or BMI) and lean mass change, measurements, performance tests against athletic targets, today\'s morning readiness, 7-day sleep, training load (session RPE × minutes, acute:chronic ratio), height, estimated body fat, lean mass, FFMI, energy burned a day, the athletic target weight and the plan to it (calories, protein, months), what today, the last 7 and 30 days of eating did (fat and muscle in grams), and a projection for the next month and 3 months if eating continues like the last 14 days. All estimates.',
     input_schema: obj({}),
     run: () => B.forAI(),
   },
@@ -293,9 +293,25 @@ const TOOLS = [
   },
   {
     name: 'log_workout',
-    description: 'Mark a training session done (or undo it) on a day. With no session, the plan\'s session for that day. Sessions: ' + Object.keys(TR.SESSIONS).join(', ') + '.',
-    input_schema: obj({ date: { type: 'string', description: 'YYYY-MM-DD, default today' }, session: { type: 'string', enum: Object.keys(TR.SESSIONS) } }),
-    run: async ({ date, session }) => { const r = await TR.markDone(date || today(), session || TR.sessionOn(date || today())?.key || 'fullA'); return r ? { ok: true, done: r.name } : { ok: true, undone: true }; },
+    description: 'Mark a training session done (or undo it) on a day, with how hard it felt (RPE 1-10) and minutes when the user says them; these feed the training load. With no session, the plan\'s session for that day. If the day is already done and rpe or minutes are given, they update it. Sessions: ' + Object.keys(TR.SESSIONS).join(', ') + '.',
+    input_schema: obj({ date: { type: 'string', description: 'YYYY-MM-DD, default today' }, session: { type: 'string', enum: Object.keys(TR.SESSIONS) }, rpe: { type: 'number', description: '1-10' }, minutes: { type: 'number' } }),
+    run: async ({ date, session, rpe, minutes }) => {
+      const d = date || today();
+      if (TR.doneOn(d) && (rpe || minutes)) { await TR.rate(d, { rpe, min: minutes }); return { ok: true, updated: true }; }
+      const r = await TR.markDone(d, session || TR.sessionOn(d)?.key || 'fullA', { rpe, min: minutes }); return r ? { ok: true, done: r.name } : { ok: true, undone: true };
+    },
+  },
+  {
+    name: 'log_body',
+    description: 'Log body measurements (cm) and/or performance test results on a day, any subset. Sites: ' + B.SITES.map(x => x[0]).join(', ') + '. Tests: ' + B.TESTS.map(x => `${x[0]} (${x[1]}, ${x[2]})`).join(', ') + '.',
+    input_schema: obj({ date: { type: 'string', description: 'YYYY-MM-DD, default today' }, ...Object.fromEntries([...B.SITES.map(x => x[0]), ...B.TESTS.map(x => x[0])].map(k => [k, { type: 'number' }])) }),
+    run: async ({ date, ...v }) => { const r = await B.logBody(v, date || today()); return r ? { ok: true, saved: Object.keys(v) } : { ok: false, error: 'Nothing to save.' }; },
+  },
+  {
+    name: 'log_readiness',
+    description: 'The morning check: hours slept, resting pulse (bpm), and sleep quality (poor/ok/good), energy (low/ok/high), muscle soreness (heavy/some/none), stress (high/some/low). Any subset. Returns the readiness score (0-100) and the advice for training.',
+    input_schema: obj({ date: { type: 'string', description: 'YYYY-MM-DD, default today' }, sleep_hours: { type: 'number' }, resting_pulse: { type: 'number' }, sleepQ: { type: 'string', enum: ['poor', 'ok', 'good'] }, energy: { type: 'string', enum: ['low', 'ok', 'high'] }, soreness: { type: 'string', enum: ['heavy', 'some', 'none'] }, stress: { type: 'string', enum: ['high', 'some', 'low'] } }),
+    run: async ({ date, sleep_hours, resting_pulse, ...rest }) => { const d = date || today(); await B.logReadiness({ sleep: sleep_hours, rhr: resting_pulse, ...rest }, d); return { ok: true, readiness: B.readiness(d) && (({ entry, ...x }) => x)(B.readiness(d)) }; },
   },
   // ----- Diet -----
   {
@@ -378,7 +394,7 @@ function slim(row) {
 export const toolDefinitions = TOOLS.map(({ run, ...def }) => def);
 
 // Which tools change data, so the chat can show a small receipt and screens refresh.
-export const WRITE_TOOLS = new Set(['log_feeling', 'log_weight', 'log_workout', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
+export const WRITE_TOOLS = new Set(['log_feeling', 'log_weight', 'log_workout', 'log_body', 'log_readiness', 'add_person', 'log_team_activity', 'log_cetele', 'set_cetele_item', 'complete_lesson', 'grade_card', 'record_test_result', 'save_week_lessons', 'log_practice', 'add_roadmap_milestones', 'complete_milestone', 'add_expense', 'delete_expense', 'add_meeting', 'update_meeting', 'delete_meeting', 'log_study', 'log_meal', 'add_task', 'complete_task', 'set_goal']);
 
 export async function runTool(name, input) {
   const tool = TOOLS.find(t => t.name === name);
@@ -397,6 +413,8 @@ export function describeAction(name, input) {
     case 'set_cetele_item': return input.remove ? `Removed ${input.name} from çetele` : `Çetele · ${input.name}: ${input.target ?? ''} ${input.unit ?? ''} per ${input.per || 'day'}`.replace(/\s+/g, ' ');
     case 'log_workout': return `Training done${input.session ? ` · ${TR.SESSIONS[input.session]?.name || ''}` : ''}`;
     case 'log_feeling': return `Feeling ${input.feel}${input.note ? ` · ${input.note}` : ''}`;
+    case 'log_body': return `Body record saved${input.date ? ` · ${input.date}` : ''}`;
+    case 'log_readiness': return `Morning check${input.sleep_hours ? ` · ${input.sleep_hours} h sleep` : ''}${input.resting_pulse ? ` · pulse ${input.resting_pulse}` : ''}`;
     case 'log_weight': return `Weight ${input.kg} kg${input.waist_cm ? ` · waist ${input.waist_cm} cm` : ''}`;
     case 'add_person': return `${input.name} added to ${T.TEAMS[input.team] || 'Students'}`;
     case 'log_team_activity': return `Logged “${input.title}”${input.place ? ` at ${input.place}` : ''}${input.people?.length ? ` · ${input.people.length} people` : ''}`;

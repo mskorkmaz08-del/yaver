@@ -22,6 +22,7 @@ import * as lessonView from './views/lesson.js';
 import * as skillsView from './views/skills.js';
 import * as teamsView from './views/teams.js';
 import * as bodyView from './views/body.js';
+import * as trainingView from './views/training.js';
 import * as C from './course.js';
 import { initShortcuts } from './keys.js';
 import { initCommand, openCommand } from './command.js';
@@ -33,11 +34,12 @@ import * as sound from './sound.js';
 import * as mech from './mech.js';
 import { icon } from './icons.js';
 
-const TABS = { home: ['home', 'Home', '1'], cetele: ['tally', 'Çetele', '2'], study: ['book', 'Study', '3'], calendar: ['calendar', 'Meet', '4'], teams: ['users', 'Teams', '9'], money: ['wallet', 'Money', '5'], diet: ['leaf', 'Diet', '6'], body: ['body', 'Body', '0'], map: ['map', 'Map', '7'], skills: ['trophy', 'Skills', '8'], settings: ['settings', 'Settings', ','] };
+// v67: Body (bottom right) holds Training and Diet; Map, Skills and Teams are in the laptop sidebar and the command bar.
+const TABS = { home: ['home', 'Home', '1'], cetele: ['tally', 'Çetele', '2'], study: ['book', 'Study', '3'], calendar: ['calendar', 'Meet', '4'], money: ['wallet', 'Money', '5'], body: ['body', 'Body', '6'], teams: ['users', 'Teams', '9'], map: ['map', 'Map', '7'], skills: ['trophy', 'Skills', '8'], settings: ['settings', 'Settings', ','] };
 
-const VIEWS = { home, cetele, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView, skills: skillsView, teams: teamsView, body: bodyView };
+const VIEWS = { home, cetele, money, calendar, study, diet, map: mapView, settings, course: courseView, lesson: lessonView, skills: skillsView, teams: teamsView, body: bodyView, training: trainingView };
 // Screens that belong to a tab for highlighting.
-const PARENT = { course: 'study', lesson: 'study' };
+const PARENT = { course: 'study', lesson: 'study', training: 'body', diet: 'body' };
 let current = 'home';
 let param = '';
 
@@ -53,7 +55,9 @@ export function go(name, arg = '') {
   document.querySelectorAll('.tabbar [data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === (PARENT[name] || name)));
   // screens slide in from the side of the tab they come from; deeper screens rise
   const order = Object.keys(TABS), a = order.indexOf(PARENT[current] || current), b = order.indexOf(PARENT[name] || name);
-  document.body.dataset.dir = PARENT[name] && !PARENT[current] ? 'in' : b > a ? 'next' : b < a ? 'prev' : 'in';
+  // Body, Training and Diet sit side by side: they slide in the order of their switch.
+  const SIB = ['body', 'training', 'diet'];
+  document.body.dataset.dir = SIB.includes(name) && SIB.includes(current) ? (SIB.indexOf(name) > SIB.indexOf(current) ? 'next' : 'prev') : PARENT[name] && !PARENT[current] && PARENT[name] !== current ? 'in' : b > a ? 'next' : b < a ? 'prev' : 'in';
   moveTabMark();
   entering = true;
   draw();
