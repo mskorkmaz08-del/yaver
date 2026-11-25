@@ -2,6 +2,7 @@ import * as D from '../data.js';
 import * as db from '../db.js';
 import { html, raw, today, addDays, fmtDay, shrinkImage, toast, haptic } from '../util.js';
 import * as F from '../foodscan.js';
+import * as FQ from '../foodqueue.js';
 import * as L from '../dietlog.js';
 import * as G from '../foodgaps.js';
 import * as B from '../body.js';
@@ -33,6 +34,14 @@ export function render(root, go) {
     ${raw(bodyTabs('diet'))}
     <div class="switch"><button data-d="-1" aria-label="Previous day">${raw(icon('chevronLeft'))}</button><span>${fmtDay(day).toLowerCase()}</span><button data-d="1" ${raw(day === today() ? 'disabled' : '')} aria-label="Next day">${raw(icon('chevronRight'))}</button></div>
 
+    <div class="food-add">
+        <button class="fa-cam" data-snap>${raw(icon('camera'))}<span>Photo</span></button>
+        <button data-library>${raw(icon('upload'))}<span>Library</span></button>
+        <button data-type-meal>${raw(icon('edit'))}<span>Type</span></button>
+      </div>
+    ${raw(pendingCard(day))}
+
+
     <section class="card diet-top">
       ${raw(ring(d.calories, g.dailyCalories, { size: 112, stroke: 7, color: d.calories > g.dailyCalories ? 'var(--red)' : 'var(--accent)', label: String(Math.round(d.calories)), sub: `/ ${g.dailyCalories}` }))}
       <div class="macros">
@@ -45,8 +54,6 @@ export function render(root, go) {
     ${raw(day === today() ? bodyLine() : '')}
 
     <div class="btn-row">
-      <button class="btn ghost" data-snap>${raw(icon('camera'))} Photo a meal</button>
-      <button class="btn ghost" data-type-meal>${raw(icon('edit'))} Type a meal</button>
       <button class="btn ghost" data-ai>${raw(icon('sparkle'))} What next?</button>
     </div>
 
@@ -67,12 +74,15 @@ export function render(root, go) {
     ${raw(diary())}`;
 
   root.querySelector('[data-add]').onclick = () => mealForm(null, day);
+  root.querySelectorAll('[data-fq-retry]').forEach(b => (b.onclick = () => FQ.run(b.dataset.fqRetry)));
+  root.querySelectorAll('[data-fq-del]').forEach(b => (b.onclick = () => FQ.remove(b.dataset.fqDel)));
   wireBodyTabs(root, go);
   root.querySelectorAll('[data-body]').forEach(b => (b.onclick = () => go('body')));
   root.querySelectorAll('[data-type]').forEach(b => (b.onclick = () => mealForm(null, day, { meal: b.dataset.type })));
   root.querySelectorAll('[data-id]').forEach(b => (b.onclick = () => mealForm(db.get('meals', b.dataset.id))));
   root.querySelectorAll('[data-d]').forEach(b => (b.onclick = () => { day = addDays(day, Number(b.dataset.d)); render(root); }));
-  root.querySelector('[data-snap]').onclick = () => pickPhoto(day);
+  root.querySelector('[data-snap]').onclick = () => pickPhoto(day, true);
+  root.querySelector('[data-library]').onclick = () => pickPhoto(day, false);
   root.querySelector('[data-type-meal]').onclick = () => photoSheet(null, day);
   root.querySelectorAll('[data-span]').forEach(b => (b.onclick = () => { span = Number(b.dataset.span); render(root); }));
   root.querySelector('[data-weak]')?.addEventListener('click', () => openAssistant(`I feel weak or unwell. Look at what I have eaten and drunk over the last ${span} days (diet_history) and tell me plainly: am I eating enough, which vitamins or minerals look low, which days were thin, and what simple foods would close the gaps. Say what the data can't show, and when I should see a doctor instead.`));
@@ -91,6 +101,17 @@ export function render(root, go) {
 }
 
 // What today's eating does to the body (v56), one line that opens the Body screen.
+// Meals handed in that Gemini is still working out, or that failed (v69).
+function pendingCard(day) {
+  const list = FQ.jobs().filter(j => j.date === day);
+  if (!list.length) return '';
+  return html`<section class="list pending-food">
+    <h4 class="list-day">Estimating <span>${list.length}</span></h4>
+    ${raw(list.map(j => html`<div class="row fq ${raw(j.status)}">${raw(j.image ? html`<img class="fq-img" src="data:${j.image.media_type};base64,${j.image.data}" alt="">` : '')}<span class="row-main"><b>${j.note || 'Food photo'}</b><small>${raw(j.status === 'failed' ? html`<span class="warn-text">${j.error}</span>` : html`${j.time ? `${j.time} · ` : ''}${j.image ? 'photo · ' : ''}working it out…`)}</small></span>
+      <span class="fq-btns">${raw(j.status === 'failed' ? html`<button class="link-btn" data-fq-retry="${j.id}">Retry</button>` : '<i class="fq-spin" aria-hidden="true"></i>')}<button class="link-btn muted" data-fq-del="${j.id}" aria-label="Remove">×</button></span></div>`).join(''))}
+  </section>`;
+}
+
 // What eating does to the body: today, the last 7 days and, after three full days,
 // where eating like this leads (all from js/body.js; estimates).
 function bodyLine() {
@@ -196,20 +217,23 @@ export function nutrientSheet(key, tab = 'why') {
 const fmt = v => (v >= 100 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleString('en');
 
 // ---------- Food photo or typed meal: photo (+ note) or words → Gemini estimate → check → log ----------
-function pickPhoto(day) {
+// camera: true opens the camera straight away; false opens the photo library (v69).
+function pickPhotoFile(done, camera = false) {
   // The input is put in the page while the picker is open: Safari on the iPhone can
   // drop a detached input before the photo comes back, so the first pick did nothing.
   document.querySelector('input.photo-pick')?.remove();
   const input = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*', className: 'photo-pick', hidden: true });
+  if (camera) input.setAttribute('capture', 'environment');
   document.body.append(input);
   input.onchange = async () => {
     const file = input.files?.[0];
     input.remove();
     if (!file) return;
-    try { photoSheet(await shrinkImage(file, 1024), day); } catch { toast('Could not open that photo.'); }
+    try { done(await shrinkImage(file, 1024)); } catch { toast('Could not open that photo.'); }
   };
   input.click();
 }
+function pickPhoto(day, camera) { pickPhotoFile(img => photoSheet(img, day), camera); }
 
 export function photoSheet(image, day = today()) {
   const wrap = document.createElement('div');
@@ -227,13 +251,23 @@ export function photoSheet(image, day = today()) {
     const t = F.totals(items);
     wrap.innerHTML = html`<div class="sheet tall food-sheet" role="dialog" aria-label="${image ? 'Food photo' : 'Type a meal'}">
       <div class="grabber"></div>
-      <h2>${result ? 'Check and log' : image ? 'Food photo' : 'What did you eat or drink?'}</h2>
-      ${raw(image ? html`<img class="food-img" src="${image.url}" alt="">` : '')}
+      <h2>${result ? 'Check and log' : image ? 'Log this meal' : 'What did you eat or drink?'}</h2>
+      ${raw(result && image ? html`<img class="food-img" src="${image.url}" alt="">` : '')}
       ${raw(!result ? html`
-        ${raw(image ? html`<label class="field"><span>Anything the photo doesn't show? (optional)</span><input name="note" value="${note}" placeholder="fried in butter, 2 sugars, ate half…" autocomplete="off"></label>`
-          : html`<label class="field"><span>Write it the way you'd say it, with amounts if you know them</span><textarea name="note" rows="3" placeholder="2 eggs, a slice of bread with butter, black tea with 1 sugar">${note}</textarea></label>`)}
-        <p class="small muted food-status">${busy ? 'Looking things up…' : image ? 'Gemini reads labels, measures each item against the plate, cup or cutlery, and looks up brands and local recipes before adding up the nutrients.' : 'Gemini looks up each item (brand, local recipe, spoon and cup sizes), then works out its amount and nutrients; you check them before logging.'}</p>
-        <div class="sheet-actions"><button class="btn ghost" data-cancel>Cancel</button><button class="btn primary" data-go ${raw(busy ? 'disabled' : '')}>${busy ? 'Estimating…' : 'Estimate'}</button></div>` : html`
+        <div class="food-entry ${raw(image ? 'has-img' : '')}">
+          ${raw(image ? html`<button class="food-thumb" data-repick aria-label="Change photo"><img src="${image.url}" alt=""><small>Change</small></button>` : '')}
+          ${raw(image ? html`<label class="field"><span>Anything the photo misses? (optional)</span><textarea name="note" rows="2" placeholder="fried in butter, 2 sugars, ate half…">${note}</textarea></label>`
+            : html`<label class="field"><span>Say it the way you'd tell someone, amounts if you know them</span><textarea name="note" rows="3" placeholder="2 eggs, bread with butter, black tea with 1 sugar">${note}</textarea></label>`)}
+        </div>
+        ${raw(busy ? html`<p class="small muted food-status">Looking things up…</p>` : html`
+        <div class="meal-chips" role="radiogroup" aria-label="Meal">${raw(D.MEAL_TYPES.map(m => html`<button type="button" role="radio" aria-checked="${m === meal ? 'true' : 'false'}" class="chip ${raw(m === meal ? 'on' : '')}" data-mealchip="${m}">${m}</button>`).join(''))}</div>
+        <div class="field-row eaten">
+          <label class="field"><span>Day</span><input type="date" name="edate" value="${eatenDate}"></label>
+          <label class="field"><span>Time</span><input type="time" name="etime" value="${eatenTime}"></label>
+        </div>`)}
+        <div class="sheet-actions food-go">${raw(busy ? html`<button class="btn ghost" data-cancel>Cancel</button><button class="btn primary" disabled>Estimating…</button>`
+          : html`<button class="btn primary big" data-bg>Log it</button>`)}</div>
+        ${raw(busy ? '' : html`<p class="small muted food-hint">Closes now; Gemini works it out in the background and the meal appears in Diet by itself. <button type="button" class="link-btn" data-go>Check the amounts first</button></p>`)}` : html`
         <label class="field"><span>Name</span><input name="dish" value="${dish}"></label>
         <div class="food-items">
           ${raw(items.length ? items.map((it, i) => html`<div class="food-item">
@@ -263,9 +297,18 @@ export function photoSheet(image, day = today()) {
     if (n && !image && !busy && !note) setTimeout(() => n.focus(), 300);
     const dn = wrap.querySelector('[name=dish]'); if (dn) dn.oninput = () => (dish = dn.value);
     const ms = wrap.querySelector('[name=meal]'); if (ms) ms.onchange = () => { meal = ms.value; mealSet = true; };
+    wrap.querySelectorAll('[data-mealchip]').forEach(b => (b.onclick = () => { meal = b.dataset.mealchip; mealSet = true; wrap.querySelectorAll('[data-mealchip]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); }); }));
+    wrap.querySelector('[data-repick]')?.addEventListener('click', () => pickPhotoFile(img => { image = img; draw(); }));
     const ed = wrap.querySelector('[name=edate]'); if (ed) ed.onchange = () => (eatenDate = ed.value || day);
-    const et = wrap.querySelector('[name=etime]'); if (et) et.onchange = () => { eatenTime = et.value; if (!mealSet && eatenTime) { meal = guessMeal(eatenTime); if (ms) ms.value = meal; } };
+    const et = wrap.querySelector('[name=etime]'); if (et) et.onchange = () => { eatenTime = et.value; if (!mealSet && eatenTime) { meal = guessMeal(eatenTime); if (ms) ms.value = meal; wrap.querySelectorAll('[data-mealchip]').forEach(x => { x.classList.toggle('on', x.dataset.mealchip === meal); x.setAttribute('aria-checked', String(x.dataset.mealchip === meal)); }); } };
     wrap.querySelector('[data-go]')?.addEventListener('click', run);
+    // v69: hand it in and move on; js/foodqueue.js estimates and logs it in the background.
+    wrap.querySelector('[data-bg]')?.addEventListener('click', async e => {
+      if (!image && !note.trim()) { toast('Write what you ate or drank first.'); return; }
+      const btn = e.currentTarget; btn.disabled = true;
+      try { await FQ.add({ image, note, date: eatenDate, time: eatenTime, meal }); haptic(); close(); toast('Got it. Working it out in the background.'); }
+      catch (err) { btn.disabled = false; toast(err.message, 4000); }
+    });
     wrap.querySelector('[data-again]')?.addEventListener('click', () => { result = null; items = []; draw(); });
     wrap.querySelectorAll('[data-g]').forEach(inp => (inp.onchange = () => { const i = Number(inp.dataset.g); items[i] = F.scaleItem(result.items[i], Math.max(0, Number(inp.value) || 0)); setTimeout(draw); })); // redraw after the field's blur finishes
     wrap.querySelectorAll('[data-x]').forEach(b => (b.onclick = () => { items.splice(Number(b.dataset.x), 1); result.items.splice(Number(b.dataset.x), 1); draw(); }));

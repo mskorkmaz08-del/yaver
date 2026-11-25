@@ -27,6 +27,7 @@ import * as C from './course.js';
 import { initShortcuts } from './keys.js';
 import { initCommand, openCommand } from './command.js';
 import { initSync } from './sync.js';
+import * as FQ from './foodqueue.js';
 import { currencyOptions } from './data.js';
 import * as D from './data.js';
 import { subdial } from './ui.js';
@@ -221,6 +222,8 @@ async function start() {
   // Chrome/Edge on a computer: keep the install prompt for the button in Settings.
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.yaverInstall = e; });
   initSync();
+  // Meals handed in for estimating when the app was last closed carry on (js/foodqueue.js).
+  FQ.resume();
   // Yaver on the Mac: connect to Claude through the bridge running on this Mac, if there is one.
   pairLocal();
   // Apple Calendar through the Mac bridge: a fresh copy on start and when coming back.
