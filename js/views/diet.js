@@ -214,7 +214,7 @@ function pickPhoto(day) {
 export function photoSheet(image, day = today()) {
   const wrap = document.createElement('div');
   wrap.className = 'sheet-wrap';
-  let result = null, items = [], busy = false, ctrl = null;
+  let result = null, items = [], busy = false, ctrl = null, saving = false;
   const hour = new Date().getHours();
   let meal = hour < 11 ? 'Breakfast' : hour < 16 ? 'Lunch' : hour < 21 ? 'Dinner' : 'Snack';
   let note = '', dish = '';
@@ -269,10 +269,24 @@ export function photoSheet(image, day = today()) {
     wrap.querySelector('[data-again]')?.addEventListener('click', () => { result = null; items = []; draw(); });
     wrap.querySelectorAll('[data-g]').forEach(inp => (inp.onchange = () => { const i = Number(inp.dataset.g); items[i] = F.scaleItem(result.items[i], Math.max(0, Number(inp.value) || 0)); setTimeout(draw); })); // redraw after the field's blur finishes
     wrap.querySelectorAll('[data-x]').forEach(b => (b.onclick = () => { items.splice(Number(b.dataset.x), 1); result.items.splice(Number(b.dataset.x), 1); draw(); }));
-    wrap.querySelector('[data-log]')?.addEventListener('click', async () => {
-      await D.logMeal({ ...F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: eatenDate, confidence: result.confidence, source: image ? 'photo' : 'typed', sources: result.sources }), time: eatenTime });
-      haptic(); close();
-      toast(`Logged ${Math.round(F.totals(items).calories)} kcal · ${Math.round(F.totals(items).protein)}g protein`);
+    // v68: one tap logs once. The button shows Saving… and stays disabled; the sheet closes
+    // as soon as the meal is saved, or after 3 s even if the phone's storage is slow.
+    const logBtn = wrap.querySelector('[data-log]');
+    logBtn?.addEventListener('click', async () => {
+      if (saving) return;
+      saving = true; logBtn.disabled = true; logBtn.textContent = 'Saving…';
+      const t = F.totals(items);
+      try {
+        await Promise.race([
+          D.logMeal({ ...F.mealRow({ dish: dish.trim() || result.dish, items, meal, date: eatenDate, confidence: result.confidence, source: image ? 'photo' : 'typed', sources: result.sources }), time: eatenTime }),
+          new Promise(r => setTimeout(r, 3000)),
+        ]);
+        haptic(); close();
+        toast(`Logged ${Math.round(t.calories)} kcal · ${Math.round(t.protein)}g protein`);
+      } catch (e) {
+        saving = false; logBtn.disabled = false; logBtn.textContent = `Log ${Math.round(t.calories)} kcal`;
+        toast(`Could not save: ${e.message}`, 5000);
+      }
     });
   };
   async function run() {

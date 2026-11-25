@@ -253,6 +253,9 @@ export function logMeal({ name, calories = 0, protein = 0, carbs = 0, fat = 0, m
   if (!name) throw new Error('name is required');
   if (!MEAL_TYPES.includes(meal)) meal = 'Snack';
   time = cleanTime(time) || (date === today() ? nowHM() : '');
+  // v68: the same meal saved again within two minutes is a double tap, not a second meal.
+  const twin = db.all('meals').find(m => m.name === name && m.date === date && (m.time || '') === (time || '') && Math.round(m.calories) === Math.round(Number(calories) || 0) && Date.now() - new Date(m.createdAt || 0).getTime() < 120000);
+  if (twin) return Promise.resolve(twin);
   const extra = Object.fromEntries(Object.entries({ fiber, sugar, sodium }).filter(([, v]) => v != null && v !== '').map(([k, v]) => [k, Number(v) || 0]));
   return db.put('meals', { name, calories: Number(calories) || 0, protein: Number(protein) || 0, carbs: Number(carbs) || 0, fat: Number(fat) || 0, meal, date, ...(time ? { time } : {}), ...extra,
     ...(micros ? { micros } : {}), ...(items ? { items } : {}), ...(source ? { source } : {}), ...(confidence ? { confidence } : {}), ...(sources?.length ? { sources } : {}) });
