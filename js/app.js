@@ -251,14 +251,21 @@ async function start() {
   onboarding();
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const w = reg.installing;
-        w?.addEventListener('statechange', () => {
-          if (w.state === 'installed' && navigator.serviceWorker.controller) toast('Yaver was updated. Reopen the app to get the new version.', 4000);
-        });
-      });
+    // v70: updates arrive without reopening twice. Coming back to the app asks for a new
+    // version (an iPhone home-screen app is resumed, not reloaded, so it never asked);
+    // when one takes over, a freshly opened app reloads into it at once, otherwise a
+    // toast offers Reload (never in the middle of a form or a lesson).
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
     }).catch(() => {});
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;
+      const busy = document.querySelector('.sheet-wrap, .food-sheet') || document.body.classList.contains('chat-open') || current === 'lesson';
+      if (performance.now() < 15000 && !busy) { reloading = true; location.reload(); return; }
+      toast('A new version of Yaver is ready.', { action: { label: 'Reload', run: () => location.reload() }, ms: 8000 });
+    });
   }
 }
 
