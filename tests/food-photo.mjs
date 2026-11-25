@@ -131,6 +131,32 @@ const nMeals = await page.evaluate(async () => (await import('./js/db.js')).all(
 await page.evaluate(() => { const b = document.querySelector('.food-sheet [data-log]'); for (let i = 0; i < 5; i++) b.click(); });
 await page.waitForTimeout(600);
 check('typed meal is logged once, even with repeated taps', await page.evaluate(async n => (await import('./js/db.js')).all('meals').length === n + 1, nMeals));
+// v69: Log it hands the meal in at once; the estimate runs in the background and logs itself.
+const n2 = await page.evaluate(async () => (await import('./js/db.js')).all('meals').length);
+await page.click('[data-type-meal]');
+await page.waitForSelector('.food-sheet textarea[name=note]');
+await page.fill('.food-sheet textarea[name=note]', 'a bowl of plov');
+await page.fill('.food-sheet [name=etime]', '13:30'); // another time, so it isn't taken for a double tap of the meal above
+await page.click('.food-sheet [data-bg]');
+await page.waitForSelector('.food-sheet', { state: 'detached', timeout: 1500 });
+check('Log it closes the sheet at once', true);
+await page.waitForSelector('.pending-food .fq', { timeout: 2000 }).catch(() => {});
+const shown = await page.$('.pending-food');
+await page.waitForFunction(n => import('./js/db.js').then(db => db.all('meals').length === n + 1 && !(db.setting('foodQueue', []) || []).length), n2, { timeout: 15000 }).catch(() => {});
+const bg = await page.evaluate(async () => { const db = await import('./js/db.js'); return { meals: db.all('meals').length, q: (db.setting('foodQueue', []) || []).length, last: db.all('meals').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] }; });
+check('background estimate logs the meal by itself', bg.meals === n2 + 1 && bg.q === 0 && bg.last.source === 'typed' && bg.last.calories > 0 && bg.last.time === '13:30' && bg.last.meal === 'Lunch', JSON.stringify({ shown: !!shown, ...bg, last: bg.last?.name }));
+check('Estimating row showed while it worked', !!shown);
+// A job cut off by closing the app is picked up on the next start.
+const resumed = await page.evaluate(async () => {
+  const db = await import('./js/db.js'); const FQ = await import('./js/foodqueue.js'); const { today } = await import('./js/util.js');
+  const n = db.all('meals').length;
+  await db.setSetting('foodQueue', [{ id: 'fqold', note: 'tea', image: null, date: today(), time: '08:00', meal: null, status: 'working', at: Date.now() - 60000 }]);
+  FQ.resume();
+  for (let i = 0; i < 100 && (db.setting('foodQueue', []) || []).length; i++) await new Promise(r => setTimeout(r, 100));
+  const m = db.all('meals').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  return { added: db.all('meals').length - n, meal: m.meal, time: m.time };
+});
+check('an unfinished job resumes and logs with its time and meal', resumed.added === 1 && resumed.meal === 'Breakfast' && resumed.time === '08:00', JSON.stringify(resumed));
 check('suggestions offer an update after more food', /Update/.test(await page.textContent('[data-tips]')));
 
 // The chat also moves to a backup model when the main one is overloaded.
