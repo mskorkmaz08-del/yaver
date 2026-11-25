@@ -1,6 +1,6 @@
 // Service worker: keeps a copy of the app on the phone so Yaver opens
 // instantly and works offline. Bump VERSION whenever app files change.
-const VERSION = 'yaver-v69';
+const VERSION = 'yaver-v70';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/db.js', 'js/util.js', 'js/data.js', 'js/ui.js', 'js/forms.js', 'js/ics.js', 'js/applecal.js', 'js/teams.js', 'js/insights.js', 'js/nutrients.js', 'js/body.js', 'js/training.js', 'js/anatomy.js', 'js/foodscan.js', 'js/foodgaps.js', 'js/dietlog.js', 'js/foodqueue.js', 'js/views/teams.js', 'js/views/body.js', 'js/views/training.js',
@@ -35,7 +35,10 @@ self.addEventListener('fetch', e => {
   // Network first, so updates show up on the next open; the saved copy is the
   // offline fallback (and is used if the network takes longer than 3 seconds).
   e.respondWith(caches.open(VERSION).then(async cache => {
-    const fromNet = fetch(e.request).then(res => { if (res.ok) cache.put(e.request, res.clone()); return res; });
+    // v70: ask the server every time (no-cache revalidates with the ETag, so an unchanged
+    // file costs a tiny 304). Without it the browser's own cache could hand out the old
+    // files for up to 10 minutes after an update was published.
+    const fromNet = fetch(e.request.mode === 'navigate' ? e.request.url : e.request, { cache: 'no-cache' }).then(res => { if (res.ok) cache.put(e.request, res.clone()); return res; });
     const timeout = new Promise(r => setTimeout(r, 3000));
     try {
       const res = await Promise.race([fromNet, timeout]);
